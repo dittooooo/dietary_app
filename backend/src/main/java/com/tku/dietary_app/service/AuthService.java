@@ -19,7 +19,7 @@ public class AuthService {
     public String register(RegisterRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+            throw new RuntimeException("已有帳號？返回登入");
         }
 
         User user = User.builder()
@@ -29,16 +29,16 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return "Register Success";
+        return "註冊成功";
     }
 
     public String login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("尚未註冊"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Password incorrect");
+            throw new RuntimeException("密碼錯誤或格式不符");
         }
 
         String token = jwtUtil.generateToken(user.getEmail());

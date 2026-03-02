@@ -41,7 +41,7 @@ public class AuthController {
      * 2. 後續需要權限的請求，需在 Header 帶上：Authorization: Bearer <Token>。
      */
     @PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
+    public String login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
