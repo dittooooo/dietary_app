@@ -14,6 +14,4 @@ public class RegisterRequest {
     @NotBlank(message = "Password cannot be blank")
     private String password;
 
-    @NotBlank(message = "Nickname cannot be blank")
-    private String nickname;
 }
