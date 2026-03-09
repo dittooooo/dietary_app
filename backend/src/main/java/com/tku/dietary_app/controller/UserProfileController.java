@@ -27,6 +27,7 @@ public class UserProfileController {
     @Autowired
     private UserRepository userRepository;
 
+    // 完成用戶 onboarding 流程
     @PostMapping("/onboarding")
     public ResponseEntity<?> completeOnboarding(@Valid @RequestBody OnboardingRequest request) {
         try {
@@ -62,6 +63,7 @@ public class UserProfileController {
         }
     }
 
+    // 獲取用戶個人資料
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile() {
         try {
@@ -96,6 +98,7 @@ public class UserProfileController {
         }
     }
 
+    // 創建錯誤響應的私有方法
     private Map<String, Object> createErrorResponse(String message) {
         Map<String, Object> error = new HashMap<>();
         error.put("success", false);

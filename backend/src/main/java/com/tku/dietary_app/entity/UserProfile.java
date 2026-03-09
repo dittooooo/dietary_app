@@ -3,6 +3,7 @@ package com.tku.dietary_app.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+// 用戶個人資料實體類別，代表資料庫中的用戶個人資料表
 @Entity
 @Table(name = "user_profile")
 public class UserProfile {

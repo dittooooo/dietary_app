@@ -15,6 +15,7 @@ public class UserProfileService {
     @Autowired
     private UserProfileRepository userProfileRepository;
 
+    // 創建或更新用戶個人資料
     @Transactional
     public UserProfile createOrUpdateUserProfile(User user, OnboardingRequest request) {
         Optional<UserProfile> existingProfile = userProfileRepository.findByUser(user);
@@ -44,12 +45,13 @@ public class UserProfileService {
         return userProfileRepository.save(userProfile);
     }
 
+    // 根據用戶獲取個人資料
     public Optional<UserProfile> getUserProfile(User user) {
         return userProfileRepository.findByUser(user);
     }
 
+    // 根據用戶ID獲取個人資料
     public Optional<UserProfile> getUserProfileById(Long userId) {
         return userProfileRepository.findByUserId(userId);
     }
 }
-

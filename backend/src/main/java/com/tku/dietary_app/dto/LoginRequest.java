@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+// 登入請求資料傳輸物件，包含登入所需的欄位
 @Data
 public class LoginRequest {
 
@@ -17,5 +18,6 @@ public class LoginRequest {
     @Size(min = 6, max = 18, message = "長度需為 6-18 位")
     @Pattern(regexp = ".*[a-z].*", message = "密碼必須包含小寫英文字母")
     @Pattern(regexp = ".*[A-Z].*", message = "密碼必須包含大寫英文字母")
+    @Pattern(regexp = ".*[0-9].*", message = "密碼必須包含至少一個數字")
     private String password;
 }

@@ -19,6 +19,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    // 過濾每個請求，檢查 JWT Token
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

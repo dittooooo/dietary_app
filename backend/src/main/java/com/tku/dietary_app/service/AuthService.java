@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+// 認證服務類別，處理用戶註冊和登入邏輯
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -16,6 +17,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    // 處理用戶註冊
     public String register(RegisterRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -32,6 +34,7 @@ public class AuthService {
         return "註冊成功";
     }
 
+    // 處理用戶登入
     public String login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())

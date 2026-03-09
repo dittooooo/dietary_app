@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
+// Onboarding 請求資料傳輸物件，包含用戶個人資料的欄位
 public class OnboardingRequest {
     @NotBlank(message = "暱稱不能為空")
     private String nickname;
