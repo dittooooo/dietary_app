@@ -20,8 +20,7 @@ src/main/java/com/tku/dietary_app
 ```json
 {
   "email": "test@gmail.com",
-  "password": "123456",
-  "nickname": "test"
+  "password": "123456"
 }
 ```
 功能說明

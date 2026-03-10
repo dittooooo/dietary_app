@@ -5,6 +5,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 
+// 用戶實體類別，代表資料庫中的用戶表
 @Entity
 @Table(name = "users")
 @Getter
@@ -23,9 +24,6 @@ public class User {
 
     @Column(nullable = false)
     private String password;
-
-    @Column(nullable = false)
-    private String nickname;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
