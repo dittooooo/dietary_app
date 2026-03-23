@@ -20,6 +20,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    // 處理用戶註冊
     public String register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("此 Email 已被註冊");
@@ -36,6 +37,7 @@ public class AuthService {
         return jwtUtil.generateToken(user.getEmail());
     }
 
+    // 處理用戶登入
     public String login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new BadCredentialsException("帳號或密碼錯誤"));

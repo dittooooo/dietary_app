@@ -1,5 +1,12 @@
-import 'dart:math'; // 導入數學庫（用於計算旋轉與弧度）
-import 'package:flutter/material.dart'; // 導入 Flutter 材質設計組件庫
+import 'dart:math'; 
+import 'package:flutter/material.dart'; 
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_config.dart';
+import 'home_page.dart';
+import 'login_page.dart';
 
 class InitialInfoPage extends StatefulWidget {
   // 定義初始資訊填寫頁面 StatefulWidget
@@ -11,7 +18,7 @@ class InitialInfoPage extends StatefulWidget {
 
 class _InitialInfoPageState extends State<InitialInfoPage>
     with TickerProviderStateMixin {
-  // 注入 Ticker 以支援動畫
+  // 注入 Ticker 以支援小精靈動畫
   late PageController _pageController; // 宣告分頁控制器
   late AnimationController _pacmanController; // 宣告小精靈嘴巴動畫控制器
   int _currentPage = 0; // 追蹤當前所在頁碼
@@ -26,28 +33,34 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   static const TextStyle _inputTextStyle = TextStyle(
     // 輸入框字體風格
     fontWeight: FontWeight.bold, // 粗體
-    fontSize: 16, // 中型字體
+    fontSize: 16, 
   );
 
   static const TextStyle _buttonTextStyle = TextStyle(
     // 按鈕文字風格
-    fontSize: 16, // 字體大小
+    fontSize: 16, 
+
     fontWeight: FontWeight.bold, // 粗體
     color: Colors.black, // 黑色
   );
 
   final Map<int, String> _pageErrors = {}; // 儲存各頁面的錯誤訊息
 
-  String _name = ''; // 保存：姓名
+  String _name = ''; // 保存：姓名 (對應 backend: nickname)
   String _gender = ''; // 保存：性別
   String _age = ''; // 保存：年齡
   String _height = ''; // 保存：身高
-  String _weight = ''; // 保存：體重
-  Set<String> _diseases = {}; // 保存：疾病集
-  Set<String> _goals = {}; // 保存：目標集
+  String _weight = ''; // 保存 : 體重
+  Set<String> _diseases = {}; // 保存：疾病集 (對應 backend: healthConditions)
+  Set<String> _goals = {}; // 保存：目標集 (對應 backend: dietGoal)
+  
+  // 新增小精靈選擇相關變數
+  final List<String> _petOptions = ['奶油皮丘', '薄荷兔兔', '草莓狐狸'];
+  int _selectedPetIndex = 0;
+  bool _isSubmitting = false;
 
-  final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病']; // 疾病選項清單
-  final List<String> _goalOptions = ['減脂', '增肌', '養生']; // 目標選項清單
+  final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病']; 
+  final List<String> _goalOptions = ['減脂', '增肌', '養生']; 
 
   @override
   void initState() {
@@ -55,8 +68,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     super.initState(); // 執行父類初始化
     _pageController = PageController(); // 建立分頁控制器實體
     _pacmanController = AnimationController(
-      // 初始化嘴巴動畫
-      vsync: this, // 綁定 Ticker
+      // 初始化小精靈嘴巴動畫
+      vsync: this, // 綁定 Ticker 
       duration: const Duration(milliseconds: 300), // 動畫週期
     )..repeat(reverse: true); // 循環往復播放
   }
@@ -71,11 +84,12 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   void _nextPage() {
     // 下一頁處理邏輯
+    print('DEBUG: [邏輯執行] _nextPage 啟動, 目前頁碼: $_currentPage');
     if (!_canProceed()) {
       // 檢查當前頁面是否完成
       final msg = _validationMessage(); // 獲取報錯訊息
+      debugPrint('校驗失敗: $msg');
       setState(() {
-        // 更新 UI
         _pageErrors[_currentPage] = msg; // 記錄該頁錯誤
       });
       ScaffoldMessenger.of(
@@ -86,6 +100,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
     if (_currentPage < 6) {
       // 若非最後一頁
+      debugPrint('執行翻頁動畫...');
       _pageController.nextPage(
         // 執行翻頁動畫
         duration: const Duration(milliseconds: 500), // 設定動畫時長
@@ -93,6 +108,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       );
     } else {
       // 若為最後一頁
+      debugPrint('已在最後一頁，啟動完成設定流程...');
       _completeSetup(); // 執行完成設置
     }
   }
@@ -163,26 +179,93 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     }
   }
 
-  void _completeSetup() {
-    // 完成設置邏輯
-    final Map<String, dynamic> userSetupData = {
-      // 封裝用戶數據為 Map
-      'name': _name, // 名字
-      'gender': _gender, // 性別
-      'age': double.tryParse(_age)?.toInt() ?? 0, // 年齡 (轉型)
-      'height': double.tryParse(_height) ?? 0, // 身高 (轉型)
-      'weight': double.tryParse(_weight) ?? 0, // 體重 (轉型)
-      'diseases': _diseases.toList(), // 疾病列表
-      'goals': _goals.toList(), // 目標列表
-      'timestamp': DateTime.now().toIso8601String(), // 提交時間戳
-    };
+  Future<void> _completeSetup() async {
+    // 防止重複提交
+    if (_isSubmitting) return;
 
-    debugPrint('提交使用者資料: $userSetupData'); // 使用數據以消除 Lint 警告，並供後續 API 調試
+    debugPrint('開始啟動提交流程...');
+    setState(() => _isSubmitting = true);
+    
+    // 立即顯示提示避免使用者覺得沒反應
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在連線伺服器，請稍候...'), duration: Duration(milliseconds: 1500)),
+      );
+    }
 
-    // ===== 預留後端 API 對接點 =====
-    // TODO: 整合 http 套件提交 userSetupData
+    try {
+      // 獲取 JWT Token
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
 
-    Navigator.pushReplacementNamed(context, '/home'); // 跳轉至首頁 (暫定)
+      if (token == null) {
+        debugPrint('錯誤: 找不到 token');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('授權失效，請重新登入')),
+          );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        }
+        return;
+      }
+
+      // 封裝用戶數據為 OnboardingRequest 格式 (根據 backend 變數)
+      final Map<String, dynamic> onboardingData = {
+        'nickname': _name,
+        'gender': _gender,
+        'age': int.tryParse(_age) ?? 0,
+        'height': double.tryParse(_height) ?? 0,
+        'weight': double.tryParse(_weight) ?? 0,
+        'healthConditions': _diseases.toList(),
+        'dietGoal': _goals.join(', '), // 將 Set 轉為逗號分隔字串
+        'petType': _petOptions[_selectedPetIndex],
+      };
+
+      debugPrint('提交資料至後端: $onboardingData');
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/user/onboarding'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(onboardingData),
+      ).timeout(const Duration(seconds: 15));
+
+      debugPrint('收到回應狀態碼: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+        debugPrint('API 回應內容: $result');
+        if (result['success'] == true) {
+          if (mounted) {
+            debugPrint('提交成功，切換至首頁');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomePage(),
+              ),
+            );
+          }
+        } else {
+          throw Exception(result['message'] ?? '設定失敗');
+        }
+      } else {
+        throw Exception('連線錯誤: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('提交過程發生例外: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('發生錯誤: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -304,35 +387,50 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           ),
           Positioned(
             // 按鈕定位
-            bottom: 0, // 固定底部
-            left: 0, // 靠左
-            right: 0, // 靠右
+            bottom: 10,
+            left: 0,
+            right: 0,
             child: Row(
-              // 水平排列按鈕
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // 兩端對齊
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (_currentPage > 0) // 若非第一頁顯示返回鍵
+                if (_currentPage > 0)
                   GestureDetector(
-                    // 手勢檢測
-                    onTap: _previousPage, // 點擊返回
-                    child: CustomPaint(
-                      // 繪製紙膠帶按鈕
-                      painter: WashiTapeButtonPainter(text: '返回修改'), // 按鈕文字
-                      size: const Size(120, 45), // 按鈕尺寸
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _previousPage();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      child: CustomPaint(
+                        painter: WashiTapeButtonPainter(text: '返回修改'),
+                        size: const Size(110, 40),
+                      ),
                     ),
                   )
                 else
-                  const SizedBox(width: 120), // 第一頁則留白佔位
+                  const SizedBox(width: 134),
 
                 GestureDetector(
-                  // 下一頁手勢檢測
-                  onTap: _nextPage, // 點擊下一頁
-                  child: CustomPaint(
-                    // 繪製紙膠帶按鈕
-                    painter: WashiTapeButtonPainter(
-                      text: _currentPage == 6 ? '完成' : '下一頁 >',
-                    ), // 文字切換
-                    size: const Size(120, 45), // 按鈕尺寸
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    if (_isSubmitting) return;
+                    _nextPage();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Opacity(
+                      opacity: _isSubmitting ? 0.6 : 1.0,
+                      child: CustomPaint(
+                        painter: WashiTapeButtonPainter(
+                          text: _isSubmitting 
+                              ? '提交中...' 
+                              : (_currentPage == 6 ? '完成' : '下一頁 >'),
+                        ),
+                        size: const Size(110, 40),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -653,42 +751,66 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       // 調用容器
       title: '請選擇您專屬的小精靈', // 標題
       scrollable: false, // 禁止捲動以保持置中
-      content: SizedBox.expand(
-        // 撐滿全屏
-        child: Stack(
-          // 疊層佈局
-          alignment: Alignment.center, // 內部元件置中
-          clipBehavior: Clip.none, // 允許溢出
-          children: [
-            Align(
-              // 絕對置對對齊
-              alignment: Alignment.center,
-              child: _buildHandDrawnBox(
-                // 手繪展示方框
-                width: 220, // 寬度
-                height: 220, // 高度
-                child: const Center(
-                  // 內容置中
-                  child: Icon(
-                    Icons.favorite,
-                    color: Color(0xFFFFA500),
-                    size: 120,
-                  ), // 精靈佔位符
+      content: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: const Alignment(0, -0.55), // 稍微往上一點
+            child: _buildHandDrawnBox(
+              width: 300, // 放大0.7倍 (大約1.7x，原本是180)
+              height: 300,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _selectedPetIndex == 0
+                          ? Icons.pets
+                          : (_selectedPetIndex == 1
+                              ? Icons.eco
+                              : Icons.star),
+                      color: const Color(0xFFFFA500),
+                      size: 170, // 跟隨放大
+                    ),
+                    const SizedBox(height: 15),
+                    Text(
+                      _petOptions[_selectedPetIndex],
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30, // 放大字體
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            Positioned(
-              // 左側導航按鈕定位
-              left: -20,
-              child: _buildSideNavButton('left', () {}), // 左箭頭
-            ),
-            Positioned(
-              // 右側導航按鈕定位
-              right: -20,
-              child: _buildSideNavButton('right', () {}), // 右箭頭
-            ),
-          ],
-        ),
+          ),
+          // 修改：第785-794行
+          // 將原本的 Positioned 修改為 Align，並將 alignment 設為 (-0.85, -0.6)
+          // 這樣可以讓按鈕內移 (不貼近紙張邊緣)，並且保持 -0.6 的高度與小精靈平行。
+          Align(
+            alignment: const Alignment(-1.15, -0.3), 
+            child: _buildSideNavButton('left', () {
+              setState(() {
+                _selectedPetIndex =
+                    (_selectedPetIndex - 1 + _petOptions.length) %
+                        _petOptions.length;
+              });
+            }),
+          ),
+          // 修改：第795-802行
+          // 將原本的 Positioned 修改為 Align，並將 alignment 設為 (0.85, -0.6)
+          Align(
+            alignment: const Alignment(1.15, -0.3), 
+            child: _buildSideNavButton('right', () {
+              setState(() {
+                _selectedPetIndex =
+                    (_selectedPetIndex + 1) % _petOptions.length;
+              });
+            }),
+          ),
+        ],
       ),
     );
   }
