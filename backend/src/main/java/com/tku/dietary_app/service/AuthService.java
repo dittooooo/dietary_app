@@ -1,3 +1,4 @@
+//負責：註冊帳號，檢查 email 是否已存在，密碼加密，驗證登入密碼，產生 JWT token
 package com.tku.dietary_app.service;
 
 import com.tku.dietary_app.dto.LoginRequest;
@@ -5,8 +6,8 @@ import com.tku.dietary_app.dto.RegisterRequest;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;//這個類別是用來做密碼加密與密碼比對
+import org.springframework.stereotype.Service;//匯入 @Service
 
 // 認證服務類別，處理用戶註冊和登入邏輯
 @Service
@@ -28,9 +29,9 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .hasCompletedOnboarding(false)
-                .build();
+                .build();//完成 User 物件建立
 
-        userRepository.save(user);
+        userRepository.save(user);//把這個新的 User 存進資料庫
 
         // 自動登入，返回 Token
         String token = jwtUtil.generateToken(user.getEmail());
@@ -40,7 +41,7 @@ public class AuthService {
 
     // 處理用戶登入
     public String login(LoginRequest request) {
-
+        //找到使用者 → 回傳 User，找不到 → 丟出錯誤
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("尚未註冊"));
 

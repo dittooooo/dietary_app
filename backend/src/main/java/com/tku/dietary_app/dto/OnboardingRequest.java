@@ -1,13 +1,13 @@
 package com.tku.dietary_app.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.*;
+import lombok.Data;
 import java.util.List;
+import org.hibernate.annotations.CreationTimestamp;//自動記錄資料建立時間
 
-// Onboarding 請求資料傳輸物件，包含用戶個人資料的欄位
+@Data
 public class OnboardingRequest {
+
     @NotBlank(message = "暱稱不能為空")
     private String nickname;
 
@@ -34,44 +34,4 @@ public class OnboardingRequest {
 
     @NotBlank(message = "小精靈角色不能為空")
     private String petType;
-
-    // Constructors
-    public OnboardingRequest() {}
-
-    public OnboardingRequest(String nickname, String gender, Integer age, Double height,
-                            Double weight, List<String> healthConditions, String dietGoal, String petType) {
-        this.nickname = nickname;
-        this.gender = gender;
-        this.age = age;
-        this.height = height;
-        this.weight = weight;
-        this.healthConditions = healthConditions;
-        this.dietGoal = dietGoal;
-        this.petType = petType;
-    }
-
-    // Getters and Setters
-    public String getNickname() { return nickname; }
-    public void setNickname(String nickname) { this.nickname = nickname; }
-
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
-
-    public Double getHeight() { return height; }
-    public void setHeight(Double height) { this.height = height; }
-
-    public Double getWeight() { return weight; }
-    public void setWeight(Double weight) { this.weight = weight; }
-
-    public List<String> getHealthConditions() { return healthConditions; }
-    public void setHealthConditions(List<String> healthConditions) { this.healthConditions = healthConditions; }
-
-    public String getDietGoal() { return dietGoal; }
-    public void setDietGoal(String dietGoal) { this.dietGoal = dietGoal; }
-
-    public String getPetType() { return petType; }
-    public void setPetType(String petType) { this.petType = petType; }
 }

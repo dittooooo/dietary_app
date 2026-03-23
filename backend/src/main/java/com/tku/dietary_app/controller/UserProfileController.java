@@ -5,12 +5,12 @@ import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.service.UserProfileService;
 import com.tku.dietary_app.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;//讓 Spring 自動把需要的物件注入進來
+import org.springframework.http.ResponseEntity;//用來自訂 HTTP 回應內容，例如：狀態碼 200 / 401 / 404 / 500
+import org.springframework.security.core.Authentication;//這是 Spring Security 裡代表「目前登入資訊」的物件
+import org.springframework.security.core.context.SecurityContextHolder;//從 Spring Security 取得「目前登入者」的資訊
+import org.springframework.validation.annotation.Validated;//這個註解用來啟用驗證功能。通常放在類別上，讓方法參數的驗證能生效
+import org.springframework.web.bind.annotation.*;//匯入 Spring Web 的註解
 import jakarta.validation.Valid;
 
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
-@Validated
+@Validated//啟用驗證功能。搭配方法裡的 @Valid 使用
 public class UserProfileController {
     @Autowired
     private UserProfileService userProfileService;
@@ -29,11 +29,13 @@ public class UserProfileController {
 
     // 完成用戶 onboarding 流程
     @PostMapping("/onboarding")
+    //ResponseEntity<?>：回傳 HTTP 回應
     public ResponseEntity<?> completeOnboarding(@Valid @RequestBody OnboardingRequest request) {
         try {
             // 從 SecurityContext 取得目前登入的使用者 email
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+            //沒有登入資訊，不是已登入狀態
             if (authentication == null || !authentication.isAuthenticated()) {
                 return ResponseEntity.status(401).body(createErrorResponse("使用者未認證"));
             }
@@ -53,7 +55,7 @@ public class UserProfileController {
             UserProfile userProfile = userProfileService.createOrUpdateUserProfile(user, request);
             // 標記 onboarding 已完成
             user.setHasCompletedOnboarding(true);
-            userRepository.save(user);
+            userRepository.save(user);//把更新後的 User 存回資料庫
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);

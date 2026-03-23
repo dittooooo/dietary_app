@@ -1,18 +1,29 @@
 package com.tku.dietary_app.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.time.LocalDateTime;
 
 // 用戶個人資料實體類別，代表資料庫中的用戶個人資料表
 @Entity
 @Table(name = "user_profile")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UserProfile {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)//一個 User 對應一個 UserProfile，LAZY 表示：只有在需要時才讀取 User 資料
+    @JoinColumn(name = "user_id", nullable = false, unique = true)//建立資料庫關聯欄位
     private User user;
 
     @Column(nullable = false)
@@ -39,70 +50,11 @@ public class UserProfile {
     @Column(nullable = false)
     private String petType;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    // Constructors
-    public UserProfile() {}
-
-    public UserProfile(User user, String nickname, String gender, Integer age, Double height,
-                      Double weight, String healthConditions, String dietGoal, String petType) {
-        this.user = user;
-        this.nickname = nickname;
-        this.gender = gender;
-        this.age = age;
-        this.height = height;
-        this.weight = weight;
-        this.healthConditions = healthConditions;
-        this.dietGoal = dietGoal;
-        this.petType = petType;
-    }
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-
-    public String getNickname() { return nickname; }
-    public void setNickname(String nickname) { this.nickname = nickname; }
-
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-
-    public Integer getAge() { return age; }
-    public void setAge(Integer age) { this.age = age; }
-
-    public Double getHeight() { return height; }
-    public void setHeight(Double height) { this.height = height; }
-
-    public Double getWeight() { return weight; }
-    public void setWeight(Double weight) { this.weight = weight; }
-
-    public String getHealthConditions() { return healthConditions; }
-    public void setHealthConditions(String healthConditions) { this.healthConditions = healthConditions; }
-
-    public String getDietGoal() { return dietGoal; }
-    public void setDietGoal(String dietGoal) { this.dietGoal = dietGoal; }
-
-    public String getPetType() { return petType; }
-    public void setPetType(String petType) { this.petType = petType; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }

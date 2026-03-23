@@ -6,12 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="04bbaaf2-7f78-4f00-b0ee-d3dc1454fed7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/config/SecurityConfig.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/AuthController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/UserProfileController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/UserProfileController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/LoginRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/LoginRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/OnboardingRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/OnboardingRequest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/UserProfile.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/UserProfile.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/repository/UserRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/repository/UserRepository.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/AuthService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/UserProfileService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/UserProfileService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/JwtUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/JwtUtil.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -1,10 +1,10 @@
 package com.tku.dietary_app.dto;
+//定義登入 API 要接收的資料格式，並驗證輸入是否符合規則
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;//欄位不能是 null，也不能是空字串，也不能只輸入空白
+import jakarta.validation.constraints.Pattern;//用正規表達式（regex）檢查字串格式
+import jakarta.validation.constraints.Size;//限制字串長度
+import lombok.Data;//自動有getter/setter
 
 // 登入請求資料傳輸物件，包含登入所需的欄位
 @Data
