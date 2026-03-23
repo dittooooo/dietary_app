@@ -6,6 +6,10 @@ import com.tku.dietary_app.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 認證相關控制器 (Authentication Controller)
@@ -28,10 +32,32 @@ public class AuthController {
      * 3. 失敗時會根據異常回傳錯誤訊息。
      */
     @PostMapping("/register")
-    public String register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
-    }
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            String registerResult = authService.register(request);
 
+            // 註冊成功後自動登入
+            LoginRequest loginRequest = new LoginRequest();
+            loginRequest.setEmail(request.getEmail());
+            loginRequest.setPassword(request.getPassword());
+
+            String token = authService.login(loginRequest);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "註冊成功，請完成 onboarding");
+            response.put("token", token);
+            response.put("needsOnboarding", true);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "註冊失敗：" + e.getMessage());
+            return ResponseEntity.status(400).body(error);
+        }
+    }
     /**
      * [POST] 使用者登入
      * * @param request 包含 email, password 的 JSON 物件

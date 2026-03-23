@@ -42,7 +42,12 @@ public class UserProfileService {
         userProfile.setDietGoal(request.getDietGoal());
         userProfile.setPetType(request.getPetType());
 
-        return userProfileRepository.save(userProfile);
+        userProfileRepository.save(userProfile);
+
+        // 標記用戶已完成 onboarding
+        user.setHasCompletedOnboarding(true);
+
+        return userProfile;
     }
 
     // 根據用戶獲取個人資料
