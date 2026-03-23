@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../config/api_config.dart';
+import '../home/home_page.dart';
 import 'initial_info_page.dart';
 
 class SuccessTransitionPage extends StatefulWidget {
@@ -24,18 +28,47 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   }
 
   void _animateProgress() async {
+    // 預先檢查使用者是否已完成 onboarding
+    bool alreadyOnboarded = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+      if (token != null) {
+        final response = await http.get(
+          Uri.parse('${ApiConfig.baseUrl}/user/profile'),
+          headers: {'Authorization': 'Bearer $token'},
+        ).timeout(const Duration(seconds: 5));
+        
+        // 如果能抓到 Profile (200 OK)，代表已經完成過 onboarding 了
+        if (response.statusCode == 200) {
+          alreadyOnboarded = true;
+        }
+      }
+    } catch (e) {
+      debugPrint('檢查 onboarding 狀態失敗: $e');
+    }
+
     for (int i = 0; i <= 100; i++) {
-      await Future.delayed(const Duration(milliseconds: 20));
+      await Future.delayed(const Duration(milliseconds: 15));
       if (mounted) {
         setState(() => _progress = i / 100.0);
       }
     }
+
     if (mounted && widget.shouldNavigate) {
-      // 進度條跑完後跳轉至個人資料填寫頁面
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const InitialInfoPage()),
-      );
+      if (alreadyOnboarded) {
+        // 已完成者 -> 直接進首頁
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        // 未完成者 -> 進個資填寫頁面
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const InitialInfoPage()),
+        );
+      }
     }
   }
 

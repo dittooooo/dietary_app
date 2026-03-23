@@ -3,7 +3,7 @@ import 'success_transition_page.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../../config/api_config.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -33,84 +33,122 @@ class _RegisterPageState extends State<RegisterPage> {
       _passwordError = null;
       _confirmPasswordError = null;
 
-      if (_emailController.text.isEmpty) { _emailError = '請輸入電子郵件'; hasLocalError = true; }
-      if (_passwordController.text.isEmpty) { _passwordError = '請輸入密碼'; hasLocalError = true; }
-      if (_confirmPasswordController.text.isEmpty) { _confirmPasswordError = '請確認密碼'; hasLocalError = true; }
-      else if (_passwordController.text != _confirmPasswordController.text) { _confirmPasswordError = '密碼不符'; hasLocalError = true; }
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      final confirmPassword = _confirmPasswordController.text;
+
+      // 1. 檢查電子郵件
+      if (email.isEmpty) {
+        _emailError = '請輸入電子郵件';
+        hasLocalError = true;
+      } else if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email)) {
+        _emailError = '請輸入正確的電子郵件格式';
+        hasLocalError = true;
+      }
+
+      // 2. 檢查密碼
+      if (password.isEmpty) {
+        _passwordError = '請輸入密碼';
+        hasLocalError = true;
+      } else if (password.length < 6 || password.length > 18) {
+        _passwordError = '密碼長度需為 6-18 位';
+        hasLocalError = true;
+      } else if (!RegExp(r'.*[a-z].*').hasMatch(password)) {
+        _passwordError = '密碼必須包含小寫英文字母';
+        hasLocalError = true;
+      } else if (!RegExp(r'.*[A-Z].*').hasMatch(password)) {
+        _passwordError = '密碼必須包含大寫英文字母';
+        hasLocalError = true;
+      } else if (!RegExp(r'.*[0-9].*').hasMatch(password)) {
+        _passwordError = '密碼必須包含至少一個數字';
+        hasLocalError = true;
+      }
+
+      // 3. 檢查確認密碼
+      if (confirmPassword.isEmpty) {
+        _confirmPasswordError = '請再次輸入密碼';
+        hasLocalError = true;
+      } else if (password != confirmPassword) {
+        _confirmPasswordError = '確認密碼與密碼不符';
+        hasLocalError = true;
+      }
     });
 
-    if (!hasLocalError) {
-      setState(() => _isLoading = true);
+    if (hasLocalError) return;
+
+    setState(() => _isLoading = true);
+    
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': _emailController.text,
+          'password': _passwordController.text,
+        }),
+      );
       
-      try {
-        final response = await http.post(
-          Uri.parse('${ApiConfig.baseUrl}/register'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'email': _emailController.text,
-            'password': _passwordController.text,
-          }),
-        );
-        
-        if (response.statusCode == 200) {
-          // 檢查後端是否把錯誤訊息包裝在 HTTP 200 裡回傳
-          try {
-            final errorData = jsonDecode(response.body);
-            if (errorData is Map && (errorData.containsKey('error') || errorData.containsKey('email') || errorData.containsKey('password'))) {
-              if (mounted) {
-                setState(() {
-                  _emailError = errorData['email'] ?? errorData['error']; // "已有帳號"之類的提示放email這
-                  _passwordError = errorData['password'];
-                });
-              }
-              return; // 終止
-            }
-          } catch (_) {
-            // 解析 JSON 失敗代表是普通的字串 (例如："註冊成功")
-          }
+      if (response.statusCode == 200) {
+        // 後端註冊成功會回傳 JSON: { success: true, message: ..., token: ... }
+        try {
+          final data = jsonDecode(response.body);
+          if (data['success'] == true) {
+            final String token = data['token'];
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('jwt_token', token);
 
-          // 註冊成功後，自動幫使用者執行登入動作以獲取 JWT Token
-          try {
-            final loginRes = await http.post(
-              Uri.parse('${ApiConfig.baseUrl}/login'),
-              headers: {'Content-Type': 'application/json'},
-              body: jsonEncode({
-                'email': _emailController.text,
-                'password': _passwordController.text,
-              }),
-            );
-            if (loginRes.statusCode == 200) {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.setString('jwt_token', loginRes.body);
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const SuccessTransitionPage(title: '註冊成功！')),
+              );
             }
-          } catch (e) {
-            debugPrint('自動登入失敗: $e');
+          } else {
+            // 後端回傳 HTTP 200 但 success 為 false 的例外狀況
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(data['message'] ?? '註冊失敗'))
+              );
+            }
           }
-
-          // 註冊成功且自動登入完成，跳轉至過渡動畫頁
+        } catch (e) {
+          debugPrint('JSON解析錯誤: $e');
+        }
+      } else {
+        // 處理 HTTP 400 錯誤與後端驗證異常
+        try {
+          final errorData = jsonDecode(response.body);
           if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SuccessTransitionPage(title: '註冊成功！')),
-            );
+            setState(() {
+              _emailError = errorData['email'];
+              _passwordError = errorData['password'];
+            });
+            if (errorData.containsKey('message')) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(errorData['message'].toString()))
+              );
+            } else if (!errorData.containsKey('email') && !errorData.containsKey('password')) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('註冊失敗，請確認輸入資料。'))
+              );
+            }
           }
-        } else {
-          // 註冊失敗，系統例外狀況
+        } catch (_) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('註冊失敗: 系統錯誤'))
             );
           }
         }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('連線失敗，請檢查網路或後端伺服器'))
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('連線失敗，請檢查網路或後端伺服器'))
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

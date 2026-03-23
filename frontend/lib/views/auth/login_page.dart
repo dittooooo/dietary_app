@@ -4,7 +4,7 @@ import 'success_transition_page.dart'; // 引入跳轉頁面
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
+import '../../config/api_config.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,42 +24,45 @@ class _LoginPageState extends State<LoginPage> {
   String? _emailError;
   String? _passwordError;
 
-  // 預留與 Spring Boot v4.0.1 後端進行 POST 比對的函數
   Future<void> _login() async {
     setState(() => _isLoading = true);
     
     try {
       final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/login'), // 向後端呼叫的組合網址: http://localhost:8080/login
-        headers: {'Content-Type': 'application/json'}, // 聲明請求類型是 JSON
+        Uri.parse('${ApiConfig.baseUrl}/login'),
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text,
           'password': _passwordController.text
-        }), // 傳送 JSON 格式的帳密
+        }),
       );
       
       if (response.statusCode == 200) {
-        // 檢查後端是否把錯誤訊息包裝在 HTTP 200 裡回傳 (例如: {"error": "密碼錯誤"})
+        // 重要修復：後端可能在 200 狀態碼中包裝錯誤訊息 (例如 {"error": "..."} 或 {"password": "..."})
         try {
-          final errorData = jsonDecode(response.body);
-          if (errorData is Map && (errorData.containsKey('error') || errorData.containsKey('email') || errorData.containsKey('password'))) {
+          final data = jsonDecode(response.body);
+          if (data is Map) {
+            // 如果後端回傳的是 JSON Map，高機率是報錯訊息袋
             if (mounted) {
               setState(() {
-                _emailError = errorData['email'];
-                // 如果是一般錯誤 'error'，統一顯示在密碼下方
-                _passwordError = errorData['error'] ?? errorData['password']; 
+                _emailError = data['email'];
+                _passwordError = data['error'] ?? data['password']; // 捕捉各種類型的報錯文字
               });
+              
+              String msg = data['error'] ?? data['message'] ?? '輸入資料格式不正確';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(msg))
+              );
             }
-            return; // 終止，不要當作成功
+            return; // 終止執行，即使是 200 也不視為成功
           }
         } catch (_) {
-          // 解析 json 失敗或是其他字串，代表是正常獲取 JWT Token (因為後端成功是直接給字串)
+          // 如果解析 JSON 失敗，代表回傳的是「純字串」JWT Token，這是正常的成功狀況
         }
 
-        // 登入成功，獲取 JWT Token (後端直接回傳字串)
+        // 登入成功，獲取 JWT Token
         String token = response.body;
         
-        // 儲存至 Local Storage (SharedPreferences)
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwt_token', token);
         
@@ -75,11 +78,26 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
       } else {
-        // 登入失敗狀態碼異常時
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('登入失敗: 系統錯誤'))
-          );
+        // 後端登入失敗時 (例如密碼錯誤或欄位未填)，交由後端處理並回傳 HTTP 403 或 400
+        try {
+          final errorData = jsonDecode(response.body);
+          if (mounted) {
+            setState(() {
+              _emailError = errorData['email'];
+              _passwordError = errorData['password'] ?? errorData['error'];
+            });
+            if (errorData.containsKey('message')) {
+               ScaffoldMessenger.of(context).showSnackBar(
+                 SnackBar(content: Text(errorData['message'].toString()))
+               );
+            }
+          }
+        } catch (_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('登入失敗: 帳號或密碼錯誤'))
+            );
+          }
         }
       }
     } catch (e) {
@@ -98,8 +116,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       _emailError = null;
       _passwordError = null;
-      if (_emailController.text.isEmpty) {
-        _emailError = '請輸入帳號';
+      
+      if (_emailController.text.trim().isEmpty) {
+        _emailError = '請輸入電子郵件';
         hasLocalError = true;
       }
       if (_passwordController.text.isEmpty) {

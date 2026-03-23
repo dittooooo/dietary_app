@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
-import 'home_page.dart';
+import '../../config/api_config.dart';
+import '../home/home_page.dart';
 import 'login_page.dart';
 
 class InitialInfoPage extends StatefulWidget {
@@ -159,21 +159,21 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     switch (_currentPage) {
       // 根據頁碼返回對應文字
       case 0:
-        return '請輸入您的名字'; // 姓名報錯
+        return '請輸入您的名字'; 
       case 1:
-        return '請選擇性別'; // 性別報錯
+        return '請選擇性別'; 
       case 2:
         if (_age.trim().isEmpty) return '請輸入年齡';
-        return '年齡必須為數字'; // 年齡非數字報錯
+        return '年齡必須為數字'; 
       case 3:
         if (_height.trim().isEmpty || _weight.trim().isEmpty) return '請輸入身高與體重';
         if (!_isNumeric(_height)) return '身高必須為數字';
         if (!_isNumeric(_weight)) return '體重必須為數字';
-        return '請輸入正確的身高與體重'; // 身高體重格式報錯
+        return '請輸入正確的身高與體重'; 
       case 4:
-        return '請選擇是否有特殊疾病'; // 疾病報錯
+        return '請選擇是否有特殊疾病'; 
       case 5:
-        return '請選擇至少一個飲食目標'; // 目標報錯
+        return '請選擇至少一個飲食目標'; 
       default:
         return '請完成本頁內容'; // 其他通用報錯
     }
@@ -240,21 +240,41 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         debugPrint('API 回應內容: $result');
-        if (result['success'] == true) {
-          if (mounted) {
-            debugPrint('提交成功，切換至首頁');
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HomePage(),
-              ),
-            );
+        
+        if (result is Map) {
+          if (result['success'] == true) {
+            if (mounted) {
+              debugPrint('提交成功，切換至首頁');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const HomePage(),
+                ),
+              );
+            }
+          } else {
+            // 處理後端可能的 200 報錯 (因為後端的 GlobalExceptionHandler 沒有設定 400 狀態碼)
+            String errorMsg = '設定失敗';
+            if (result.containsKey('message')) {
+              errorMsg = result['message'];
+            } else if (result.containsKey('error')) {
+              errorMsg = result['error'];
+            } else if (!result.containsKey('success') && result.isNotEmpty) {
+               // 可能是 validation 錯誤的 map (例如 {"age": "年齡必須大於0"})
+               errorMsg = result.values.first.toString();
+            }
+            throw Exception(errorMsg);
           }
-        } else {
-          throw Exception(result['message'] ?? '設定失敗');
         }
       } else {
-        throw Exception('連線錯誤: ${response.statusCode}');
+        // HTTP 狀態碼非 200 時
+        try {
+          final result = jsonDecode(response.body);
+          String errorMsg = result['message'] ?? result['error'] ?? '連線錯誤: ${response.statusCode}';
+          throw Exception(errorMsg);
+        } catch (_) {
+          throw Exception('連線錯誤: ${response.statusCode}');
+        }
       }
     } catch (e) {
       debugPrint('提交過程發生例外: $e');
@@ -271,10 +291,11 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   @override
   Widget build(BuildContext context) {
     // 建立畫面 UI
-    return Container(
-      // 主容器
-      color: const Color(0xFFF5F0EB), // 米色背景
-      child: Stack(
+    return Scaffold(
+      body: Container(
+        // 主容器
+        color: const Color(0xFFF5F0EB), // 米色背景
+        child: Stack(
         // 疊層佈局
         children: [
           AnimatedBuilder(
@@ -345,7 +366,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildPageContainer({
