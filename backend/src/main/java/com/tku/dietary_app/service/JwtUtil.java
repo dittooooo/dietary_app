@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
+// JWT 工具類別，提供生成和驗證 JWT Token 的功能
 @Component
 public class JwtUtil {
 
@@ -16,6 +17,7 @@ public class JwtUtil {
 
     private final long EXPIRATION = 1000 * 60 * 60; // 1 hour
 
+    // 生成 JWT Token
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
@@ -25,6 +27,7 @@ public class JwtUtil {
                 .compact();
     }
 
+    // 驗證 JWT Token 並返回主題
     public String validateToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(key)

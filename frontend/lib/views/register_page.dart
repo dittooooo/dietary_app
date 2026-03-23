@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'success_transition_page.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/api_config.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -17,22 +22,94 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
 
+  String? _emailError;
+  String? _passwordError;
+  String? _confirmPasswordError;
 
   Future<void> _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
+    bool hasLocalError = false;
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+      _confirmPasswordError = null;
+
+      if (_emailController.text.isEmpty) { _emailError = '請輸入電子郵件'; hasLocalError = true; }
+      if (_passwordController.text.isEmpty) { _passwordError = '請輸入密碼'; hasLocalError = true; }
+      if (_confirmPasswordController.text.isEmpty) { _confirmPasswordError = '請確認密碼'; hasLocalError = true; }
+      else if (_passwordController.text != _confirmPasswordController.text) { _confirmPasswordError = '密碼不符'; hasLocalError = true; }
+    });
+
+    if (!hasLocalError) {
       setState(() => _isLoading = true);
       
-      // 模擬異步註冊請求
-      await Future.delayed(const Duration(seconds: 2));
-      
-      setState(() => _isLoading = false);
-      
-      if (mounted) {
-        // 註冊成功後導向小精靈創建頁面 (Placeholder)
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const CreateElfPage()),
+      try {
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'email': _emailController.text,
+            'password': _passwordController.text,
+          }),
         );
+        
+        if (response.statusCode == 200) {
+          // 檢查後端是否把錯誤訊息包裝在 HTTP 200 裡回傳
+          try {
+            final errorData = jsonDecode(response.body);
+            if (errorData is Map && (errorData.containsKey('error') || errorData.containsKey('email') || errorData.containsKey('password'))) {
+              if (mounted) {
+                setState(() {
+                  _emailError = errorData['email'] ?? errorData['error']; // "已有帳號"之類的提示放email這
+                  _passwordError = errorData['password'];
+                });
+              }
+              return; // 終止
+            }
+          } catch (_) {
+            // 解析 JSON 失敗代表是普通的字串 (例如："註冊成功")
+          }
+
+          // 註冊成功後，自動幫使用者執行登入動作以獲取 JWT Token
+          try {
+            final loginRes = await http.post(
+              Uri.parse('${ApiConfig.baseUrl}/login'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'email': _emailController.text,
+                'password': _passwordController.text,
+              }),
+            );
+            if (loginRes.statusCode == 200) {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.setString('jwt_token', loginRes.body);
+            }
+          } catch (e) {
+            debugPrint('自動登入失敗: $e');
+          }
+
+          // 註冊成功且自動登入完成，跳轉至過渡動畫頁
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SuccessTransitionPage(title: '註冊成功！')),
+            );
+          }
+        } else {
+          // 註冊失敗，系統例外狀況
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('註冊失敗: 系統錯誤'))
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('連線失敗，請檢查網路或後端伺服器'))
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
@@ -69,11 +146,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 label: '電子郵件',
                 hint: 'example@mail.com',
                 controller: _emailController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '請輸入電子郵件';
-                  if (!value.contains('@')) return '電子郵件格式不正確';
-                  return null;
-                },
+                errorText: _emailError,
+                onChanged: (_) => setState(() => _emailError = null),
               ),
               
               const SizedBox(height: 20),
@@ -86,18 +160,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 isPassword: true,
                 isVisible: _isPasswordVisible,
                 onToggleVisibility: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '請輸入密碼';
-                  if (value.length < 6 || value.length > 18) return '長度需為 6-18 位';
-                  // 新增：密碼強度檢查邏輯
-                  if (!value.contains(RegExp(r'[A-Z]'))) {
-                    return '密碼必須包含大寫英文字母';
-                  }
-                  if (!value.contains(RegExp(r'[a-z]'))) {
-                    return '密碼必須包含小寫英文字母';
-                  }
-                  return null;
-                },
+                errorText: _passwordError,
+                onChanged: (_) => setState(() => _passwordError = null),
               ),
 
               const SizedBox(height: 20),
@@ -110,11 +174,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 isPassword: true,
                 isVisible: _isConfirmPasswordVisible,
                 onToggleVisibility: () => setState(() => _isConfirmPasswordVisible = !_isConfirmPasswordVisible),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return '請確認密碼';
-                  if (value != _passwordController.text) return '密碼不符';
-                  return null;
-                },
+                errorText: _confirmPasswordError,
+                onChanged: (_) => setState(() => _confirmPasswordError = null),
               ),
 
               const SizedBox(height: 30),
@@ -157,7 +218,8 @@ class _RegisterPageState extends State<RegisterPage> {
     bool isPassword = false,
     bool isVisible = false,
     VoidCallback? onToggleVisibility,
-    String? Function(String?)? validator,
+    String? errorText,
+    void Function(String)? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,8 +229,9 @@ class _RegisterPageState extends State<RegisterPage> {
         TextFormField(
           controller: controller,
           obscureText: isPassword && !isVisible,
-          validator: validator,
+          onChanged: onChanged,
           decoration: InputDecoration(
+            errorText: errorText,
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
             contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -198,34 +261,4 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 }
 
-// 小精靈創建頁面 (Placeholder)
-class CreateElfPage extends StatelessWidget {
-  const CreateElfPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('創建小精靈')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.auto_awesome, size: 100, color: Colors.orange),
-            const SizedBox(height: 20),
-            const Text('歡迎來到小精靈模組', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            const Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text('在此設定您的身高、體重與目標來創建您的小精靈。', textAlign: TextAlign.center),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // 跳轉至首頁等邏輯
-              },
-              child: const Text('開始創建'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
+// 移除舊有的 CreateElfPage，改用統一的 SuccessTransitionPage
