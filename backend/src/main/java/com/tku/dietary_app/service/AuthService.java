@@ -17,7 +17,7 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    // 處理用戶註冊
+    // 處理用戶註冊 - 自動登入並返回 Token
     public String register(RegisterRequest request) {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -27,11 +27,15 @@ public class AuthService {
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .hasCompletedOnboarding(false)
                 .build();
 
         userRepository.save(user);
 
-        return "註冊成功";
+        // 自動登入，返回 Token
+        String token = jwtUtil.generateToken(user.getEmail());
+
+        return token;
     }
 
     // 處理用戶登入

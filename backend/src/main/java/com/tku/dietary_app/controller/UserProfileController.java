@@ -51,6 +51,9 @@ public class UserProfileController {
 
             // 建立或更新 UserProfile
             UserProfile userProfile = userProfileService.createOrUpdateUserProfile(user, request);
+            // 標記 onboarding 已完成
+            user.setHasCompletedOnboarding(true);
+            userRepository.save(user);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
