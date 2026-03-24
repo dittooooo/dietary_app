@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
+import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -24,87 +25,38 @@ class _LoginPageState extends State<LoginPage> {
   String? _emailError;
   String? _passwordError;
 
-  Future<void> _login() async {
+Future<void> _login() async {
     setState(() => _isLoading = true);
     
     try {
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text,
-          'password': _passwordController.text
-        }),
+      // 呼叫 Service 執行登入
+      final result = await AuthService().login(
+        _emailController.text, 
+        _passwordController.text
       );
       
-      if (response.statusCode == 200) {
-        // 重要修復：後端可能在 200 狀態碼中包裝錯誤訊息 (例如 {"error": "..."} 或 {"password": "..."})
-        try {
-          final data = jsonDecode(response.body);
-          if (data is Map) {
-            // 如果後端回傳的是 JSON Map，高機率是報錯訊息袋
-            if (mounted) {
-              setState(() {
-                _emailError = data['email'];
-                _passwordError = data['error'] ?? data['password']; // 捕捉各種類型的報錯文字
-              });
-              
-              String msg = data['error'] ?? data['message'] ?? '輸入資料格式不正確';
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(msg))
-              );
-            }
-            return; // 終止執行，即使是 200 也不視為成功
-          }
-        } catch (_) {
-          // 如果解析 JSON 失敗，代表回傳的是「純字串」JWT Token，這是正常的成功狀況
-        }
-
-        // 登入成功，獲取 JWT Token
-        String token = response.body;
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', token);
-        
-        if (mounted) {
+      if (mounted) {
+        if (result['success'] == true) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const SuccessTransitionPage(
-                title: '登入成功！',
-                shouldNavigate: true,
-              ),
+              builder: (context) => const SuccessTransitionPage(title: '登入成功！', shouldNavigate: true),
             ),
           );
-        }
-      } else {
-        // 後端登入失敗時 (例如密碼錯誤或欄位未填)，交由後端處理並回傳 HTTP 403 或 400
-        try {
-          final errorData = jsonDecode(response.body);
-          if (mounted) {
-            setState(() {
-              _emailError = errorData['email'];
-              _passwordError = errorData['password'] ?? errorData['error'];
-            });
-            if (errorData.containsKey('message')) {
-               ScaffoldMessenger.of(context).showSnackBar(
-                 SnackBar(content: Text(errorData['message'].toString()))
-               );
-            }
-          }
-        } catch (_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('登入失敗: 帳號或密碼錯誤'))
-            );
-          }
+        } else {
+          // 顯示後端回傳的錯誤欄位
+          setState(() {
+            _emailError = result['email'];
+            _passwordError = result['error'] ?? result['password'];
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(result['message'] ?? result['error'] ?? '登入失敗'))
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('連線失敗，請檢查後端是否啟動'))
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('連線失敗，請檢查網路')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
