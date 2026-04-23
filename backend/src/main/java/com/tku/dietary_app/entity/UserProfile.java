@@ -44,6 +44,9 @@ public class UserProfile {
     @Column(columnDefinition = "TEXT")
     private String healthConditions;
 
+    @Column(columnDefinition = "TEXT")
+    private String dietHistory;
+
     @Column(nullable = false)
     private String dietGoal;
 
