@@ -281,6 +281,42 @@ HTTP 200 OK
 
 把這個 token 存成 `adminToken`。
 
+## 6-1. 登入失敗測試
+
+Method:
+
+```text
+POST {{baseUrl}}/api/login
+```
+
+Body:
+
+```json
+{
+  "email": "admin@gmail.com",
+  "password": "WrongPassword123"
+}
+```
+
+正確回傳:
+
+```text
+HTTP 401 Unauthorized
+```
+
+```json
+{
+  "error": "帳號或密碼錯誤"
+}
+```
+
+前端判斷：
+
+| 情境 | HTTP 狀態 | 處理方式 |
+|---|---:|---|
+| 密碼錯誤 | 401 | 顯示登入失敗訊息，不要當成成功登入 |
+| 帳號不存在 | 401 | 顯示登入失敗訊息 |
+
 ## 7. 管理者查詢使用者
 
 Method:
@@ -472,6 +508,16 @@ PUT {{baseUrl}}/api/admin/restaurants/{{restaurantId}}
 DELETE {{baseUrl}}/api/admin/restaurants/{{restaurantId}}
 ```
 
+正確回傳:
+
+```text
+HTTP 200 OK
+```
+
+```text
+刪除成功訊息字串
+```
+
 ## 11. 管理者管理菜單
 
 新增菜單:
@@ -517,6 +563,16 @@ PUT {{baseUrl}}/api/admin/menus/{{menuId}}
 DELETE {{baseUrl}}/api/admin/menus/{{menuId}}
 ```
 
+正確回傳:
+
+```text
+HTTP 200 OK
+```
+
+```text
+刪除成功訊息字串
+```
+
 ## 12. 管理者管理飲食紀錄
 
 新增飲食紀錄:
@@ -560,6 +616,45 @@ PUT {{baseUrl}}/api/admin/diet-records/{{dietRecordId}}
 ```text
 DELETE {{baseUrl}}/api/admin/diet-records/{{dietRecordId}}
 ```
+
+正確回傳:
+
+```text
+HTTP 200 OK
+```
+
+```text
+刪除成功訊息字串
+```
+
+## 13. 管理者刪除使用者
+
+Method:
+
+```text
+DELETE {{baseUrl}}/api/admin/users/{{createdUserProfileId}}
+```
+
+Headers:
+
+```text
+Authorization: Bearer {{adminToken}}
+```
+
+正確回傳:
+
+```text
+HTTP 200 OK
+```
+
+```text
+刪除成功訊息字串
+```
+
+注意：
+
+- 這裡刪的是 `UserProfile` 的 id，不是 `User` 的 id。
+- 建議先用 `Create User By Admin` 建一筆測試資料，再刪除。
 
 ## 前端狀態判斷整理
 
