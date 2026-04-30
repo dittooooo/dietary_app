@@ -24,24 +24,23 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   int _currentPage = 0; // 追蹤當前所在頁碼
 
   static const TextStyle _titleStyle = TextStyle(
-    // 標題風格定義
-    fontSize: 20, // 字體大小
-    fontWeight: FontWeight.bold, // 粗體
-    color: Colors.black, // 黑色
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+    fontFamily: 'Roboto',
   );
 
   static const TextStyle _inputTextStyle = TextStyle(
-    // 輸入框字體風格
-    fontWeight: FontWeight.bold, // 粗體
-    fontSize: 16, 
+    fontWeight: FontWeight.bold,
+    fontSize: 22,
+    fontFamily: 'Roboto',
   );
 
   static const TextStyle _buttonTextStyle = TextStyle(
-    // 按鈕文字風格
-    fontSize: 16, 
-
-    fontWeight: FontWeight.bold, // 粗體
-    color: Colors.black, // 黑色
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: Colors.black,
+    fontFamily: 'Roboto',
   );
 
   final Map<int, String> _pageErrors = {}; // 儲存各頁面的錯誤訊息
@@ -407,8 +406,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             ],
           ),
           Positioned(
-            // 按鈕定位
-            bottom: 10,
+            bottom: 12,
             left: 0,
             right: 0,
             child: Row(
@@ -425,7 +423,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       padding: const EdgeInsets.all(12),
                       child: CustomPaint(
                         painter: WashiTapeButtonPainter(text: '返回修改'),
-                        size: const Size(110, 40),
+                        size: const Size(154, 56), // 放大 0.4 倍
                       ),
                     ),
                   )
@@ -449,7 +447,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                               ? '提交中...' 
                               : (_currentPage == 6 ? '完成' : '下一頁 >'),
                         ),
-                        size: const Size(110, 40),
+                        size: const Size(154, 56), // 放大 0.4 倍
                       ),
                     ),
                   ),
@@ -488,29 +486,19 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildNamePage() {
     // 建構名字頁面
     return _buildPageContainer(
-      // 調用通用組件
-      title: '嗨！您想我如何稱呼您呢?', // 設定標題
+      title: '嗨！您想我如何稱呼您呢?',
       content: Column(
-        // 內容區域
-        crossAxisAlignment: CrossAxisAlignment.start, // 靠左
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 40), // 增加間距
           _buildHandDrawnTextField(
             '輸入您的名字',
             (value) => setState(() {
-              // 建立手繪輸入框
-              _name = value; // 同步資料
-              _pageErrors.remove(0); // 清除錯誤標記
+              _name = value;
+              _pageErrors.remove(0);
             }),
             initialValue: _name,
-          ), // 初始值
-          if (_pageErrors.containsKey(0)) // 若有錯誤
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0), // 錯誤文字邊距
-              child: Text(
-                _pageErrors[0]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ), // 顯示錯誤紅字
-            ),
+          ),
         ],
       ),
     );
@@ -519,44 +507,32 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildGenderPage() {
     // 建構性別頁面
     return _buildPageContainer(
-      // 調用容器
-      title: '您的性別是?', // 標題
+      title: '您的性別是?',
       content: Column(
-        // 垂直內容
-        crossAxisAlignment: CrossAxisAlignment.start, // 靠左
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 60), // 增加間距
           Row(
-            // 水平排列按鈕
-            mainAxisAlignment: MainAxisAlignment.spaceAround, // 平均分配
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildHandDrawnButton(
                 '男',
                 _gender == '男',
                 () => setState(() {
-                  // 建立男按鈕
-                  _gender = '男'; // 選中男
-                  _pageErrors.remove(1); // 清除錯誤
+                  _gender = '男';
+                  _pageErrors.remove(1);
                 }),
               ),
               _buildHandDrawnButton(
                 '女',
                 _gender == '女',
                 () => setState(() {
-                  // 建立女按鈕
-                  _gender = '女'; // 選中女
-                  _pageErrors.remove(1); // 清除錯誤
+                  _gender = '女';
+                  _pageErrors.remove(1);
                 }),
               ),
             ],
           ),
-          if (_pageErrors.containsKey(1)) // 顯示錯誤訊息
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _pageErrors[1]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
         ],
       ),
     );
@@ -565,30 +541,20 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildAgePage() {
     // 建構年齡頁面
     return _buildPageContainer(
-      // 容器
-      title: '請輸入您的年齡', // 標題
+      title: '請輸入您的年齡',
       content: Column(
-        // 內容
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 40),
           _buildHandDrawnTextField(
             '年齡',
             (value) => setState(() {
-              // 建立輸入框
-              _age = value; // 同步資料
-              _pageErrors.remove(2); // 清除錯誤
+              _age = value;
+              _pageErrors.remove(2);
             }),
             isNumber: true,
             initialValue: _age,
-          ), // 設定為數字模式
-          if (_pageErrors.containsKey(2)) // 報錯處理
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _pageErrors[2]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
+          ),
         ],
       ),
     );
@@ -597,31 +563,27 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildHeightWeightPage() {
     // 建構身高體重頁面
     return _buildPageContainer(
-      // 容器
-      title: '請輸入您的身高與體重', // 標題
+      title: '請輸入您的身高與體重',
       content: Column(
-        // 內容
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 20),
           Row(
-            // 水平兩欄
             children: [
               Expanded(
-                // 身高欄
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '身高',
-                      style: _buttonTextStyle.copyWith(fontSize: 16),
-                    ), // 標籤
+                      style: _buttonTextStyle.copyWith(fontSize: 22),
+                    ),
                     const SizedBox(height: 12),
                     _buildHandDrawnTextField(
                       'cm',
                       (value) => setState(() {
-                        // 輸入框
-                        _height = value; // 同步身高
-                        _pageErrors.remove(3); // 清除錯誤
+                        _height = value;
+                        _pageErrors.remove(3);
                       }),
                       isNumber: true,
                       initialValue: _height,
@@ -629,23 +591,21 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                   ],
                 ),
               ),
-              const SizedBox(width: 20), // 欄位間距
+              const SizedBox(width: 30),
               Expanded(
-                // 體重欄
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '體重',
-                      style: _buttonTextStyle.copyWith(fontSize: 16),
-                    ), // 標籤
+                      style: _buttonTextStyle.copyWith(fontSize: 22),
+                    ),
                     const SizedBox(height: 12),
                     _buildHandDrawnTextField(
                       'kg',
                       (value) => setState(() {
-                        // 輸入框
-                        _weight = value; // 同步體重
-                        _pageErrors.remove(3); // 清除錯誤
+                        _weight = value;
+                        _pageErrors.remove(3);
                       }),
                       isNumber: true,
                       initialValue: _weight,
@@ -655,14 +615,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
               ),
             ],
           ),
-          if (_pageErrors.containsKey(3)) // 報錯處理
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _pageErrors[3]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
         ],
       ),
     );
@@ -671,47 +623,31 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildDiseasesPage() {
     // 建構疾病頁面
     return _buildPageContainer(
-      // 容器
-      title: '您是否患有特殊疾病?', // 標題
+      title: '您是否患有特殊疾病?',
       content: Column(
-        // 內容
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 20),
           Wrap(
-            // 自動換行列表
-            spacing: 12, // 間距
-            runSpacing: 12, // 行間距
-            children:
-                _diseaseOptions // 對映疾病清單
-                    .map(
-                      (disease) => _buildHandDrawnToggleButton(
-                        // 建立選取鈕
-                        disease, // 選項文字
-                        _diseases.contains(disease), // 是否選中
-                        () {
-                          // 點擊切換
-                          setState(() {
-                            if (_diseases.contains(disease)) {
-                              _diseases.remove(disease); // 移出
-                            } else {
-                              _diseases.add(disease); // 加入
-                            }
-                            if (_diseases.isNotEmpty)
-                              _pageErrors.remove(4); // 清除錯誤
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
+            spacing: 20,
+            runSpacing: 20,
+            children: _diseaseOptions
+                .map((disease) => _buildHandDrawnToggleButton(
+                      disease,
+                      _diseases.contains(disease),
+                      () {
+                        setState(() {
+                          if (_diseases.contains(disease)) {
+                            _diseases.remove(disease);
+                          } else {
+                            _diseases.add(disease);
+                          }
+                          if (_diseases.isNotEmpty) _pageErrors.remove(4);
+                        });
+                      },
+                    ))
+                .toList(),
           ),
-          if (_pageErrors.containsKey(4)) // 報錯處理
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _pageErrors[4]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
         ],
       ),
     );
@@ -720,47 +656,31 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Widget _buildGoalsPage() {
     // 建構目標頁面
     return _buildPageContainer(
-      // 容器
-      title: '您的飲食目標是?', // 標題
+      title: '您的飲食目標是?',
       content: Column(
-        // 內容
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 20),
           Wrap(
-            // 換行列表
-            spacing: 12, // 間距
-            runSpacing: 12, // 行間距
-            children:
-                _goalOptions // 對映目標清單
-                    .map(
-                      (goal) => _buildHandDrawnToggleButton(
-                        // 選取鈕
-                        goal, // 文字
-                        _goals.contains(goal), // 狀態
-                        () {
-                          // 切換動作
-                          setState(() {
-                            if (_goals.contains(goal)) {
-                              _goals.remove(goal); // 移除
-                            } else {
-                              _goals.add(goal); // 新增
-                            }
-                            if (_goals.isNotEmpty)
-                              _pageErrors.remove(5); // 清除錯誤
-                          });
-                        },
-                      ),
-                    )
-                    .toList(),
+            spacing: 20,
+            runSpacing: 20,
+            children: _goalOptions
+                .map((goal) => _buildHandDrawnToggleButton(
+                      goal,
+                      _goals.contains(goal),
+                      () {
+                        setState(() {
+                          if (_goals.contains(goal)) {
+                            _goals.remove(goal);
+                          } else {
+                            _goals.add(goal);
+                          }
+                          if (_goals.isNotEmpty) _pageErrors.remove(5);
+                        });
+                      },
+                    ))
+                .toList(),
           ),
-          if (_pageErrors.containsKey(5)) // 報錯處理
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Text(
-                _pageErrors[5]!,
-                style: const TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ),
         ],
       ),
     );
@@ -777,7 +697,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         alignment: Alignment.center,
         children: [
           Align(
-            alignment: const Alignment(0, -0.55), // 稍微往上一點
+            alignment: const Alignment(0, -0.85), // 稍微往上一點
             child: _buildHandDrawnBox(
               width: 300, // 放大0.7倍 (大約1.7x，原本是180)
               height: 300,
@@ -874,18 +794,13 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   }) {
     // 手繪输入框
     return CustomPaint(
-      // 畫布
-      painter: HandDrawnBoxPainter(), // 手繪框畫筆
+      painter: HandDrawnBoxPainter(),
       child: Material(
-        // 材質層
-        color: Colors.transparent, // 透明
+        color: Colors.transparent,
         child: Container(
-          // 內距容器
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17), // 放大 0.4 倍
           child: TextField(
-            // 文字輸入組件
             controller: TextEditingController.fromValue(
-              // 設定初始值與游標
               TextEditingValue(
                 text: initialValue,
                 selection: TextSelection.fromPosition(
@@ -893,18 +808,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 ),
               ),
             ),
-            keyboardType: isNumber
-                ? TextInputType.number
-                : TextInputType.text, // 鍵盤模式
-            onChanged: onChanged, // 回呼函數
-            style: _inputTextStyle, // 字體風格
+            keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+            onChanged: onChanged,
+            style: _inputTextStyle,
             decoration: InputDecoration(
-              // 內部裝飾
-              hintText: hint, // 提示
-              hintStyle: const TextStyle(color: Colors.grey),
-              border: InputBorder.none, // 取消原生邊框
-              isDense: true, // 緊湊佈局
-              contentPadding: EdgeInsets.zero, // 無內距
+              hintText: hint,
+              hintStyle: const TextStyle(color: Colors.grey, fontSize: 20),
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
             ),
           ),
         ),
@@ -919,22 +831,16 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   ) {
     // 手繪普通按鈕
     return GestureDetector(
-      // 手勢
-      onTap: onTap, // 點擊回呼
+      onTap: onTap,
       child: CustomPaint(
-        // 畫布
-        painter: HandDrawnBoxPainter(isSelected: isSelected), // 框畫筆 (帶選中狀態)
+        painter: HandDrawnBoxPainter(isSelected: isSelected),
         child: Material(
-          // 材質底層
-          color: Colors.transparent, // 透明
+          color: Colors.transparent,
           child: Container(
-            // 按鈕佈局
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 42, vertical: 20), // 放大 0.4 倍
             child: Text(
-              // 標籤文字
               label,
               style: _buttonTextStyle.copyWith(
-                // 動態變色
                 color: isSelected ? const Color(0xFFFFA500) : Colors.black,
               ),
             ),
@@ -953,15 +859,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     return GestureDetector(
       onTap: onTap,
       child: CustomPaint(
-        painter: HandDrawnRoundedBoxPainter(isSelected: isSelected), // 圓角框畫筆
+        painter: HandDrawnRoundedBoxPainter(isSelected: isSelected),
         child: Material(
           color: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14), // 放大 0.4 倍
             child: Text(
               label,
               style: _buttonTextStyle.copyWith(
-                fontSize: 14,
+                fontSize: 20, // 放大
                 color: isSelected ? const Color(0xFFFFA500) : Colors.black,
               ),
             ),
@@ -1350,6 +1256,15 @@ class HandDrawnBoxPainter extends CustomPainter {
     Paint fillPaint = Paint()
       ..color = isSelected ? const Color(0xFFFFE4B5) : Colors.white
       ..style = PaintingStyle.fill; // 背景筆
+
+    // 繪製陰影
+    canvas.drawPath(
+      boxPath.shift(const Offset(8, 10)), 
+      Paint()
+        ..color = Colors.black.withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+    );
+
     canvas.drawPath(boxPath, fillPaint); // 畫填充
     Paint borderPaint = Paint()
       ..color = Colors.black
@@ -1459,6 +1374,15 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
 
     Paint fillPaint = Paint()
       ..color = isSelected ? const Color(0xFFFFE4B5) : Colors.white;
+
+    // 繪製陰影
+    canvas.drawPath(
+      path.shift(const Offset(8, 10)), 
+      Paint()
+        ..color = Colors.black.withOpacity(0.4)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+    );
+
     canvas.drawPath(path, fillPaint);
     Paint borderPaint = Paint()
       ..color = Colors.black
@@ -1560,6 +1484,14 @@ class WashiTapeButtonPainter extends CustomPainter {
     } // 右端鋸齒
     baseShape.close();
 
+    // 繪製陰影
+    canvas.drawPath(
+      baseShape.shift(const Offset(10, 12)), 
+      Paint()
+        ..color = Colors.black.withOpacity(0.55)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
+    );
+
     canvas.drawPath(baseShape, Paint()..color = Colors.white); // 填充
     canvas.drawPath(
       baseShape,
@@ -1574,7 +1506,7 @@ class WashiTapeButtonPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: 22, // 放大 0.4 倍
           fontWeight: FontWeight.bold,
           color: Colors.black,
         ),

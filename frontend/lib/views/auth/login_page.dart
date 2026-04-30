@@ -37,6 +37,10 @@ Future<void> _login() async {
       
       if (mounted) {
         if (result['success'] == true) {
+          // 儲存 Email 到本地，供 ProfilePage 使用
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_email', _emailController.text.trim());
+          
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -100,7 +104,15 @@ Future<void> _login() async {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 1),
+                  color: Colors.white,
+                  border: Border.all(color: Colors.black, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: const Icon(Icons.person_outline, size: 60, color: Colors.black),
               ),
@@ -134,32 +146,52 @@ Future<void> _login() async {
 
               const SizedBox(height: 30),
 
-              // 登入按鈕
-              SizedBox(
+              Container(
                 width: double.infinity,
                 height: 50,
-                child: OutlinedButton(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.7),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLoginClick,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.blue, width: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 0, // 使用 Container 的 shadow
                   ),
                   child: _isLoading 
                     ? const SizedBox(
                         width: 20, 
                         height: 20, 
-                        child: CircularProgressIndicator(strokeWidth: 2)
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
                       )
-                    : const Text('登入', style: TextStyle(color: Colors.blue, fontSize: 18)),
+                    : const Text('登入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              // 尚未註冊按鈕
-              SizedBox(
+              Container(
                 width: double.infinity,
                 height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.35),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
                 child: OutlinedButton(
                   onPressed: () {
                     // 跳轉至註冊頁面
@@ -169,10 +201,11 @@ Future<void> _login() async {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.black, width: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.black, width: 1.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   ),
-                  child: const Text('尚未註冊', style: TextStyle(color: Colors.black, fontSize: 18)),
+                  child: const Text('尚未註冊', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -203,26 +236,32 @@ Future<void> _login() async {
             errorText: errorText,
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             suffixIcon: isPassword 
               ? IconButton(
                   icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
                   onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
                 )
               : null,
-            enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 1),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.black, width: 1),
             ),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue, width: 2),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
             ),
-            errorBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.red, width: 1),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
             ),
-            focusedErrorBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.red, width: 2),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 2),
             ),
             errorStyle: const TextStyle(color: Colors.red),
+            filled: true,
+            fillColor: Colors.grey.withOpacity(0.05),
           ),
         ),
       ],
