@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false, // 移除右上角浮水印彩帶
       title: 'Food App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const ProfilePage(),
+      home: const LoginPage(),
     );
   }
 }
