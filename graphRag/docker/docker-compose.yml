@@ -1,0 +1,18 @@
+services:
+  graphrag-dev:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: graphrag-dev
+    working_dir: /app/workspace
+    volumes:
+      - ../graphrag-local-ollama:/app/graphrag-local-ollama
+      - ../workspace:/app/workspace
+    env_file:
+      - ../workspace/.env
+    environment:
+      - OLLAMA_API_BASE=http://host.docker.internal:11434
+    stdin_open: true
+    tty: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

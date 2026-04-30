@@ -1,0 +1,177 @@
+17:56:47,513 graphrag.config.read_dotenv INFO Loading pipeline .env file
+17:56:47,528 graphrag.index.cli INFO Using default configuration
+17:56:47,558 graphrag.index.create_pipeline_config INFO skipping workflows 
+17:56:47,571 graphrag.index.run INFO Running pipeline
+17:56:47,571 graphrag.index.storage.file_pipeline_storage INFO Creating file storage at /app/workspace/output/20260410-175647/artifacts
+17:56:47,576 graphrag.index.input.load_input INFO loading input from root_dir=input
+17:56:47,576 graphrag.index.input.load_input INFO using file storage for input
+17:56:47,578 graphrag.index.storage.file_pipeline_storage INFO search /app/workspace/input for files matching .*\.txt$
+17:56:47,583 graphrag.index.input.text INFO found text files from input, found [('book.txt', {})]
+17:56:47,622 graphrag.index.workflows.load INFO Workflow Run Order: ['create_base_text_units', 'create_base_extracted_entities', 'create_summarized_entities', 'create_base_entity_graph', 'create_final_entities', 'create_final_nodes', 'create_final_communities', 'join_text_units_to_entity_ids', 'create_final_relationships', 'join_text_units_to_relationship_ids', 'create_final_community_reports', 'create_final_text_units', 'create_base_documents', 'create_final_documents']
+17:56:47,622 graphrag.index.run INFO Final # of rows loaded: 1
+17:56:48,53 graphrag.index.run INFO Running workflow: create_base_text_units...
+17:56:48,53 graphrag.index.run INFO dependencies for create_base_text_units: []
+17:56:48,58 datashaper.workflow.workflow INFO executing verb orderby
+17:56:48,63 datashaper.workflow.workflow INFO executing verb zip
+17:56:48,69 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:56:48,78 datashaper.workflow.workflow INFO executing verb chunk
+17:56:48,314 datashaper.workflow.workflow INFO executing verb select
+17:56:48,320 datashaper.workflow.workflow INFO executing verb unroll
+17:56:48,330 datashaper.workflow.workflow INFO executing verb rename
+17:56:48,335 datashaper.workflow.workflow INFO executing verb genid
+17:56:48,341 datashaper.workflow.workflow INFO executing verb unzip
+17:56:48,347 datashaper.workflow.workflow INFO executing verb copy
+17:56:48,351 datashaper.workflow.workflow INFO executing verb filter
+17:56:48,368 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_base_text_units.parquet
+17:56:48,836 graphrag.index.run INFO Running workflow: create_base_extracted_entities...
+17:56:48,840 graphrag.index.run INFO dependencies for create_base_extracted_entities: ['create_base_text_units']
+17:56:48,842 graphrag.index.run INFO read table from storage: create_base_text_units.parquet
+17:56:48,878 datashaper.workflow.workflow INFO executing verb entity_extract
+17:56:48,895 graphrag.llm.openai.create_openai_client INFO Creating OpenAI client base_url=None
+17:56:48,913 graphrag.index.llm.load_llm INFO create TPM/RPM limiter for gpt-4.1-nano: TPM=150000, RPM=500
+17:56:48,913 graphrag.index.llm.load_llm INFO create concurrency limiter for gpt-4.1-nano: 25
+17:56:49,138 datashaper.workflow.workflow INFO executing verb snapshot
+17:56:49,159 datashaper.workflow.workflow INFO executing verb merge_graphs
+17:56:49,187 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:49,196 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_base_extracted_entities.parquet
+17:56:49,610 graphrag.index.run INFO Running workflow: create_summarized_entities...
+17:56:49,610 graphrag.index.run INFO dependencies for create_summarized_entities: ['create_base_extracted_entities']
+17:56:49,612 graphrag.index.run INFO read table from storage: create_base_extracted_entities.parquet
+17:56:49,634 datashaper.workflow.workflow INFO executing verb summarize_descriptions
+17:56:50,219 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:50,230 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_summarized_entities.parquet
+17:56:50,649 graphrag.index.run INFO Running workflow: create_base_entity_graph...
+17:56:50,650 graphrag.index.run INFO dependencies for create_base_entity_graph: ['create_summarized_entities']
+17:56:50,652 graphrag.index.run INFO read table from storage: create_summarized_entities.parquet
+17:56:50,674 datashaper.workflow.workflow INFO executing verb cluster_graph
+17:56:50,742 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:50,766 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:50,788 datashaper.workflow.workflow INFO executing verb select
+17:56:50,796 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_base_entity_graph.parquet
+17:56:51,236 graphrag.index.run INFO Running workflow: create_final_entities...
+17:56:51,242 graphrag.index.run INFO dependencies for create_final_entities: ['create_base_entity_graph']
+17:56:51,246 graphrag.index.run INFO read table from storage: create_base_entity_graph.parquet
+17:56:51,273 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:51,309 datashaper.workflow.workflow INFO executing verb rename
+17:56:51,320 datashaper.workflow.workflow INFO executing verb select
+17:56:51,332 datashaper.workflow.workflow INFO executing verb dedupe
+17:56:51,342 datashaper.workflow.workflow INFO executing verb rename
+17:56:51,352 datashaper.workflow.workflow INFO executing verb filter
+17:56:51,374 datashaper.workflow.workflow INFO executing verb text_split
+17:56:51,387 datashaper.workflow.workflow INFO executing verb drop
+17:56:51,398 datashaper.workflow.workflow INFO executing verb merge
+17:56:51,445 datashaper.workflow.workflow INFO executing verb text_embed
+17:56:51,448 graphrag.llm.openai.create_openai_client INFO Creating OpenAI client base_url=None
+17:56:51,468 graphrag.index.llm.load_llm INFO create TPM/RPM limiter for text-embedding-3-small: TPM=0, RPM=0
+17:56:51,468 graphrag.index.llm.load_llm INFO create concurrency limiter for text-embedding-3-small: 25
+17:56:51,504 graphrag.index.verbs.text.embed.strategies.openai INFO embedding 240 inputs via 240 snippets using 15 batches. max_batch_size=16, max_tokens=8191
+17:56:51,707 datashaper.workflow.workflow INFO executing verb drop
+17:56:51,718 datashaper.workflow.workflow INFO executing verb filter
+17:56:51,741 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_entities.parquet
+17:56:52,229 graphrag.index.run INFO Running workflow: create_final_nodes...
+17:56:52,230 graphrag.index.run INFO dependencies for create_final_nodes: ['create_base_entity_graph']
+17:56:52,238 graphrag.index.run INFO read table from storage: create_base_entity_graph.parquet
+17:56:52,277 datashaper.workflow.workflow INFO executing verb layout_graph
+17:56:52,346 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:52,378 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:52,409 datashaper.workflow.workflow INFO executing verb drop
+17:56:52,421 datashaper.workflow.workflow INFO executing verb filter
+17:56:52,454 datashaper.workflow.workflow INFO executing verb select
+17:56:52,471 datashaper.workflow.workflow INFO executing verb snapshot
+17:56:52,492 datashaper.workflow.workflow INFO executing verb rename
+17:56:52,506 datashaper.workflow.workflow INFO executing verb join
+17:56:52,529 datashaper.workflow.workflow INFO executing verb convert
+17:56:52,571 datashaper.workflow.workflow INFO executing verb rename
+17:56:52,576 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_nodes.parquet
+17:56:53,29 graphrag.index.run INFO Running workflow: create_final_communities...
+17:56:53,29 graphrag.index.run INFO dependencies for create_final_communities: ['create_base_entity_graph']
+17:56:53,31 graphrag.index.run INFO read table from storage: create_base_entity_graph.parquet
+17:56:53,66 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:53,111 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:53,137 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:56:53,154 datashaper.workflow.workflow INFO executing verb join
+17:56:53,178 datashaper.workflow.workflow INFO executing verb join
+17:56:53,196 datashaper.workflow.workflow INFO executing verb concat
+17:56:53,210 datashaper.workflow.workflow INFO executing verb filter
+17:56:53,259 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:56:53,292 datashaper.workflow.workflow INFO executing verb join
+17:56:53,310 datashaper.workflow.workflow INFO executing verb filter
+17:56:53,343 datashaper.workflow.workflow INFO executing verb fill
+17:56:53,357 datashaper.workflow.workflow INFO executing verb merge
+17:56:53,374 datashaper.workflow.workflow INFO executing verb copy
+17:56:53,396 datashaper.workflow.workflow INFO executing verb select
+17:56:53,403 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_communities.parquet
+17:56:53,863 graphrag.index.run INFO Running workflow: join_text_units_to_entity_ids...
+17:56:53,864 graphrag.index.run INFO dependencies for join_text_units_to_entity_ids: ['create_final_entities']
+17:56:53,866 graphrag.index.run INFO read table from storage: create_final_entities.parquet
+17:56:53,933 datashaper.workflow.workflow INFO executing verb select
+17:56:53,952 datashaper.workflow.workflow INFO executing verb unroll
+17:56:53,974 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:56:53,982 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table join_text_units_to_entity_ids.parquet
+17:56:54,464 graphrag.index.run INFO Running workflow: create_final_relationships...
+17:56:54,469 graphrag.index.run INFO dependencies for create_final_relationships: ['create_base_entity_graph', 'create_final_nodes']
+17:56:54,482 graphrag.index.run INFO read table from storage: create_base_entity_graph.parquet
+17:56:54,492 graphrag.index.run INFO read table from storage: create_final_nodes.parquet
+17:56:54,539 datashaper.workflow.workflow INFO executing verb unpack_graph
+17:56:54,572 datashaper.workflow.workflow INFO executing verb filter
+17:56:54,616 datashaper.workflow.workflow INFO executing verb filter
+17:56:54,660 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:54,684 datashaper.workflow.workflow INFO executing verb drop
+17:56:54,703 datashaper.workflow.workflow INFO executing verb snapshot_rows
+17:56:54,725 datashaper.workflow.workflow INFO executing verb remap_edge_ids
+17:56:54,806 datashaper.workflow.workflow INFO executing verb compute_edge_combined_degree
+17:56:54,829 datashaper.workflow.workflow INFO executing verb convert
+17:56:54,872 datashaper.workflow.workflow INFO executing verb check_dangling_ids
+17:56:54,876 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_relationships.parquet
+17:56:55,330 graphrag.index.run INFO Running workflow: join_text_units_to_relationship_ids...
+17:56:55,331 graphrag.index.run INFO dependencies for join_text_units_to_relationship_ids: ['create_final_relationships']
+17:56:55,333 graphrag.index.run INFO read table from storage: create_final_relationships.parquet
+17:56:55,384 datashaper.workflow.workflow INFO executing verb select
+17:56:55,404 datashaper.workflow.workflow INFO executing verb unroll
+17:56:55,425 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:56:55,449 datashaper.workflow.workflow INFO executing verb select
+17:56:55,455 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table join_text_units_to_relationship_ids.parquet
+17:56:56,77 graphrag.index.run INFO Running workflow: create_final_community_reports...
+17:56:56,78 graphrag.index.run INFO dependencies for create_final_community_reports: ['create_final_nodes', 'create_final_relationships']
+17:56:56,80 graphrag.index.run INFO read table from storage: create_final_nodes.parquet
+17:56:56,94 graphrag.index.run INFO read table from storage: create_final_relationships.parquet
+17:56:56,153 datashaper.workflow.workflow INFO executing verb prepare_community_reports_nodes
+17:56:56,192 datashaper.workflow.workflow INFO executing verb prepare_community_reports_edges
+17:56:56,224 datashaper.workflow.workflow INFO executing verb restore_community_hierarchy
+17:56:56,255 datashaper.workflow.workflow INFO executing verb prepare_community_reports
+17:56:56,257 graphrag.index.verbs.graph.report.prepare_community_reports INFO Number of nodes at level=1 => 240
+17:56:56,288 graphrag.index.verbs.graph.report.prepare_community_reports INFO Number of nodes at level=0 => 240
+17:56:56,352 datashaper.workflow.workflow INFO executing verb create_community_reports
+17:57:03,129 httpx INFO HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+17:57:03,134 graphrag.llm.base.rate_limiting_llm INFO perf - llm.chat "create_community_report" with 0 retries took 6.734000000000378. input_tokens=3082, output_tokens=924
+17:57:03,187 datashaper.workflow.workflow INFO executing verb window
+17:57:03,194 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_community_reports.parquet
+17:57:03,650 graphrag.index.run INFO Running workflow: create_final_text_units...
+17:57:03,651 graphrag.index.run INFO dependencies for create_final_text_units: ['join_text_units_to_entity_ids', 'join_text_units_to_relationship_ids', 'create_base_text_units']
+17:57:03,653 graphrag.index.run INFO read table from storage: join_text_units_to_entity_ids.parquet
+17:57:03,663 graphrag.index.run INFO read table from storage: join_text_units_to_relationship_ids.parquet
+17:57:03,671 graphrag.index.run INFO read table from storage: create_base_text_units.parquet
+17:57:03,745 datashaper.workflow.workflow INFO executing verb select
+17:57:03,776 datashaper.workflow.workflow INFO executing verb rename
+17:57:03,800 datashaper.workflow.workflow INFO executing verb join
+17:57:03,827 datashaper.workflow.workflow INFO executing verb join
+17:57:03,858 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:57:03,885 datashaper.workflow.workflow INFO executing verb select
+17:57:03,890 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_text_units.parquet
+17:57:04,349 graphrag.index.run INFO Running workflow: create_base_documents...
+17:57:04,350 graphrag.index.run INFO dependencies for create_base_documents: ['create_final_text_units']
+17:57:04,352 graphrag.index.run INFO read table from storage: create_final_text_units.parquet
+17:57:04,420 datashaper.workflow.workflow INFO executing verb unroll
+17:57:04,447 datashaper.workflow.workflow INFO executing verb select
+17:57:04,472 datashaper.workflow.workflow INFO executing verb rename
+17:57:04,499 datashaper.workflow.workflow INFO executing verb join
+17:57:04,527 datashaper.workflow.workflow INFO executing verb aggregate_override
+17:57:04,554 datashaper.workflow.workflow INFO executing verb join
+17:57:04,585 datashaper.workflow.workflow INFO executing verb rename
+17:57:04,612 datashaper.workflow.workflow INFO executing verb convert
+17:57:04,642 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_base_documents.parquet
+17:57:05,127 graphrag.index.run INFO Running workflow: create_final_documents...
+17:57:05,133 graphrag.index.run INFO dependencies for create_final_documents: ['create_base_documents']
+17:57:05,154 graphrag.index.run INFO read table from storage: create_base_documents.parquet
+17:57:05,219 datashaper.workflow.workflow INFO executing verb rename
+17:57:05,225 graphrag.index.emit.parquet_table_emitter INFO emitting parquet table create_final_documents.parquet

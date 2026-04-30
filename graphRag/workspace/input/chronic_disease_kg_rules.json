@@ -1,0 +1,1133 @@
+{
+  "diseases": [
+    {
+      "id": "D001",
+      "name_en": "Metabolic Syndrome",
+      "name_zh": "代謝症候群"
+    },
+    {
+      "id": "D002",
+      "name_en": "Diabetes Mellitus",
+      "name_zh": "糖尿病"
+    },
+    {
+      "id": "D003",
+      "name_en": "Hypertension",
+      "name_zh": "高血壓"
+    },
+    {
+      "id": "D004",
+      "name_en": "Hyperlipidemia",
+      "name_zh": "高血脂"
+    },
+    {
+      "id": "D005",
+      "name_en": "Hypercholesterolemia",
+      "name_zh": "高膽固醇血症"
+    },
+    {
+      "id": "D006",
+      "name_en": "Hypertriglyceridemia",
+      "name_zh": "高三酸甘油酯血症"
+    },
+    {
+      "id": "D007",
+      "name_en": "Chronic Kidney Disease",
+      "name_zh": "慢性腎臟病"
+    },
+    {
+      "id": "D008",
+      "name_en": "Gout",
+      "name_zh": "痛風"
+    },
+    {
+      "id": "D010",
+      "name_en": "Irritable Bowel Syndrome",
+      "name_zh": "腸躁症"
+    },
+    {
+      "id": "D011",
+      "name_en": "Gastroesophageal Reflux Disease",
+      "name_zh": "胃食道逆流"
+    },
+    {
+      "id": "D012",
+      "name_en": "Rheumatoid Arthritis",
+      "name_zh": "類風濕性關節炎"
+    },
+    {
+      "id": "D013",
+      "name_en": "Iron Deficiency Anemia",
+      "name_zh": "缺鐵性貧血"
+    },
+    {
+      "id": "D014",
+      "name_en": "Hypotension",
+      "name_zh": "低血壓"
+    }
+  ],
+  "biomarkers": [
+    {
+      "id": "B001",
+      "name": "Blood Pressure",
+      "alias": ["SBP", "DBP", "血壓"]
+    },
+    {
+      "id": "B002",
+      "name": "Systolic Blood Pressure",
+      "alias": ["SBP"]
+    },
+    {
+      "id": "B003",
+      "name": "Diastolic Blood Pressure",
+      "alias": ["DBP"]
+    },
+    {
+      "id": "B004",
+      "name": "Fasting Blood Glucose",
+      "alias": ["FBG", "空腹血糖"]
+    },
+    {
+      "id": "B005",
+      "name": "Triglycerides",
+      "alias": ["TG", "三酸甘油酯"]
+    },
+    {
+      "id": "B007",
+      "name": "HDL Cholesterol",
+      "alias": ["HDL-C", "高密度脂蛋白膽固醇"]
+    },
+    {
+      "id": "B008",
+      "name": "Blood Cholesterol",
+      "alias": ["血膽固醇"]
+    },
+    {
+      "id": "B009",
+      "name": "Serum Potassium",
+      "alias": ["血鉀"]
+    },
+    {
+      "id": "B010",
+      "name": "Serum Phosphorus",
+      "alias": ["血磷"]
+    },
+    {
+      "id": "B011",
+      "name": "Body Weight",
+      "alias": ["BMI", "體重"]
+    },
+    {
+      "id": "B012",
+      "name": "Urine Output",
+      "alias": ["尿量"]
+    },
+    {
+      "id": "B013",
+      "name": "Insulin Sensitivity",
+      "alias": ["胰島素敏感度"]
+    }
+  ],
+  "nutrients": [
+    {
+      "id": "N001",
+      "name": "Sodium"
+    },
+    {
+      "id": "N002",
+      "name": "Potassium"
+    },
+    {
+      "id": "N003",
+      "name": "Calcium"
+    },
+    {
+      "id": "N004",
+      "name": "Magnesium"
+    },
+    {
+      "id": "N005",
+      "name": "Dietary Fiber"
+    },
+    {
+      "id": "N006",
+      "name": "Protein"
+    },
+    {
+      "id": "N007",
+      "name": "Carbohydrate"
+    },
+    {
+      "id": "N008",
+      "name": "Fat"
+    },
+    {
+      "id": "N009",
+      "name": "Sugar"
+    },
+    {
+      "id": "N010",
+      "name": "Saturated Fat"
+    },
+    {
+      "id": "N011",
+      "name": "Trans Fat"
+    },
+    {
+      "id": "N012",
+      "name": "Monounsaturated Fat"
+    },
+    {
+      "id": "N013",
+      "name": "Omega-3 Fatty Acids"
+    },
+    {
+      "id": "N014",
+      "name": "Cholesterol"
+    },
+    {
+      "id": "N015",
+      "name": "Phosphorus"
+    },
+    {
+      "id": "N016",
+      "name": "Water"
+    },
+    {
+      "id": "N017",
+      "name": "Energy"
+    },
+    {
+      "id": "N018",
+      "name": "Alcohol"
+    }
+  ],
+  "foods": [
+    {
+      "id": "F001",
+      "name": "Whole Grains"
+    },
+    {
+      "id": "F002",
+      "name": "Unrefined Whole Grains"
+    },
+    {
+      "id": "F003",
+      "name": "Vegetables"
+    },
+    {
+      "id": "F004",
+      "name": "Deep-Colored Vegetables"
+    },
+    {
+      "id": "F005",
+      "name": "Fruits"
+    },
+    {
+      "id": "F006",
+      "name": "High-Fiber Foods"
+    },
+    {
+      "id": "F007",
+      "name": "Low-GI Foods"
+    },
+    {
+      "id": "F008",
+      "name": "High-GI Foods"
+    },
+    {
+      "id": "F009",
+      "name": "Sugary Beverages"
+    },
+    {
+      "id": "F010",
+      "name": "Refined Sweets and Desserts"
+    },
+    {
+      "id": "F011",
+      "name": "Processed Foods"
+    },
+    {
+      "id": "F012",
+      "name": "Pickled Foods"
+    },
+    {
+      "id": "F013",
+      "name": "High-Sodium Seasonings"
+    },
+    {
+      "id": "F014",
+      "name": "Fish and Seafood"
+    },
+    {
+      "id": "F015",
+      "name": "Deep-Sea Fish"
+    },
+    {
+      "id": "F016",
+      "name": "Lean Meat"
+    },
+    {
+      "id": "F017",
+      "name": "Red Meat"
+    },
+    {
+      "id": "F018",
+      "name": "White Meat"
+    },
+    {
+      "id": "F019",
+      "name": "High-Biological-Value Protein Foods"
+    },
+    {
+      "id": "F020",
+      "name": "Low-Biological-Value Protein Foods"
+    },
+    {
+      "id": "F021",
+      "name": "Soy Products"
+    },
+    {
+      "id": "F022",
+      "name": "Milk and Dairy Products"
+    },
+    {
+      "id": "F023",
+      "name": "Low-Fat Dairy"
+    },
+    {
+      "id": "F024",
+      "name": "Plant Oils"
+    },
+    {
+      "id": "F025",
+      "name": "Olive Oil"
+    },
+    {
+      "id": "F026",
+      "name": "Canola Oil"
+    },
+    {
+      "id": "F027",
+      "name": "Nuts and Seeds"
+    },
+    {
+      "id": "F028",
+      "name": "Animal Fat"
+    },
+    {
+      "id": "F029",
+      "name": "Fatty Meat and Skin"
+    },
+    {
+      "id": "F030",
+      "name": "Trans-Fat Foods"
+    },
+    {
+      "id": "F031",
+      "name": "Soup and Broth"
+    },
+    {
+      "id": "F032",
+      "name": "Alcoholic Drinks"
+    },
+    {
+      "id": "F033",
+      "name": "Beer"
+    },
+    {
+      "id": "F034",
+      "name": "High-Purine Foods"
+    },
+    {
+      "id": "F035",
+      "name": "High-Potassium Foods"
+    },
+    {
+      "id": "F036",
+      "name": "High-Potassium Fruits"
+    },
+    {
+      "id": "F037",
+      "name": "High-Phosphorus Foods"
+    },
+    {
+      "id": "F038",
+      "name": "Salt Substitutes"
+    },
+    {
+      "id": "F039",
+      "name": "Dried Fruit and Juice"
+    },
+    {
+      "id": "F040",
+      "name": "Caffeinated Foods and Drinks"
+    },
+    {
+      "id": "F041",
+      "name": "Foods Rich in Tryptophan"
+    },
+    {
+      "id": "F042",
+      "name": "Low-FODMAP / Easy-to-Digest Foods"
+    },
+    {
+      "id": "F043",
+      "name": "Acidic Foods"
+    },
+    {
+      "id": "F044",
+      "name": "Yangtao (Star Fruit)"
+    },
+    {
+      "id": "F045",
+      "name": "Balanced Six Food Groups"
+    }
+  ],
+  "rules": [
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "biomarker_id": "B004",
+      "target_type": "disease",
+      "target_id": "D001",
+      "relation_type": "risk_for",
+      "condition": null,
+      "value": 100,
+      "unit": "mg/dL",
+      "evidence": "空腹血糖≥100mg/dL 為代謝症候群警戒指標。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "biomarker_id": "B005",
+      "target_type": "disease",
+      "target_id": "D001",
+      "relation_type": "risk_for",
+      "condition": null,
+      "value": 150,
+      "unit": "mg/dL",
+      "evidence": "三酸甘油酯≥150mg/dL 為代謝症候群警戒指標。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "disease",
+      "target_id": "D002",
+      "relation_type": "risk_for",
+      "condition": null,
+      "value": 6,
+      "unit": "fold_risk",
+      "evidence": "有代謝症候群的人未來得到糖尿病的機率是一般健康民眾的6倍。",
+      "confidence": "medium"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "disease",
+      "target_id": "D003",
+      "relation_type": "risk_for",
+      "condition": null,
+      "value": 4,
+      "unit": "fold_risk",
+      "evidence": "有代謝症候群的人未來得到高血壓的機率是一般健康民眾的4倍。",
+      "confidence": "medium"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "disease",
+      "target_id": "D004",
+      "relation_type": "risk_for",
+      "condition": null,
+      "value": 3,
+      "unit": "fold_risk",
+      "evidence": "有代謝症候群的人未來得到高脂血症的機率是一般健康民眾的3倍。",
+      "confidence": "medium"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "food",
+      "target_id": "F045",
+      "relation_type": "recommend",
+      "condition": "prevention",
+      "value": null,
+      "unit": null,
+      "evidence": "預防代謝症候群，以營養均衡與六大類食物為第一優先。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "nutrient",
+      "target_id": "N005",
+      "relation_type": "increase_intake",
+      "condition": "三低一高",
+      "value": null,
+      "unit": null,
+      "evidence": "健康飲食應運用三低一高，其中一高為高纖。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "nutrient",
+      "target_id": "N010",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "減少吃富含飽和脂肪酸及膽固醇的食物。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "food",
+      "target_id": "F030",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "避免攝取反式脂肪酸高的食物，如酥油、硬乳瑪琳、氫化油、糕餅類。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "biomarker_id": "B004",
+      "target_type": "food",
+      "target_id": "F009",
+      "relation_type": "worsens",
+      "condition": "high intake",
+      "value": null,
+      "unit": null,
+      "evidence": "含高糖的精緻糕餅與含糖飲料易使血糖快速升高。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "biomarker_id": "B005",
+      "target_type": "food",
+      "target_id": "F009",
+      "relation_type": "worsens",
+      "condition": "high intake",
+      "value": null,
+      "unit": null,
+      "evidence": "含高糖的精緻糕餅與含糖飲料也會造成血脂升高。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "減少鹽、醬油、各式醬料及重口味食物。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "food",
+      "target_id": "F032",
+      "relation_type": "limit",
+      "condition": "female",
+      "value": 1,
+      "unit": "alcohol_equivalent/day",
+      "evidence": "女性每日不宜超過1個酒精當量。"
+    },
+    {
+      "source": "代謝症候群學習手冊.pdf",
+      "disease_id": "D001",
+      "target_type": "food",
+      "target_id": "F032",
+      "relation_type": "limit",
+      "condition": "male",
+      "value": 2,
+      "unit": "alcohol_equivalent/day",
+      "evidence": "男性每日不宜超過2個酒精當量。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F006",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "糖尿病飲食原則：儘量選擇高纖維食物。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F001",
+      "relation_type": "recommend",
+      "condition": "replace white rice",
+      "value": null,
+      "unit": null,
+      "evidence": "三餐以全穀類或雜糧飯代替白米飯。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "nutrient",
+      "target_id": "N009",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "烹調遵守少油、少鹽、少糖。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F029",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "減少油炸、油煎、油酥以及豬皮、雞皮、鴨皮、魚皮等食物之攝取。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F009",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "避免攝取含有蔗糖或果糖的飲料。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F010",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "避免精緻甜食、糖果、餅乾與加糖製品。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "biomarker_id": "B004",
+      "target_type": "nutrient",
+      "target_id": "N009",
+      "relation_type": "monitor",
+      "condition": "hypoglycemia treatment",
+      "value": [10, 15],
+      "unit": "g",
+      "evidence": "低血糖時應立即進食含10~15公克容易吸收之糖份食品。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D003",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "減少鈉攝取：少用鹽、醬油、味精等含鈉調味料。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D003",
+      "target_type": "food",
+      "target_id": "F011",
+      "relation_type": "avoid",
+      "condition": "high sodium",
+      "value": null,
+      "unit": null,
+      "evidence": "加工食品含鈉量高，例如麵線、油麵、加工肉類、罐頭食品等，應儘量少用。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D003",
+      "target_type": "nutrient",
+      "target_id": "N002",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "新鮮蔬果多為高鉀食物，增加攝取可幫助血壓控制。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D003",
+      "target_type": "nutrient",
+      "target_id": "N003",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "含鈣離子較多的食物對高血壓有幫助。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D003",
+      "target_type": "nutrient",
+      "target_id": "N004",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "含鎂離子較多的食物對高血壓有幫助。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D005",
+      "target_type": "nutrient",
+      "target_id": "N010",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "高膽固醇血症應少吃含有飽和脂肪酸的食物。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D005",
+      "target_type": "food",
+      "target_id": "F030",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "少吃酥油、白油、乳瑪琳、糕餅、蛋糕與餅乾。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D006",
+      "target_type": "nutrient",
+      "target_id": "N013",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "可多攝取富含omega-3脂肪酸的魚類。"
+    },
+    {
+      "source": "慢性病飲食守則.md",
+      "disease_id": "D006",
+      "target_type": "food",
+      "target_id": "F032",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "高三酸甘油酯不宜飲酒。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D003",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "limit",
+      "condition": null,
+      "value": 5,
+      "unit": "g salt/day",
+      "evidence": "高血壓飲食調理建議：限制鹽分（每日 < 5g）。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F007",
+      "relation_type": "recommend",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "糖尿病飲食調理建議：選擇低升糖指數（GI）的食物。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D002",
+      "target_type": "food",
+      "target_id": "F008",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "糖尿病患者避免高GI食物與精製糖類。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D004",
+      "target_type": "nutrient",
+      "target_id": "N013",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "高血脂飲食調理建議：增加攝取Omega-3。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D004",
+      "target_type": "nutrient",
+      "target_id": "N010",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "高血脂飲食調理建議：減少飽和脂肪與反式脂肪。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D010",
+      "target_type": "food",
+      "target_id": "F042",
+      "relation_type": "recommend",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "腸躁症建議選擇易消化蛋白質並避免高FODMAP食物。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D011",
+      "target_type": "food",
+      "target_id": "F043",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "胃食道逆流避免酸性食物，如柑橘類、番茄、咖啡。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D008",
+      "target_type": "food",
+      "target_id": "F034",
+      "relation_type": "limit",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "痛風限制攝取高嘌呤食物，如內臟、海鮮、紅肉等。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D008",
+      "target_type": "food",
+      "target_id": "F033",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "痛風建議少吃酒精，尤其是啤酒。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D012",
+      "target_type": "nutrient",
+      "target_id": "N013",
+      "relation_type": "increase_intake",
+      "condition": "anti-inflammatory",
+      "value": null,
+      "unit": null,
+      "evidence": "類風濕性關節炎增加抗發炎食物，如Omega-3。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D013",
+      "target_type": "food",
+      "target_id": "F017",
+      "relation_type": "increase_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "缺鐵性貧血多攝取含鐵食物，如紅肉與動物肝臟。"
+    },
+    {
+      "source": "慢性病飲食調理基本原則.md",
+      "disease_id": "D014",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "recommend",
+      "condition": "appropriate amount",
+      "value": null,
+      "unit": null,
+      "evidence": "低血壓飲食建議：適量攝取鹽分，避免過量。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "biomarker",
+      "target_id": "B001",
+      "relation_type": "monitor",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "維持正常的血壓控制可以延緩腎功能喪失。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "biomarker",
+      "target_id": "B004",
+      "relation_type": "monitor",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "維持正常的血糖控制可以延緩腎功能喪失。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N006",
+      "relation_type": "decrease_intake",
+      "condition": "maintain good nutritional status",
+      "value": null,
+      "unit": null,
+      "evidence": "在維持良好營養狀態下，減少蛋白質食物攝取有助延緩腎功能下降。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N006",
+      "relation_type": "recommend",
+      "condition": "CKD stage 1-3",
+      "value": [0.8, 1.0],
+      "unit": "g/kg/day",
+      "evidence": "慢性腎臟病初期（第三期以前）蛋白質建議每公斤體重0.8至1.0克。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N006",
+      "relation_type": "limit",
+      "condition": "CKD stage 4+; non-diabetic",
+      "value": 0.6,
+      "unit": "g/kg/day",
+      "evidence": "慢性腎臟病第四期以後沒有糖尿病者，蛋白質約每公斤體重0.6克。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N006",
+      "relation_type": "limit",
+      "condition": "CKD stage 4+; diabetic",
+      "value": 0.8,
+      "unit": "g/kg/day",
+      "evidence": "慢性腎臟病第四期以後合併糖尿病者，蛋白質約每公斤體重0.8克。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N017",
+      "relation_type": "recommend",
+      "condition": "low protein diet",
+      "value": null,
+      "unit": null,
+      "evidence": "低蛋白飲食時熱量一定要吃夠，營養才會好。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "decrease_intake",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "不要吃太鹹，烹調時減少鹽與醬油的使用量。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B001",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "worsens",
+      "condition": "high intake",
+      "value": null,
+      "unit": null,
+      "evidence": "不要吃太鹹能降低血壓；過鹹會使血壓控制不佳。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "food",
+      "target_id": "F013",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "不要用胡椒鹽、番茄醬、辣椒醬、豆瓣醬、沙茶醬增加調味。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "food",
+      "target_id": "F020",
+      "relation_type": "avoid",
+      "condition": "increase uremic toxins",
+      "value": null,
+      "unit": null,
+      "evidence": "少吃會增加尿毒素的低生物價蛋白質，如麵筋製品與部分堅果豆類。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "food",
+      "target_id": "F019",
+      "relation_type": "recommend",
+      "condition": "choose right amount",
+      "value": null,
+      "unit": null,
+      "evidence": "高品質蛋白質包括蛋、肉類與豆腐豆乾豆包等黃豆製品。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "food",
+      "target_id": "F022",
+      "relation_type": "avoid",
+      "condition": "hyperphosphatemia prevention",
+      "value": null,
+      "unit": null,
+      "evidence": "慢性腎臟病患者要避免奶類與奶製品，以將血磷維持在理想範圍。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B010",
+      "target_type": "food",
+      "target_id": "F037",
+      "relation_type": "worsens",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "高磷食物會造成血磷異常，也會損害腎功能。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B009",
+      "target_type": "food",
+      "target_id": "F035",
+      "relation_type": "worsens",
+      "condition": "urine output decreased",
+      "value": null,
+      "unit": null,
+      "evidence": "尿量減少時需減少高鉀食物，以免造成心律不整危害生命。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B009",
+      "target_type": "food",
+      "target_id": "F031",
+      "relation_type": "avoid",
+      "condition": "hyperkalemia",
+      "value": null,
+      "unit": null,
+      "evidence": "菜湯、肉湯、補湯與肉汁拌飯都可能導致高血鉀。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B009",
+      "target_type": "food",
+      "target_id": "F036",
+      "relation_type": "avoid",
+      "condition": "hyperkalemia",
+      "value": null,
+      "unit": null,
+      "evidence": "蕃茄、奇異果、哈密瓜、香瓜、火龍果、櫻桃、草莓等高鉀水果應盡量少吃。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "biomarker_id": "B009",
+      "target_type": "food",
+      "target_id": "F038",
+      "relation_type": "avoid",
+      "condition": "hyperkalemia",
+      "value": null,
+      "unit": null,
+      "evidence": "勿使用以鉀代替鈉的低鈉鹽、薄鹽及無鹽醬油。"
+    },
+    {
+      "source": "自主健康保腎手冊.pdf",
+      "disease_id": "D007",
+      "target_type": "food",
+      "target_id": "F044",
+      "relation_type": "contraindicated",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "慢性腎臟病患者避免食用楊桃。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "nutrient",
+      "target_id": "N006",
+      "relation_type": "recommend",
+      "condition": "general population",
+      "value": [10, 20],
+      "unit": "% total energy",
+      "evidence": "每日飲食指南三大營養素占總熱量比例：蛋白質10-20%。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "nutrient",
+      "target_id": "N008",
+      "relation_type": "recommend",
+      "condition": "general population",
+      "value": [20, 30],
+      "unit": "% total energy",
+      "evidence": "每日飲食指南三大營養素占總熱量比例：脂質20-30%。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "nutrient",
+      "target_id": "N007",
+      "relation_type": "recommend",
+      "condition": "general population",
+      "value": [50, 60],
+      "unit": "% total energy",
+      "evidence": "每日飲食指南三大營養素占總熱量比例：醣類50-60%。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "food",
+      "target_id": "F002",
+      "relation_type": "recommend",
+      "condition": "general population; staple foods",
+      "value": 0.333,
+      "unit": "proportion_of_staple_food_minimum",
+      "evidence": "建議國人提高未精製全穀攝取，占主食之1/3。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "food",
+      "target_id": "F022",
+      "relation_type": "recommend",
+      "condition": "general population",
+      "value": [1, 2],
+      "unit": "cup/day",
+      "evidence": "每日攝取1~2杯乳品是最容易滿足鈣質需求的方法。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "food",
+      "target_id": "F004",
+      "relation_type": "recommend",
+      "condition": "1200 kcal/day minimum",
+      "value": 1.5,
+      "unit": "serving/day_minimum",
+      "evidence": "1200大卡蔬菜類3份，其中至少1.5份為深色蔬菜。"
+    },
+    {
+      "source": "每日飲食指南手冊.pdf",
+      "target_type": "food",
+      "target_id": "F027",
+      "relation_type": "recommend",
+      "condition": "general population",
+      "value": 1,
+      "unit": "serving/day_minimum",
+      "evidence": "每日飲食中的油脂與堅果種子類，應包含至少一份原態堅果種子。"
+    }
+  ]
+}

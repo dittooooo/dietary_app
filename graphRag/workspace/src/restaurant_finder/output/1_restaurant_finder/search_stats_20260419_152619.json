@@ -1,0 +1,9 @@
+{
+  "nearby_radius_calls": 20,
+  "nearby_distance_calls": 20,
+  "text_search_calls": 26,
+  "nearby_radius_results_raw": 1200,
+  "nearby_distance_results_raw": 1200,
+  "text_search_results_raw": 520,
+  "dedup_unique_restaurants": 824
+}

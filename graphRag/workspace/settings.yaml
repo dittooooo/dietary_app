@@ -1,0 +1,435 @@
+encoding_model: cl100k_base
+skip_workflows: []
+workflows: [create_communities, create_community_reports]
+
+# llm:
+#   api_key: ${GRAPHRAG_API_KEY}
+#   type: openai_chat # openai_chat # or azure_openai_chat # !! cna NOT change !!
+#   model: llama3.1:8b # llama3.1:8b # gemma3:4b-it-qat # mistral:7b-instruct
+#   model_supports_json: true # recommended if this is available for your model.
+#   # max_tokens: 4000
+#   # request_timeout: 180.0
+#   api_base: http://localhost:11434/v1
+#   # api_version: 2024-02-15-preview
+#   # organization: <organization_id>
+#   # deployment_name: <azure_model_deployment_name>
+#   # tokens_per_minute: 150_000 # set a leaky bucket throttle
+#   # requests_per_minute: 10_000 # set a leaky bucket throttle
+#   # max_retries: 10
+#   # max_retry_wait: 10.0
+#   # sleep_on_rate_limit_recommendation: true # whether to sleep when azure suggests wait-times
+#   # concurrent_requests: 25 # the number of parallel inflight requests that may be made
+
+llm:
+  api_key: ${GRAPHRAG_API_KEY}
+  type: openai_chat # openai_chat # or azure_openai_chat # !! can NOT change !!
+  model: gpt-4.1-nano # mistral:7b-instruct # gpt-4o-mini # llama3.1:8b # gemma3:4b-it-qat
+  model_supports_json: true # recommended if this is available for your model.
+  max_tokens: 32000 # Max output limit for gpt-4.1-nano
+  # request_timeout: 180.0
+  # api_base: http://localhost:11434/v1
+  # api_version: 2024-02-15-preview
+  # organization: <organization_id>
+  # deployment_name: <azure_model_deployment_name>
+  tokens_per_minute: 150000 # set a leaky bucket throttle
+  requests_per_minute: 500 # set a leaky bucket throttle
+  # max_retries: 10
+  # max_retry_wait: 10.0
+  # sleep_on_rate_limit_recommendation: true # whether to sleep when azure suggests wait-times
+  concurrent_requests: 25 # the number of parallel inflight requests that may be made
+
+chunking:
+  enabled: true
+  strategy: tokens      # 根據 token 長度分段
+  max_tokens: 2000      # 每次 LLM 最大輸入長度（建議 1000~1500）
+  overlap: 200          # 每段重疊 100 token，避免邊界資訊丟失
+  min_tokens: 200       # 避免太小的段落
+
+
+parallelization:
+  enabled: true
+  stagger: 0.3
+  # num_threads: 50 # the number of threads to use for parallel processing
+  parameters:
+    partitions: 4
+    min_rows_per_partition: 1
+
+async_mode: threaded # or asyncio
+
+embeddings:
+  ## parallelization: override the global parallelization settings for embeddings
+  async_mode: threaded # or asyncio
+  llm:
+    api_key: ${GRAPHRAG_API_KEY}
+    type: openai_embedding # or azure_openai_embedding
+    model: text-embedding-3-small
+    # api_base: http://localhost:11434/api
+    # api_version: 2024-02-15-preview
+    # organization: <organization_id>
+    # deployment_name: <azure_model_deployment_name>
+    # tokens_per_minute: 150_000 # set a leaky bucket throttle
+    # requests_per_minute: 10_000 # set a leaky bucket throttle
+    # max_retries: 10
+    # max_retry_wait: 10.0
+    # sleep_on_rate_limit_recommendation: true # whether to sleep when azure suggests wait-times
+    # concurrent_requests: 25 # the number of parallel inflight requests that may be made
+    # batch_size: 16 # the number of documents to send in a single request
+    batch_max_tokens: 6000 # Buffer for proxy tokenizer variance (8191 max)
+    # target: required # or optional
+  
+
+chunks:
+  size: 1200
+  overlap: 300
+  group_by_columns: [id] # by default, we don't allow chunks to cross documents
+
+input:
+  type: file
+  file_type: text
+  base_dir: "input"
+  file_encoding: utf-8
+  file_pattern: ".*\\.txt$"
+    
+# input:
+#   type: file # or blob
+#   file_type: text # or csv
+#   base_dir: "input"
+#   file_encoding: utf-8
+#   file_pattern: ".*\\.txt$"
+#   # enabled: false
+
+
+cache:
+  type: file # or blob
+  base_dir: "cache"
+  # connection_string: <azure_blob_storage_connection_string>
+  # container_name: <azure_blob_storage_container_name>
+
+storage:
+  type: file # or blob
+  base_dir: "output/${timestamp}/artifacts" # "output/20251019-214305"
+  # connection_string: <azure_blob_storage_connection_string>
+  # container_name: <azure_blob_storage_container_name>
+
+reporting:
+  type: file # or console, blob
+  base_dir: "output/${timestamp}/reports"
+  # connection_string: <azure_blob_storage_connection_string>
+  # container_name: <azure_blob_storage_container_name>
+
+entity_extraction:
+  prompt: "prompts/entity_extraction_v1.txt"
+  entity_types: [organization, person, geo, event]
+  max_gleanings: 0
+  entity_extract:
+    strategy:
+      type: graph_intelligence
+
+relation_extract:
+  # 你的欄位：text_column、id_column 等照舊
+  text_column: chunk
+  id_column: chunk_id
+  
+  llm:
+      type: openai_chat # openai_chat # or azure_openai_chat # !! cna NOT change !!
+      model: gpt-4.1-nano # llama3.1:8b # gemma3:4b-it-qat
+      model_supports_json: true # recommended if this is available for your model.
+      max_tokens: 32000
+      # request_timeout: 180.0
+      # api_base: http://localhost:11434/v1
+
+  # 關鍵：strategy 區塊
+  strategy:
+    type: graph_intelligence_rel
+    # 建議用 include，路徑相對於 settings.yaml 所在位置
+    extraction_prompt: "prompts/relation_extraction.txt"
+
+    # 若你的策略支援，順便把分隔符統一交代清楚
+    tuple_delimiter: "<|>"
+    record_delimiter: "##"
+    completion_delimiter: "<|COMPLETE|>"
+
+    
+summarize_descriptions:
+  ## llm: override the global llm settings for this task
+  ## parallelization: override the global parallelization settings for this task
+  ## async_mode: override the global async_mode settings for this task
+  prompt: "prompts/summarize_descriptions.txt"
+  max_length: 500
+
+claim_extraction:
+  ## llm: override the global llm settings for this task
+  ## parallelization: override the global parallelization settings for this task
+  ## async_mode: override the global async_mode settings for this task
+  # enabled: true
+  prompt: "prompts/claim_extraction.txt"
+  description: "Any claims or facts that could be relevant to information discovery."
+  max_gleanings: 0
+  claim_extract:
+    strategy:
+      type: graph_intelligence
+
+community_report:
+  ## llm: override the global llm settings for this task
+  ## parallelization: override the global parallelization settings for this task
+  ## async_mode: override the global async_mode settings for this task
+  prompt: "prompts/community_report.txt"
+  max_length: 2000
+  max_input_length: 8000
+
+
+cluster_graph:
+  max_cluster_size: 10
+
+embed_graph:
+  enabled: false # if true, will generate node2vec embeddings for nodes
+  # num_walks: 10
+  # walk_length: 40
+  # window_size: 2
+  # iterations: 3
+  # random_seed: 597832
+
+umap:
+  enabled: false # if true, will generate UMAP embeddings for nodes
+
+snapshots:
+  graphml: yes
+  raw_entities: yes
+  top_level_nodes: yes
+
+local_search:
+  # text_unit_prop: 0.5
+  # community_prop: 0.1
+  # conversation_history_max_turns: 5
+  # top_k_mapped_entities: 10
+  # top_k_relationships: 10
+  # max_tokens: 12000
+
+global_search:
+  retrieval:
+    sources:
+      - create_final_text_units.parquet
+    exclude_sources:
+      - create_final_community_reports.parquet
+      - create_final_community_summaries.parquet
+    top_k: 20
+
+  context_config:
+    use_community_summary: false
+
+  mapreduce_config:
+    map_temperature: 0.0
+    reduce_temperature: 0.0
+    allow_general_knowledge: false
+
+
+# ### ⭐ 新增：明確指定 artifacts_dir（避免讀錯 snapshot）
+# paths:
+#   artifacts_dir: "./output/20250820-193522/artifacts"   # <-- 換成你要用的最新時間戳
+#   output_dir: "./output"
+
+# ### ⭐ 新增：查詢提示語，限制只能用 parquet 欄位
+# query:
+#   prompts:
+#     global:
+#       system: |
+#         You are a GraphRAG analyst. 
+#         Use ONLY the fields present in ./output/<snapshot>/artifacts parquet files:
+#         - Entities: canonical_name, title, description, community, id
+#         - Relationships: source_canonical, target_canonical, description, rank, weight, text_unit_ids
+#         - Text units: id, text, source_id
+#         Rules:
+#         - Every point MUST include at least source_canonical → target_canonical and text_unit_ids
+#         - Do NOT mention original TXT filenames; they do not exist in artifacts
+#         - If context is insufficient, return exactly: INSUFFICIENT_CONTEXT
+#         - Sort results by rank or weight
+#     local:
+#       system: |
+#         Same rules as global. 
+#         Use ONLY parquet fields (source_canonical, target_canonical, description, rank, weight, text_unit_ids). 
+#         Do NOT hallucinate TXT filenames or external websites. 
+#         Return INSUFFICIENT_CONTEXT if no relevant context is found.
+
+# # V2
+# # ===============================================================
+# encoding_model: cl100k_base
+# skip_workflows: []
+
+# # ===============================================================
+# # 🌐 LLM 設定（全域預設）
+# # ===============================================================
+# llm:
+#   api_key: ${GRAPHRAG_API_KEY}
+#   type: openai_chat
+#   model: gpt-4o
+#   api_base: https://api.openai.com/v1
+#   model_supports_json: true
+#   request_timeout: 180.0
+#   max_retries: 5
+#   retry_delay: 5
+#   timeout_backoff: true
+#   suppress_exceptions: true
+#   return_exceptions: true
+
+# # ===============================================================
+# # 📘 Chunk 分段策略
+# # ===============================================================
+# chunking:
+#   enabled: true
+#   strategy: tokens
+#   max_tokens: 2500     # ↑ 給 LLM 更大的上下文視野
+#   overlap: 300         # 避免邊界資訊遺失
+#   min_tokens: 200
+
+# # ===============================================================
+# # ⚙️ 並行與非同步設定
+# # ===============================================================
+# parallelization:
+#   enabled: true
+#   stagger: 0.3
+#   parameters:
+#     partitions: 6
+#     min_rows_per_partition: 1
+
+# async_mode: threaded
+
+# # ===============================================================
+# # 🔡 Embeddings
+# # ===============================================================
+# embeddings:
+#   async_mode: threaded
+#   llm:
+#     api_key: ${GRAPHRAG_API_KEY}
+#     type: openai_embedding
+#     model: nomic-embed-text:latest
+#     api_base: http://localhost:11434/api
+#     batch_size: 8
+#     batch_max_tokens: 8191
+
+# # ===============================================================
+# # 📂 Input / Cache / Storage
+# # ===============================================================
+# input:
+#   type: file
+#   file_type: text
+#   base_dir: "input"
+#   file_encoding: utf-8
+#   file_pattern: ".*\\.txt$"
+#   enabled: true
+
+# cache:
+#   type: file
+#   base_dir: "cache"
+
+# storage:
+#   type: file
+#   base_dir: "output/${timestamp}/artifacts"
+
+# reporting:
+#   type: file
+#   base_dir: "output/${timestamp}/reports"
+
+# # ===============================================================
+# # 🧠 Entity Extraction（修正抽取步驟）
+# # ===============================================================
+# entity_extraction:
+#   enabled: true
+#   prompt: "prompts/entity_extraction_v1.txt"
+#   entity_types: [organization, person, geo, event]
+#   max_gleanings: 3
+#   entity_extract:
+#     strategy:
+#       type: graph_intelligence
+#       llm:
+#         type: openai_chat
+#         model: gpt-4o
+#         api_base: https://api.openai.com/v1
+#         api_key: ${GRAPHRAG_API_KEY}
+#         model_supports_json: true
+#         request_timeout: 180.0
+#         max_retries: 5
+#         retry_delay: 5
+
+# # ===============================================================
+# # 🔗 Relationship Extraction（修正端點與啟用）
+# # ===============================================================
+# relation_extract:
+#   enabled: true
+#   text_column: chunk
+#   id_column: chunk_id
+#   llm:
+#     type: openai_chat
+#     model: gpt-4o
+#     api_base: https://api.openai.com/v1
+#     api_key: ${GRAPHRAG_API_KEY}
+#     model_supports_json: true
+#     request_timeout: 180.0
+#   strategy:
+#     type: graph_intelligence_rel
+#     extraction_prompt: "prompts/relation_extraction.txt"
+#     tuple_delimiter: "<|>"
+#     record_delimiter: "##"
+#     completion_delimiter: "<|COMPLETE|>"
+
+# # ===============================================================
+# # 📝 Summarization / Claims / Reports
+# # ===============================================================
+# summarize_descriptions:
+#   prompt: "prompts/summarize_descriptions.txt"
+#   max_length: 500
+
+# claim_extraction:
+#   enabled: true
+#   prompt: "prompts/claim_extraction.txt"
+#   description: "Any claims or facts that could be relevant to information discovery."
+#   max_gleanings: 1
+#   claim_extract:
+#     strategy:
+#       type: graph_intelligence
+
+# community_report:
+#   prompt: "prompts/community_report.txt"
+#   max_length: 2000
+#   max_input_length: 8000
+
+# # ===============================================================
+# # 🕸️ Graph Construction / Layout
+# # ===============================================================
+# embed_graph:
+#   enabled: true
+#   num_walks: 10
+#   walk_length: 40
+#   window_size: 2
+#   iterations: 3
+#   random_seed: 86
+
+# cluster_graph:
+#   max_cluster_size: 10
+
+# umap:
+#   enabled: true
+
+# # ===============================================================
+# # 🧩 Snapshots & Search
+# # ===============================================================
+# snapshots:
+#   graphml: yes
+#   raw_entities: yes
+#   top_level_nodes: yes
+
+# local_search: {}
+
+# global_search:
+#   retrieval:
+#     sources:
+#       - create_final_text_units.parquet
+#     exclude_sources:
+#       - create_final_community_reports.parquet
+#       - create_final_community_summaries.parquet
+#     top_k: 20
+#   context_config:
+#     use_community_summary: false
+#   mapreduce_config:
+#     map_temperature: 0.0
+#     reduce_temperature: 0.0
+#     allow_general_knowledge: false

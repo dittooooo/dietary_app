@@ -1,0 +1,225 @@
+你是一位「醫療知識結構化工程師 + 知識圖譜資料建構專家」。
+
+我目前正在建置一套 AI 飲食建議系統，核心架構為：
+
+Dish → Ingredient → Nutrition → Disease
+
+最終會把資料做成 Knowledge Graph，並提供 GraphRAG 檢索，讓 AI 根據使用者健康狀況推薦飲食。
+
+---
+
+## 你的任務
+
+我會提供你數份與「慢性病飲食建議 / 疾病營養守則 / 醫療飲食指南」相關的文件。
+
+請你完整閱讀所有檔案內容，萃取出其中提到的：
+
+1. 疾病（Disease）
+2. 營養素（Nutrition）
+3. 食物 / 食材（Food / Ingredient）
+4. 疾病相關指標（如血壓、血糖、LDL、eGFR 等）※ 作為疾病屬性，不獨立成 node
+5. 飲食限制條件（攝取上限、避免、增加、適量）
+6. 疾病與營養素之間的關係
+7. 疾病與食物之間的關係
+8. 疾病與臨床指標之間的關係
+9. 特殊條件（分期、年齡、體重、透析、藥物等）
+
+並整理成可直接建立 Knowledge Graph 的 JSON 格式。
+
+---
+
+## Graph 設計原則（重要）
+
+本次圖譜以「疾病」為核心節點。
+
+不建立 biomarker node。
+
+所有 biomarker / clinical marker（如：
+
+- Blood Pressure
+- HbA1c
+- LDL-C
+- Triglycerides
+- eGFR
+- Creatinine
+- Potassium
+
+）改存為 disease 的：
+
+- diagnostic_markers
+- monitoring_markers
+- risk_markers
+
+或出現在 rules.condition 中。
+
+---
+
+## 請遵守以下抽取原則
+
+### 1. 不要摘要，要完整抽取規則
+
+例如：
+
+- 高血壓患者每日鈉攝取應低於 2000mg
+- 糖尿病患者避免高 GI 食物
+- 慢性腎臟病第三期蛋白質建議 0.6~0.8 g/kg/day
+
+都必須保留。
+
+---
+
+### 2. 優先轉成標準實體名稱
+
+例如：
+
+高血壓 → Hypertension  
+糖尿病 → Diabetes Mellitus  
+高血脂 → Hyperlipidemia  
+慢性腎臟病 → Chronic Kidney Disease  
+鈉 → Sodium  
+鉀 → Potassium  
+蛋白質 → Protein
+
+---
+
+### 3. 規則類型分類
+
+relation_type 可使用：
+
+increase_intake
+decrease_intake
+avoid
+limit
+recommend
+contraindicated
+monitor
+beneficial_for
+risk_for
+requires_control
+
+---
+
+### 4. 單位保留
+
+例如：
+
+2000 mg/day
+0.8 g/kg/day
+<5 g salt/day
+
+---
+
+## JSON 輸出格式（非常重要）
+
+{
+  "diseases": [
+    {
+      "id": "D001",
+      "name_zh": "高血壓",
+      "name_en": "Hypertension",
+      "diagnostic_markers": [
+        "Blood Pressure"
+      ],
+      "risk_markers": [
+        "Obesity",
+        "High Sodium Intake"
+      ],
+      "monitoring_markers": [
+        "SBP",
+        "DBP"
+      ]
+    }
+  ],
+
+  "nutrients": [
+    {
+      "id": "N001",
+      "name": "Sodium"
+    }
+  ],
+
+  "foods": [
+    {
+      "id": "F001",
+      "name": "Processed Food"
+    }
+  ],
+
+  "rules": [
+    {
+      "source": "filename.pdf",
+      "disease_id": "D001",
+      "target_type": "nutrient",
+      "target_id": "N001",
+      "relation_type": "limit",
+      "condition": null,
+      "value": 2000,
+      "unit": "mg/day",
+      "evidence": "高血壓患者每日鈉攝取應低於2000mg"
+    },
+
+    {
+      "source": "filename.pdf",
+      "disease_id": "D001",
+      "target_type": "food",
+      "target_id": "F001",
+      "relation_type": "avoid",
+      "condition": null,
+      "value": null,
+      "unit": null,
+      "evidence": "避免加工食品"
+    }
+  ]
+}
+
+---
+
+## CKD 特殊規則
+
+若出現：
+
+- CKD stage 3
+- CKD stage 4
+- Dialysis patient
+
+請分開建立 rules，condition 寫明 stage。
+
+例如：
+
+condition: "CKD Stage 3"
+
+---
+
+## 同義詞自動合併
+
+鹽巴 / 食鹽 / Sodium chloride → Sodium
+
+血糖 / 空腹血糖 → Glucose（依上下文）
+
+壞膽固醇 → LDL Cholesterol
+
+---
+
+## 最終輸出要求
+
+將檔案放至：
+
+workspace/src/chronic_disease_rules/output/chronic_disease_rules_v2.py
+
+只輸出 JSON
+不要解釋
+不要 markdown
+不要省略規則
+同一份文件全部整理完
+只整理和營養成分或食材相關的規則，運動、抽菸、睡眠或是需監測血壓等非飲食相關的注意事項，一律略過
+若是沒有找到相關規則的疾病，就不列出該疾病
+
+---
+
+## 最重要原則
+
+Knowledge Graph 主體是：
+
+Disease ←→ Nutrition ←→ Ingredient ←→ dish
+
+現在開始處理我提供的檔案。

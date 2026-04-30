@@ -1,0 +1,2979 @@
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d13" for="edge" attr.name="level" attr.type="long" />
+  <key id="d12" for="edge" attr.name="human_readable_id" attr.type="long" />
+  <key id="d11" for="edge" attr.name="id" attr.type="string" />
+  <key id="d10" for="edge" attr.name="source_id" attr.type="string" />
+  <key id="d9" for="edge" attr.name="description" attr.type="string" />
+  <key id="d8" for="edge" attr.name="weight" attr.type="double" />
+  <key id="d7" for="node" attr.name="level" attr.type="long" />
+  <key id="d6" for="node" attr.name="cluster" attr.type="string" />
+  <key id="d5" for="node" attr.name="id" attr.type="string" />
+  <key id="d4" for="node" attr.name="human_readable_id" attr.type="long" />
+  <key id="d3" for="node" attr.name="degree" attr.type="long" />
+  <key id="d2" for="node" attr.name="source_id" attr.type="string" />
+  <key id="d1" for="node" attr.name="description" attr.type="string" />
+  <key id="d0" for="node" attr.name="type" attr.type="string" />
+  <graph edgedefault="undirected">
+    <node id="&quot;CHARLES DICKENS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Charles Dickens is the author of 'A Christmas Carol', a renowned writer known for his literary works and contributions to Victorian literature."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">0</data>
+      <data key="d5">b45241d70f0e43fca764df95b2b81f77</data>
+    </node>
+    <node id="&quot;ARTHUR RACKHAM&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Arthur Rackham is the illustrator of 'A Christmas Carol', recognized for his detailed and imaginative illustrations."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">1</data>
+      <data key="d5">4119fd06010c494caa07f439b333f4c5</data>
+    </node>
+    <node id="&quot;J. B. LIPPINCOTT COMPANY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"J. B. Lippincott Company is a publishing organization responsible for publishing and reprinting 'A Christmas Carol' in various editions."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">2</data>
+      <data key="d5">d3835bf3dda84ead99deadbeac5d0d7d</data>
+    </node>
+    <node id="&quot;PHILADELPHIA AND NEW YORK&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Philadelphia and New York are the cities where 'A Christmas Carol' was originally published in 1915, indicating the publication locations."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">3</data>
+      <data key="d5">077d2820ae1845bcbb1803379a3d1eae</data>
+    </node>
+    <node id="&quot;DECEMBER 24, 2007&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The release date of the eBook version of 'A Christmas Carol', marking its digital publication anniversary."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">4</data>
+      <data key="d5">3671ea0dd4e84c1a9b02c5ab2c8f4bac</data>
+    </node>
+    <node id="&quot;1843&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The original publication year of 'A Christmas Carol', marking its first release date."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">5</data>
+      <data key="d5">19a7f254a5d64566ab5cc15472df02de</data>
+    </node>
+    <node id="&quot;BOB CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Bob Cratchit is a character in Charles Dickens' "A Christmas Carol" who serves as Ebenezer Scrooge's underpaid and humble clerk. He is known for his hard work, modesty, warmth, and cheerful nature. Despite his financial hardships, Cratchit values family and embodies the spirit of Christmas through his caring attitude and festive spirit. He is deeply devoted to his family, particularly to his son Tiny Tim, and demonstrates kindness, hopefulness, and resilience in the face of adversity. Cratchit is also associated with themes of social inequality and compassion, illustrating the importance of family, generosity, and the true meaning of Christmas. He is proud of his family traditions, such as leading a Christmas toast and expressing pride in their modest celebrations, including their pudding. Overall, Bob Cratchit represents kindness, family values, and the enduring human spirit amidst hardship.</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1,06f8f60fe63e5736ed00220d9f99d3f8,0ca1b9289b4d44cdf9a92b936c6cf02e,4d24514bfd653ec63181d9d824eb98ef,5645a7c2235d7684a40835dfccde9e5d,625dd4ebd52c06ed1525faad129fbba9,696cd4a0ae22e395f3c9d04cfcea8d49,6b5812a07d880d92f055d038934b2b87,c1a3098d7dc9c7384be625b31c7d1e1d,e1a9a4cd5b8b7a41149299fb58a5e156,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">6</data>
+      <data key="d5">e7ffaee9d31d4d3c96e04f911d0a8f9e</data>
+    </node>
+    <node id="&quot;PETER CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Peter Cratchit is Bob Cratchit's son, a character representing the Cratchit family's warmth and resilience."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">7</data>
+      <data key="d5">f7e11b0e297a44a896dc67928368f600</data>
+    </node>
+    <node id="&quot;TIM CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Tim Cratchit, also known as Tiny Tim, is the youngest son of Bob Cratchit, characterized as a cripple and symbol of innocence and hope."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">8</data>
+      <data key="d5">1fd3fa8bb5a2408790042ab9573779ee</data>
+    </node>
+    <node id="&quot;EBENEZER SCROOGE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Ebenezer Scrooge is the main character and protagonist of the story, depicted as a miserly old man who initially exhibits greed and a lack of compassion. Through supernatural visits that reveal visions of his past, present, and future, Ebenezer Scrooge undergoes a profound moral transformation. These experiences lead to his moral awakening and eventual redemption, highlighting his journey from selfishness to generosity and kindness.</data>
+      <data key="d2">4dd973f86fac64800eb57dc9848d3136,c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">9</data>
+      <data key="d5">27f9fbe6ad8c4a8b9acee0d3596ed57c</data>
+    </node>
+    <node id="&quot;GHOST OF CHRISTMAS PAST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">The Ghost of Christmas Past is a supernatural spirit that appears to guide Ebenezer Scrooge through his memories of past Christmases. It is characterized by a fluctuating, dissolving form and a bright jet of light emanating from its head. The spirit serves as a representation of memories of Christmases gone by, influencing Scrooge's reflections on his earlier life. It appears during key scenes, such as illuminating Fezziwig's festive celebration, prompting Scrooge to reflect on happiness and generosity. The Ghost of Christmas Past shows Scrooge scenes from his own past, highlighting his transformation over time and emphasizing the consequences of his greed. Its role is to prompt introspection and encourage change by revealing the impact of his previous choices and experiences.</data>
+      <data key="d2">312a70793b39dccac6fb4e4b0d23df0d,4b5a2c29bc3f579c8040c45f2a9363d0,4d24514bfd653ec63181d9d824eb98ef,6359ab00dbbec9c39edad51589aea3ae,c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">10</data>
+      <data key="d5">e1fd0e904a53409aada44442f23a51cb</data>
+    </node>
+    <node id="&quot;GHOST OF CHRISTMAS PRESENT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">The Ghost of Christmas Present is a supernatural spirit that embodies the current Christmas celebration. It guides Scrooge through scenes of holiday cheer, joy, and community, revealing the festive spirit and the warmth of human kindness. The spirit also exposes the plight of those less fortunate during the holiday season, fostering compassion and moral reflection in Scrooge. By showcasing scenes of generosity and human connection, the Ghost of Christmas Present encourages Scrooge's transformation towards greater kindness and charitable behavior.</data>
+      <data key="d2">3e0edc9c6b1dbff5eaeaf248e6181926,4d24514bfd653ec63181d9d824eb98ef,adad8724255cb219e0e4760c3773404c,c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">11</data>
+      <data key="d5">de988724cfdf45cebfba3b13c43ceede</data>
+    </node>
+    <node id="&quot;GHOST OF CHRISTMAS YET TO COME&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">The Ghost of Christmas Yet to Come is a supernatural spectral figure that represents future consequences and serves as a warning to Ebenezer Scrooge. It is depicted as a ghostly entity that shows Scrooge visions of his possible future, including his death and the outcomes resulting from his current actions. This spirit functions as a symbol of death and the inevitable consequences of one's behavior, prompting Scrooge to reconsider his ways and inspiring his transformation.</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef,4dd973f86fac64800eb57dc9848d3136,c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">12</data>
+      <data key="d5">96aad7cb4b7d40e9b7e13b94a67af206</data>
+    </node>
+    <node id="&quot;GHOST OF JACOB MARLEY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Ghost of Jacob Marley is Scrooge's former business partner, whose ghost visits him to warn of the need for moral redemption."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">13</data>
+      <data key="d5">c9632a35146940c2a86167c7726d35e9</data>
+    </node>
+    <node id="&quot;MRS. CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Mrs. Cratchit is the wife of Bob Cratchit and a caring mother who manages her family with warmth and resilience. She is deeply involved in household preparations, including cooking and preparing Christmas dinner, and demonstrates her affection through gestures such as kissing her family members, embodying familial love and warmth. Mrs. Cratchit supports her family emotionally and practically, expressing her feelings about their modest life and showing support for her husband and children. Her character is portrayed as nurturing, supportive, and dedicated to maintaining a loving and warm family environment during the holiday season and beyond.</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8,0cdc0e3848cc2f8d788eaccbd7854734,4dd973f86fac64800eb57dc9848d3136,5645a7c2235d7684a40835dfccde9e5d,625dd4ebd52c06ed1525faad129fbba9,6b5812a07d880d92f055d038934b2b87,c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">14</data>
+      <data key="d5">9646481f66ce4fd2b08c2eddda42fc82</data>
+    </node>
+    <node id="&quot;A CHRISTMAS CAROL&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A Christmas Carol is the story's central event, depicting the transformation of Ebenezer Scrooge during Christmas time."</data>
+      <data key="d2">c1a3098d7dc9c7384be625b31c7d1e1d</data>
+      <data key="d3">0</data>
+      <data key="d4">15</data>
+      <data key="d5">d91a266f766b4737a06b0fda588ba40b</data>
+    </node>
+    <node id="&quot;SCROOGE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Ebenezer Scrooge is a central character in Charles Dickens' "A Christmas Carol," depicted as a miserly, unkind, and solitary old man who owns chambers in London and works in a counting-house. Initially characterized by greed, miserliness, and a lack of charity and joy, especially during Christmas, he despises the holiday and is involved in themes of greed, remorse, and moral reflection. Throughout the story, Scrooge undergoes a profound spiritual transformation after being visited by the ghost of his former partner Jacob Marley and subsequent spirits representing Christmas past, present, and future. These supernatural encounters prompt him to reflect on his own feelings, his past misdeeds, and the consequences of his actions, including his neglect of others like Bob Cratchit and Tiny Tim. Initially dogged, fearful, and unfeeling, Scrooge experiences moments of nostalgia, agitation, and moral awakening, ultimately recognizing the value of generosity, compassion, and the Christmas spirit. His transformation is marked by a shift from greed and miserliness to kindness and joy, leading to his newfound generosity and joy, especially towards those in need. This character's journey embodies themes of redemption, remorse, and the moral lessons of Christmas, illustrating his evolution from a stingy, unfeeling man to a benevolent and caring individual.</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1,06f8f60fe63e5736ed00220d9f99d3f8,0ca1b9289b4d44cdf9a92b936c6cf02e,1c6fcc72a1b3a10fc504cbf305e0c901,1d053f283b452be30ad8678439919b3c,2133f23cd48da7db45725d6fd180a9a6,2398bef3715ca1485012bdd394f7db3e,25293d3af56b1e8bb7387f18e5f830c6,2c53885ea36c9f539ca623101d70b60b,2f4b2f4053b5911c93f7f63677f780fe,312a70793b39dccac6fb4e4b0d23df0d,33439623114354941f9323e7d62c790b,3e0edc9c6b1dbff5eaeaf248e6181926,3edbf99376540faf00d8f5307941932e,41f7fa53e3b8823756ff8863b6d8ca0c,4b5a2c29bc3f579c8040c45f2a9363d0,4d24514bfd653ec63181d9d824eb98ef,4dd973f86fac64800eb57dc9848d3136,5e8b09e4b9e2e758c5a254dc558da1dc,603c96b108bdd4c8c8ee63857f031a52,625dd4ebd52c06ed1525faad129fbba9,6359ab00dbbec9c39edad51589aea3ae,696cd4a0ae22e395f3c9d04cfcea8d49,6b5812a07d880d92f055d038934b2b87,7873ef9345f51b5cea209977c77a2895,788fa4df64efbe366465a2d79c57540d,7ba8563b46e83c78694383e9184f6fbc,7c3c14fb7534245699334c3f3af741d1,82b4ace78f477e67498bca9fdf85f5c6,8b240ac8efc37250a30c472cdc63f1ff,a340401c3ec3b6740e9a82b46c6623a4,a9d95369d1d8bbd8108e7bbd93d652ec,adad8724255cb219e0e4760c3773404c,dd956afe0e7b4cef80dab966b9f82753,dda7c862f830b65e72990cccdaf7190a,e1a9a4cd5b8b7a41149299fb58a5e156,e6179d70c9e4e7bbf0b591e9ece706e8,e63efed56e4606f35b676ab40e2432aa,e7b8bfb3e2c427ea3b889edc137f6ec5,f12da31d40e34efbe8c2c848cff576db,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">53</data>
+      <data key="d4">16</data>
+      <data key="d5">bc0e3f075a4c4ebbb7c7b152b65a5625</data>
+    </node>
+    <node id="&quot;MARLEY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Marley is a character associated with Ebenezer Scrooge, known for being Scrooge's deceased business partner who died seven years prior to the events of the story. He appears as a ghostly figure, often depicted as a transparent phantom bound by a heavy chain made of cash-boxes, keys, and deeds, symbolizing his greed and misdeeds in life. Marley's ghost appears to warn Scrooge about his own fate and the consequences of his selfishness, playing a significant role in influencing Scrooge's journey toward redemption. His presence is also symbolized by his ghostly face appearing on the knocker of Scrooge's door, emphasizing his lingering influence and the importance of moral reflection in the narrative.</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e,2133f23cd48da7db45725d6fd180a9a6,5e8b09e4b9e2e758c5a254dc558da1dc,e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">17</data>
+      <data key="d5">254770028d7a4fa9877da4ba0ad5ad21</data>
+    </node>
+    <node id="&quot;MARLEY'S GHOST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">Marley's Ghost is a supernatural spirit that haunts Ebenezer Scrooge, serving as a key figure in the story's supernatural elements. It is the spirit of Jacob Marley, who appears to warn Scrooge of his past misdeeds and future consequences. Bound by chains as a symbol of his previous sins, Marley's Ghost plays a pivotal role in prompting Scrooge's reflection and transformation by highlighting the importance of moral redemption and the consequences of a life led without compassion or generosity.</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e,82b4ace78f477e67498bca9fdf85f5c6,a340401c3ec3b6740e9a82b46c6623a4</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">18</data>
+      <data key="d5">4a67211867e5464ba45126315a122a8a</data>
+    </node>
+    <node id="&quot;CHRISTMAS EVE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">Christmas Eve is a significant event in the story, marking a time of key visits and transformations. It is also the occasion celebrated by the clerk with joy, emphasizing themes of charity and personal change. Overall, Christmas Eve serves as a pivotal moment that highlights moments of generosity, reflection, and transformation within the narrative.</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1,0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">19</data>
+      <data key="d5">04dbbb2283b845baaeac0eaf0c34c9da</data>
+    </node>
+    <node id="&quot;CORNHILL&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Cornhill is a location mentioned as the site of Bob Cratchit's slide, indicating a place in London."</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d3">0</data>
+      <data key="d4">20</data>
+      <data key="d5">1943f245ee4243bdbfbd2fd619ae824a</data>
+    </node>
+    <node id="&quot;THE BED&quot;">
+      <data key="d0">"LOCATION"</data>
+      <data key="d1">"The bed is a setting where nobody is found, emphasizing a scene of suspense or mystery."</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d3">0</data>
+      <data key="d4">21</data>
+      <data key="d5">273daeec8cad41e6b3e450447db58ee7</data>
+    </node>
+    <node id="&quot;THE PHANTOMS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The air filled with wandering phantoms signifies a supernatural occurrence during the story."</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d3">0</data>
+      <data key="d4">22</data>
+      <data key="d5">e69dc259edb944ea9ea41264b9fcfe59</data>
+    </node>
+    <node id="&quot;FEZZIWIG&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Fezziwig is a jovial and benevolent character renowned for his generosity and joyful spirit. He is known for hosting lively Christmas celebrations at his warehouse, where he exemplifies kindness and the joy of giving. During these festivities, Fezziwig is depicted as a jovial individual who dances with Mrs. Fezziwig, symbolizing his festive and benevolent nature. Overall, Fezziwig embodies the spirit of generosity, happiness, and festive cheer, making him a beloved figure associated with warmth and merriment during the Christmas season.</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e,33439623114354941f9323e7d62c790b,3edbf99376540faf00d8f5307941932e,4b5a2c29bc3f579c8040c45f2a9363d0</data>
+      <data key="d6">7</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">23</data>
+      <data key="d5">e2f5735c7d714423a2c4f61ca2644626</data>
+    </node>
+    <node id="&quot;CHRISTMAS TOYS AND PRESENTS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Christmas Toys and Presents" are items associated with the festive season, symbolizing holiday celebration and generosity. They depict a festive scene and the spirit of giving, as exemplified by the Christmas toys and presents brought home by the father, representing the joy and tradition of gift-giving during Christmas.</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e,dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d3">0</data>
+      <data key="d4">24</data>
+      <data key="d5">deece7e64b2a4628850d4bb6e394a9c3</data>
+    </node>
+    <node id="&quot;FRED&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Fred is Scrooge's nephew, characterized by his good humor, joyful attitude, and affectionate nature towards his family. He is supportive of celebrating Christmas and actively defends the festive spirit against Scrooge's initial skepticism. Fred plays a significant role in fostering family ties and social relationships, often hosting Scrooge for dinner and inviting him to participate in holiday festivities. His actions symbolize reconciliation and the importance of family, as well as his efforts to bring joy and festive spirit to those around him. Additionally, Fred is known for initiating the game of Yes and No, further contributing to the cheerful and lively atmosphere of the holiday season.</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e,25293d3af56b1e8bb7387f18e5f830c6,788fa4df64efbe366465a2d79c57540d,e1a9a4cd5b8b7a41149299fb58a5e156,eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d6">6</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">25</data>
+      <data key="d5">e657b5121ff8456b9a610cfaead8e0cb</data>
+    </node>
+    <node id="&quot;THE GHOST OF CHRISTMAS PRESENT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The ghost appears to show Scrooge scenes of Christmas cheer, influencing his transformation."</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d3">0</data>
+      <data key="d4">26</data>
+      <data key="d5">bf4e255cdac94ccc83a56435a5e4b075</data>
+    </node>
+    <node id="&quot;THE END OF IT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Refers to the conclusion of the story, marking the final resolution."</data>
+      <data key="d2">0ca1b9289b4d44cdf9a92b936c6cf02e</data>
+      <data key="d3">0</data>
+      <data key="d4">27</data>
+      <data key="d5">3b040bcc19f14e04880ae52881a89c1c</data>
+    </node>
+    <node id="&quot;OLD MARLEY'S FUNERAL&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The funeral of Marley is a key event that underscores the story's themes of death and the afterlife, and is referenced multiple times to establish Marley&#8217;s death."</data>
+      <data key="d2">5e8b09e4b9e2e758c5a254dc558da1dc</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">28</data>
+      <data key="d5">3d6b216c14354332b1bf1927ba168986</data>
+    </node>
+    <node id="&quot;SCROOGE AND MARLEY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The firm of Scrooge and Marley is the business partnership between Scrooge and Marley, symbolizing their joint enterprise and legacy."</data>
+      <data key="d2">5e8b09e4b9e2e758c5a254dc558da1dc</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">29</data>
+      <data key="d5">1c109cfdc370463eb6d537e5b7b382fb</data>
+    </node>
+    <node id="&quot;CITY OF LONDON&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The City of London is the geographical setting where Scrooge's counting-house is located, representing the financial and social environment of the story."</data>
+      <data key="d2">5e8b09e4b9e2e758c5a254dc558da1dc</data>
+      <data key="d3">0</data>
+      <data key="d4">30</data>
+      <data key="d5">3d0dcbc8971b415ea18065edc4d8c8ef</data>
+    </node>
+    <node id="&quot;NEPHEW&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Scrooge's nephew is a cheerful, kind-hearted, and hearty man who actively advocates for the spirit of Christmas, emphasizing its core values of charity, forgiveness, and community. He is a joyful family member who participates enthusiastically in Christmas festivities and games, demonstrating affection towards his family. Known for his good humor and laughter, he plays a significant role in festive social interactions and strives to reconcile with Scrooge, embodying the warmth and generosity associated with the holiday season.</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6,7873ef9345f51b5cea209977c77a2895,8b240ac8efc37250a30c472cdc63f1ff,adad8724255cb219e0e4760c3773404c</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">31</data>
+      <data key="d5">68105770b523412388424d984e711917</data>
+    </node>
+    <node id="&quot;CLERK&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">The Clerk is an employee of Ebenezer Scrooge, working in his counting-house or office. He is portrayed as a modest, humble, and somewhat resigned individual who performs administrative and daily tasks essential to Scrooge's business. The Clerk represents the working class and reflects the impact of Scrooge's attitude towards money and service. Despite his modest position and the influence of Scrooge's demeanor, the Clerk is depicted as a cheerful individual who celebrates Christmas Eve with joy, highlighting a contrast between his humble role and his festive spirit.</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1,312a70793b39dccac6fb4e4b0d23df0d,7873ef9345f51b5cea209977c77a2895,8b240ac8efc37250a30c472cdc63f1ff</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">32</data>
+      <data key="d5">85c79fd84f5e4f918471c386852204c5</data>
+    </node>
+    <node id="&quot;CITY&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The City is a large, bustling urban area characterized by busy streets, shops, and a lively atmosphere, especially during the Christmas season. It is depicted as a vibrant environment where scenes of commerce and social activity take place, exemplified by scenes of Christmas-time activity and the presence of crowds. The City serves as the setting for key events in the story, including the interactions between Scrooge and Bob Cratchit, as well as the location of Scrooge's counting-house, which is described as being in a cold, foggy, and bustling environment. Additionally, the City features open spaces where significant moments occur, such as the scene after the Christmas party where Scrooge and the Spirit stand together. Overall, the City functions as the lively, urban backdrop for the narrative's events and characters.</data>
+      <data key="d2">1c6fcc72a1b3a10fc504cbf305e0c901,33439623114354941f9323e7d62c790b,3edbf99376540faf00d8f5307941932e,8b240ac8efc37250a30c472cdc63f1ff,e63efed56e4606f35b676ab40e2432aa,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">33</data>
+      <data key="d5">eae4259b19a741ab9f9f6af18c4a0470</data>
+    </node>
+    <node id="&quot;CHRISTMAS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">Christmas is a central and significant holiday in the story, symbolizing themes of generosity, kindness, joy, family, renewal, and the spirit of giving. It serves as a festive backdrop for the narrative, highlighting social gatherings, charity, warmth, and reflection. The holiday is depicted as a time of joy, laughter, and community, contrasting with scenes of hardship and initial attitudes of greed, particularly exemplified by Scrooge's character. Throughout the story, Christmas represents a period of transformation, redemption, and moral reflection, emphasizing the importance of compassion, social connection, and the renewal of the human spirit. The celebration involves family gatherings, singing, feasts, gifts, and festivities that underscore the themes of hope and kindness, ultimately inspiring characters to embrace generosity and moral growth.</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734,1d053f283b452be30ad8678439919b3c,2398bef3715ca1485012bdd394f7db3e,25293d3af56b1e8bb7387f18e5f830c6,312a70793b39dccac6fb4e4b0d23df0d,33439623114354941f9323e7d62c790b,3e0edc9c6b1dbff5eaeaf248e6181926,41f7fa53e3b8823756ff8863b6d8ca0c,4d24514bfd653ec63181d9d824eb98ef,625dd4ebd52c06ed1525faad129fbba9,696cd4a0ae22e395f3c9d04cfcea8d49,7873ef9345f51b5cea209977c77a2895,788fa4df64efbe366465a2d79c57540d,7ba8563b46e83c78694383e9184f6fbc,7c3c14fb7534245699334c3f3af741d1,8b240ac8efc37250a30c472cdc63f1ff,a9d95369d1d8bbd8108e7bbd93d652ec,adad8724255cb219e0e4760c3773404c,e1a9a4cd5b8b7a41149299fb58a5e156,e63efed56e4606f35b676ab40e2432aa,eaa11e11b4e9c6586b9128388a9fe4ea,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d6">4</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">34</data>
+      <data key="d5">3138f39f2bcd43a69e0697cd3b05bc4d</data>
+    </node>
+    <node id="&quot;COUNTING-HOUSE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">The counting-house is the business establishment where Scrooge works, serving as a symbol of his wealth, business dealings, and the cold, transactional nature of his character.</data>
+      <data key="d2">8b240ac8efc37250a30c472cdc63f1ff,e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">35</data>
+      <data key="d5">dde131ab575d44dbb55289a6972be18f</data>
+    </node>
+    <node id="&quot;WEATHER&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The weather described as cold, bleak, foggy, and biting sets the atmospheric tone of the story, reflecting the somber mood and the harshness of Scrooge's outlook."</data>
+      <data key="d2">8b240ac8efc37250a30c472cdc63f1ff</data>
+      <data key="d3">0</data>
+      <data key="d4">36</data>
+      <data key="d5">de9e343f2e334d88a8ac7f8813a915e5</data>
+    </node>
+    <node id="&quot;PORTLY GENTLEMEN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Portly gentlemen are charitable visitors who come to Scrooge's office during Christmas to collect donations for the poor."</data>
+      <data key="d2">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">37</data>
+      <data key="d5">e2bf260115514fb3b252fd879fb3e7be</data>
+    </node>
+    <node id="&quot;MR. MARLEY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Mr. Marley was Scrooge's deceased business partner, whose ghost visits Scrooge to warn him of his miserly ways and impending doom."</data>
+      <data key="d2">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">38</data>
+      <data key="d5">b462b94ce47a4b8c8fffa33f7242acec</data>
+    </node>
+    <node id="&quot;POOR AND DESTITUTE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The poor and destitute are the vulnerable populations that the charity efforts aim to support during Christmas."</data>
+      <data key="d2">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d3">0</data>
+      <data key="d4">39</data>
+      <data key="d5">17ed1d92075643579a712cc6c29e8ddb</data>
+    </node>
+    <node id="&quot;PRISONS&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">Prisons are institutions for confinement that are part of the social system supporting the poor and destitute. They are also recognized as institutions of punishment and social neglect, often subject to social critique. For example, Scrooge questions the role of prisons within society, highlighting their function as mechanisms of social control and their association with social inequality and neglect.</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c,7873ef9345f51b5cea209977c77a2895,e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d3">1</data>
+      <data key="d4">40</data>
+      <data key="d5">3ce7c210a21b4deebad7cc9308148d86</data>
+    </node>
+    <node id="&quot;UNION WORKHOUSES&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">Union Workhouses are social institutions established to provide shelter and employment for impoverished individuals, functioning as part of the broader social welfare system. These establishments served as places where the poor could live and work, offering support and assistance to those in need.</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c,7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d3">1</data>
+      <data key="d4">41</data>
+      <data key="d5">d64ed762ea924caa95c8d06f072a9a96</data>
+    </node>
+    <node id="&quot;TREADMILL AND POOR LAW&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Treadmill and Poor Law are social systems in operation, representing the harsh measures for managing poverty during the period."</data>
+      <data key="d2">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d3">0</data>
+      <data key="d4">42</data>
+      <data key="d5">adf4ee3fbe9b4d0381044838c4f889c8</data>
+    </node>
+    <node id="&quot;LIBERTY AND CHARITY&quot;">
+      <data key="d0">"CONCEPT"</data>
+      <data key="d1">"Themes of charity, generosity, and social responsibility are emphasized during the Christmas season in the narrative."</data>
+      <data key="d2">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d3">0</data>
+      <data key="d4">43</data>
+      <data key="d5">32ee140946e5461f9275db664dc541a5</data>
+    </node>
+    <node id="&quot;GENTLEMAN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The gentleman is a representative of charitable organizations, advocating for aid to the poor during Christmas."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">44</data>
+      <data key="d5">c160b9cb27d6408ba6ab20214a2f3f81</data>
+    </node>
+    <node id="&quot;TREADMILL&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Treadmill is a device used in workhouses to punish or employ the poor, symbolizing harsh social policies."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d3">1</data>
+      <data key="d4">45</data>
+      <data key="d5">23527cd679ff4d5a988d52e7cd056078</data>
+    </node>
+    <node id="&quot;POOR LAW&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Poor Law is legislation aimed at providing relief to the impoverished through workhouses and other means."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d3">2</data>
+      <data key="d4">46</data>
+      <data key="d5">f1c6eed066f24cbdb376b910fce29ed4</data>
+    </node>
+    <node id="&quot;LORD MAYOR&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Lord Mayor is a civic leader overseeing the Mansion House, involved in Christmas celebrations and civic duties."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d3">1</data>
+      <data key="d4">47</data>
+      <data key="d5">83a6cb03df6b41d8ad6ee5f6fef5f024</data>
+    </node>
+    <node id="&quot;MANSION HOUSE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Mansion House is the official residence of the Lord Mayor, hosting official events and orders."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d3">1</data>
+      <data key="d4">48</data>
+      <data key="d5">147c038aef3e4422acbbc5f7938c4ab8</data>
+    </node>
+    <node id="&quot;GOTHIC TOWER&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"A Gothic tower of a church, symbolizing the setting's historical and architectural context, becoming invisible in fog."</data>
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d3">0</data>
+      <data key="d4">49</data>
+      <data key="d5">b7702b90c7f24190b864e8c6e64612a5</data>
+    </node>
+    <node id="&quot;WORKHOUSES&quot;">
+      <data key="d2">41f7fa53e3b8823756ff8863b6d8ca0c,e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d1">Workhouses are referenced as part of the social critique, symbolizing poverty and societal neglect.</data>
+      <data key="d3">1</data>
+      <data key="d4">50</data>
+      <data key="d5">de6fa24480894518ab3cbcb66f739266</data>
+    </node>
+    <node id="&quot;MARLEY'S FACE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Marley's face appears on the knocker of Scrooge's door, symbolizing the ghost of Marley, Scrooge's deceased partner, and heralding supernatural events."</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">51</data>
+      <data key="d5">6fae5ee1a831468aa585a1ea09095998</data>
+    </node>
+    <node id="&quot;LONDON&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">London is the city where the story is set, serving as the primary backdrop for the narrative. It is characterized by fog, frost, and old buildings, which contribute to the atmospheric setting of the story. London provides the historical and cultural context for the events that unfold, including the urban environment in which Ebenezer Scrooge's life takes place. Additionally, London&#8217;s streets are depicted as the location where the animal in the game is said to live, further emphasizing its role as a central setting for various elements of the story.</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1,312a70793b39dccac6fb4e4b0d23df0d,788fa4df64efbe366465a2d79c57540d,a9d95369d1d8bbd8108e7bbd93d652ec</data>
+      <data key="d6">4</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">52</data>
+      <data key="d5">ef32c4b208d041cc856f6837915dc1b0</data>
+    </node>
+    <node id="&quot;THE OFFICE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The office is Scrooge's workplace, a gloomy, old building in London where he conducts his business and where the story's events unfold."</data>
+      <data key="d2">0199efcc183aac09eefc978fa1b715f1</data>
+      <data key="d3">0</data>
+      <data key="d4">53</data>
+      <data key="d5">07b2425216bd4f0aa4e079827cb48ef5</data>
+    </node>
+    <node id="&quot;CORPORATION&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The corporation is mentioned as part of a list including aldermen and livery, representing societal institutions involved in commerce and governance."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">54</data>
+      <data key="d5">2670deebfa3f4d69bb82c28ab250a209</data>
+    </node>
+    <node id="&quot;ALDERMEN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Aldermen are local government officials associated with municipal authority, mentioned as part of societal entities."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">55</data>
+      <data key="d5">404309e89a5241d6bff42c05a45df206</data>
+    </node>
+    <node id="&quot;LIVERY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Livery refers to a guild or organization related to trade or crafts, included among societal institutions."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">56</data>
+      <data key="d5">b785a9025069417f94950ad231bb1441</data>
+    </node>
+    <node id="&quot;HOUSE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The house serves as a central setting in various contexts, symbolizing home and familial warmth as the primary environment for family scenes. It is depicted as the place where children engage in activities such as going to bed after their excitement. Additionally, the house is the setting for significant events, including Scrooge's supernatural encounter, which takes place in different areas within the house, such as the hall, rooms, and staircase. Overall, the house functions both as a symbol of comfort and as a backdrop for key narrative moments.</data>
+      <data key="d2">1d053f283b452be30ad8678439919b3c,2133f23cd48da7db45725d6fd180a9a6,dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d6">3</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">57</data>
+      <data key="d5">3b6cd96a27304614850709aba1c9598b</data>
+    </node>
+    <node id="&quot;DUTCH MERCHANT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A Dutch merchant is referenced as the builder of the old fireplace, representing historical craftsmanship."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d3">0</data>
+      <data key="d4">58</data>
+      <data key="d5">d54956b79dd147f894b67a8b97dcbef0</data>
+    </node>
+    <node id="&quot;OLD FIRE-GUARD&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"An old fire-guard is mentioned as part of the household items, indicating a person associated with the household's maintenance."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d3">0</data>
+      <data key="d4">59</data>
+      <data key="d5">958beecdb5bb4060948415ffd75d2b03</data>
+    </node>
+    <node id="&quot;GAS-LAMPS&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Gas-lamps are part of the street lighting, contributing to the dark atmosphere of the scene."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d3">0</data>
+      <data key="d4">60</data>
+      <data key="d5">b999ed77e19e4f85b7f1ae79af5c002a</data>
+    </node>
+    <node id="&quot;FIREPLACE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The fireplace is a central setting element, described with Dutch tiles illustrating biblical scenes, creating a contemplative atmosphere."</data>
+      <data key="d2">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d3">0</data>
+      <data key="d4">61</data>
+      <data key="d5">48c0c4d72da74ff5bb926fa0c856d1a7</data>
+    </node>
+    <node id="&quot;JACOB MARLEY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Jacob Marley is a deceased business partner of Ebenezer Scrooge, who appears as a ghost to warn him about the consequences of his greed and selfishness. As a spirit condemned to wander the world bound by a heavy chain he forged in life, Marley symbolizes remorse and unfulfilled duties. His ghostly visitations serve as moral lessons, emphasizing the importance of redemption and encouraging Scrooge to change his ways to avoid a similar fate.</data>
+      <data key="d2">603c96b108bdd4c8c8ee63857f031a52,7c3c14fb7534245699334c3f3af741d1,a9d95369d1d8bbd8108e7bbd93d652ec,e63efed56e4606f35b676ab40e2432aa,e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">62</data>
+      <data key="d5">4f3c97517f794ebfb49c4c6315f9cf23</data>
+    </node>
+    <node id="&quot;GHOST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">The entity "GHOST" refers to a collection of supernatural spirits that play a central role in Charles Dickens' "A Christmas Carol." These spirits serve as moral messengers and catalysts for Scrooge's transformation. The Ghosts include the spirit of Jacob Marley, who appears as a transparent, chain-fettered apparition condemned to eternal wandering, warning Scrooge about his own fate and emphasizing the importance of charity and benevolence. Additionally, the Ghosts of Christmas Past, Present, and Yet to Come (or Future) are supernatural entities that guide Scrooge through visions of his own life, illustrating memories, current circumstances, and potential future outcomes, including Tiny Tim's possible death. The Ghost of Christmas Past shows Scrooge his earlier life and memories, while the Ghost of Christmas Present reveals scenes of current Christmas celebrations and social realities. The Ghost of Christmas Yet to Come, also known as the Spirit of Christmas Yet to Come, embodies the spirit of Christmas yet to come and presents a foreboding vision of the future, including the death of Tiny Tim. These spirits are unearthly visitors who enter through locked doors, symbolizing supernatural intervention in Scrooge's life. Collectively, these Ghosts serve to guide Scrooge towards moral reflection, redemption, and a renewed sense of charity, embodying the spirit of Christmas and the moral lessons associated with it.</data>
+      <data key="d2">1d053f283b452be30ad8678439919b3c,2398bef3715ca1485012bdd394f7db3e,603c96b108bdd4c8c8ee63857f031a52,6b5812a07d880d92f055d038934b2b87,788fa4df64efbe366465a2d79c57540d,82b4ace78f477e67498bca9fdf85f5c6,a340401c3ec3b6740e9a82b46c6623a4,a9d95369d1d8bbd8108e7bbd93d652ec,dd956afe0e7b4cef80dab966b9f82753,e63efed56e4606f35b676ab40e2432aa,e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">63</data>
+      <data key="d5">1745a2485a9443bab76587ad650e9be0</data>
+    </node>
+    <node id="&quot;FIRE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The fireplace in Scrooge's room is a central setting where the ghost appears and the supernatural phenomena occur."</data>
+      <data key="d2">e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">64</data>
+      <data key="d5">32e6ccab20d94029811127dbbe424c64</data>
+    </node>
+    <node id="&quot;BELL&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The entity "BELL" is associated with both the disused bell in Scrooge's room and the hour bell that marks the passage of time. The disused bell begins to swing and ring, signaling the supernatural presence and the arrival of Marley&#8217;s ghost, indicating its role in supernatural events. Additionally, the hour bell's ringing signifies the passage of time and the timing of supernatural visitations, emphasizing its function as a marker of significant moments within the supernatural narrative.</data>
+      <data key="d2">6359ab00dbbec9c39edad51589aea3ae,e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">65</data>
+      <data key="d5">94a964c6992945ebb3833dfdfdc8d655</data>
+    </node>
+    <node id="&quot;DOOR&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The cellar door and the heavy door of Scrooge's room are involved in the ghost's entrance, emphasizing the supernatural intrusion into the physical space."</data>
+      <data key="d2">e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">66</data>
+      <data key="d5">1eb829d0ace042089f0746f78729696c</data>
+    </node>
+    <node id="&quot;WINGS OF THE WIND&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The phrase 'on the wings of the wind' describes the Ghost's mode of travel, symbolizing swift and unstoppable movement through eternity."</data>
+      <data key="d2">603c96b108bdd4c8c8ee63857f031a52</data>
+      <data key="d3">0</data>
+      <data key="d4">67</data>
+      <data key="d5">015e7b58d1a14b44beab3bbc9f912c18</data>
+    </node>
+    <node id="&quot;CHRISTMAS EVES&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Refers to the period of seven Christmas Eves, during which Jacob Marley has been traveling, emphasizing the passage of time and the weight of remorse."</data>
+      <data key="d2">603c96b108bdd4c8c8ee63857f031a52</data>
+      <data key="d3">0</data>
+      <data key="d4">68</data>
+      <data key="d5">26f88ab3e2e04c33a459ad6270ade565</data>
+    </node>
+    <node id="&quot;NIGHT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The night when Scrooge is visited by the Ghost of Jacob Marley, marking the beginning of his spiritual awakening and the series of ghostly visits."</data>
+      <data key="d2">603c96b108bdd4c8c8ee63857f031a52</data>
+      <data key="d3">0</data>
+      <data key="d4">69</data>
+      <data key="d5">babe97e1d9784cffa1c85abc1e588126</data>
+    </node>
+    <node id="&quot;JACOB&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Jacob is a significant character in the story, serving as both Scrooge's former business partner and the Ghost of Christmas Present. As Scrooge's former business partner, Jacob's death is a pivotal event that prompts reflection on mortality and morality. In his role as the Ghost of Christmas Present, Jacob is a supernatural spirit who warns Scrooge about his impending fate and the visits from other spirits that will follow.</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe,a340401c3ec3b6740e9a82b46c6623a4</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">70</data>
+      <data key="d5">1033a18c45aa4584b2aef6ab96890351</data>
+    </node>
+    <node id="&quot;NIGHT OF THE GHOSTS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The night when Scrooge is visited by three spirits, marking a pivotal supernatural event leading to his moral awakening."</data>
+      <data key="d2">a340401c3ec3b6740e9a82b46c6623a4</data>
+      <data key="d3">0</data>
+      <data key="d4">71</data>
+      <data key="d5">c9b8ce91fc2945b4907fe35519339cac</data>
+    </node>
+    <node id="&quot;THEY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"They are an unspecified organization involved in interfering in human matters, having lost their power forever."</data>
+      <data key="d2">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d3">0</data>
+      <data key="d4">72</data>
+      <data key="d5">fa3c4204421c48609e52c8de2da4c654</data>
+    </node>
+    <node id="&quot;CREATURES&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Creatures are supernatural or spiritual entities whose fate is ambiguous, possibly fading into mist or being enshrouded by mist."</data>
+      <data key="d2">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d3">1</data>
+      <data key="d4">73</data>
+      <data key="d5">53af055f068244d0ac861b2e89376495</data>
+    </node>
+    <node id="&quot;SPIRIT VOICES&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Spirit voices are the intangible voices associated with the creatures, fading together with them, indicating their spiritual or supernatural nature."</data>
+      <data key="d2">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d3">1</data>
+      <data key="d4">74</data>
+      <data key="d5">c03ab3ce8cb74ad2a03b94723bfab3c7</data>
+    </node>
+    <node id="&quot;THE GHOST&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Ghost" is a supernatural entity that guides Ebenezer Scrooge through scenes of his past, present, and future, revealing emotional and moral insights. It influences Scrooge by serving as a symbol of the spirit world and supernatural visitation, ultimately helping him to reflect on his life and moral choices.</data>
+      <data key="d2">696cd4a0ae22e395f3c9d04cfcea8d49,82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">75</data>
+      <data key="d5">ed6d2eee9d7b4f5db466b1f6404d31cc</data>
+    </node>
+    <node id="&quot;THE INVISIBLE WORLD&quot;">
+      <data key="d0">"CONCEPT"</data>
+      <data key="d1">"The Invisible World refers to the supernatural realm that Scrooge glimpses, associated with spirits and ghosts."</data>
+      <data key="d2">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d3">0</data>
+      <data key="d4">76</data>
+      <data key="d5">fc01e9baa80e417c9206f941bb279407</data>
+    </node>
+    <node id="&quot;THE FIRST OF THE THREE SPIRITS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The First of the Three Spirits is a supernatural visitation that occurs during the story, representing the beginning of Scrooge's supernatural journey."</data>
+      <data key="d2">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d3">0</data>
+      <data key="d4">77</data>
+      <data key="d5">56d0e5ebe79e4814bd1463cf6ca21394</data>
+    </node>
+    <node id="&quot;SPIRIT&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">The entity "SPIRIT" refers to a supernatural being associated with Christmas that plays a central role in guiding Ebenezer Scrooge through various moral and spiritual lessons. This spirit is depicted as a ghostly figure involved in showing Scrooge visions of his past, present, and future, with the purpose of prompting his moral reflection and transformation. The Spirit is responsible for revealing scenes from Scrooge's history, including his memories and experiences, as well as providing insights into the consequences of his current actions and the potential future, including the shadows of death and the fate of Tiny Tim. It is also involved in symbolic acts such as sprinkling incense and water on dinners, representing benevolence and the festive spirit. The Spirit's guidance is gentle and influential, often touching Scrooge to evoke change, and it embodies the moral and benevolent aspects of Christmas. The entity is likely composed of multiple manifestations, including the Ghost of Christmas Past, the Ghost of Christmas Present, and the Ghost of Christmas Yet to Come, each serving to illustrate different facets of the holiday's moral and spiritual significance. Overall, the "SPIRIT" functions as a moral guide, a symbol of Christmas, and a supernatural force that encourages moral reflection, benevolence, and the celebration of the festive spirit.</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8,1d053f283b452be30ad8678439919b3c,25293d3af56b1e8bb7387f18e5f830c6,2c53885ea36c9f539ca623101d70b60b,2f4b2f4053b5911c93f7f63677f780fe,312a70793b39dccac6fb4e4b0d23df0d,625dd4ebd52c06ed1525faad129fbba9,6359ab00dbbec9c39edad51589aea3ae,6b5812a07d880d92f055d038934b2b87,788fa4df64efbe366465a2d79c57540d,7ba8563b46e83c78694383e9184f6fbc,dda7c862f830b65e72990cccdaf7190a,f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d6">2</data>
+      <data key="d7">0</data>
+      <data key="d3">4</data>
+      <data key="d4">78</data>
+      <data key="d5">7c49f2710e8b4d3b8dc9310834406ea5</data>
+    </node>
+    <node id="&quot;CHRISTMAS PAST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The event involves the visitation of the Ghost of Christmas Past to Scrooge, revealing his earlier life and experiences."</data>
+      <data key="d2">6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d3">0</data>
+      <data key="d4">79</data>
+      <data key="d5">c6d1e4f56c2843e89cf0b91c10bb6de2</data>
+    </node>
+    <node id="&quot;ROOM&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The "ROOM" is a cozy, well-furnished space that serves as a symbol of domestic comfort and warmth. It is a setting where a family gathers, emphasizing a sense of togetherness and homeliness. The room has been depicted as a transformed space decorated with greenery and filled with festive food, representing a scene of Christmas abundance and seasonal cheer. Additionally, the "ROOM" is the location where Scrooge is initially found, with curtains drawn and the clock striking the hour, indicating a supernatural or significant moment in the narrative. Overall, the "ROOM" functions as a warm, festive, and pivotal setting within the story.</data>
+      <data key="d2">2398bef3715ca1485012bdd394f7db3e,6359ab00dbbec9c39edad51589aea3ae,dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">80</data>
+      <data key="d5">0adb2d9941f34ef7b2f7743cc6225844</data>
+    </node>
+    <node id="&quot;HOLLY&quot;">
+      <data key="d0">"PLANT"</data>
+      <data key="d1">"The holly branch held by the Ghost symbolizes winter and festive imagery, contrasting with the summer flowers on its dress."</data>
+      <data key="d2">6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d3">0</data>
+      <data key="d4">81</data>
+      <data key="d5">6b02373137fd438ba96af28f735cdbdb</data>
+    </node>
+    <node id="&quot;CURTAINS&quot;">
+      <data key="d0">"OBJECT"</data>
+      <data key="d1">"The curtains of Scrooge's bed are drawn aside by an unseen hand, revealing the Ghost and signifying the transition to a supernatural experience."</data>
+      <data key="d2">6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d3">0</data>
+      <data key="d4">82</data>
+      <data key="d5">36a4fcd8efc144e6b8af9a1c7ab8b2ce</data>
+    </node>
+    <node id="&quot;COUNTRY ROAD&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The country road is an open rural area where Scrooge and the Spirit walk, representing a scene from his past."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">83</data>
+      <data key="d5">fbeef791d19b413a9c93c6608286ab63</data>
+    </node>
+    <node id="&quot;MARKET-TOWN&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The market-town is a location from Scrooge's memories, featuring a bridge, church, and river, symbolizing a community scene from his youth."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">84</data>
+      <data key="d5">d2b629c0396f4180a03e16ddf3818589</data>
+    </node>
+    <node id="&quot;MANSION OF DULL RED BRICK&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The mansion is a large, decayed house representing a place of broken fortunes and past neglect, associated with Scrooge's earlier life."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">85</data>
+      <data key="d5">6102fc6619ed422ebc42588bfa97355d</data>
+    </node>
+    <node id="&quot;CHILD&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The neglected child is a symbol of innocence and loneliness, representing a phase of Scrooge's childhood that he revisits in his memories."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">86</data>
+      <data key="d5">8d141c0b80f74b79a05eed7fe161fe49</data>
+    </node>
+    <node id="&quot;FOWLS AND STABLES&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The fowls and stables are part of the mansion's surroundings, indicating a rural, impoverished setting from the past."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">87</data>
+      <data key="d5">e22d1d1cd8d14f12b81828d940f40d70</data>
+    </node>
+    <node id="&quot;ROOM WITH DESPONDENT BOY&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The room is a bare, melancholy space where a young Scrooge is seen reading, symbolizing his childhood and forgotten self."</data>
+      <data key="d2">dda7c862f830b65e72990cccdaf7190a</data>
+      <data key="d3">0</data>
+      <data key="d4">88</data>
+      <data key="d5">9ab48505fb1b487babd0d1f6d3a3f980</data>
+    </node>
+    <node id="&quot;THE STABLES&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Stables refers to a collection of outbuildings such as coach-houses and sheds, which are overrun with grass, indicating neglect and abandonment."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d3">0</data>
+      <data key="d4">89</data>
+      <data key="d5">148fffeb994541b2b4b6dcefda7001a8</data>
+    </node>
+    <node id="&quot;THE COACH-HOUSES AND SHEDS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"These are outbuildings associated with the estate, now overgrown and poorly maintained."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d3">0</data>
+      <data key="d4">90</data>
+      <data key="d5">89c08e793298442686292454a1abff31</data>
+    </node>
+    <node id="&quot;THE SPIRIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Spirit is a supernatural entity guiding Scrooge through visions of his past, present, and future, facilitating his emotional awakening."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">91</data>
+      <data key="d5">0467928aa65e4a4fba62bdb1467e3a54</data>
+    </node>
+    <node id="&quot;ALI BABA&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Ali Baba is a fictional character from a story within the narrative, representing a figure from a foreign tale that Scrooge recognizes and exclaims about."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">92</data>
+      <data key="d5">43c3390303c6476cb65f584e37c3e81c</data>
+    </node>
+    <node id="&quot;VALENTINE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Valentine is mentioned as part of Scrooge's nostalgic recollections, associated with stories of adventure and childhood."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">93</data>
+      <data key="d5">fa14b16c17e3417dba5a4b473ea5b18d</data>
+    </node>
+    <node id="&quot;ORSON&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Orson is depicted as a wild brother in Scrooge's memories, part of the storytelling scene."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">94</data>
+      <data key="d5">7cc3356d38de4328a51a5cbcb187dac3</data>
+    </node>
+    <node id="&quot;THE SULTAN'S GROOM&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A character from a story within the narrative, involved in a humorous or fantastical scene with genies."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">95</data>
+      <data key="d5">bef16fb5fd7344cca5e295b13ef3e0cd</data>
+    </node>
+    <node id="&quot;THE PARROT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Parrot is a character in Scrooge's recollections, symbolizing a lively and humorous memory from his past."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">96</data>
+      <data key="d5">bb9e01bc171d4326a29afda59ece8d17</data>
+    </node>
+    <node id="&quot;ROBIN CRUSOE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Robin Crusoe is a character from a story that Scrooge recalls, associated with adventure and sailing."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">97</data>
+      <data key="d5">3c063eea52e94164b70c99431ea30bae</data>
+    </node>
+    <node id="&quot;FRIDAY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Friday is a character from the story of Robinson Crusoe, mentioned as running for his life in Scrooge's memory."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d3">0</data>
+      <data key="d4">98</data>
+      <data key="d5">252cc8452bfc4c2aa58cab68d8b61879</data>
+    </node>
+    <node id="&quot;THE BOY SINGING A CHRISTMAS CAROL&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A young boy who sings a Christmas carol at Scrooge's door, representing innocence and the spirit of giving."</data>
+      <data key="d2">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">99</data>
+      <data key="d5">7e2c84548fb94ee395ba8588d8f2a006</data>
+    </node>
+    <node id="&quot;FAN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Fan is a young girl depicted as a caring sister who comes to bring her brother home, symbolizing familial love and warmth. She is likely a relative of Scrooge, possibly his sister, and her actions convey affection, hope, and the spirit of reunion during Christmas.</data>
+      <data key="d2">33439623114354941f9323e7d62c790b,e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">100</data>
+      <data key="d5">f034618dde7948beb6dab30176d0fc87</data>
+    </node>
+    <node id="&quot;SCHOOLMASTER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The schoolmaster is an authority figure who interacts with Scrooge and his sister, representing the educational and social environment of the time."</data>
+      <data key="d2">33439623114354941f9323e7d62c790b</data>
+      <data key="d3">0</data>
+      <data key="d4">101</data>
+      <data key="d5">5c41f96be13e49dba649454297834546</data>
+    </node>
+    <node id="&quot;WAREHOUSE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"A warehouse is a storage building where goods are kept, and in this context, it is a specific location where the scene takes place."</data>
+      <data key="d2">3edbf99376540faf00d8f5307941932e</data>
+      <data key="d6">7</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">102</data>
+      <data key="d5">7ea4afbf8a264f29af29950ce98105ba</data>
+    </node>
+    <node id="&quot;DICK WILKINS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Dick Wilkins is a former apprentice of Scrooge, depicted as a young man enjoying the festive activities."</data>
+      <data key="d2">3edbf99376540faf00d8f5307941932e</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">103</data>
+      <data key="d5">91ff849d12b24574b0691dbddf44968b</data>
+    </node>
+    <node id="&quot;CHRISTMAS-TIME&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Christmas-time is the annual holiday celebration marked by festivities, decorations, and social gatherings, central to the scene."</data>
+      <data key="d2">3edbf99376540faf00d8f5307941932e</data>
+      <data key="d3">0</data>
+      <data key="d4">104</data>
+      <data key="d5">d73c1f2fb3094d8dace42ad2a76e9a52</data>
+    </node>
+    <node id="&quot;FEZZIWIG'S DANCE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A festive dance event organized by Fezziwig, featuring multiple couples, music, and merriment, symbolizing generosity and community."</data>
+      <data key="d2">4b5a2c29bc3f579c8040c45f2a9363d0</data>
+      <data key="d3">0</data>
+      <data key="d4">105</data>
+      <data key="d5">cdc8901e668749889bd49bebdc4ff1f6</data>
+    </node>
+    <node id="&quot;MR. AND MRS. FEZZIWIG&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Mr. and Mrs. Fezziwig are the hosts of the Christmas dance, embodying warmth and hospitality, and are central figures in the celebration."</data>
+      <data key="d2">4b5a2c29bc3f579c8040c45f2a9363d0</data>
+      <data key="d3">0</data>
+      <data key="d4">106</data>
+      <data key="d5">36084a9fab53433493f079e97e68bf65</data>
+    </node>
+    <node id="&quot;CHRISTMAS PARTY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Christmas party hosted by Fezziwig is a lively event with dancing, food, and merriment, illustrating themes of joy and community."</data>
+      <data key="d2">4b5a2c29bc3f579c8040c45f2a9363d0</data>
+      <data key="d3">0</data>
+      <data key="d4">107</data>
+      <data key="d5">eebcc7ec8e3e4df7aea83659bbdc2199</data>
+    </node>
+    <node id="&quot;YOUNG GIRL&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Young Girl is depicted as a beautiful child in a lively household scene, symbolizing innocence and joy."</data>
+      <data key="d2">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d3">0</data>
+      <data key="d4">108</data>
+      <data key="d5">ceadf262ef834e9ab146b20650912cae</data>
+    </node>
+    <node id="&quot;MOTHER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Mother is the woman sitting with her daughter, representing maternal warmth and family bonds."</data>
+      <data key="d2">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d6">3</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">109</data>
+      <data key="d5">7f65feab75424b53b24470d305ba331a</data>
+    </node>
+    <node id="&quot;CHILDREN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">The children are a boisterous group engaged in playful chaos, expressing joy and wonder as they develop packages and interact with their environment. Their activities illustrate familial love and childhood exuberance, highlighting their lively and joyful nature.</data>
+      <data key="d2">1d053f283b452be30ad8678439919b3c,dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d6">3</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">110</data>
+      <data key="d5">fd9cb733b28d420cb5cef01e545a132c</data>
+    </node>
+    <node id="&quot;PORTER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">The entity "PORTER" is depicted as a character who embodies the themes of service and the everyday hustle. In one description, the porter is portrayed as a defenceless individual who is attacked by children during their excitement, experiencing physical assault and distress. In another, the porter is characterized as being overwhelmed by the children's antics, symbolizing the challenges faced in service roles and the bustling nature of daily life. Together, these descriptions present the porter as a figure representing both the vulnerability and the demanding environment associated with service work and the lively, sometimes chaotic, interactions that occur within such settings.</data>
+      <data key="d2">1d053f283b452be30ad8678439919b3c,dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d6">3</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">111</data>
+      <data key="d5">0fbcca3f17c649a08aea64b5a7d9ef36</data>
+    </node>
+    <node id="&quot;FAMILY SCENE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The family scene depicts a lively, joyful gathering during Christmas, emphasizing themes of family, joy, and togetherness."</data>
+      <data key="d2">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d3">0</data>
+      <data key="d4">112</data>
+      <data key="d5">482027a59f32484c9c44fd700615c1b6</data>
+    </node>
+    <node id="&quot;TOYS AND PRESENTS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A scene involving children receiving toys and presents, leading to shouting, struggling, and expressions of wonder and delight."</data>
+      <data key="d2">1d053f283b452be30ad8678439919b3c</data>
+      <data key="d3">0</data>
+      <data key="d4">113</data>
+      <data key="d5">de837ff3d626451282ff6ac77a82216d</data>
+    </node>
+    <node id="&quot;JACOB MARLEY'S INTERVENTION&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Jacob Marley's intervention is an event that influences the messenger's dispatch, indicating a pivotal moment in the narrative."</data>
+      <data key="d2">2398bef3715ca1485012bdd394f7db3e</data>
+      <data key="d3">1</data>
+      <data key="d4">114</data>
+      <data key="d5">460295fed3ae4cd39f9f274cec9c2506</data>
+    </node>
+    <node id="&quot;MESSENGER&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Messenger is an agent dispatched to deliver a message, playing a role in the communication process within the story."</data>
+      <data key="d2">2398bef3715ca1485012bdd394f7db3e</data>
+      <data key="d3">1</data>
+      <data key="d4">115</data>
+      <data key="d5">553b285bba60460ab1ed8341ae61282b</data>
+    </node>
+    <node id="&quot;SPIRIT OF CHRISTMAS PRESENT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">The Spirit of Christmas Present is a benevolent and ghostly figure who embodies the festive spirit of Christmas. He appears to teach Ebenezer Scrooge about kindness, generosity, and the true meaning of the holiday. Depicted with a kind and clear gaze, he is dressed in a green robe bordered with white fur and is adorned with holly wreaths. As one of the three spirits that visit Scrooge, the Spirit of Christmas Present shows him a lively and transformed scene of Christmas celebration, highlighting both the joy and hardships experienced by others during the holiday season. His purpose is to encourage Scrooge to embrace generosity and compassion by revealing the current state of happiness and suffering among people during Christmas time.</data>
+      <data key="d2">2398bef3715ca1485012bdd394f7db3e,3e0edc9c6b1dbff5eaeaf248e6181926,7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">116</data>
+      <data key="d5">cec95bf17e7e4c939b56c9c6f402a29f</data>
+    </node>
+    <node id="&quot;GREENERY AND FESTIVE FOOD&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The decorated room with holly, mistletoe, ivy, and abundant food signifies the festive atmosphere of Christmas."</data>
+      <data key="d2">2398bef3715ca1485012bdd394f7db3e</data>
+      <data key="d3">0</data>
+      <data key="d4">117</data>
+      <data key="d5">599164aead034bc19446efacc77554d2</data>
+    </node>
+    <node id="&quot;CITY STREETS&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The city streets are depicted as bustling and lively on Christmas morning, with snow, people making music, and shops displaying festive goods, representing the environment of Christmas celebration."</data>
+      <data key="d2">3e0edc9c6b1dbff5eaeaf248e6181926</data>
+      <data key="d6">5</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">118</data>
+      <data key="d5">bbf148ae4d48422f8fdef754cfa2b9e4</data>
+    </node>
+    <node id="&quot;GREAT BRITAIN&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Great Britain is the setting of the story, characterized by its severe weather, snowy streets, and chimneys emitting smoke, illustrating the winter climate during Christmas."</data>
+      <data key="d2">3e0edc9c6b1dbff5eaeaf248e6181926</data>
+      <data key="d6">5</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">119</data>
+      <data key="d5">de61b2670999433f807a6a1dc2b81e43</data>
+    </node>
+    <node id="&quot;POULTERERS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Poulterers' shops are retail outlets that sell poultry and related food items, actively open during the period described."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">1</data>
+      <data key="d4">120</data>
+      <data key="d5">3e95dacfe57b4d57b5da4310ef2e157f</data>
+    </node>
+    <node id="&quot;FRUITERS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Fruiters' shops are retail outlets that sell fruits and vegetables, depicted as radiant and abundant in the scene."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">1</data>
+      <data key="d4">121</data>
+      <data key="d5">1f1545308e9347af91fd03b94aadc21f</data>
+    </node>
+    <node id="&quot;SPANISH ONIONS&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Spanish onions are a type of vegetable characterized by their brown face and broad girthed shape, symbolizing freshness and abundance."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">0</data>
+      <data key="d4">122</data>
+      <data key="d5">6ea81acaf232485e94fff638e03336e1</data>
+    </node>
+    <node id="&quot;NORFOLK BIFFINS&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Norfolk Biffins are a variety of apple, described as squab and swarthy, used to decorate the scene with their juicy appearance."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">0</data>
+      <data key="d4">123</data>
+      <data key="d5">d136b08d586d488f9e4188b524c85a29</data>
+    </node>
+    <node id="&quot;GOLD AND SILVER FISH&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Gold and silver fish are aquatic creatures displayed in a bowl among the fruits, symbolizing delicacy and the festive setting."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">0</data>
+      <data key="d4">124</data>
+      <data key="d5">cccfa151fedc4b218a8d96adc7dceabe</data>
+    </node>
+    <node id="&quot;GROCERS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Grocers' shops are retail stores selling a variety of foodstuffs, depicted as nearly closed but lively with activity and rich in goods."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">1</data>
+      <data key="d4">125</data>
+      <data key="d5">ce54725672a74ebcabe6127577dacb2b</data>
+    </node>
+    <node id="&quot;BAKERS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Bakers' shops are establishments where bread and baked goods are prepared and sold, active in the scene with people carrying dinners."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">1</data>
+      <data key="d4">126</data>
+      <data key="d5">ea2b28ca1a974ffab4517811dc1d1e5c</data>
+    </node>
+    <node id="&quot;CHRISTMAS DAY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">Christmas Day is a festive occasion characterized by church and chapel visits, dinners, and community gatherings, making it a central event in the cultural and social calendar. It is also celebrated by families, such as the Cratchit family, who mark the day with a festive meal and a family gathering. The holiday serves as a focal point for themes of generosity, family, and moral reflection, emphasizing the importance of compassion and community during this special time.</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8,2c53885ea36c9f539ca623101d70b60b,5645a7c2235d7684a40835dfccde9e5d</data>
+      <data key="d3">0</data>
+      <data key="d4">127</data>
+      <data key="d5">aff21f1da1654e7babdcf3fb0e4a75fc</data>
+    </node>
+    <node id="&quot;CHURCH AND CHAPEL&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Church and chapel are religious venues where people gather to celebrate Christmas, depicted as bustling with activity."</data>
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d3">0</data>
+      <data key="d4">128</data>
+      <data key="d5">dc2cc9016e3f49dbac7232f05cce794d</data>
+    </node>
+    <node id="&quot;DINNERS&quot;">
+      <data key="d2">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d6">2</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">129</data>
+      <data key="d5">6ea0cef05f694dcea455478f40674e45</data>
+    </node>
+    <node id="&quot;TINY TIM&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Tiny Tim is the young, disabled child of the Cratchit family, characterized by his innocence, vulnerability, and cheerful spirit. He is often depicted with a crutch supported by an iron frame, symbolizing both his physical ailment and his innocence. Despite his illness, Tiny Tim is portrayed as a cheerful and grateful boy, embodying hope, the spirit of Christmas, and the potential for compassion and social change. His presence in the story highlights the consequences of poverty and social neglect, and his optimistic outlook and role in inspiring Scrooge's transformation underscore his significance as a symbol of innocence and the need for kindness and charity.</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8,0cdc0e3848cc2f8d788eaccbd7854734,4dd973f86fac64800eb57dc9848d3136,5645a7c2235d7684a40835dfccde9e5d,625dd4ebd52c06ed1525faad129fbba9,696cd4a0ae22e395f3c9d04cfcea8d49,6b5812a07d880d92f055d038934b2b87,7ba8563b46e83c78694383e9184f6fbc,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">4</data>
+      <data key="d4">130</data>
+      <data key="d5">7ab5d53a872f4dfc98f3d386879f3c75</data>
+    </node>
+    <node id="&quot;MARTHA CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Martha is Bob's daughter, a young woman who helps with household chores and family celebrations."&gt;</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8</data>
+      <data key="d3">0</data>
+      <data key="d4">131</data>
+      <data key="d5">af1d0fec22114a3398b8016f5225f9ed</data>
+    </node>
+    <node id="&quot;GEORGINA CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Georgina is one of Bob's children, part of the Cratchit family celebrating Christmas."&gt;</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8</data>
+      <data key="d3">0</data>
+      <data key="d4">132</data>
+      <data key="d5">b07a7f088364459098cd8511ff27a4c8</data>
+    </node>
+    <node id="&quot;CHRISTMAS PRESENT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Ghost of Christmas Present is an event representing the current Christmas, showing scenes of generosity and poverty."&gt;</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8</data>
+      <data key="d3">0</data>
+      <data key="d4">133</data>
+      <data key="d5">8870cf2b5df64d2cab5820f67e29b9f1</data>
+    </node>
+    <node id="&quot;BAKER'S SHOP&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The Baker's Shop is a location where scenes of Christmas dinner preparations are depicted, symbolizing community and tradition."&gt;</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8</data>
+      <data key="d3">0</data>
+      <data key="d4">134</data>
+      <data key="d5">cd130938a2844050be991af70baf5ee0</data>
+    </node>
+    <node id="&quot;TOWN&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The Town serves as the setting for the story, representing the community and social environment of the characters. It is the place where the mother, children, and husband live, embodying the broader community affected by themes of death and economic hardship.</data>
+      <data key="d2">06f8f60fe63e5736ed00220d9f99d3f8,f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d3">0</data>
+      <data key="d4">135</data>
+      <data key="d5">43544b99c3b04b059546198a0ae6366d</data>
+    </node>
+    <node id="&quot;MASTER PETER CRATCHIT&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Master Peter Cratchit is a young member of the Cratchit family, depicted as exalting and participating in Christmas festivities."</data>
+      <data key="d2">5645a7c2235d7684a40835dfccde9e5d</data>
+      <data key="d3">0</data>
+      <data key="d4">136</data>
+      <data key="d5">a671bf7fea2f4514b6e96ba99127fafd</data>
+    </node>
+    <node id="&quot;MARTHA&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Martha is a young girl in the Cratchit family who is responsible for household chores, including dusting the hot plates. She is actively involved in the daily responsibilities of the household and participates in the family's Christmas celebration.</data>
+      <data key="d2">5645a7c2235d7684a40835dfccde9e5d,6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">0</data>
+      <data key="d4">137</data>
+      <data key="d5">525f41ea20274a05af4e52b625b473f3</data>
+    </node>
+    <node id="&quot;THE CRATCHIT FAMILY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Cratchit family is a humble household celebrating Christmas, exemplifying familial warmth and resilience."</data>
+      <data key="d2">5645a7c2235d7684a40835dfccde9e5d</data>
+      <data key="d3">0</data>
+      <data key="d4">138</data>
+      <data key="d5">071a416efbec4f0886c19ac68f6d43cb</data>
+    </node>
+    <node id="&quot;THE GOOSE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Goose" is the centerpiece of the Christmas dinner in the Cratchit household, symbolizing abundance and celebration. It is celebrated for its tenderness, flavor, and size, making it a festive and significant feature of the holiday feast.</data>
+      <data key="d2">5645a7c2235d7684a40835dfccde9e5d,6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">1</data>
+      <data key="d4">139</data>
+      <data key="d5">6d8473ef3b1042bf87178a611e3dbcc6</data>
+    </node>
+    <node id="&quot;MISS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Miss is mentioned as a character involved in the scene, possibly a family member or guest at the dinner."</data>
+      <data key="d2">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">1</data>
+      <data key="d4">140</data>
+      <data key="d5">30c9641543c24773938bd8ec57ea98ab</data>
+    </node>
+    <node id="&quot;BELINDA&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Belinda is a person who sweetens the apple sauce, indicating her role in preparing the meal."</data>
+      <data key="d2">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">1</data>
+      <data key="d4">141</data>
+      <data key="d5">18b839da898e4026b81727d759d95c6a</data>
+    </node>
+    <node id="&quot;BOB&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Bob is a cheerful and caring family man who works as a clerk. He expresses happiness and affection through his interactions with his family, demonstrating a childlike joy and concern for their well-being. Bob is also involved in festive occasions, such as Christmas dinner, where he takes Tiny Tim beside him at the table and shows pride in the pudding, highlighting his nurturing nature and his role as a loving and supportive figure within his family.</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734,4dd973f86fac64800eb57dc9848d3136,6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">142</data>
+      <data key="d5">eeef6ae5c464400c8755900b4f1ac37a</data>
+    </node>
+    <node id="&quot;CRATCHITS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Cratchit family is a household depicted in the scene, known for their humble Christmas dinner and family bonds."</data>
+      <data key="d2">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">1</data>
+      <data key="d4">143</data>
+      <data key="d5">422433aa45804c7ebb973b2fafce5da6</data>
+    </node>
+    <node id="&quot;PUDDING&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The pudding is a significant part of the Christmas dinner, prepared with care and celebrated as a success."</data>
+      <data key="d2">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">144</data>
+      <data key="d5">86505bca739d4bccaaa1a8e0f3baffdc</data>
+    </node>
+    <node id="&quot;FUTURE SHADOWS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Future Shadows are visions shown by the Ghost, depicting the potential death of Tiny Tim and the consequences of current actions."</data>
+      <data key="d2">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d6">2</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">145</data>
+      <data key="d5">1af9faf341e14a5bbf4ddc9080e8dc0b</data>
+    </node>
+    <node id="&quot;SURPLUS POPULATION&quot;">
+      <data key="d0">"CONCEPT"</data>
+      <data key="d1">The Surplus Population is a concept referenced by the Spirit that pertains to societal views on overpopulation and resource allocation. It specifically refers to the less fortunate members of society, whose existence is often debated in discussions surrounding social responsibility and moral judgment.</data>
+      <data key="d2">625dd4ebd52c06ed1525faad129fbba9,6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d3">0</data>
+      <data key="d4">146</data>
+      <data key="d5">353d91abc68648639d65a549e59b5cf3</data>
+    </node>
+    <node id="&quot;FAMILY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">The Cratchit family is a modest and loving household that celebrates Christmas despite their poverty, emphasizing themes of gratitude and strong familial bonds. They are a group of relatives and friends who gather together for Christmas celebrations, engaging in music, games, and merriment. Overall, the family is characterized by happiness, togetherness, and a warm spirit of celebration during the holiday season.</data>
+      <data key="d2">625dd4ebd52c06ed1525faad129fbba9,7ba8563b46e83c78694383e9184f6fbc,adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">2</data>
+      <data key="d4">147</data>
+      <data key="d5">7ce637e4f35b42e3a9f8272cab69cd22</data>
+    </node>
+    <node id="&quot;FEAST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Feast is a Christmas celebration hosted by the Cratchit family, symbolizing joy, community, and the spirit of giving."</data>
+      <data key="d2">625dd4ebd52c06ed1525faad129fbba9</data>
+      <data key="d3">0</data>
+      <data key="d4">148</data>
+      <data key="d5">4d999d7744b04a998475f8f8531589f0</data>
+    </node>
+    <node id="&quot;PAWNBROKER&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The pawnbroker's shop is mentioned as part of the Cratchit family's modest circumstances, indicating economic hardship."</data>
+      <data key="d2">625dd4ebd52c06ed1525faad129fbba9</data>
+      <data key="d3">0</data>
+      <data key="d4">149</data>
+      <data key="d5">9a6f414210e14841a5b0e661aedc898d</data>
+    </node>
+    <node id="&quot;MOOR&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The moor is a bleak, desolate landscape where the Spirit shows Scrooge a place of miners' lives, symbolizing hardship and humility."</data>
+      <data key="d2">7ba8563b46e83c78694383e9184f6fbc</data>
+      <data key="d3">0</data>
+      <data key="d4">150</data>
+      <data key="d5">db541b7260974db8bac94e953009f60e</data>
+    </node>
+    <node id="&quot;MINERS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Miners are workers who labor underground, living in a humble community, representing the working class and their hardships."</data>
+      <data key="d2">7ba8563b46e83c78694383e9184f6fbc</data>
+      <data key="d3">0</data>
+      <data key="d4">151</data>
+      <data key="d5">f2ff8044718648e18acef16dd9a65436</data>
+    </node>
+    <node id="&quot;LIGHTHOUSE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The lighthouse is a solitary structure built on sunken rocks, symbolizing guidance and hope amidst the darkness and danger of the sea. It also represents guidance and isolation amidst turbulent waters, serving as a beacon of safety and reassurance for those navigating treacherous maritime conditions.</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6,7ba8563b46e83c78694383e9184f6fbc</data>
+      <data key="d3">1</data>
+      <data key="d4">152</data>
+      <data key="d5">00d785e7d76b47ec81b508e768d40584</data>
+    </node>
+    <node id="&quot;WATER&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Water is depicted as rolling and roaring among caverns and over rocks, emphasizing the wild, uncontrollable forces of nature."</data>
+      <data key="d2">7ba8563b46e83c78694383e9184f6fbc</data>
+      <data key="d3">0</data>
+      <data key="d4">153</data>
+      <data key="d5">87915637da3e474c9349bd0ae604bd95</data>
+    </node>
+    <node id="&quot;STORM-BIRDS&quot;">
+      <data key="d0">"ANIMAL"</data>
+      <data key="d1">Storm-birds are seabirds associated with the sea, wind, and stormy weather, symbolizing the wildness and power of nature. They are often depicted as part of the natural environment surrounding the lighthouse, emphasizing their connection to the maritime and atmospheric elements of their habitat.</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6,7ba8563b46e83c78694383e9184f6fbc</data>
+      <data key="d3">0</data>
+      <data key="d4">154</data>
+      <data key="d5">8f1eba29f39e411188200bf0d14628ec</data>
+    </node>
+    <node id="&quot;NIECE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Scrooge's niece is a cheerful woman who shares in the Christmas festivities, characterized by her pretty appearance and lively spirit."</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d6">6</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">155</data>
+      <data key="d5">7282c73622b8408e97289d959faff483</data>
+    </node>
+    <node id="&quot;LAND&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The land refers to the setting of the story, including the bleak waste and the sea, emphasizing the themes of loneliness and the vastness of the world."</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d3">0</data>
+      <data key="d4">156</data>
+      <data key="d5">3deb220d31f74103aa44870a36a63220</data>
+    </node>
+    <node id="&quot;SHIP&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The ship represents a scene of seafarers celebrating Christmas, illustrating the universal nature of the holiday and its associated warmth and camaraderie."</data>
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d3">1</data>
+      <data key="d4">157</data>
+      <data key="d5">af7a1584dd15492cb9a4940e285f57fc</data>
+    </node>
+    <node id="&quot;SEA&quot;">
+      <data key="d2">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d3">2</data>
+      <data key="d4">158</data>
+      <data key="d5">6e8d9029ce4e4ea182367173ab2c7bbf</data>
+    </node>
+    <node id="&quot;SCROOGE'S NIECE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Scrooge's niece is a cheerful, pretty woman who enjoys social gatherings, expresses strong opinions about wealth and Christmas, and is depicted as lively and good-natured."</data>
+      <data key="d2">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d6">6</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">159</data>
+      <data key="d5">cbf232211e7d4eb6abdbe182f71c2cf0</data>
+    </node>
+    <node id="&quot;TOPPER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Topper is a member of Scrooge's family, characterized as a humorous individual who enjoys music and socializing. He is a family member, likely a relative or close friend, who actively participates in Christmas games and festivities, notably playing blind man's buff.</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c,eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d3">0</data>
+      <data key="d4">160</data>
+      <data key="d5">bb0cff774a4440b289cc6f3b929fe13c</data>
+    </node>
+    <node id="&quot;THE LADIES&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Ladies are a group of women, including Scrooge's niece and her sisters, who are social and expressive about their opinions on wealth and Christmas."</data>
+      <data key="d2">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d6">6</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">161</data>
+      <data key="d5">ce55841ebfdd47008bab8c258f10372e</data>
+    </node>
+    <node id="&quot;THE FAMILY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Family is a social group gathered for Christmas, engaging in singing, conversation, and merriment, illustrating familial bonds and holiday traditions."</data>
+      <data key="d2">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d6">4</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">162</data>
+      <data key="d5">6090e736374d45fd84f0e4610a314f8f</data>
+    </node>
+    <node id="&quot;DINNER&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Dinner is a central social activity during the Christmas gathering, symbolizing family unity and celebration."</data>
+      <data key="d2">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d3">0</data>
+      <data key="d4">163</data>
+      <data key="d5">0e8d921ccd8d4a8594b65b7fd19f7120</data>
+    </node>
+    <node id="&quot;MUSIC&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">Music is an integral part of the Christmas celebration, performed by family members to contribute to the festive atmosphere. During the gathering, music is actively performed through singing and playing instruments, thereby enhancing the overall festive mood.</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c,eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d3">1</data>
+      <data key="d4">164</data>
+      <data key="d5">59c726a8792d443e84ab052cb7942b4a</data>
+    </node>
+    <node id="&quot;HARPER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Scrooge's niece is a musical family member who plays the harp and joins in Christmas games, embodying warmth and familial love."</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">0</data>
+      <data key="d4">165</data>
+      <data key="d5">4f2c665decf242b0bfcaf7350b0e02ed</data>
+    </node>
+    <node id="&quot;BLIND MAN'S BUFF&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A traditional game played during the Christmas gathering, involving playful chasing and identification, symbolizing joy and childlike innocence."</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">0</data>
+      <data key="d4">166</data>
+      <data key="d5">66cdf168f36d4a57a505028c97dc06e0</data>
+    </node>
+    <node id="&quot;FORFEITS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A game where participants perform dares or tasks, adding to the entertainment of the Christmas gathering."</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">0</data>
+      <data key="d4">167</data>
+      <data key="d5">38f51478f41f48db9bee570859b6f43e</data>
+    </node>
+    <node id="&quot;GAME OF YES AND NO&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A questioning game played during the celebration, where participants guess what the others are thinking, fostering interaction and fun."</data>
+      <data key="d2">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">0</data>
+      <data key="d4">168</data>
+      <data key="d5">896d2a51e8de47de85ba8ced108c3d53</data>
+    </node>
+    <node id="&quot;GAMES&quot;">
+      <data key="d2">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d3">1</data>
+      <data key="d4">169</data>
+      <data key="d5">14555b518e954637b83aa762dc03164e</data>
+    </node>
+    <node id="&quot;WHITECHAPEL&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Whitechapel is mentioned as the location associated with the sharpest needle, symbolizing the setting's detail."</data>
+      <data key="d2">788fa4df64efbe366465a2d79c57540d</data>
+      <data key="d6">4</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">170</data>
+      <data key="d5">b1f6164116d44fe8b8f135d7f65b9e58</data>
+    </node>
+    <node id="&quot;TWELFTH-NIGHT&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Twelfth-Night is referenced as a festive celebration that the spirits and characters attend, symbolizing the holiday's significance."</data>
+      <data key="d2">788fa4df64efbe366465a2d79c57540d</data>
+      <data key="d3">0</data>
+      <data key="d4">171</data>
+      <data key="d5">c8b2408617804483b620e1a6691ac90d</data>
+    </node>
+    <node id="&quot;MULLED WINE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Mulled Wine is a festive drink mentioned as part of the Christmas celebration, symbolizing warmth and cheer."</data>
+      <data key="d2">788fa4df64efbe366465a2d79c57540d</data>
+      <data key="d3">0</data>
+      <data key="d4">172</data>
+      <data key="d5">a5e0d1644eb547ba9a5c3211aac4631a</data>
+    </node>
+    <node id="&quot;TWELFTH-NIGHT PARTY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A celebration marking the Twelfth Night, during which the Ghost's age is observed and the story's supernatural elements are emphasized."</data>
+      <data key="d2">e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d3">0</data>
+      <data key="d4">173</data>
+      <data key="d5">5a28b94bc63b44edb30c54748fd14f15</data>
+    </node>
+    <node id="&quot;SPIRIT OF CHRISTMAS YET TO COME&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The Spirit of Christmas Yet to Come is a ghostly figure that appears to guide Ebenezer Scrooge through visions of the future, often filled with solemn dread and silent communication. As the third spirit in the series, it reveals to Scrooge the possible future consequences of his current path, serving as a catalyst to motivate him to change his ways and embrace a more compassionate and generous life.</data>
+      <data key="d2">1c6fcc72a1b3a10fc504cbf305e0c901,7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">174</data>
+      <data key="d5">f97011b2a99d44648e18d517e1eae15c</data>
+    </node>
+    <node id="&quot;CHANGE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Change refers to the transformative experience of Scrooge as he witnesses future shadows, leading to his moral and personal reevaluation."</data>
+      <data key="d2">1c6fcc72a1b3a10fc504cbf305e0c901</data>
+      <data key="d3">0</data>
+      <data key="d4">175</data>
+      <data key="d5">35489ca6a63b47d6a8913cf333818bc1</data>
+    </node>
+    <node id="&quot;OLD SCRATCH&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Old Scratch is a colloquial name for the devil or a demon figure, referenced in the context of a conversation, symbolizing evil or temptation."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d3">1</data>
+      <data key="d4">176</data>
+      <data key="d5">5d3344f45e654d2c808481672f2f08dd</data>
+    </node>
+    <node id="&quot;THE STREET&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The Street is a location in the story where Scrooge observes interactions and scenes reflecting societal conditions and characters."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">177</data>
+      <data key="d5">6fb57f83baec45c9b30490ee991f433f</data>
+    </node>
+    <node id="&quot;THE SHOP&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The Shop is a location described as a den of crime and misery, representing the darker aspects of society and the environment of the story."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">178</data>
+      <data key="d5">68762e6f0d1c41cd857c6b964a8e76c3</data>
+    </node>
+    <node id="&quot;OLD JOE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Old Joe" is a character depicted as an elderly man involved in the trade of secondhand goods and illicit items. He is portrayed as a low-life figure who deals in stolen or illicit goods, symbolizing crime and moral decay. In addition to his association with criminal activity, Old Joe is also involved in assessing and valuing possessions, possibly functioning as a dealer or appraiser. He is often depicted in a shop setting, trimming his smoky lamp and examining plunder, highlighting his role in the scene as someone who deals with both legitimate and illicit merchandise.</data>
+      <data key="d2">13bc5cc4ab04eb9c1378f28106aecc55,2f4b2f4053b5911c93f7f63677f780fe,62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">5</data>
+      <data key="d4">179</data>
+      <data key="d5">70634e10a5e845aa8c6a32fe7e8eb2b2</data>
+    </node>
+    <node id="&quot;THE WOMAN WITH HEAVY BUNDLE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A woman who enters the shop carrying a heavy bundle, representing the impoverished or marginalized members of society."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">180</data>
+      <data key="d5">04085f7cf46544b79597fc49286ff84d</data>
+    </node>
+    <node id="&quot;THE LAUNDRESS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A woman who enters the shop, associated with the character of the laundress, indicating social class and occupation."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">181</data>
+      <data key="d5">d203efdbfb2f4b2a899abfb31cf72e82</data>
+    </node>
+    <node id="&quot;THE UNDERTAKER'S MAN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A man associated with the funeral business, involved in the scene with the other characters, symbolizing death and mortality."</data>
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">182</data>
+      <data key="d5">6731a665561840c2898ce8c9788e4c88</data>
+    </node>
+    <node id="&quot;CONVERSATION&quot;">
+      <data key="d2">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d3">1</data>
+      <data key="d4">183</data>
+      <data key="d5">4026806fa92f4e849a59a7f5c9a45c79</data>
+    </node>
+    <node id="&quot;MRS. DILBER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Mrs. Dilber is a laundress and a woman involved in the collection and sale of household items. In the scene, she is engaged in discussions about the theft of items and assists in assessing the value of stolen goods, indicating her role in dealing with possessions after death.</data>
+      <data key="d2">13bc5cc4ab04eb9c1378f28106aecc55,62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">184</data>
+      <data key="d5">68e0c60d2e8845d89d9d0ad397833648</data>
+    </node>
+    <node id="&quot;THE WOMAN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The Woman" is a bold and defiant character who is actively involved in handling the belongings of a deceased individual. She discusses taking care of herself and participates in the theft of items from the dead man, including removing bed-curtains and other possessions. Her actions and conversations suggest she is engaged in dealing with the deceased's belongings in a manner that indicates a level of familiarity and possibly complicity in the theft.</data>
+      <data key="d2">13bc5cc4ab04eb9c1378f28106aecc55,62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">185</data>
+      <data key="d5">101572f552b54e529fe7765c05168981</data>
+    </node>
+    <node id="&quot;FRAUDS OF BONES&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Frauds of Bones refers to the sepulchres of bones mentioned in the description, indicating a location associated with death and decay."</data>
+      <data key="d2">13bc5cc4ab04eb9c1378f28106aecc55</data>
+      <data key="d3">0</data>
+      <data key="d4">186</data>
+      <data key="d5">60c58026b2764b40adffca6eaa31d6d9</data>
+    </node>
+    <node id="&quot;SHOP&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The shop is a place where the characters gather, deal in secondhand goods, and conduct their clandestine activities, including theft and assessment of stolen items."</data>
+      <data key="d2">13bc5cc4ab04eb9c1378f28106aecc55</data>
+      <data key="d6">8</data>
+      <data key="d7">0</data>
+      <data key="d3">3</data>
+      <data key="d4">187</data>
+      <data key="d5">ad1595a78935472999444c9330e7730e</data>
+    </node>
+    <node id="&quot;JOE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Joe is a character who examines and appraises items, acting as a sort of appraiser or dealer in the context of the scene."</data>
+      <data key="d2">62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d3">0</data>
+      <data key="d4">188</data>
+      <data key="d5">735d19aea0744b2295556841c5c4c3fd</data>
+    </node>
+    <node id="&quot;THE BED-CURTAINS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Bed-Curtains are household items, specifically bed coverings, mentioned as part of the possessions taken from the deceased."</data>
+      <data key="d2">62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d3">0</data>
+      <data key="d4">189</data>
+      <data key="d5">c725babdb14a485582f8fbdf95429030</data>
+    </node>
+    <node id="&quot;THE ROOM&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The Room is the setting where the scene of dealing with the deceased's belongings takes place, described as very dark and containing a bed with a body."</data>
+      <data key="d2">62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d3">0</data>
+      <data key="d4">190</data>
+      <data key="d5">a0047221896d418d849847d422fa4bb8</data>
+    </node>
+    <node id="&quot;THE BODY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Body refers to the deceased person lying on the bed, central to the scene of death and the subsequent handling of possessions."</data>
+      <data key="d2">62e42a7788fef803dbcbcc1c32748146</data>
+      <data key="d3">0</data>
+      <data key="d4">191</data>
+      <data key="d5">98fc2ee593184c5a839454db4eec7013</data>
+    </node>
+    <node id="&quot;DEATH&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Death is depicted as a powerful, dreadful force that signifies the end of life, associated with the scene of the dead man and the lessons about mortality."</data>
+      <data key="d2">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">192</data>
+      <data key="d5">80020a1da63042459e00266b2a605452</data>
+    </node>
+    <node id="&quot;ROOM OF DEATH&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The Room of Death is a dark, somber space where the dead man's body lies, symbolizing mortality and the consequences of a life of greed."</data>
+      <data key="d2">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d3">0</data>
+      <data key="d4">193</data>
+      <data key="d5">31a7e680c4d54101afe4c8d52d246913</data>
+    </node>
+    <node id="&quot;MOTHER AND CHILDREN&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"A mother and her children are shown in a room by daylight, representing innocence, hope, and the impact of death on families."</data>
+      <data key="d2">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d3">1</data>
+      <data key="d4">194</data>
+      <data key="d5">351abba16e5c448994c6daf48121b14d</data>
+    </node>
+    <node id="&quot;HUSBAND&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The husband is a man who is depressed and worn, reflecting the emotional toll of death and financial ruin on individuals and families."</data>
+      <data key="d2">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d3">1</data>
+      <data key="d4">195</data>
+      <data key="d5">50ea7d3b69614bcdbfbff7ddbfbf3d34</data>
+    </node>
+    <node id="&quot;CAROLINE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Caroline is a woman who shows hope and patience, engaging in conversations about their dire situation and expressing faith in a possible miracle."</data>
+      <data key="d2">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d3">1</data>
+      <data key="d4">196</data>
+      <data key="d5">004f40a5aeca48a1879db728eb12bcba</data>
+    </node>
+    <node id="&quot;HE&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"He is a young man experiencing feelings of depression, shame, and hope amidst a difficult circumstance."</data>
+      <data key="d2">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d3">1</data>
+      <data key="d4">197</data>
+      <data key="d5">4465efb7f6ed4dedad72a658184addd2</data>
+    </node>
+    <node id="&quot;CRATCHIT FAMILY&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">The Cratchit family is a close-knit household characterized by warmth, love, and resilience in the face of financial hardship. Despite their poverty, they exemplify familial warmth and strong bonds, with their love and support for one another shining through, especially highlighted through Tiny Tim.</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734,696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d6">0</data>
+      <data key="d7">0</data>
+      <data key="d3">2</data>
+      <data key="d4">198</data>
+      <data key="d5">b0dd60e11dad4ff782623acf039b3948</data>
+    </node>
+    <node id="&quot;THE FIRE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The fire is a setting element, providing warmth and comfort in the Cratchit household, symbolizing hope and domestic life."</data>
+      <data key="d2">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d3">0</data>
+      <data key="d4">199</data>
+      <data key="d5">db8c43fa4df947b09e5754d3b1393ead</data>
+    </node>
+    <node id="&quot;PETER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Peter is a member of the Cratchit family, involved in the family scene and depicted as part of the close-knit group. He is the son of Bob and Mrs. Cratchit, a young man who is optimistic about his future and supportive of his family.</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734,4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d3">0</data>
+      <data key="d4">200</data>
+      <data key="d5">5dabc4cd05da425cb194a04482bf0c29</data>
+    </node>
+    <node id="&quot;MR. SCROOGE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Mr. Scrooge is a wealthy, miserly man who initially shows no kindness but undergoes a transformation after supernatural visits, embodying themes of redemption."</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734</data>
+      <data key="d3">0</data>
+      <data key="d4">201</data>
+      <data key="d5">9d08f285a7be4c79b8f359c51d51db37</data>
+    </node>
+    <node id="&quot;TINY TIM'S FUTURE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The vision of Tiny Tim's future depicts his potential death due to his illness, serving as a moral warning about compassion and social responsibility."</data>
+      <data key="d2">0cdc0e3848cc2f8d788eaccbd7854734</data>
+      <data key="d3">0</data>
+      <data key="d4">202</data>
+      <data key="d5">adffed660d154b519c1817e514e83096</data>
+    </node>
+    <node id="&quot;CRATCHIT DAUGHTERS&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The daughters of Bob Cratchit, who participate in family bonding and show affection towards each other."</data>
+      <data key="d2">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d3">0</data>
+      <data key="d4">203</data>
+      <data key="d5">b7e9c9ef572c445a9574ca571e41fb96</data>
+    </node>
+    <node id="&quot;SPIRIT OF TINY TIM&quot;">
+      <data key="d0">"ENTITY"</data>
+      <data key="d1">"The Spirit of Tiny Tim is a ghostly embodiment of Tiny Tim's essence, representing innocence and the moral message of the story."</data>
+      <data key="d2">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d3">0</data>
+      <data key="d4">204</data>
+      <data key="d5">dcb9f281cd6248c699e0ebb285a42a5e</data>
+    </node>
+    <node id="&quot;FUTURE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Future is depicted as a time of death and judgment, where Scrooge sees his own grave and the consequences of his life choices."</data>
+      <data key="d2">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d3">0</data>
+      <data key="d4">205</data>
+      <data key="d5">072cdee531b74513984f49d99a8d64a0</data>
+    </node>
+    <node id="&quot;PAST, PRESENT, FUTURE&quot;">
+      <data key="d2">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">206</data>
+      <data key="d5">5ae335d9210a45fda3f92a9a028d6d9b</data>
+    </node>
+    <node id="&quot;SPIRIT OF CHRISTMAS PAST&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Spirit of Christmas Past is one of the three spirits that visit Scrooge, representing memories of his own past, aiming to teach him lessons about his previous life."</data>
+      <data key="d2">7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">207</data>
+      <data key="d5">5ac60a941a5b4934bdc43d2f87de601c</data>
+    </node>
+    <node id="&quot;BEDPOST&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The bedpost is a physical object in Scrooge's room that transforms into the spectral form of Jacob Marley's spirit, symbolizing the connection between the physical and spiritual realms."</data>
+      <data key="d2">7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d3">0</data>
+      <data key="d4">208</data>
+      <data key="d5">d405c3154d0e48ce96fad4c28fe20590</data>
+    </node>
+    <node id="&quot;BOY&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The boy is a young street vendor who interacts with Scrooge, providing information about local shops and engaging in Christmas activities."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">209</data>
+      <data key="d5">7923d8521c744bd9aab131c1aea91ffd</data>
+    </node>
+    <node id="&quot;JOE MILLER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Joe Miller is mentioned as a humorous figure, associated with a joke about the size of a turkey."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d3">0</data>
+      <data key="d4">210</data>
+      <data key="d5">5bd156c87ec44e19ae6f8f62e6e50b9d</data>
+    </node>
+    <node id="&quot;TURKEY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The turkey is a large prize bird purchased by Scrooge, symbolizing generosity and Christmas celebration."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d6">1</data>
+      <data key="d7">0</data>
+      <data key="d3">1</data>
+      <data key="d4">211</data>
+      <data key="d5">c1a146d7fb16429ea6d0aa2a55ee597f</data>
+    </node>
+    <node id="&quot;STREET DOOR&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The street door is the entrance to Scrooge's house, where he waits for the poulterer's delivery."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d3">1</data>
+      <data key="d4">212</data>
+      <data key="d5">ede9350632084da5b0b577ff799ab14b</data>
+    </node>
+    <node id="&quot;KNOCKER&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The knocker is a decorative door fitting that catches Scrooge's eye, symbolizing the supernatural or the reflection of his own face."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d3">1</data>
+      <data key="d4">213</data>
+      <data key="d5">ed559fb4ebde45518849ec803b350fa3</data>
+    </node>
+    <node id="&quot;STREET&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The street serves as the setting for various scenes, including Ebenezer Scrooge's walks through the city and his interactions with passersby and the community.</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef,e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">214</data>
+      <data key="d5">f422035f8b78417f98e4d116971cf9f3</data>
+    </node>
+    <node id="&quot;POULTERER'S IN THE NEXT STREET BUT ONE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"A local shop that sells poultry, notably the prize turkey that Scrooge inquires about."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d3">0</data>
+      <data key="d4">215</data>
+      <data key="d5">c79d686eba044c5586c706cdc096817d</data>
+    </node>
+    <node id="&quot;MERRY CHRISTMAS&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"A greeting exchanged among characters, representing the festive spirit and goodwill."</data>
+      <data key="d2">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d3">0</data>
+      <data key="d4">216</data>
+      <data key="d5">0f70db1e598d463fbbcdd1e288bd9490</data>
+    </node>
+    <node id="&quot;MARLEY'S&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"Marley's is associated with Scrooge, likely a related person, possibly a business partner or a ghostly figure linked to his past."</data>
+      <data key="d2">e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">217</data>
+      <data key="d5">b35c3d1a7daa4924b6bdb58bc69c354d</data>
+    </node>
+    <node id="&quot;FRED'S HOUSE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Fred's house is the location where Scrooge visits for dinner, indicating a familial and social setting."</data>
+      <data key="d2">e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">218</data>
+      <data key="d5">a97e2ecd870944cfbe71c79bc0fcc752</data>
+    </node>
+    <node id="&quot;NEPHEW'S HOUSE&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"The nephew's house is a key location in the story, symbolizing family reunion and social warmth."</data>
+      <data key="d2">e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">219</data>
+      <data key="d5">3e1b063bbfa9423d84e50311296d2f3c</data>
+    </node>
+    <node id="&quot;CHURCH&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Scrooge visits a church, an event reflecting his engagement with community and spiritual reflection."</data>
+      <data key="d2">e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">220</data>
+      <data key="d5">9a8ce816ee954bdabd01ea2081538009</data>
+    </node>
+    <node id="&quot;OFFICE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"Scrooge's office is the workplace where he begins his day, representing his business activities."</data>
+      <data key="d2">e1a9a4cd5b8b7a41149299fb58a5e156</data>
+      <data key="d3">0</data>
+      <data key="d4">221</data>
+      <data key="d5">09f18f81442d4d6d93a90f0fac683f9b</data>
+    </node>
+    <node id="&quot;THE FOUNDATION&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Foundation" is an organization that manages the copyright, licensing, and distribution policies related to Project Gutenberg works. It is responsible for overseeing permissions, trademarks, and ensuring compliance with license terms. Additionally, The Foundation makes no representations concerning the copyright status of works and handles the management of permissions, trademarks, and distribution to facilitate the dissemination of Project Gutenberg's digital library.</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf,775fded7899f0e78d4e7cec4fae42fd9,d2952439a1347076328cc02ce263f73b</data>
+      <data key="d3">1</data>
+      <data key="d4">222</data>
+      <data key="d5">e02be3e37ca0454883a4c1fd859c24bb</data>
+    </node>
+    <node id="&quot;PROJECT GUTENBERG&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">Project Gutenberg is a nonprofit digital library organization dedicated to providing free access to public domain works and electronic texts. It aims to promote the dissemination of literature and information by producing and distributing free eBooks. The organization manages licensing terms for electronic texts and relies heavily on volunteer support and various donation methods to sustain its operations. Additionally, Project Gutenberg holds a registered trademark and is committed to making digital literature accessible to the public worldwide.</data>
+      <data key="d2">775fded7899f0e78d4e7cec4fae42fd9,a22f06338d9771d1617bbf6e0b15d5b8,a33174286d9d6731d658d04ab0089fcc,d2952439a1347076328cc02ce263f73b</data>
+      <data key="d3">5</data>
+      <data key="d4">223</data>
+      <data key="d5">6e0c81bef5364c988b21bf9b709d9861</data>
+    </node>
+    <node id="&quot;UNITED STATES&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">The United States is a country whose copyright laws are a primary basis for the licensing terms and copyright status of works distributed through Project Gutenberg. It is also the country where the Foundation responsible for Project Gutenberg is legally organized, and where U.S. laws regarding charitable donations and tax exemptions apply. In the United States, many of the works available through Project Gutenberg are in the public domain, reflecting the country's copyright regulations and licensing practices.</data>
+      <data key="d2">775fded7899f0e78d4e7cec4fae42fd9,a33174286d9d6731d658d04ab0089fcc,d2952439a1347076328cc02ce263f73b</data>
+      <data key="d3">2</data>
+      <data key="d4">224</data>
+      <data key="d5">1dbc51475cb04dafa4a8833a8378635e</data>
+    </node>
+    <node id="&quot;PROJECT GUTENBERG LITERARY ARCHIVE FOUNDATION&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">The Project Gutenberg Literary Archive Foundation owns the copyright to Project Gutenberg's electronic works and is responsible for managing their licensing, distribution, and public domain status. Additionally, the Foundation oversees donations, supports the production of eBooks, and facilitates public engagement with Project Gutenberg. It plays a central role in managing the distribution and licensing of Project Gutenberg's works, ensuring proper permissions are obtained and maintained.</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf,775fded7899f0e78d4e7cec4fae42fd9,a22f06338d9771d1617bbf6e0b15d5b8</data>
+      <data key="d3">2</data>
+      <data key="d4">225</data>
+      <data key="d5">c12b9ebd8b4e42b7896822a32e3fa6eb</data>
+    </node>
+    <node id="&quot;SECTION 4&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Section 4 specifies the address for donations to the Project Gutenberg Literary Archive Foundation."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">0</data>
+      <data key="d4">226</data>
+      <data key="d5">27505f6ade4b4e5f9316ffe9c34821f7</data>
+    </node>
+    <node id="&quot;SECTION 3&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"Section 3 provides contact information for obtaining permission from the Foundation."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">0</data>
+      <data key="d4">227</data>
+      <data key="d5">0ee7db2c6bea4630ba9f0c25e8a967ad</data>
+    </node>
+    <node id="&quot;THE WORKS&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Works refer to the electronic texts and digital copies created and distributed by Project Gutenberg, involving volunteers and staff."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">3</data>
+      <data key="d4">228</data>
+      <data key="d5">5a6c1d15424149f69052cd8d91fbff75</data>
+    </node>
+    <node id="&quot;THE USER&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">"The User is an individual who interacts with the Project Gutenberg collection, potentially requesting refunds or reporting defects."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">2</data>
+      <data key="d4">229</data>
+      <data key="d5">d005bf75c31d4848ad7041f39651e59c</data>
+    </node>
+    <node id="&quot;THE DEFECTS&quot;">
+      <data key="d0">"CONCEPT"</data>
+      <data key="d1">"Defects refer to errors, corrupt data, or damages in the electronic works or media, which may be identified by users."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">1</data>
+      <data key="d4">230</data>
+      <data key="d5">9b3eef8f3a3a45e6873838db95295b8a</data>
+    </node>
+    <node id="&quot;THE LICENSE&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The License refers to the legal agreement under which users can access and distribute Project Gutenberg works, including terms for refunds and permissions."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">1</data>
+      <data key="d4">231</data>
+      <data key="d5">fdc954b454744820804d7798f3e0b5de</data>
+    </node>
+    <node id="&quot;THE REFUND POLICY&quot;">
+      <data key="d0">"EVENT"</data>
+      <data key="d1">"The Refund Policy outlines conditions under which users can receive refunds or replacements for defective works within specified timeframes."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">0</data>
+      <data key="d4">232</data>
+      <data key="d5">49c1383836934ec495c3b35769100a73</data>
+    </node>
+    <node id="&quot;THE LAW&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Various states and jurisdictions are referenced regarding warranties and disclaimers, indicating legal considerations across different regions."</data>
+      <data key="d2">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d3">0</data>
+      <data key="d4">233</data>
+      <data key="d5">859dedcc3736439a8a563419f16cb3d8</data>
+    </node>
+    <node id="&quot;MICHAEL S. HART&quot;">
+      <data key="d0">"PERSON"</data>
+      <data key="d1">Michael S. Hart was the originator of the Project Gutenberg concept and played a pivotal role in establishing the digital library. He led the creation and distribution of electronic works for over forty years, producing and disseminating free eBooks and significantly contributing to the development of digital access to literature.</data>
+      <data key="d2">a22f06338d9771d1617bbf6e0b15d5b8,a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">1</data>
+      <data key="d4">234</data>
+      <data key="d5">6078b9980a6c4dcd9198d151b833ead7</data>
+    </node>
+    <node id="&quot;FOUNDATION&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The Foundation, specifically the Project Gutenberg Literary Archive Foundation, is a non-profit educational organization based in Mississippi, responsible for managing the mission, donations, and legal compliance of Project Gutenberg."</data>
+      <data key="d2">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">3</data>
+      <data key="d4">235</data>
+      <data key="d5">f93cd6b8213e46dda67af7e5382e1bd2</data>
+    </node>
+    <node id="&quot;MONTCLAIR NJ&quot;">
+      <data key="d0">"GEO"</data>
+      <data key="d1">"Montclair, New Jersey, is the location of the Foundation's business office, serving as a logistical hub for operations."</data>
+      <data key="d2">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">1</data>
+      <data key="d4">236</data>
+      <data key="d5">496f17c2f74244c681db1b23c7a39c0c</data>
+    </node>
+    <node id="&quot;WWW.GUTENBERG.ORG&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"WWW.GUTENBERG.ORG" is the official website of Project Gutenberg, serving as the primary portal for accessing its extensive collection of eBooks. The website provides search functions to browse and find digital books, along with donation information to support the organization. Additionally, it offers contact details and subscription options, making it a comprehensive resource for users interested in accessing and supporting Project Gutenberg's digital library.</data>
+      <data key="d2">a22f06338d9771d1617bbf6e0b15d5b8,a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">0</data>
+      <data key="d4">237</data>
+      <data key="d5">da1684437ab04f23adac28ff70bd8429</data>
+    </node>
+    <node id="&quot;WWW.GUTENBERG.ORG/CONTACT&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The contact webpage for the Foundation, offering communication channels for inquiries and support."</data>
+      <data key="d2">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">0</data>
+      <data key="d4">238</data>
+      <data key="d5">4517768fc4e24bd2a790be0e08a7856e</data>
+    </node>
+    <node id="&quot;WWW.GUTENBERG.ORG/DONATE&quot;">
+      <data key="d0">"ORGANIZATION"</data>
+      <data key="d1">"The donation webpage where supporters can contribute funds to support Project Gutenberg's mission."</data>
+      <data key="d2">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d3">0</data>
+      <data key="d4">239</data>
+      <data key="d5">545edff337344e518f68d1301d745455</data>
+    </node>
+    <edge source="&quot;BOB CRATCHIT&quot;" target="&quot;TINY TIM&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Bob Cratchit is the father of Tiny Tim, and he cares deeply for Tiny Tim's well-being. His concern for Tiny Tim's health and happiness plays a significant role in the story's moral, highlighting themes of parental love and compassion.</data>
+      <data key="d10">696cd4a0ae22e395f3c9d04cfcea8d49,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d11">9376ce8940e647a99e5e087514b88fa4</data>
+      <data key="d12">0</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;BOB CRATCHIT&quot;" target="&quot;CRATCHIT FAMILY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Bob is the head of the Cratchit family, central to their collective identity and struggles."|</data>
+      <data key="d10">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d11">b38a636e86984600bb4b57c2e2df9747</data>
+      <data key="d12">1</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;BOB CRATCHIT&quot;" target="&quot;SCROOGE&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Scrooge is Bob Cratchit's employer, and their relationship is central to the story, highlighting themes of kindness and social responsibility. Initially, Scrooge is portrayed as a miserly and unkind employer, but after experiencing a change of heart, he decides to improve his treatment of Bob Cratchit and support his family. This transformation underscores the story's message about the importance of compassion and social conscience.</data>
+      <data key="d10">4d24514bfd653ec63181d9d824eb98ef,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d11">4bc7440b8f4b4e4cae65a5c49defa923</data>
+      <data key="d12">2</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;GHOST OF CHRISTMAS PAST&quot;" target="&quot;SCROOGE&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">The Ghost of Christmas Past is a supernatural entity that appears to Ebenezer Scrooge as a guide to his own past. It has a fluctuating form and emits a bright jet of light from its head, indicating its supernatural nature. The Ghost of Christmas Past leads Scrooge through memories of his earlier life, including joyful celebrations such as Fezziwig's party, encouraging him to reflect on his life and the choices he has made. Its purpose is to prompt self-examination and potential change by revealing scenes from Scrooge's past.</data>
+      <data key="d10">312a70793b39dccac6fb4e4b0d23df0d,4b5a2c29bc3f579c8040c45f2a9363d0,6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d11">5d1b038ce8be4533b54dd79d6496de9b</data>
+      <data key="d12">3</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;GHOST OF CHRISTMAS PAST&quot;" target="&quot;ROOM&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Ghost manifests in Scrooge's room, where the supernatural visitation begins."|</data>
+      <data key="d10">6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d11">ac6e5a44e0c04a4fa93589376fde4c34</data>
+      <data key="d12">4</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;GHOST OF CHRISTMAS PRESENT&quot;" target="&quot;SCROOGE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Ghost guides Scrooge through scenes of Christmas cheer, encouraging his transformation from miser to benefactor."|</data>
+      <data key="d10">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d11">40e4ef7dbc98473ba311bd837859a62a</data>
+      <data key="d12">5</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;GHOST OF CHRISTMAS YET TO COME&quot;" target="&quot;SCROOGE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Ghost shows Scrooge his future, including his own death and the fate of others, prompting his change of heart."</data>
+      <data key="d10">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d11">222f0ea8a5684123a7045986640ec844</data>
+      <data key="d12">6</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MRS. CRATCHIT&quot;" target="&quot;BOB&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Bob and Mrs. Cratchit are family members working together to prepare and enjoy the Christmas dinner."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">668cf1fdfd644d39acc6350b86117ea2</data>
+      <data key="d12">7</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MRS. CRATCHIT&quot;" target="&quot;PUDDING&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Mrs. Cratchit prepares the pudding, which is celebrated as a successful dish."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">478e4c72d8fb46dd8cc9f0691c9878fd</data>
+      <data key="d12">8</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;MARLEY&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">Marley was Scrooge's business partner, and his death profoundly affects Scrooge's outlook and the progression of the story. Marley's face appears as a ghostly image on the knocker, symbolizing his lingering presence and influence. Additionally, Marley's ghost appears to Scrooge, serving as a supernatural warning about his life choices and future.</data>
+      <data key="d10">2133f23cd48da7db45725d6fd180a9a6,5e8b09e4b9e2e758c5a254dc558da1dc,e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d11">82b0446e7c9d4fc793f7b97f890e9049</data>
+      <data key="d12">9</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;OLD MARLEY'S FUNERAL&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge attends and is directly affected by Marley's funeral, which marks a pivotal moment in the narrative."|</data>
+      <data key="d10">5e8b09e4b9e2e758c5a254dc558da1dc</data>
+      <data key="d11">8169efeea3ce473d9fd2f1c688126a1c</data>
+      <data key="d12">10</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;SCROOGE AND MARLEY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The firm of Scrooge and Marley signifies their business partnership, which continues to influence the story's events and themes."|</data>
+      <data key="d10">5e8b09e4b9e2e758c5a254dc558da1dc</data>
+      <data key="d11">c2d48b75af6a4d7989ccf9eceabd934e</data>
+      <data key="d12">11</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;NEPHEW&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">The nephew is a family member who shares in Christmas festivities and games with Scrooge, embodying familial warmth and joy. He actively attempts to persuade Scrooge to embrace the spirit of Christmas by being more generous and forgiving. The nephew visits Scrooge to invite him to celebrate Christmas, representing kindness and familial warmth, and serving as a contrast to Scrooge's initial attitude towards the holiday.</data>
+      <data key="d10">7873ef9345f51b5cea209977c77a2895,8b240ac8efc37250a30c472cdc63f1ff,adad8724255cb219e0e4760c3773404c</data>
+      <data key="d11">5f1fc373a8f34050a5f7dbd8ac852c1b</data>
+      <data key="d12">12</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;CLERK&quot;">
+      <data key="d8">4.0</data>
+      <data key="d9">Scrooge employs the clerk in his counting-house, and their relationship is characterized by Scrooge's stinginess and the clerk's modest resignation, patience, and modesty. The clerk's well-being and attitude are influenced by Scrooge's treatment and attitude towards money and service. Additionally, the clerk's demeanor and circumstances reflect the typical experience of a common worker in Victorian society, and he is affected by Scrooge's attitude as well as the Christmas spirit.</data>
+      <data key="d10">0199efcc183aac09eefc978fa1b715f1,312a70793b39dccac6fb4e4b0d23df0d,7873ef9345f51b5cea209977c77a2895,8b240ac8efc37250a30c472cdc63f1ff</data>
+      <data key="d11">0c010fa3aeac4b28b2fbb8c2339c2521</data>
+      <data key="d12">13</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;CITY&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Scrooge's counting-house is located within the City, which serves as the urban backdrop and atmospheric setting for the story. The City provides the primary setting for much of the story's action, illustrating a lively Christmas atmosphere that enhances the narrative's festive and bustling environment.</data>
+      <data key="d10">33439623114354941f9323e7d62c790b,8b240ac8efc37250a30c472cdc63f1ff</data>
+      <data key="d11">c2999bdca08a478b84b10219875b285e</data>
+      <data key="d12">14</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;PORTLY GENTLEMEN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The portly gentlemen visit Scrooge to solicit donations for the poor, highlighting social charity during Christmas."</data>
+      <data key="d10">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d11">263d07354a1b4336b462024288f9bcd3</data>
+      <data key="d12">15</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;MR. MARLEY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Mr. Marley's ghost appears to Scrooge to warn him about his miserly ways and to urge him to change."</data>
+      <data key="d10">7873ef9345f51b5cea209977c77a2895</data>
+      <data key="d11">f9005e5c01b44bb489f7112322fd1162</data>
+      <data key="d12">16</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;GENTLEMAN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The gentleman seeks to persuade Scrooge to contribute to charity, highlighting social responsibility and compassion."|</data>
+      <data key="d10">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d11">d9ef017549724f4fbc4ff4ba6701dac0</data>
+      <data key="d12">17</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;MARLEY'S FACE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Marley's face on the knocker signifies the supernatural warning from the ghost of Marley, indicating a connection between Scrooge and the ghostly apparition."|</data>
+      <data key="d10">0199efcc183aac09eefc978fa1b715f1</data>
+      <data key="d11">33b9e826af3f43838c07c847b6349497</data>
+      <data key="d12">18</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;LONDON&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge's residence and workplace are located in London, making the city the setting for his life and the story's events."|</data>
+      <data key="d10">0199efcc183aac09eefc978fa1b715f1</data>
+      <data key="d11">dbe9063124d047dc8d6fcaeadcda038f</data>
+      <data key="d12">19</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;CORPORATION&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The corporation is part of the societal context surrounding Scrooge, representing societal institutions involved in commerce and governance."</data>
+      <data key="d10">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d11">c885166d0c454a748376b56279f96408</data>
+      <data key="d12">20</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;ALDERMEN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Aldermen are societal officials mentioned alongside other institutions, indicating the societal environment of the story."</data>
+      <data key="d10">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d11">586bccefb1e344289c1ee984e165de9c</data>
+      <data key="d12">21</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;LIVERY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Livery is part of the societal institutions mentioned, representing trade or craft guilds."</data>
+      <data key="d10">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d11">a2201b8753ba4847ab0b22054e27d2c0</data>
+      <data key="d12">22</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;HOUSE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The house is the setting where Scrooge's supernatural encounter occurs, including the hall, rooms, and staircase."</data>
+      <data key="d10">2133f23cd48da7db45725d6fd180a9a6</data>
+      <data key="d11">b5ecd0553dd742f5813c9b855d548a41</data>
+      <data key="d12">23</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;FIRE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The fire in Scrooge's room is a setting where the ghost appears and the supernatural events unfold."|</data>
+      <data key="d10">e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d11">89b2003e97804961805ea1886d078ebd</data>
+      <data key="d12">24</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;BELL&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The swinging and ringing of the bell signifies the supernatural presence and the ghost's arrival."|</data>
+      <data key="d10">e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d11">6dd7f5f6b4544271a97f6a136f82fc3d</data>
+      <data key="d12">25</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;DOOR&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The door is the physical entry point for the ghost, marking the boundary between the natural and supernatural realms."|</data>
+      <data key="d10">e7b8bfb3e2c427ea3b889edc137f6ec5</data>
+      <data key="d11">eb01db8435554f2cbafe39a50f62f20a</data>
+      <data key="d12">26</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;JACOB MARLEY&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">Jacob Marley is the deceased former business partner of Ebenezer Scrooge. As a ghostly spirit, Marley appears to Scrooge to warn him about the negative consequences of his greed and selfishness. His ghostly visitation serves both as a warning and an instruction, aiming to prompt Scrooge to reconsider his life choices and embrace a more compassionate and generous outlook. Marley's appearance as a spiritual visitor acts as a catalyst for Scrooge's eventual transformation.</data>
+      <data key="d10">7c3c14fb7534245699334c3f3af741d1,a9d95369d1d8bbd8108e7bbd93d652ec,e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d11">3d175ad1f0014cd4871eff4e86db9f88</data>
+      <data key="d12">27</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;GHOST&quot;">
+      <data key="d8">5.0</data>
+      <data key="d9">The Ghost is a supernatural entity that interacts with Scrooge, serving as a moral guide and catalyst for his transformation. It visits Scrooge by entering through his door and influences his perceptions of the supernatural realm. The Ghost guides and shows visions to Scrooge, revealing insights into his past, present, and future, with the purpose of inspiring moral change. As a spirit that teaches moral lessons about kindness and generosity, the Ghost plays a crucial role in influencing Scrooge's reflections and potential for personal growth.</data>
+      <data key="d10">788fa4df64efbe366465a2d79c57540d,82b4ace78f477e67498bca9fdf85f5c6,a9d95369d1d8bbd8108e7bbd93d652ec,dd956afe0e7b4cef80dab966b9f82753,e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d11">c8e706fbdc90420d952deed03c4f04b4</data>
+      <data key="d12">28</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;JACOB&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Jacob, also known as the Ghost of Christmas Present, plays a guiding role in the narrative by warning and advising Scrooge about his future and moral choices. His presence prompts Scrooge to reflect on mortality and moral responsibility, especially in light of Jacob's death, which leads Scrooge to contemplate the consequences of his actions and the importance of moral integrity.</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe,a340401c3ec3b6740e9a82b46c6623a4</data>
+      <data key="d11">cf6115e69d6649cc99ef2bd11854ccfb</data>
+      <data key="d12">29</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;MARLEY'S GHOST&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Marley's Ghost is the spirit of Jacob Marley, who appears to Scrooge to warn him about the consequences of greed and to foretell the visits from other spirits. It haunts and warns Scrooge, playing a pivotal role in his supernatural experiences and moral reflection.</data>
+      <data key="d10">82b4ace78f477e67498bca9fdf85f5c6,a340401c3ec3b6740e9a82b46c6623a4</data>
+      <data key="d11">9ed7e3d187b94ab0a90830b17d66615e</data>
+      <data key="d12">30</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE GHOST&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Scrooge examines the door and environment after the Ghost's entry, indicating his interaction and investigation of supernatural phenomena. The Ghost guides Scrooge through scenes of his past, present, and future, leading to his moral awakening.</data>
+      <data key="d10">696cd4a0ae22e395f3c9d04cfcea8d49,82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d11">b4c7432f712849d7aba9dccbb77471ef</data>
+      <data key="d12">31</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;ROOM&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Scrooge is present in the room where the ghost appears and interacts with the spirit, seeking to understand its purpose. He observes the transformed room, which has become a scene of Christmas festivity, indicating that he has been exposed to the spirit's message and has experienced a change in his surroundings reflecting the spirit's influence.</data>
+      <data key="d10">2398bef3715ca1485012bdd394f7db3e,6359ab00dbbec9c39edad51589aea3ae</data>
+      <data key="d11">434e752b992c4e6a812557529315c5b9</data>
+      <data key="d12">32</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE SPIRIT&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit guides Scrooge through visions of his past, present, and future, enabling his emotional reflection and change."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">df79a27b9a4f42fd839c90bb8a79ad91</data>
+      <data key="d12">33</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;ALI BABA&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge recognizes Ali Baba as a character from a foreign story, expressing recognition and nostalgia."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">8f140fd7126f47b6b00307b0181509f9</data>
+      <data key="d12">34</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;VALENTINE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Valentine is part of Scrooge's nostalgic memories, representing childhood stories."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">40450f2c91944a81944621b94f190b49</data>
+      <data key="d12">35</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;ORSON&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Orson is remembered as a wild brother in Scrooge's past, part of his storytelling memories."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">5b9fa6a959294dc29c8420b2d7d3096f</data>
+      <data key="d12">36</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE SULTAN'S GROOM&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"A character from a story within the narrative, involved in a fantastical scene that Scrooge recalls."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">b84d71ed9c3b45819eb3205fd28e13a0</data>
+      <data key="d12">37</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE PARROT&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Parrot is a lively memory from Scrooge's past, symbolizing humor and liveliness."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">b0b464bc92a541e48547fe9738378dab</data>
+      <data key="d12">38</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;ROBIN CRUSOE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Robin Crusoe is a story character that Scrooge recalls, associated with adventure."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">44c65dda6fb7472dae36f6eea720ab47</data>
+      <data key="d12">39</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE BOY SINGING A CHRISTMAS CAROL&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The boy represents innocence and the festive spirit, recalling a Christmas memory."</data>
+      <data key="d10">e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">5d97ff82691c4482973d73d1860e4757</data>
+      <data key="d12">40</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;FAN&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">Fan is a young girl who visits her uncle, Scrooge, to bring him home for Christmas, symbolizing familial love and warmth. Her visit signifies a moment of familial reunion and hope for a better future, which impacts Scrooge's emotional state. Fan is described as Scrooge's younger sister or relative, and her presence emphasizes themes of family, love, and hope during the holiday season.</data>
+      <data key="d10">33439623114354941f9323e7d62c790b,e6179d70c9e4e7bbf0b591e9ece706e8</data>
+      <data key="d11">2567445079794d1e84f17abc48776002</data>
+      <data key="d12">41</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;FEZZIWIG&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">Fezziwig is a former employer of Scrooge, known for his festive and generous nature. He is the host of the Christmas celebration that Scrooge attends, which signifies a relationship of employer and former apprentice or friend. Fezziwig's joyful and generous celebration has a significant influence on Scrooge's feelings and memories, highlighting a stark contrast between Scrooge's current attitude and his past acts of kindness and generosity.</data>
+      <data key="d10">33439623114354941f9323e7d62c790b,3edbf99376540faf00d8f5307941932e,4b5a2c29bc3f579c8040c45f2a9363d0</data>
+      <data key="d11">392be891f8b649fabdc20e7bf549f669</data>
+      <data key="d12">42</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;DICK WILKINS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Dick Wilkins is a former fellow-apprentice and friend of Scrooge, sharing in the festive activities."</data>
+      <data key="d10">3edbf99376540faf00d8f5307941932e</data>
+      <data key="d11">0111777c4e9e4260ab2e5ddea7cbcf58</data>
+      <data key="d12">43</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;SPIRIT&quot;">
+      <data key="d8">7.0</data>
+      <data key="d9">In the narrative involving Scrooge and the Spirit, the Spirit plays a pivotal role in guiding and influencing Scrooge through a series of visions of his past, present, and future. These visions serve to deepen Scrooge's understanding of his life choices, morality, and mortality, ultimately inspiring a moral transformation. Throughout their interactions, Scrooge engages with the Spirit by questioning its motives and expressing concern about deprivation, reflecting a moral and philosophical relationship. He seeks insight into Tiny Tim's fate and reflects on his own morality, demonstrating a desire for self-awareness and change. The Spirit's guidance is instrumental in shaping Scrooge's emotional response and moral awakening, emphasizing lessons about the importance of compassion, the consequences of greed, and the value of human kindness. Overall, the relationship between Scrooge and the Spirit is characterized by guidance, influence, and a shared goal of moral redemption.</data>
+      <data key="d10">25293d3af56b1e8bb7387f18e5f830c6,2c53885ea36c9f539ca623101d70b60b,2f4b2f4053b5911c93f7f63677f780fe,312a70793b39dccac6fb4e4b0d23df0d,6b5812a07d880d92f055d038934b2b87,788fa4df64efbe366465a2d79c57540d,f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d11">785f7f32471c439e89601ab81c828d1d</data>
+      <data key="d12">44</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;SPIRIT OF CHRISTMAS PRESENT&quot;">
+      <data key="d8">3.0</data>
+      <data key="d9">The Spirit of Christmas Present appears to Ebenezer Scrooge, guiding him through scenes of Christmas celebration and imparting moral lessons. It shows Scrooge the current state of others during Christmas, highlighting both the joy and suffering experienced by people around him. The Spirit of Christmas Present interacts with Scrooge to teach him the importance of kindness and generosity, encouraging him to embrace the true spirit of Christmas.</data>
+      <data key="d10">2398bef3715ca1485012bdd394f7db3e,3e0edc9c6b1dbff5eaeaf248e6181926,7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d11">6768339b54084020aec27adcef8994ff</data>
+      <data key="d12">45</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;CITY STREETS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge observes the city streets during Christmas morning, witnessing the festive atmosphere and community spirit."|</data>
+      <data key="d10">3e0edc9c6b1dbff5eaeaf248e6181926</data>
+      <data key="d11">f09f381c319f4251847d1a4bb8cdcac1</data>
+      <data key="d12">46</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;FRED&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Fred is Scrooge's nephew who actively celebrates Christmas and endeavors to influence Scrooge's attitude towards the holiday. He strives to bring joy and a festive spirit to Scrooge, embodying familial love and hope.</data>
+      <data key="d10">25293d3af56b1e8bb7387f18e5f830c6,788fa4df64efbe366465a2d79c57540d</data>
+      <data key="d11">eec11f567e7f4943b157c3a657eb9a46</data>
+      <data key="d12">47</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;CHRISTMAS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Christmas serves as the moral and spiritual turning point for Scrooge, emphasizing themes of generosity and redemption."</data>
+      <data key="d10">e63efed56e4606f35b676ab40e2432aa</data>
+      <data key="d11">efef117839b64ce9adf614a461d41ba6</data>
+      <data key="d12">48</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE STREET&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge observes societal interactions and scenes in the street, reflecting societal conditions."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">2171091ada0942d8ae7944df11659f6e</data>
+      <data key="d12">49</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;THE SHOP&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge visits or observes the shop, which is depicted as a place of crime and misery, representing societal decay."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">bcfdc48e5f044e1d84c5d217c1992d4b</data>
+      <data key="d12">50</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;DEATH&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge reflects on death, experiencing fear and contemplating the moral implications of his life."</data>
+      <data key="d10">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d11">b232fb0f2ac14790b931d1e7fcddd8ad</data>
+      <data key="d12">51</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;TINY TIM&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Scrooge's transformation is significantly motivated by Tiny Tim's plight and well-being, which influence his newfound generosity and concern for others. Tiny Tim's innocence and moral message play a crucial role in inspiring Scrooge to change his ways and become more compassionate.</data>
+      <data key="d10">4dd973f86fac64800eb57dc9848d3136,f13768b850451c6d88dc4c794e5c6cf7</data>
+      <data key="d11">1c16b22e18d3483b8d41b284754274e2</data>
+      <data key="d12">52</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;PAST, PRESENT, FUTURE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge's journey through the past, present, and future spirits leads to his moral awakening and change."</data>
+      <data key="d10">4dd973f86fac64800eb57dc9848d3136</data>
+      <data key="d11">0080f96708cd4054a5f0986ca86889f4</data>
+      <data key="d12">53</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;SPIRIT OF CHRISTMAS PAST&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit of Christmas Past guides Scrooge through memories of his earlier life, illustrating how he became the person he is today."|</data>
+      <data key="d10">7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d11">e683130322ac47708a852a5e51abb7c5</data>
+      <data key="d12">54</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;SPIRIT OF CHRISTMAS YET TO COME&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit of Christmas Yet to Come reveals possible future outcomes based on Scrooge's current behavior, urging him to change."|</data>
+      <data key="d10">7c3c14fb7534245699334c3f3af741d1</data>
+      <data key="d11">71a0a8c1beb64da08124205e9a803d98</data>
+      <data key="d12">55</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;BOY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge interacts with the boy to gather information about local shops and Christmas traditions, showing his engagement with the community."</data>
+      <data key="d10">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d11">f84314943bee4c859c9a62f268c9c216</data>
+      <data key="d12">56</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE&quot;" target="&quot;TURKEY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Scrooge purchases the turkey as a gesture of generosity for Christmas, symbolizing his transformation."</data>
+      <data key="d10">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d11">ba481175ee1d4329bf07757a30abd3a1</data>
+      <data key="d12">57</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CHRISTMAS EVE&quot;" target="&quot;CLERK&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The clerk celebrates Christmas Eve with joy, contrasting with Scrooge's gloom, and this event highlights themes of holiday spirit."|</data>
+      <data key="d10">0199efcc183aac09eefc978fa1b715f1</data>
+      <data key="d11">8d8da35190bf43c5878fa38f3eb4f3d2</data>
+      <data key="d12">58</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FEZZIWIG&quot;" target="&quot;WAREHOUSE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Fezziwig owns and operates the warehouse where the Christmas festivities are held, making him the host of the event."</data>
+      <data key="d10">3edbf99376540faf00d8f5307941932e</data>
+      <data key="d11">2fb7e14a3f124526bd7b24867fc18e81</data>
+      <data key="d12">59</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FRED&quot;" target="&quot;NIECE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Fred and his niece are both family members who participate in the Christmas festivities, sharing joy and good humor."</data>
+      <data key="d10">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d11">5c13c7d61e6c4bfe839f21e7ad3530a7</data>
+      <data key="d12">60</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FRED&quot;" target="&quot;SCROOGE'S NIECE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Fred is the nephew of Scrooge's Niece, sharing familial ties and participating in the Christmas festivities together."|</data>
+      <data key="d10">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d11">a621663edba64d99b7e50f1e53f32ee7</data>
+      <data key="d12">61</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CHRISTMAS&quot;" target="&quot;LONDON&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"London is the setting where the events of Christmas take place, emphasizing the cultural context of the story."</data>
+      <data key="d10">312a70793b39dccac6fb4e4b0d23df0d</data>
+      <data key="d11">42be4e140061482ea509dd3e26189480</data>
+      <data key="d12">62</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CHRISTMAS&quot;" target="&quot;THE FAMILY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Family celebrates Christmas through social gatherings, singing, and exchanging good wishes, embodying holiday traditions."|</data>
+      <data key="d10">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d11">4da4ef951ff340f1a3dd679de4be3341</data>
+      <data key="d12">63</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PRISONS&quot;" target="&quot;POOR LAW&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Prisons are part of the social system supported by the Poor Law, providing detention for offenders and the impoverished."|</data>
+      <data key="d10">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d11">2f05fcce857e4a499ca4e89a3cefbcb3</data>
+      <data key="d12">64</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;UNION WORKHOUSES&quot;" target="&quot;POOR LAW&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Workhouses operate under the Poor Law, offering shelter and work for the destitute."|</data>
+      <data key="d10">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d11">b3aeb7ae009a4f52ae3ae4586e32fe11</data>
+      <data key="d12">65</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;TREADMILL&quot;" target="&quot;WORKHOUSES&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Treadmill is a device used within workhouses as a form of punishment or labor."|</data>
+      <data key="d10">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d11">089b9b9841714b8da043777e2cda3767</data>
+      <data key="d12">66</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;LORD MAYOR&quot;" target="&quot;MANSION HOUSE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Lord Mayor resides in and oversees the Mansion House, which hosts official civic events."|</data>
+      <data key="d10">41f7fa53e3b8823756ff8863b6d8ca0c</data>
+      <data key="d11">38f1e44579d0437dac1203c34678d3c3</data>
+      <data key="d12">67</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;LONDON&quot;" target="&quot;WHITECHAPEL&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"London and Whitechapel are locations that provide the setting for the story's events, with Whitechapel specifically associated with sharpness and danger."|</data>
+      <data key="d10">788fa4df64efbe366465a2d79c57540d</data>
+      <data key="d11">1ca24718a96b47f3a8855550506c4b41</data>
+      <data key="d12">68</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;HOUSE&quot;" target="&quot;CHILDREN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Children are playing and causing chaos within the house, illustrating childhood innocence and exuberance."|</data>
+      <data key="d10">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d11">9c980dfe3cab44b7a83408405edab0b6</data>
+      <data key="d12">69</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CREATURES&quot;" target="&quot;SPIRIT VOICES&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The spirit voices fade together with the creatures, indicating a shared supernatural fate or origin."</data>
+      <data key="d10">82b4ace78f477e67498bca9fdf85f5c6</data>
+      <data key="d11">f23484b1b45d44c3b7847e1906dddd37</data>
+      <data key="d12">70</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SPIRIT&quot;" target="&quot;DINNERS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit interacts benevolently with dinners, sprinkling incense and water, symbolizing blessing and good will."|</data>
+      <data key="d10">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d11">929f30875e1744b49e7b416eaf5a790c</data>
+      <data key="d12">71</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SPIRIT&quot;" target="&quot;BOB&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Bob interacts with the Spirit, expressing hope and pride, and listening to visions of Tiny Tim's future."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">4920fda031804ce8a1073ace8e061ed6</data>
+      <data key="d12">72</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SPIRIT&quot;" target="&quot;FUTURE SHADOWS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit shows Scrooge visions of the Future Shadows, depicting potential outcomes for Tiny Tim."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">4b8aa4587c7344adac2cbfa69d5e40fa</data>
+      <data key="d12">73</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;ROOM&quot;" target="&quot;SPIRIT OF CHRISTMAS PRESENT&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Spirit of Christmas Present inhabits and reveals the room, making it a central setting for the scene."|</data>
+      <data key="d10">2398bef3715ca1485012bdd394f7db3e</data>
+      <data key="d11">52701d941dfb45359693baae8f267056</data>
+      <data key="d12">74</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MOTHER&quot;" target="&quot;CHILDREN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Mother is caring for and engaging with her children, exemplifying maternal love and family bonds."|</data>
+      <data key="d10">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d11">31499ee6277a4d71b19cb5b6be554c69</data>
+      <data key="d12">75</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CHILDREN&quot;" target="&quot;PORTER&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Porter is overwhelmed by the children's playful assault, representing service staff affected by household chaos."|</data>
+      <data key="d10">dd956afe0e7b4cef80dab966b9f82753</data>
+      <data key="d11">d99eabad5dfd47278692569d2a9395b1</data>
+      <data key="d12">76</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;JACOB MARLEY'S INTERVENTION&quot;" target="&quot;MESSENGER&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Messenger's dispatch is directly influenced by Jacob Marley's intervention, marking a significant narrative turning point."|</data>
+      <data key="d10">2398bef3715ca1485012bdd394f7db3e</data>
+      <data key="d11">d53f15cb7f7845de91cc44ad44ff9f6e</data>
+      <data key="d12">77</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CITY STREETS&quot;" target="&quot;GREAT BRITAIN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The city streets are part of Great Britain, illustrating the setting and environment of the story."|</data>
+      <data key="d10">3e0edc9c6b1dbff5eaeaf248e6181926</data>
+      <data key="d11">23becf8c6fca4f47a53ec4883d4bf63f</data>
+      <data key="d12">78</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;POULTERERS&quot;" target="&quot;FRUITERS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Both are retail shops involved in selling food items, contributing to the lively market scene during Christmas."|</data>
+      <data key="d10">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d11">d0ffa3bcd1234258953ff4956d19f561</data>
+      <data key="d12">79</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;GROCERS&quot;" target="&quot;BAKERS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Both are food retail establishments that serve the community during Christmas, with the scene highlighting their activity."|</data>
+      <data key="d10">2c53885ea36c9f539ca623101d70b60b</data>
+      <data key="d11">ac41b77ba33c4c84877eb425aba03aa1</data>
+      <data key="d12">80</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;TINY TIM&quot;" target="&quot;BOB&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">"Bob is the guardian or parent figure to Tiny Tim, sitting beside him and expressing pride in the meal.""Tiny Tim is the son of Bob Cratchit, sitting close to him and sharing in the Christmas celebration."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">5d3184dabfd647a5a7e565f72c60ff24</data>
+      <data key="d12">81</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;TINY TIM&quot;" target="&quot;CRATCHIT FAMILY&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Tiny Tim is a member of the Cratchit family, symbolizing innocence and the impact of social conditions."|</data>
+      <data key="d10">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d11">0ec262c2cfef4dd581f3655e5e496e31</data>
+      <data key="d12">82</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE GOOSE&quot;" target="&quot;CRATCHITS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The goose is the centerpiece of the Cratchit family's Christmas dinner, symbolizing their celebration."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">100c2fccd7f74d9281707082f062ba72</data>
+      <data key="d12">83</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MISS&quot;" target="&quot;BELINDA&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Miss is associated with Belinda, possibly as a family member or guest involved in the meal preparation."</data>
+      <data key="d10">6b5812a07d880d92f055d038934b2b87</data>
+      <data key="d11">378fc7636eeb4aabbfd40995a6960c64</data>
+      <data key="d12">84</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FAMILY&quot;" target="&quot;MUSIC&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Family members participate in musical activities, such as playing the harp and singing, enhancing the festive spirit."|</data>
+      <data key="d10">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d11">80a04aa18cd649d584292f23b10c0727</data>
+      <data key="d12">85</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FAMILY&quot;" target="&quot;GAMES&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Family members engage in traditional Christmas games like blind man's buff and forfeits, fostering joy and togetherness."|</data>
+      <data key="d10">adad8724255cb219e0e4760c3773404c</data>
+      <data key="d11">4e9ca18ccc1d4527a3bc035d07f5e162</data>
+      <data key="d12">86</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;LIGHTHOUSE&quot;" target="&quot;SEA&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The lighthouse is situated on a reef in the sea, serving as a beacon of guidance amidst the dangerous waters."</data>
+      <data key="d10">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d11">5564257e89f1428486a64fcf52f49490</data>
+      <data key="d12">87</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SHIP&quot;" target="&quot;SEA&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The ship is built upon a reef in the sea, illustrating the perilous environment and the setting for the seafarers' Christmas celebration."</data>
+      <data key="d10">25293d3af56b1e8bb7387f18e5f830c6</data>
+      <data key="d11">83c76fbd2a004d90a5b0a6736ffed61d</data>
+      <data key="d12">88</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;SCROOGE'S NIECE&quot;" target="&quot;THE LADIES&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Ladies are the family members and friends who gather for Christmas, engaging in social activities and expressing opinions about wealth and happiness."|</data>
+      <data key="d10">eaa11e11b4e9c6586b9128388a9fe4ea</data>
+      <data key="d11">d9779c41e3c74fe0b26e23822a4b995b</data>
+      <data key="d12">89</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;OLD SCRATCH&quot;" target="&quot;CONVERSATION&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Scratch is referenced in a colloquial conversation, symbolizing evil or temptation."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">9d7a563b3b2d405092c31f1fe08cff77</data>
+      <data key="d12">90</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE SHOP&quot;" target="&quot;OLD JOE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Joe is a character within the shop, involved in illicit dealings, symbolizing crime."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">bd43f3d439a54781bd4b721a9a269b92</data>
+      <data key="d12">91</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;OLD JOE&quot;" target="&quot;THE WOMAN WITH HEAVY BUNDLE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Joe interacts with or recognizes the woman, indicating social connections or transactions."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">adc0f95733e74351a891c4dadf650a52</data>
+      <data key="d12">92</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;OLD JOE&quot;" target="&quot;THE LAUNDRESS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Joe interacts with or recognizes the laundress, indicating social or economic ties."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">225105a7be14447cb03186bd40756059</data>
+      <data key="d12">93</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;OLD JOE&quot;" target="&quot;THE UNDERTAKER'S MAN&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Joe" and the undertaker's man are part of the same scene, involved in a shared context of crime and death."</data>
+      <data key="d10">2f4b2f4053b5911c93f7f63677f780fe</data>
+      <data key="d11">efce8a9d61254447a26aee99e53f0398</data>
+      <data key="d12">94</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;OLD JOE&quot;" target="&quot;SHOP&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Old Joe is the proprietor or worker at the shop, managing the space and conducting the valuation of items."|</data>
+      <data key="d10">13bc5cc4ab04eb9c1378f28106aecc55</data>
+      <data key="d11">4a75a9f0b18a48bea9c0601c0fc395c4</data>
+      <data key="d12">95</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MRS. DILBER&quot;" target="&quot;SHOP&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Mrs. Dilber works at the shop, involved in the theft and valuation of items."|</data>
+      <data key="d10">13bc5cc4ab04eb9c1378f28106aecc55</data>
+      <data key="d11">e19287afe00a431f9a593a4827d1b448</data>
+      <data key="d12">96</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE WOMAN&quot;" target="&quot;SHOP&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Woman is present at the shop, participating in the theft and discussing her actions."|</data>
+      <data key="d10">13bc5cc4ab04eb9c1378f28106aecc55</data>
+      <data key="d11">f2c06f3a0c704296bf3353b91ee8af47</data>
+      <data key="d12">97</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;MOTHER AND CHILDREN&quot;" target="&quot;HUSBAND&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The husband is part of the family unit, and his death impacts the mother and children, illustrating familial bonds affected by mortality."</data>
+      <data key="d10">f12da31d40e34efbe8c2c848cff576db</data>
+      <data key="d11">f512103ed4624accac6cbbf90d7d250a</data>
+      <data key="d12">98</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;CAROLINE&quot;" target="&quot;HE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"He is the person Caroline is speaking to about their situation, indicating a close relationship and shared concern."|</data>
+      <data key="d10">696cd4a0ae22e395f3c9d04cfcea8d49</data>
+      <data key="d11">2325dafe50d1435cbee8ebcaa69688df</data>
+      <data key="d12">99</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;STREET DOOR&quot;" target="&quot;KNOCKER&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The street door's knocker is a notable object that catches Scrooge's eye, symbolizing reflection and supernatural influence."</data>
+      <data key="d10">4d24514bfd653ec63181d9d824eb98ef</data>
+      <data key="d11">469aeef98cd1421fa123277b93d7b83a</data>
+      <data key="d12">100</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE FOUNDATION&quot;" target="&quot;PROJECT GUTENBERG&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation owns the collection copyright and manages the distribution of Project Gutenberg's electronic works."</data>
+      <data key="d10">775fded7899f0e78d4e7cec4fae42fd9</data>
+      <data key="d11">2fb66f9a0de6406d83b61742a3b52cd6</data>
+      <data key="d12">101</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PROJECT GUTENBERG&quot;" target="&quot;UNITED STATES&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Project Gutenberg's works are primarily in the public domain in the United States, facilitating free copying and distribution."</data>
+      <data key="d10">775fded7899f0e78d4e7cec4fae42fd9</data>
+      <data key="d11">b0e6cfd979ea48b997019b059999d3c2</data>
+      <data key="d12">102</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PROJECT GUTENBERG&quot;" target="&quot;MICHAEL S. HART&quot;">
+      <data key="d8">2.0</data>
+      <data key="d9">Michael S. Hart is the founder and originator of Project Gutenberg, having established its mission and initiated its activities. He played a pivotal role in shaping the digital library's purpose, which focuses on providing free electronic works to the public.</data>
+      <data key="d10">a22f06338d9771d1617bbf6e0b15d5b8,a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d11">ef00ec3a324f4f5986141401002af3f6</data>
+      <data key="d12">103</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PROJECT GUTENBERG&quot;" target="&quot;FOUNDATION&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation manages and supports the operations, legal compliance, and fundraising efforts of Project Gutenberg."</data>
+      <data key="d10">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d11">a542fd7aed7341468028928937ea2983</data>
+      <data key="d12">104</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PROJECT GUTENBERG&quot;" target="&quot;PROJECT GUTENBERG LITERARY ARCHIVE FOUNDATION&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation manages donations, supports eBook production, and oversees the operations of Project Gutenberg."|</data>
+      <data key="d10">a22f06338d9771d1617bbf6e0b15d5b8</data>
+      <data key="d11">1c5e296a5ac541c1b5cac4357537c22d</data>
+      <data key="d12">105</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;UNITED STATES&quot;" target="&quot;FOUNDATION&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation is organized under U.S. law and adheres to U.S. regulations regarding charities and tax-exempt status."</data>
+      <data key="d10">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d11">5ecf534a9ffe46e0b1c2144110c691c0</data>
+      <data key="d12">106</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;PROJECT GUTENBERG LITERARY ARCHIVE FOUNDATION&quot;" target="&quot;THE WORKS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation manages and oversees the creation, distribution, and licensing of the electronic works."</data>
+      <data key="d10">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d11">4d183e7007624fcd98af96b9d752c16d</data>
+      <data key="d12">107</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE WORKS&quot;" target="&quot;THE USER&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The User interacts with the electronic works, reporting defects or requesting refunds."</data>
+      <data key="d10">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d11">718c507cb8ac49e6a35c251ac951b5ca</data>
+      <data key="d12">108</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE WORKS&quot;" target="&quot;THE DEFECTS&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"Defects are issues found within the electronic works or media, which can be reported by users for resolution."</data>
+      <data key="d10">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d11">b45ef27279c043269b23b894461d7d8c</data>
+      <data key="d12">109</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;THE USER&quot;" target="&quot;THE LICENSE&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The User agrees to the terms of the License when accessing or distributing the works."</data>
+      <data key="d10">2b027fe5bbbfb34d51ac16bcd915b8cf</data>
+      <data key="d11">10983a248cc448c59c94df4d1d0898f0</data>
+      <data key="d12">110</data>
+      <data key="d13">0</data>
+    </edge>
+    <edge source="&quot;FOUNDATION&quot;" target="&quot;MONTCLAIR NJ&quot;">
+      <data key="d8">1.0</data>
+      <data key="d9">"The Foundation's business office is located in Montclair, New Jersey, serving as the operational base."</data>
+      <data key="d10">a33174286d9d6731d658d04ab0089fcc</data>
+      <data key="d11">e2ec7d3cdbeb4dd086ae6eb399332363</data>
+      <data key="d12">111</data>
+      <data key="d13">0</data>
+    </edge>
+  </graph>
+</graphml>
