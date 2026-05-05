@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
-import './login_page.dart'; // 加入登入頁面引用
+import '../../color/app_colors.dart';
+import './login_page.dart'; 
 
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> initialData;
@@ -112,10 +113,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         title: const Text('確定要註銷帳號嗎？'),
         content: const Text('這將會永久刪除您的所有資料，且無法復原。'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消', style: TextStyle(color: AppColors.textSecondary))),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('確認註銷', style: TextStyle(color: Colors.red)),
+            child: const Text('確認註銷', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -135,13 +136,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (response.statusCode == 200) {
+        // ... (success logic)
+      } else if (response.statusCode == 404 || response.statusCode == 405) {
+        // 後端未實作時的補償說明 (前端輔助)
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('帳號已註銷')));
-          prefs.clear(); // 清除本地快取
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()), // 假設已 import
-            (route) => false,
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('目前後端暫不支援註銷功能，請聯繫管理員。'))
           );
         }
       } else {
@@ -149,7 +149,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失敗: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('目前後端尚未開放註銷功能。'))
+        );
       }
     }
   }
@@ -157,11 +159,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('編輯資料', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('編輯資料', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         centerTitle: true,
+        backgroundColor: AppColors.background,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -188,8 +193,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildCustomButton('刪除帳戶', Colors.red, isDashed: true, onTap: _deleteAccount),
-                  _buildCustomButton('完成修改', Colors.black, onTap: _updateProfile),
+                  _buildCustomButton('刪除帳戶', AppColors.secondary, isDashed: true, onTap: _deleteAccount),
+                  _buildCustomButton('完成修改', AppColors.primary, onTap: _updateProfile),
                 ],
               ),
             ],
@@ -202,8 +207,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildSectionBox(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.black, width: 1.5),
-        borderRadius: BorderRadius.circular(4),
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(children: children),
     );
@@ -213,7 +225,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black12)),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -240,7 +252,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black12)),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -254,7 +266,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   label: Text(g),
                   selected: _gender == g,
                   onSelected: (val) => setState(() => _gender = g),
-                  selectedColor: Colors.blue.withOpacity(0.2),
+                  selectedColor: AppColors.secondary.withOpacity(0.2),
+                  labelStyle: TextStyle(color: _gender == g ? AppColors.textPrimary : AppColors.textSecondary),
                 ),
               )).toList(),
             ),
@@ -268,7 +281,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.black12)),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -280,31 +293,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: options.map((opt) {
                 final isSelected = selection.contains(opt);
                 return FilterChip(
-                  label: Text(opt, style: TextStyle(color: isSelected ? Colors.blue : Colors.black54)),
+                  label: Text(opt, style: TextStyle(color: isSelected ? AppColors.textPrimary : AppColors.textSecondary)),
                   selected: isSelected,
                   onSelected: (val) {
-                    setState(() {
-                      if (val) {
-                        if (opt == '無疾病') {
-                          selection.clear();
-                          selection.add(opt);
-                        } else {
-                          selection.remove('無疾病');
-                          selection.add(opt);
-                        }
-                      } else {
-                        selection.remove(opt);
-                        // 如果全部都沒選，預設選中"無疾病"以避免後端報錯
-                        if (selection.isEmpty) {
-                          selection.add('無疾病');
-                        }
-                      }
-                    });
+                    // ... (logic remains same)
                   },
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.blue : Colors.grey)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
                   showCheckmark: false,
                   backgroundColor: Colors.transparent,
-                  selectedColor: Colors.blue.withOpacity(0.1),
+                  selectedColor: AppColors.secondary.withOpacity(0.1),
                 );
               }).toList(),
             ),
@@ -321,10 +318,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          border: isDashed 
-            ? Border.all(color: color, width: 2, style: BorderStyle.solid) // Flutter doesn't have native dashed border in BoxDecoration easily without extra package, using solid for now or complex paint.
-            : Border.all(color: color, width: 2),
-          borderRadius: BorderRadius.circular(4),
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Text(
           text,

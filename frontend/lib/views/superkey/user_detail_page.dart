@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../color/app_colors.dart';
 
 class UserDetailPage extends StatelessWidget {
   final Map<String, String> userData;
@@ -7,7 +8,13 @@ class UserDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(userData['name']!)),
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: Text(userData['name']!, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -18,10 +25,10 @@ class UserDetailPage extends StatelessWidget {
             _buildDetailField('性別', userData['gender']!),
             _buildDetailField('身高 (cm)', userData['height']!),
             _buildDetailField('體重 (kg)', userData['weight']!),
-            _buildDetailField('個人目標', '養成健康飲食習慣'), // 規格書範例 [cite: 9]
+            _buildDetailField('個人目標', '養成健康飲食習慣'),
             _buildDetailField('特殊疾病', '無'),
             const SizedBox(height: 30),
-            const Text('向右滑動可返回清單', style: TextStyle(color: Colors.grey)),
+            const Text('向右滑動可返回清單', style: TextStyle(color: AppColors.textSecondary)),
           ],
         ),
       ),
@@ -33,12 +40,15 @@ class UserDetailPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
         initialValue: value,
-        readOnly: true, // 所有欄位都設為唯讀
+        readOnly: true,
+        style: const TextStyle(color: AppColors.textPrimary),
         decoration: InputDecoration(
           labelText: label,
-          filled: true, // 加上背景色提示
-          fillColor: Colors.grey[200],
-          border: const OutlineInputBorder(),
+          labelStyle: const TextStyle(color: AppColors.textSecondary),
+          filled: true,
+          fillColor: AppColors.background,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
         ),
       ),
     );

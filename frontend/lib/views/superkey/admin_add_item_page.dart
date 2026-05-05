@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../color/app_colors.dart';
 
 class AdminAddItemPage extends StatefulWidget {
   final String title;
@@ -17,8 +18,12 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text('新增${widget.title.replaceAll('管理', '')}'),
+        title: Text('新增${widget.title.replaceAll('管理', '')}', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -29,16 +34,22 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> {
             children: [
               const Text(
                 '基本資訊',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.background,
                   labelText: '名稱',
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: '請輸入名稱',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.label),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+                  prefixIcon: const Icon(Icons.label, color: AppColors.secondary),
                 ),
                 validator: (value) => (value == null || value.isEmpty) ? '請輸入名稱' : null,
               ),
@@ -46,11 +57,17 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> {
               TextFormField(
                 controller: _descController,
                 maxLines: 3,
+                style: const TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.background,
                   labelText: '描述 / 備註',
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
                   hintText: '請輸入相關描述',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  prefixIcon: const Icon(Icons.description),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary)),
+                  prefixIcon: const Icon(Icons.description, color: AppColors.secondary),
                 ),
               ),
               const SizedBox(height: 40),
@@ -59,8 +76,10 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> {
                 height: 55,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
+                    elevation: 5,
+                    shadowColor: Colors.black.withOpacity(0.5),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _submitForm,
@@ -76,7 +95,6 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      // 模擬新增邏輯
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('已成功新增：${_nameController.text}')),
       );

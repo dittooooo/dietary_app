@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../home/home_page.dart';
 import '../auth/profile_page.dart';
 import 'diary_page.dart';
 import 'report_page.dart';
+import 'camera_record_page.dart';
 import 'dart:math' as math;
+import '../../color/app_colors.dart';
 
 class DietaryRecordPage extends StatefulWidget {
   const DietaryRecordPage({super.key});
@@ -40,7 +43,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       firstDate: DateTime(2023),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: Color(0xFF8EACFE), onPrimary: Colors.white, onSurface: Colors.black)),
+        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: AppColors.primary, onPrimary: AppColors.background, onSurface: AppColors.textPrimary)),
         child: child!,
       ),
     );
@@ -83,7 +86,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
     final double pathWidth = screenWidth - (margin * 2) - (radius * 2);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5FF),
+      backgroundColor: AppColors.surface,
       body: SafeArea(
         child: Stack(
           children: [
@@ -122,9 +125,9 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF8EACFE),
+                      color: AppColors.secondary,
                       borderRadius: BorderRadius.circular(25),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -146,23 +149,58 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   Widget _buildFixedHeader(BuildContext context) {
     return Positioned(
       top: 0, left: 0, right: 0,
-      child: Container(
-        height: 80, 
-        color: const Color(0xFFFDF5FF),
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(onPressed: () => Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0)), (route) => false), icon: const Icon(Icons.arrow_back_ios, size: 28)),
-            const Text('飲食紀錄', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1))),
-              child: Container(
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 15, offset: const Offset(0, 8))]),
-                child: const CircleAvatar(radius: 25, backgroundColor: Colors.white, child: Icon(Icons.person, color: Colors.grey, size: 35)),
-              ),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            height: 80, // 與個人首頁高度一致
+            decoration: BoxDecoration(
+              color: AppColors.background.withOpacity(0.7),
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
             ),
-          ],
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0)), 
+                    (route) => false
+                  ), 
+                  icon: const Icon(Icons.arrow_back_ios, size: 28)
+                ),
+                const Text(
+                  '飲食紀錄', 
+                  style: TextStyle(
+                    fontSize: 22, 
+                    fontWeight: FontWeight.bold, 
+                    color: AppColors.textPrimary, 
+                    letterSpacing: 1.2
+                  )
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1))),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle, 
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2), 
+                          blurRadius: 15, 
+                          offset: const Offset(0, 8)
+                        )
+                      ]
+                    ),
+                    child: const CircleAvatar(
+                      radius: 25, 
+                      backgroundColor: AppColors.background, 
+                      child: Icon(Icons.person, color: AppColors.accent, size: 35)
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -180,27 +218,30 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
               onTap: _selectDate,
               child: Container(
                 width: 60, height: 80,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(4, 6))]),
+                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(4, 6))]),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('月', style: TextStyle(fontSize: 14)), Text('${_selectedDate.day}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))]),
               ),
             ),
-            Transform.translate(
-              offset: const Offset(15, 0),
-              child: Container(
-                width: 160, height: 70,
-                decoration: BoxDecoration(color: const Color(0xFF4A90E2), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.black, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 10))]),
-                child: const Icon(Icons.camera_alt, color: Colors.white, size: 40),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CameraRecordPage())),
+              child: Transform.translate(
+                offset: const Offset(15, 0),
+                child: Container(
+                  width: 160, height: 70,
+                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 10))]),
+                  child: const Icon(Icons.camera_alt, color: AppColors.background, size: 40),
+                ),
               ),
             ),
             Column(
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(15), border: Border.all(color: Colors.black), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), offset: const Offset(2, 2))]),
-                  child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10), textAlign: TextAlign.center),
+                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 5, offset: const Offset(2, 2))]),
+                  child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center),
                 ),
                 const SizedBox(height: 5),
-                const Icon(Icons.terrain, color: Colors.green, size: 25),
+                const Icon(Icons.terrain, color: AppColors.accent, size: 25),
               ],
             ),
           ],
@@ -212,7 +253,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   Widget _buildActionPanel(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.35,
-      decoration: const BoxDecoration(color: Color.fromARGB(255, 60, 55, 60), borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      decoration: const BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -221,8 +262,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
           Padding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: const Color(0xFFB39DDB), onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }),
-              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: const Color(0xFF80CBC4), onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }),
+              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: AppColors.background, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }),
+              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: AppColors.border, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }),
             ]),
           ),
         ],
@@ -235,8 +276,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       onTap: onTap,
       child: Container(
         width: 140, height: 110,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.black, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 10, offset: const Offset(4, 4))]),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 45, color: Colors.black87), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87))]),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10, offset: const Offset(4, 4))]),
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 45, color: AppColors.textPrimary), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]),
       ),
     );
   }
@@ -292,7 +333,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: dotSize, height: dotSize,
-                  decoration: BoxDecoration(color: Colors.red, shape: BoxShape.circle, border: Border.all(color: Colors.black, width: 2), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: isSelected ? 12 : 8, offset: const Offset(2, 2))]),
+                  decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: isSelected ? 12 : 8, offset: const Offset(2, 2))]),
                 ),
               ],
             ),
@@ -328,7 +369,7 @@ class RipplePainter extends CustomPainter {
       double value = (animationValue + i / 3.0) % 1.0;
       double radius = (size.width / 2 + 15) * value;
       double opacity = (1.0 - value).clamp(0.0, 1.0);
-      final paint = Paint()..color = const Color(0xFF4A90E2).withOpacity(opacity * 0.7)..style = PaintingStyle.stroke..strokeWidth = 3.5;
+      final paint = Paint()..color = AppColors.accent.withOpacity(opacity * 0.7)..style = PaintingStyle.stroke..strokeWidth = 3.5;
       canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
     }
   }
@@ -341,7 +382,7 @@ class GeometricSPathPainter extends CustomPainter {
   GeometricSPathPainter({required this.isLeftToRight});
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 5.0..strokeCap = StrokeCap.round;
+    final paint = Paint()..color = AppColors.border..style = PaintingStyle.stroke..strokeWidth = 6.0..strokeCap = StrokeCap.round;
     const double radius = 50.0;
     double pathWidth = size.width - (radius * 2);
     // 對接邏輯：線條在 30，弧線高度 110，總高 110。

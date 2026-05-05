@@ -24,4 +24,24 @@ class ApiClient {
       rethrow; // 將錯誤丟給上層 Service 處理
     }
   }
+
+  // 統一處理 GET 請求
+  Future<http.Response> get(String path, {Map<String, String>? headers}) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}$path');
+    print('🚀 GET 請求至: $url');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
+      );
+      return response;
+    } catch (e) {
+      print('❌ GET 網路連線異常: $e');
+      rethrow;
+    }
+  }
 }

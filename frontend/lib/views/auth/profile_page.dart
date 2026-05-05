@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart'; // 引入相簿套件
 import 'dart:typed_data'; // 處理圖片數據
 import '../../config/api_config.dart';
+import '../../color/app_colors.dart';
 import '../superkey/admin_user_list_page.dart'; 
 import '../superkey/generic_admin_page.dart'; // 引入通用管理頁面
 import '../home/home_page.dart';
 import 'edit_profile_page.dart';
+import 'login_page.dart';
+import '../../services/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
@@ -32,40 +36,64 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-      final savedEmail = prefs.getString('user_email');
+    // 1. 優先從本地快取讀取 (前端輔助，立即響應)
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _email = prefs.getString('user_email') ?? '...';
+      _nickname = prefs.getString('user_nickname') ?? '載入中...';
+    });
 
-      if (savedEmail != null) {
-        setState(() => _email = savedEmail);
-      }
-
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/user/profile'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 5));
-
-      if (response.statusCode == 200) {
-        final result = jsonDecode(response.body);
-        if (result['success'] == true) {
-          final userData = result['data'];
-          setState(() {
-            _fullUserData = userData;
-            _nickname = userData['nickname'] ?? '未設定姓名';
-            // 根據暱稱、角色或特定測試帳號判斷管理員
-            _isAdmin = userData['role'] == 'ADMIN' || 
-                       userData['nickname'] == '管理員' || 
-                       _email == 'aaa@aaa.aaa'; 
-          });
+    // 2. 向後端請求最新資料 (後端為主，更新快取)
+    final result = await AuthService().getUserProfile();
+    
+    if (mounted) {
+      if (result['success'] == true) {
+        setState(() {
+          _fullUserData = result['data'];
+          _nickname = _fullUserData?['nickname'] ?? '未設定姓名';
+          // 權限判斷：後端為主，前端為輔 (暫時透過 email 判斷，若後端補上 role 則自動對接)
+          _isAdmin = _fullUserData?['role'] == 'ADMIN' || 
+                     _email == 'aaa@aaa.aaa';
+        });
+      } else {
+        debugPrint('更新資料失敗: ${result['message']}');
+        // 如果完全沒資料且報錯，才顯示失敗
+        if (_nickname == '載入中...') {
+          setState(() => _nickname = '連線失敗');
         }
       }
-    } catch (e) {
-      debugPrint('載入個人資料失敗: $e');
-      setState(() => _nickname = '載入失敗');
+    }
+  }
+
+  // 登出功能
+  Future<void> _handleLogout() async {
+    await AuthService().logout();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
+  // 根據小精靈名稱獲取對應圖標
+  IconData _getPetIcon(String? petType) {
+    switch (petType) {
+      case '奶油皮丘': return Icons.pets;
+      case '薄荷兔兔': return Icons.eco;
+      case '草莓狐狸': return Icons.star;
+      default: return Icons.help_outline;
+    }
+  }
+
+  // 根據小精靈名稱獲取對應顏色
+  Color _getPetColor(String? petType) {
+    switch (petType) {
+      case '奶油皮丘': return Colors.orangeAccent;
+      case '薄荷兔兔': return Colors.greenAccent;
+      case '草莓狐狸': return Colors.pinkAccent;
+      default: return Colors.blueGrey;
     }
   }
 
@@ -95,12 +123,25 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        toolbarHeight: 80,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        automaticallyImplyLeading: false, // 移除左上角預設返回鍵
+        automaticallyImplyLeading: false, 
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.background.withOpacity(0.5), 
+                border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
+              ),
+            ),
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () {
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => HomePage(initialIndex: widget.returnIndex)),
@@ -108,50 +149,40 @@ class _ProfilePageState extends State<ProfilePage> {
             );
           },
         ),
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.black, width: 2),
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.25),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: const Text(
-            '個人首頁',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: const Text(
+          '個人首頁',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+            letterSpacing: 1.2,
           ),
         ),
         centerTitle: true,
         actions: [
           if (_isAdmin)
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.black, size: 40), // 管理者放大 2 倍
-              onPressed: () {
-                // 管理員設定
-              },
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: Icon(Icons.settings, color: AppColors.textPrimary, size: 40),
             )
           else
             const SizedBox(width: 48), // 保持間距平衡
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-            // 1. 頭像區域 (包含相機按鈕)
+      body: Container(
+        color: AppColors.surface, // 確保底色覆蓋全螢幕
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const SizedBox(height: 80), // 預留標題列高度
+              const SizedBox(height: 30),
+              // 1. 頭像區域 (包含相機按鈕)
             Center(
               child: Stack(
                 children: [
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black, width: 2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.4),
@@ -162,12 +193,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: CircleAvatar(
                       radius: 70,
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.background,
                       backgroundImage: _imageBytes != null 
                           ? MemoryImage(_imageBytes!) 
                           : null,
                       child: _imageBytes == null 
-                          ? const Icon(Icons.person, size: 80, color: Colors.grey) 
+                          ? const Icon(Icons.person, size: 80, color: AppColors.accent) 
                           : null,
                     ),
                   ),
@@ -176,13 +207,15 @@ class _ProfilePageState extends State<ProfilePage> {
                     right: 5,
                     child: Material(
                       color: Colors.white,
-                      shape: const CircleBorder(side: BorderSide(color: Colors.black, width: 1.5)),
+                      shape: const CircleBorder(),
+                      elevation: 5,
+                      shadowColor: Colors.black.withOpacity(0.5),
                       child: InkWell(
                         onTap: _pickImage,
                         customBorder: const CircleBorder(),
                         child: const Padding(
                           padding: EdgeInsets.all(10),
-                          child: Icon(Icons.camera_alt, color: Colors.black, size: 22),
+                          child: Icon(Icons.camera_alt, color: AppColors.textPrimary, size: 22),
                         ),
                       ),
                     ),
@@ -217,7 +250,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ],
                   ),
-                  child: OutlinedButton.icon(
+                  child: ElevatedButton.icon(
                     onPressed: () async {
                       if (_fullUserData != null) {
                         final updated = await Navigator.push(
@@ -234,11 +267,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (updated == true) _loadUserData();
                       }
                     },
-                    icon: const Icon(Icons.edit, color: Colors.black, size: 18),
-                    label: const Text('修改個人檔案', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.black, width: 1.5),
+                    icon: const Icon(Icons.edit, color: AppColors.textPrimary, size: 18),
+                    label: const Text('修改個人檔案', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.background,
+                      foregroundColor: AppColors.textPrimary,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                       padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
                     ),
@@ -254,7 +288,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(bottom: 15),
-                      child: Text('--- 管理員選單 ---', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                      child: Text('--- 管理員選單 ---', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold)),
                     ),
                     _buildAdminButton('使用者管理', () {
                       Navigator.push(
@@ -277,14 +311,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const GenericAdminListPage(title: '菜單管理'),
-                        ),
-                      );
-                    }),
-                    _buildAdminButton('社群管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '社群管理'),
                         ),
                       );
                     }),
@@ -315,32 +341,54 @@ class _ProfilePageState extends State<ProfilePage> {
               height: 250,
               width: double.infinity,
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.black, width: 2),
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: AppColors.primary.withOpacity(0.3),
                     blurRadius: 25,
                     offset: const Offset(0, 12),
                   ),
                 ],
               ),
-              child: const Center(
+              child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.pets, size: 100, color: Colors.blueGrey),
-                    SizedBox(height: 10),
-                    Text('小精靈正在休息...', style: TextStyle(color: Colors.grey)),
+                    Icon(
+                      _getPetIcon(_fullUserData?['petType']), 
+                      size: 100, 
+                      color: AppColors.secondary
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _fullUserData?['petType'] ?? '未選擇小精靈', 
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                    ),
+                    const Text('正在休息中...', style: TextStyle(color: AppColors.textSecondary)),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            // 5. 登出按鈕
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+              child: ElevatedButton.icon(
+                onPressed: _handleLogout,
+                icon: const Icon(Icons.logout, color: AppColors.background),
+                label: const Text('登出帳號', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -360,16 +408,26 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ],
         ),
-        child: OutlinedButton(
+        child: ElevatedButton(
           onPressed: onTap,
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
-            side: const BorderSide(color: Colors.black, width: 1.5),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.background,
+            foregroundColor: AppColors.textPrimary,
+            surfaceTintColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ).copyWith(
+            overlayColor: WidgetStateProperty.resolveWith<Color?>(
+              (Set<WidgetState> states) {
+                if (states.contains(WidgetState.pressed)) return AppColors.secondary.withOpacity(0.1);
+                return null;
+              },
+            ),
           ),
           child: Text(
             label,
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import 'home_page.dart';
 import 'login_page.dart';
+import '../../color/app_colors.dart';
 
 class InitialInfoPage extends StatefulWidget {
   // 定義初始資訊填寫頁面 StatefulWidget
@@ -26,7 +27,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   static const TextStyle _titleStyle = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
-    color: Colors.black,
+    color: AppColors.textPrimary,
     fontFamily: 'Roboto',
   );
 
@@ -274,7 +275,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     return Scaffold(
       body: Container(
         // 主容器
-        color: const Color(0xFFF5F0EB), // 米色背景
+        color: AppColors.surface, // 改為主題淺灰背景
         child: Stack(
         // 疊層佈局
         children: [
@@ -693,7 +694,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                           : (_selectedPetIndex == 1
                               ? Icons.eco
                               : Icons.star),
-                      color: const Color(0xFFFFA500),
+                      color: AppColors.secondary,
                       size: 170, // 跟隨放大
                     ),
                     const SizedBox(height: 15),
@@ -749,11 +750,11 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         height: 100, // 尺寸
         decoration: BoxDecoration(
           // 風格
-          color: const Color(0xFF444444), // 深灰色
+          color: AppColors.primary, // 改為純黑
           borderRadius: BorderRadius.circular(6), // 圓角
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: AppColors.primary.withOpacity(0.2),
               blurRadius: 4,
               offset: const Offset(2, 2),
             ),
@@ -1236,23 +1237,17 @@ class HandDrawnBoxPainter extends CustomPainter {
     boxPath.close(); // 封閉
 
     Paint fillPaint = Paint()
-      ..color = isSelected ? const Color(0xFFFFE4B5) : Colors.white
+      ..color = isSelected ? AppColors.surface : AppColors.background
       ..style = PaintingStyle.fill; // 背景筆
 
-    // 繪製陰影
     canvas.drawPath(
       boxPath.shift(const Offset(8, 10)), 
       Paint()
-        ..color = Colors.black.withOpacity(0.4)
+        ..color = AppColors.primary.withOpacity(0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
     );
 
     canvas.drawPath(boxPath, fillPaint); // 畫填充
-    Paint borderPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0; // 邊框筆
-    canvas.drawPath(boxPath, borderPaint); // 寫黑邊
   }
 
   @override
@@ -1355,22 +1350,17 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
     path.close();
 
     Paint fillPaint = Paint()
-      ..color = isSelected ? const Color(0xFFFFE4B5) : Colors.white;
+      ..color = isSelected ? AppColors.surface : AppColors.background;
 
-    // 繪製陰影
     canvas.drawPath(
       path.shift(const Offset(8, 10)), 
       Paint()
-        ..color = Colors.black.withOpacity(0.4)
+        ..color = AppColors.primary.withOpacity(0.4)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
     );
 
     canvas.drawPath(path, fillPaint);
-    Paint borderPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
-    canvas.drawPath(path, borderPaint);
+    canvas.drawPath(path, fillPaint);
   }
 
   @override
@@ -1387,7 +1377,7 @@ class ArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     Paint arrowPaint = Paint()
-      ..color = Colors.white
+      ..color = AppColors.background
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round; // 採用白色加粗箭頭以突顯
@@ -1475,13 +1465,6 @@ class WashiTapeButtonPainter extends CustomPainter {
     );
 
     canvas.drawPath(baseShape, Paint()..color = Colors.white); // 填充
-    canvas.drawPath(
-      baseShape,
-      Paint()
-        ..color = Colors.black
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0,
-    ); // 描邊
 
     TextPainter textPainter = TextPainter(
       // 文字標註
@@ -1490,7 +1473,7 @@ class WashiTapeButtonPainter extends CustomPainter {
         style: const TextStyle(
           fontSize: 22, // 放大 0.4 倍
           fontWeight: FontWeight.bold,
-          color: Colors.black,
+          color: AppColors.textPrimary,
         ),
       ),
       textDirection: TextDirection.ltr,
