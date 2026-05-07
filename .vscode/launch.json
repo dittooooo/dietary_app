@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Flutter 網頁版 (無 CORS 限制測試)",
+            "request": "launch",
+            "type": "dart",
+            "program": "${workspaceFolder}/frontend/lib/main.dart",
+            "cwd": "${workspaceFolder}/frontend",
+            "args": [
+                "-d",
+                "chrome",
+                "--web-browser-flag",
+                "--disable-web-security"
+            ]
+        }
+    ]
+}

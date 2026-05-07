@@ -1,0 +1,44 @@
+M  backend/README.md
+M  backend/src/main/java/com/tku/dietary_app/config/JwtAuthenticationFilter.java
+MM backend/src/main/java/com/tku/dietary_app/config/SecurityConfig.java
+MM backend/src/main/java/com/tku/dietary_app/controller/AuthController.java
+A  backend/src/main/java/com/tku/dietary_app/controller/UserProfileController.java
+M  backend/src/main/java/com/tku/dietary_app/dto/LoginRequest.java
+A  backend/src/main/java/com/tku/dietary_app/dto/OnboardingRequest.java
+M  backend/src/main/java/com/tku/dietary_app/dto/RegisterRequest.java
+M  backend/src/main/java/com/tku/dietary_app/entity/User.java
+A  backend/src/main/java/com/tku/dietary_app/entity/UserProfile.java
+M  backend/src/main/java/com/tku/dietary_app/exception/GlobalExceptionHandler.java
+A  backend/src/main/java/com/tku/dietary_app/repository/UserProfileRepository.java
+M  backend/src/main/java/com/tku/dietary_app/repository/UserRepository.java
+M  backend/src/main/java/com/tku/dietary_app/service/AuthService.java
+M  backend/src/main/java/com/tku/dietary_app/service/JwtUtil.java
+A  backend/src/main/java/com/tku/dietary_app/service/UserProfileService.java
+ M frontend/.metadata
+ M frontend/android/app/src/main/AndroidManifest.xml
+ M frontend/lib/views/initial_info_page.dart
+ M frontend/lib/views/login_page.dart
+ M frontend/lib/views/register_page.dart
+ M frontend/macos/Flutter/GeneratedPluginRegistrant.swift
+ M frontend/pubspec.lock
+ M frontend/pubspec.yaml
+?? .vscode/
+?? backend/boot_run.log
+?? backend/boot_run2.log
+?? backend/boot_run2_utf8.log
+?? backend/boot_run3.log
+?? backend/boot_run3_utf8.log
+?? backend/compile.log
+?? backend/compile_batch.log
+?? backend/compile_java21.log
+?? backend/compile_utf8.log
+?? backend/output.log
+?? frontend/.vscode/
+?? frontend/analyze_output.txt
+?? frontend/analyze_output_2.txt
+?? frontend/android/build/
+?? frontend/lib/config/
+?? frontend/lib/views/home_page.dart
+?? frontend/lib/views/success_transition_page.dart
+?? status.txt
+?? status2.txt
