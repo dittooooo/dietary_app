@@ -491,3 +491,45 @@ Authorization: Bearer <token>
 - 用 controller / service / repository 分層，讓每一層只做自己的工作
 
 你如果把這個觀念吃下來，這份專案的骨架就差不多懂了。
+---
+
+## 2026-05-06 Diet Record Query Update
+
+Admin diet record management was extended to support:
+
+- all records
+- all meals for a specific day
+- one specific meal for a specific day
+- all meals for a 7-day window
+
+Relevant files:
+
+- [AdminController.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/controller/AdminController.java)
+- [DietRecordService.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/service/DietRecordService.java)
+- [DietRecordRepository.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/repository/DietRecordRepository.java)
+- [DietRecord.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/entity/DietRecord.java)
+- [DietRecordRequest.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/dto/DietRecordRequest.java)
+- [MealType.java](/C:/Users/Cyborg%2015/Desktop/dietary_app/backend/src/main/java/com/tku/dietary_app/entity/MealType.java)
+
+API shape:
+
+```text
+GET /api/admin/diet-records
+GET /api/admin/diet-records?dishName=Chicken
+GET /api/admin/diet-records?date=2026-05-06
+GET /api/admin/diet-records?date=2026-05-06&mealType=BREAKFAST
+GET /api/admin/diet-records?weekStart=2026-05-05
+```
+
+Field update:
+
+- `DietRecord` now includes `mealType`
+- accepted values: `BREAKFAST`, `LUNCH`, `DINNER`
+- the backend also normalizes Chinese input such as `早餐`, `午餐`, `晚餐`
+
+Filtering behavior:
+
+- `date` filters records within that calendar day
+- `weekStart` filters records in the next 7 days starting at `weekStart`
+- `date` and `weekStart` are mutually exclusive
+- records are sorted by `createdAt DESC, id DESC`

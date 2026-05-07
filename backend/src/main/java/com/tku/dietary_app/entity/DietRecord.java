@@ -30,6 +30,9 @@ public class DietRecord {
 
     private String healthLevel;
 
+    @Column(name = "meal_type")
+    private String mealType;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

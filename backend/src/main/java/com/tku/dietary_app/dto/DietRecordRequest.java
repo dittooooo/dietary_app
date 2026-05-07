@@ -8,4 +8,5 @@ public class DietRecordRequest {
     private String nutrition;
     private String cumulativeNutrition;
     private String healthLevel;
+    private String mealType;
 }

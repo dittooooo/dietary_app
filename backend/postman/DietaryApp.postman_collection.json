@@ -945,7 +945,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Sous Vide Chicken Box\",\n  \"nutrition\": \"protein:35g, carb:45g, fat:10g\",\n  \"cumulativeNutrition\": \"protein:80g, carb:120g, fat:30g\",\n  \"healthLevel\": \"A\"\n}"
+              "raw": "{\n  \"dishName\": \"Sous Vide Chicken Box\",\n  \"nutrition\": \"protein:35g, carb:45g, fat:10g\",\n  \"cumulativeNutrition\": \"protein:80g, carb:120g, fat:30g\",\n  \"healthLevel\": \"A\",\n  \"mealType\": \"BREAKFAST\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/diet-records",
@@ -1018,6 +1018,150 @@
                   "key": "dishName",
                   "value": "Chicken"
                 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Diet Records By Date",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/diet-records?date=2026-05-06",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "diet-records"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-05-06"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Diet Records By Date And Meal",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/diet-records?date=2026-05-06&mealType=BREAKFAST",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "diet-records"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-05-06"
+                },
+                {
+                  "key": "mealType",
+                  "value": "BREAKFAST"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Diet Records By Week",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/diet-records?weekStart=2026-05-05",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "diet-records"
+              ],
+              "query": [
+                {
+                  "key": "weekStart",
+                  "value": "2026-05-05"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Diet Record",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dishName\": \"Sous Vide Chicken Box Updated\",\n  \"nutrition\": \"protein:40g, carb:35g, fat:12g\",\n  \"cumulativeNutrition\": \"protein:95g, carb:130g, fat:35g\",\n  \"healthLevel\": \"A\",\n  \"mealType\": \"DINNER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/diet-records/{{dietRecordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "diet-records",
+                "{{dietRecordId}}"
               ]
             }
           }

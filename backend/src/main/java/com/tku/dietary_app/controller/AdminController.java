@@ -10,7 +10,10 @@ import com.tku.dietary_app.service.MenuItemService;
 import com.tku.dietary_app.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -105,9 +108,11 @@ public class AdminController {
     // ===== 過去飲食管理 =====
 
     @GetMapping("/diet-records")
-    public ResponseEntity<?> listDietRecords(@RequestParam(required = false) String dishName) {
-        if (dishName != null) return ResponseEntity.ok(dietRecordService.searchByDishName(dishName));
-        return ResponseEntity.ok(dietRecordService.getAllRecords());
+    public ResponseEntity<?> listDietRecords(@RequestParam(required = false) String dishName,
+                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                             @RequestParam(required = false) String mealType,
+                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
+        return ResponseEntity.ok(dietRecordService.getAdminRecords(dishName, date, mealType, weekStart));
     }
 
     @PostMapping("/diet-records")

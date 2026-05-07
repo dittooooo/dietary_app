@@ -680,3 +680,42 @@ HTTP 200 OK
 7. 跑「一般使用者測試 Admin 權限」，應該得到 403。
 8. 跑「管理者登入」，確認存到 `adminToken`。
 9. 跑所有 `/api/admin/**` API，應該得到 200。
+---
+
+## 2026-05-06 Admin Diet Record 更新
+
+`/api/admin/diet-records` 現在支援管理者依日期與餐別查詢飲食紀錄。
+
+支援的查詢方式：
+
+```text
+GET {{baseUrl}}/api/admin/diet-records
+GET {{baseUrl}}/api/admin/diet-records?dishName=Chicken
+GET {{baseUrl}}/api/admin/diet-records?date=2026-05-06
+GET {{baseUrl}}/api/admin/diet-records?date=2026-05-06&mealType=BREAKFAST
+GET {{baseUrl}}/api/admin/diet-records?weekStart=2026-05-05
+```
+
+查詢規則：
+
+- `date` format: `yyyy-MM-dd`
+- `weekStart` format: `yyyy-MM-dd`
+- `mealType` supports `BREAKFAST`, `LUNCH`, `DINNER`
+- `date` and `weekStart` cannot be used together
+- `date` 格式：`yyyy-MM-dd`
+- `weekStart` 格式：`yyyy-MM-dd`
+- `mealType` 支援 `BREAKFAST`、`LUNCH`、`DINNER`
+- `date` 與 `weekStart` 不能同時使用
+
+新增／修改飲食紀錄的 request body 現在也支援 `mealType`：
+
+```json
+{
+  "dishName": "Sous Vide Chicken Box",
+  "nutrition": "protein:35g, carb:45g, fat:10g",
+  "cumulativeNutrition": "protein:80g, carb:120g, fat:30g",
+  "healthLevel": "A",
+  "mealType": "BREAKFAST"
+}
+```
+
