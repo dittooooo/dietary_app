@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../config/api_config.dart';
-import '../home/home_page.dart';
+import '../config/api_config.dart';
+import 'home_page.dart';
 import 'login_page.dart';
 
 class InitialInfoPage extends StatefulWidget {
@@ -31,16 +31,17 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   );
 
   static const TextStyle _inputTextStyle = TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 22,
-    fontFamily: 'Roboto',
+    // 輸入框字體風格
+    fontWeight: FontWeight.bold, // 粗體
+    fontSize: 16, 
   );
 
   static const TextStyle _buttonTextStyle = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    color: Colors.black,
-    fontFamily: 'Roboto',
+    // 按鈕文字風格
+    fontSize: 16, 
+
+    fontWeight: FontWeight.bold, // 粗體
+    color: Colors.black, // 黑色
   );
 
   final Map<int, String> _pageErrors = {}; // 儲存各頁面的錯誤訊息
@@ -239,41 +240,21 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
         debugPrint('API 回應內容: $result');
-        
-        if (result is Map) {
-          if (result['success'] == true) {
-            if (mounted) {
-              debugPrint('提交成功，切換至首頁');
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const HomePage(),
-                ),
-              );
-            }
-          } else {
-            // 處理後端可能的 200 報錯 (因為後端的 GlobalExceptionHandler 沒有設定 400 狀態碼)
-            String errorMsg = '設定失敗';
-            if (result.containsKey('message')) {
-              errorMsg = result['message'];
-            } else if (result.containsKey('error')) {
-              errorMsg = result['error'];
-            } else if (!result.containsKey('success') && result.isNotEmpty) {
-               // 可能是 validation 錯誤的 map (例如 {"age": "年齡必須大於0"})
-               errorMsg = result.values.first.toString();
-            }
-            throw Exception(errorMsg);
+        if (result['success'] == true) {
+          if (mounted) {
+            debugPrint('提交成功，切換至首頁');
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomePage(),
+              ),
+            );
           }
+        } else {
+          throw Exception(result['message'] ?? '設定失敗');
         }
       } else {
-        // HTTP 狀態碼非 200 時
-        try {
-          final result = jsonDecode(response.body);
-          String errorMsg = result['message'] ?? result['error'] ?? '連線錯誤: ${response.statusCode}';
-          throw Exception(errorMsg);
-        } catch (_) {
-          throw Exception('連線錯誤: ${response.statusCode}');
-        }
+        throw Exception('連線錯誤: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('提交過程發生例外: $e');
@@ -406,7 +387,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             ],
           ),
           Positioned(
-            bottom: 12,
+            // 按鈕定位
+            bottom: 10,
             left: 0,
             right: 0,
             child: Row(
@@ -423,7 +405,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       padding: const EdgeInsets.all(12),
                       child: CustomPaint(
                         painter: WashiTapeButtonPainter(text: '返回修改'),
-                        size: const Size(154, 56), // 放大 0.4 倍
+                        size: const Size(110, 40),
                       ),
                     ),
                   )
@@ -447,7 +429,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                               ? '提交中...' 
                               : (_currentPage == 6 ? '完成' : '下一頁 >'),
                         ),
-                        size: const Size(154, 56), // 放大 0.4 倍
+                        size: const Size(110, 40),
                       ),
                     ),
                   ),
@@ -697,7 +679,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         alignment: Alignment.center,
         children: [
           Align(
-            alignment: const Alignment(0, -0.85), // 稍微往上一點
+            alignment: const Alignment(0, -0.55), // 稍微往上一點
             child: _buildHandDrawnBox(
               width: 300, // 放大0.7倍 (大約1.7x，原本是180)
               height: 300,
