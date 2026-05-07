@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
+import '../../color/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -104,17 +105,16 @@ Future<void> _login() async {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
-                  border: Border.all(color: Colors.black, width: 2),
+                  color: AppColors.background,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      color: AppColors.primary.withOpacity(0.25),
                       blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
                   ],
                 ),
-                child: const Icon(Icons.person_outline, size: 60, color: Colors.black),
+                child: const Icon(Icons.person_outline, size: 60, color: AppColors.primary),
               ),
               const SizedBox(height: 10),
               const Text(
@@ -153,7 +153,7 @@ Future<void> _login() async {
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.7),
+                      color: AppColors.primary.withOpacity(0.2),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -162,16 +162,16 @@ Future<void> _login() async {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleLoginClick,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    elevation: 0, // 使用 Container 的 shadow
+                    elevation: 0, 
                   ),
                   child: _isLoading 
                     ? const SizedBox(
                         width: 20, 
                         height: 20, 
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background)
                       )
                     : const Text('登入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
@@ -186,27 +186,27 @@ Future<void> _login() async {
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.35),
+                      color: AppColors.primary.withOpacity(0.15),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: OutlinedButton(
-                  onPressed: () {
-                    // 跳轉至註冊頁面
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const RegisterPage()),
-                    );
-                  },
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Colors.black, width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const RegisterPage()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.background,
+                      foregroundColor: AppColors.textPrimary,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    ),
+                    child: const Text('尚未註冊', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  child: const Text('尚未註冊', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
               ),
             ],
           ),
@@ -245,23 +245,23 @@ Future<void> _login() async {
               : null,
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.black, width: 1),
+              borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
+              borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 1),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 2),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
             ),
-            errorStyle: const TextStyle(color: Colors.red),
+            errorStyle: const TextStyle(color: AppColors.danger),
             filled: true,
-            fillColor: Colors.grey.withOpacity(0.05),
+            fillColor: AppColors.surface,
           ),
         ),
       ],

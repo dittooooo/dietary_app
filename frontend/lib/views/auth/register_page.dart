@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
+import '../../color/app_colors.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -131,14 +132,13 @@ class _RegisterPageState extends State<RegisterPage> {
               // 頂部圖標
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.black, width: 1),
                 ),
                 child: const Icon(
                   Icons.person_outline,
                   size: 60,
-                  color: Colors.black,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -194,23 +194,26 @@ class _RegisterPageState extends State<RegisterPage> {
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: _isLoading ? null : _handleRegister,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.blue, width: 2),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
+                    elevation: 5,
+                    shadowColor: AppColors.primary.withOpacity(0.3),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(15),
                     ),
                   ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : const Text(
                           '註冊',
-                          style: TextStyle(color: Colors.blue, fontSize: 18),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
@@ -221,7 +224,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 child: const Text(
                   '已有帳號？返回登入',
                   style: TextStyle(
-                    color: Colors.grey,
+                    color: AppColors.textSecondary,
                     decoration: TextDecoration.underline,
                   ),
                 ),
@@ -268,19 +271,25 @@ class _RegisterPageState extends State<RegisterPage> {
                     onPressed: onToggleVisibility,
                   )
                 : null,
-            enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.black, width: 1),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
             ),
-            focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.blue, width: 2),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
             ),
-            errorBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.red, width: 1),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1),
             ),
-            focusedErrorBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.red, width: 2),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
             ),
-            errorStyle: const TextStyle(color: Colors.red),
+            filled: true,
+            fillColor: AppColors.surface,
+            errorStyle: const TextStyle(color: AppColors.danger),
           ),
         ),
       ],

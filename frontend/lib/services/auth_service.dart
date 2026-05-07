@@ -46,6 +46,52 @@ class AuthService {
     return {'success': false, ...data};
   }
 
+  // 獲取個人資料 (串接後端並更新本地緩衝)
+  Future<Map<String, dynamic>> getUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    try {
+      final response = await _client.get('/user/profile', headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      final Map<String, dynamic> data = _decodeBody(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        // 更新本地快取
+        final userData = data['data'];
+        await prefs.setString('user_nickname', userData['nickname'] ?? '');
+        await prefs.setString('user_pet_type', userData['petType'] ?? '');
+        return {'success': true, 'data': userData};
+      }
+      
+      return {'success': false, ...data};
+    } catch (e) {
+      // 網路斷開時，嘗試從本地讀取快取 (前端輔助模式)
+      final cachedNickname = prefs.getString('user_nickname');
+      if (cachedNickname != null) {
+        return {
+          'success': true, 
+          'data': {
+            'nickname': cachedNickname,
+            'petType': prefs.getString('user_pet_type'),
+          },
+          'isOffline': true
+        };
+      }
+      return {'success': false, 'message': '連線失敗'};
+    }
+  }
+
+  // 登出：清除所有本地資料
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+  }
+
   // 私有工具：儲存 Token
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();

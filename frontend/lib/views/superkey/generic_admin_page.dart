@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_add_item_page.dart';
+import '../../color/app_colors.dart';
 
 class GenericAdminListPage extends StatefulWidget {
   final String title;
@@ -56,9 +57,12 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text(_isDeleteMode ? '點擊以刪除' : widget.title),
-        backgroundColor: _isDeleteMode ? Colors.red[400] : null,
+        title: Text(_isDeleteMode ? '點擊以刪除' : widget.title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: _isDeleteMode ? AppColors.danger.withOpacity(0.1) : AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20.0),
@@ -77,27 +81,34 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
               controller: _searchController,
               onChanged: (value) => _runFilter(value),
               decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.background,
                 hintText: widget.searchHint,
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
+                prefixIcon: const Icon(Icons.search, color: AppColors.secondary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.primary)),
               ),
             ),
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                 : _foundData.isEmpty
-                    ? Center(child: Text('查無資料', style: TextStyle(fontSize: 18, color: Colors.grey)))
+                    ? const Center(child: Text('查無資料', style: TextStyle(fontSize: 18, color: AppColors.textSecondary)))
                     : ListView.builder(
                         itemCount: _foundData.length,
                         itemBuilder: (context, index) {
                           final item = _foundData[index];
                           return Card(
+                            color: AppColors.background,
                             margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             child: ListTile(
-                              title: Text(item['name'] ?? '未命名', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text(item['desc'] ?? ''),
-                              trailing: const Icon(Icons.edit, size: 20),
+                              title: Text(item['name'] ?? '未命名', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                              subtitle: Text(item['desc'] ?? '', style: const TextStyle(color: AppColors.textSecondary)),
+                              trailing: const Icon(Icons.edit, size: 20, color: AppColors.secondary),
                               onTap: () {
                                 if (_isDeleteMode) {
                                   _showDeleteDialog(item);
@@ -113,6 +124,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
         onPressed: () {
           Navigator.push(
             context,
@@ -123,7 +135,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
             if (value == true) _fetchData(); // 若新增成功則刷新
           });
         },
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: AppColors.background),
       ),
     );
   }
@@ -132,10 +144,11 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('確定刪除？'),
-        content: Text('這將永久移除這項資料。'),
+        backgroundColor: AppColors.background,
+        title: const Text('確定刪除？', style: TextStyle(color: AppColors.textPrimary)),
+        content: Text('這將永久移除這項資料。', style: const TextStyle(color: AppColors.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消', style: TextStyle(color: AppColors.textSecondary))),
           TextButton(
             onPressed: () {
               setState(() {
@@ -146,7 +159,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除')));
             },
-            child: const Text('確定', style: TextStyle(color: Colors.red)),
+            child: const Text('確定', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
