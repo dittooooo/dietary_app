@@ -13,16 +13,23 @@ import java.util.List;
 public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
     List<DietRecord> findByDishNameContainingIgnoreCase(String dishName);
 
+    List<DietRecord> findByUserIdOrderByCreatedAtDescIdDesc(Long userId);
+
     @Query("""
             SELECT d
             FROM DietRecord d
-            WHERE (:dishName IS NULL OR LOWER(d.dishName) LIKE LOWER(CONCAT('%', :dishName, '%')))
+            LEFT JOIN UserProfile up ON up.user.id = d.user.id
+            WHERE (:userId IS NULL OR d.user.id = :userId)
+              AND (:nickname IS NULL OR LOWER(up.nickname) LIKE LOWER(CONCAT('%', :nickname, '%')))
+              AND (:dishName IS NULL OR LOWER(d.dishName) LIKE LOWER(CONCAT('%', :dishName, '%')))
               AND (:mealType IS NULL OR d.mealType = :mealType)
               AND (:startAt IS NULL OR d.createdAt >= :startAt)
               AND (:endAt IS NULL OR d.createdAt < :endAt)
             ORDER BY d.createdAt DESC, d.id DESC
             """)
-    List<DietRecord> findByAdminFilters(@Param("dishName") String dishName,
+    List<DietRecord> findByAdminFilters(@Param("userId") Long userId,
+                                        @Param("nickname") String nickname,
+                                        @Param("dishName") String dishName,
                                         @Param("mealType") String mealType,
                                         @Param("startAt") LocalDateTime startAt,
                                         @Param("endAt") LocalDateTime endAt);

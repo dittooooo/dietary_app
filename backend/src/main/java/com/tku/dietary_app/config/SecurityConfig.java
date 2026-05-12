@@ -41,6 +41,9 @@ public class SecurityConfig {
                         // 註冊與登入不需要 token。
                         .requestMatchers("/api/register", "/api/login").permitAll()
 
+                        // 大頭像圖片靜態資源公開存取。
+                        .requestMatchers("/avatars/**").permitAll()
+
                         // 後台 API 只允許 ROLE_ADMIN 使用。
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
 

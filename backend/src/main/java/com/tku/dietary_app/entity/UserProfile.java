@@ -53,6 +53,8 @@ public class UserProfile {
     @Column(nullable = false)
     private String petType;
 
+    private String avatarUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -108,16 +108,18 @@ public class AdminController {
     // ===== 過去飲食管理 =====
 
     @GetMapping("/diet-records")
-    public ResponseEntity<?> listDietRecords(@RequestParam(required = false) String dishName,
+    public ResponseEntity<?> listDietRecords(@RequestParam(required = false) Long userId,
+                                             @RequestParam(required = false) String nickname,
+                                             @RequestParam(required = false) String dishName,
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                              @RequestParam(required = false) String mealType,
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
-        return ResponseEntity.ok(dietRecordService.getAdminRecords(dishName, date, mealType, weekStart));
+        return ResponseEntity.ok(dietRecordService.getAdminRecords(userId, nickname, dishName, date, mealType, weekStart));
     }
 
     @PostMapping("/diet-records")
-    public ResponseEntity<?> addDietRecord(@RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(dietRecordService.create(request));
+    public ResponseEntity<?> addDietRecord(@RequestParam Long userId, @RequestBody DietRecordRequest request) {
+        return ResponseEntity.ok(dietRecordService.create(userId, request));
     }
 
     @PutMapping("/diet-records/{id}")
