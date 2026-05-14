@@ -98,8 +98,8 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
         _currentStage = RecordStage.recognizing;
       });
       
-      // 模擬辨識過程
-      Timer(const Duration(seconds: 3), () {
+      // 模擬辨識過程 (加速至 0.3 秒)
+      Timer(const Duration(milliseconds: 300), () {
         setState(() {
           _currentStage = RecordStage.result;
         });
@@ -207,13 +207,15 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
           _buildTopOverlay(),
 
           // 3. 掃描動畫 (僅在辨識階段顯示)
-          if (_currentStage == RecordStage.recognizing) _buildScanningEffect(),
+          // 3. 掃描動畫 (已移除)
+          // if (_currentStage == RecordStage.recognizing) _buildScanningEffect(),
 
           // 4. 小精靈與對話框
           _buildElfOverlay(),
 
           // 5. 辨識標籤 (僅在結果階段顯示)
-          if (_currentStage == RecordStage.result) ..._buildResultLabels(),
+          // 5. 辨識標籤 (已移除)
+          // if (_currentStage == RecordStage.result) ..._buildResultLabels(),
 
           // 6. 底部功能卡片或按鈕
           _buildBottomAction(),
@@ -310,7 +312,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
                       height: 2,
                       decoration: BoxDecoration(
                         boxShadow: [
-                          BoxShadow(color: Colors.blue.withOpacity(0.8), blurRadius: 10, spreadRadius: 2),
+                          BoxShadow(color: Colors.blue.withOpacity(0.8), blurRadius: 1.95, spreadRadius: 0.39),
                         ],
                       ),
                     ),
@@ -331,7 +333,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
     else msg = "這份子不錯，補充蛋白質";
 
     final screenHeight = MediaQuery.of(context).size.height;
-    final bottomOffset = _currentStage == RecordStage.result ? (screenHeight * 0.5 + 10) : 120.0;
+    final bottomOffset = _currentStage == RecordStage.result ? 140.0 : 120.0; // 挪下來一點
 
     return Positioned(
       bottom: bottomOffset,
@@ -347,7 +349,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.9),
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+                boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 1.95)],
               ),
               child: Text(msg, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             ),
@@ -360,7 +362,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.blue.shade100, width: 3),
               ),
-              child: const Icon(Icons.pets, size: 50, color: Colors.blueGrey),
+              child: const Icon(Icons.pets, size: 50, color: Colors.black),
             ),
           ],
         ),
@@ -389,97 +391,61 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
   Widget _buildBottomAction() {
     if (_currentStage == RecordStage.result) {
       return Positioned(
-        bottom: 0, left: 0, right: 0,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.5,
-          decoration: const BoxDecoration(
-            color: Color(0xFFF9F9F9),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 20)],
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 15),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 120), // 為下方按鈕留空間
-                        child: Column(
-                          children: [
-                            // 原先的食物清單
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              padding: EdgeInsets.zero,
-                              itemCount: _detectedItems.length,
-                              itemBuilder: (context, index) {
-                                final item = _detectedItems[index];
-                                return ListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: Text(item['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  subtitle: Text("份量: ${item['portion']} | 熱量: ${item['calories']}"),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(icon: const Icon(Icons.edit, size: 20), onPressed: () => _showEditDialog(index)),
-                                      IconButton(icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent), onPressed: () => _deleteItem(index)),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                            // 新增按鈕
-                            OutlinedButton.icon(
-                              onPressed: _addNewItem,
-                              icon: const Icon(Icons.add),
-                              label: const Text("新增品項"),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(double.infinity, 45),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                              ),
-                            ),
-                            const SizedBox(height: 25),
-                            // 營養資訊區
-                            _buildNutritionSection(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+        bottom: 40, left: 0, right: 0,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // 1. 重拍按鈕 (維持原本相機按鈕樣式)
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _currentStage = RecordStage.shooting;
+                  _capturedImage = null;
+                });
+              },
+              child: Container(
+                width: 80, height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 5),
+                ),
+                child: Container(
+                  margin: const EdgeInsets.all(5),
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.camera_alt, color: Colors.black, size: 35),
                 ),
               ),
-              // 固定在底部的確認按鈕
-              Positioned(
-                bottom: 30, left: 0, right: 0,
-                child: Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ElfFeedingPage(
-                            imagePath: _capturedImage!.path,
-                            items: _detectedItems,
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(20),
-                      elevation: 10,
+            ),
+            // 2. 確認按鈕 (在右側)
+            Positioned(
+              right: MediaQuery.of(context).size.width * 0.15,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ElfFeedingPage(
+                        imagePath: _capturedImage!.path,
+                        items: _detectedItems,
+                      ),
                     ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 30),
+                  );
+                },
+                child: Container(
+                  width: 65, height: 65,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.blue.shade400, width: 4),
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(color: Colors.blue.shade400, shape: BoxShape.circle),
+                    child: const Icon(Icons.check, color: Colors.white, size: 35),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }

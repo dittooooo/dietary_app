@@ -6,12 +6,9 @@
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart",
-            "cwd": "${workspaceFolder}",
+            "deviceId": "chrome",
             "args": [
-                "-d",
-                "chrome",
-                "--web-browser-flag",
-                "--disable-web-security"
+                "--web-browser-flag=--disable-web-security"
             ]
         }
     ]

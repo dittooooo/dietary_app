@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
 import '../../color/app_colors.dart';
+import '../../services/auth_service.dart';
 import './login_page.dart'; 
 
 class EditProfilePage extends StatefulWidget {
@@ -16,6 +17,8 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
+  
+  late AuthService _authService;
   
   late TextEditingController _nameController;
   late TextEditingController _ageController;
@@ -33,6 +36,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void initState() {
     super.initState();
+    _authService = AuthService();
     final data = widget.initialData;
     _nameController = TextEditingController(text: data['nickname'] ?? '');
     _ageController = TextEditingController(text: data['age']?.toString() ?? '');
@@ -64,10 +68,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-
-      final body = jsonEncode({
+      final body = {
         'nickname': _nameController.text.trim(),
         'gender': _gender,
         'age': int.tryParse(_ageController.text) ?? 0,
@@ -75,19 +76,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'weight': double.tryParse(_weightController.text) ?? 0.0,
         'healthConditions': _diseases.toList(),
         'dietGoal': _goals.join(', '),
-        'petType': widget.initialData['petType'] ?? '預設小精靈',
-      });
+        'petType': widget.initialData['petType'] ?? '奶油皮丘',
+      };
 
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}/user/onboarding'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: body,
-      );
+      final result = await _authService.updateProfile(body);
 
-      if (response.statusCode == 200) {
+      if (result['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('個人資料修改成功！'))
@@ -95,7 +89,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           Navigator.pop(context, true);
         }
       } else {
-        throw Exception('Server returned ${response.statusCode}');
+        throw Exception(result['message'] ?? 'Server returned error');
       }
     } catch (e) {
       if (mounted) {
@@ -193,8 +187,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildCustomButton('刪除帳戶', AppColors.secondary, isDashed: true, onTap: _deleteAccount),
-                  _buildCustomButton('完成修改', AppColors.primary, onTap: _updateProfile),
+                  _buildCustomButton('刪除帳戶', AppColors.danger, isFilled: false, onTap: _deleteAccount),
+                  _buildCustomButton('完成修改', AppColors.primary, isFilled: true, onTap: _updateProfile),
                 ],
               ),
             ],
@@ -212,8 +206,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         boxShadow: [
           BoxShadow(
             color: AppColors.primary.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 1.95,
+            offset: const Offset(0, 0.78),
           ),
         ],
       ),
@@ -267,8 +261,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   selected: _gender == g,
                   onSelected: (val) => setState(() => _gender = g),
                   selectedColor: AppColors.secondary.withOpacity(0.2),
-                  labelStyle: TextStyle(color: _gender == g ? AppColors.textPrimary : AppColors.textSecondary),
-                ),
+                   labelStyle: TextStyle(
+                     color: _gender == g ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5),
+                     fontWeight: _gender == g ? FontWeight.bold : FontWeight.normal,
+                   ),
+                 ),
               )).toList(),
             ),
           ),
@@ -292,17 +289,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
               alignment: WrapAlignment.center,
               children: options.map((opt) {
                 final isSelected = selection.contains(opt);
-                return FilterChip(
-                  label: Text(opt, style: TextStyle(color: isSelected ? AppColors.textPrimary : AppColors.textSecondary)),
-                  selected: isSelected,
+                 return FilterChip(
+                   label: Text(opt, style: TextStyle(color: isSelected ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5))),
+                   selected: isSelected,
                   onSelected: (val) {
-                    // ... (logic remains same)
+                    setState(() {
+                      if (label == '疾病') {
+                        if (opt == '無疾病') {
+                          if (val) {
+                            selection.clear();
+                            selection.add('無疾病');
+                          } else {
+                            selection.remove('無疾病');
+                          }
+                        } else {
+                          if (val) {
+                            selection.remove('無疾病');
+                            selection.add(opt);
+                          } else {
+                            selection.remove(opt);
+                          }
+                        }
+                      } else {
+                        // 目標選項維持原本的複選邏輯
+                        if (val) {
+                          selection.add(opt);
+                        } else {
+                          selection.remove(opt);
+                        }
+                      }
+                    });
                   },
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
                   showCheckmark: false,
-                  backgroundColor: Colors.transparent,
-                  selectedColor: AppColors.secondary.withOpacity(0.1),
-                );
+                   backgroundColor: AppColors.surface.withOpacity(0.5),
+                   selectedColor: AppColors.secondary.withOpacity(0.2),
+                 );
               }).toList(),
             ),
           ),
@@ -312,25 +334,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildCustomButton(String text, Color color, {bool isDashed = false, required VoidCallback onTap}) {
+  Widget _buildCustomButton(String text, Color color, {bool isFilled = false, required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: isFilled ? color : AppColors.background,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: isFilled ? color.withOpacity(0.3) : Colors.black.withOpacity(0.1),
+              blurRadius: 3.9,
+              offset: const Offset(0, 1.95),
             ),
           ],
+          border: isFilled ? null : Border.all(color: color.withOpacity(0.5)),
         ),
         child: Text(
           text,
-          style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(
+            color: isFilled ? AppColors.background : color,
+            fontWeight: FontWeight.bold, 
+            fontSize: 16
+          ),
         ),
       ),
     );

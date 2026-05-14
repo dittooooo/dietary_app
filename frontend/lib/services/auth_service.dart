@@ -60,17 +60,19 @@ class AuthService {
 
       final Map<String, dynamic> data = _decodeBody(response.body);
 
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode == 200 && (data['success'] == true || data.containsKey('nickname'))) {
         // 更新本地快取
-        final userData = data['data'];
+        final userData = data['data'] ?? data;
+        await prefs.setString('user_email', userData['email'] ?? '');
         await prefs.setString('user_nickname', userData['nickname'] ?? '');
         await prefs.setString('user_pet_type', userData['petType'] ?? '');
+        // 額外儲存更多資訊以便編輯時使用
+        await prefs.setString('user_gender', userData['gender'] ?? '男');
         return {'success': true, 'data': userData};
       }
       
       return {'success': false, ...data};
     } catch (e) {
-      // 網路斷開時，嘗試從本地讀取快取 (前端輔助模式)
       final cachedNickname = prefs.getString('user_nickname');
       if (cachedNickname != null) {
         return {
@@ -86,24 +88,57 @@ class AuthService {
     }
   }
 
+  // 更新個人資料 (Onboarding)
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> profileData) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    final response = await _client.post(
+      '/user/onboarding', 
+      profileData,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    final Map<String, dynamic> data = _decodeBody(response.body);
+
+    if (response.statusCode == 200) {
+      // 更新本地快取
+      if (data['success'] == true) {
+        await prefs.setString('user_nickname', profileData['nickname']);
+      }
+      return {'success': true, ...data};
+    }
+
+    return {'success': false, ...data};
+  }
+
   // 登出：清除所有本地資料
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
   }
 
-  // 私有工具：儲存 Token
+  // 私有工具：儲存 Token (強化過濾機制)
   Future<void> _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('jwt_token', token);
+    // 移除可能存在的空白與多餘引號 (部分後端回傳純字串時會帶引號)
+    String cleanToken = token.trim();
+    if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) {
+      cleanToken = cleanToken.substring(1, cleanToken.length - 1);
+    }
+    await prefs.setString('jwt_token', cleanToken);
   }
 
   // 私有工具：安全解析 JSON
   Map<String, dynamic> _decodeBody(String body) {
     try {
-      return jsonDecode(body) as Map<String, dynamic>;
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) return decoded;
+      return {}; 
     } catch (_) {
-      return {}; // 回傳空 Map 代表可能是純字串 Token
+      return {}; 
     }
   }
-}
+}

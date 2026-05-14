@@ -91,6 +91,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (mounted) {
         if (result['success'] == true) {
+          // 儲存 Email 到本地
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_email', _emailController.text.trim());
+          
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -132,9 +136,7 @@ class _RegisterPageState extends State<RegisterPage> {
               // 頂部圖標
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                ),
+                decoration: const BoxDecoration(shape: BoxShape.circle),
                 child: const Icon(
                   Icons.person_outline,
                   size: 60,
@@ -155,6 +157,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: _emailController,
                 errorText: _emailError,
                 onChanged: (_) => setState(() => _emailError = null),
+                textInputAction: TextInputAction.next,
               ),
 
               const SizedBox(height: 20),
@@ -170,6 +173,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     setState(() => _isPasswordVisible = !_isPasswordVisible),
                 errorText: _passwordError,
                 onChanged: (_) => setState(() => _passwordError = null),
+                textInputAction: TextInputAction.next,
               ),
 
               const SizedBox(height: 20),
@@ -186,6 +190,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 errorText: _confirmPasswordError,
                 onChanged: (_) => setState(() => _confirmPasswordError = null),
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _handleRegister(),
               ),
 
               const SizedBox(height: 30),
@@ -199,7 +205,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.background,
-                    elevation: 5,
+                    elevation: 0.975,
                     shadowColor: AppColors.primary.withOpacity(0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -209,26 +215,56 @@ class _RegisterPageState extends State<RegisterPage> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text(
                           '註冊',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
 
               const SizedBox(height: 20),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  '已有帳號？返回登入',
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    decoration: TextDecoration.underline,
+              Container(
+                width: double.infinity,
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.15),
+                      blurRadius: 2.925,
+                      offset: const Offset(0, 1.56),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.background,
+                    foregroundColor: AppColors.textPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: const Text(
+                    '已有帳號？返回登入',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -244,7 +280,9 @@ class _RegisterPageState extends State<RegisterPage> {
     bool isVisible = false,
     VoidCallback? onToggleVisibility,
     String? errorText,
+    TextInputAction? textInputAction,
     void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,6 +293,8 @@ class _RegisterPageState extends State<RegisterPage> {
           controller: controller,
           obscureText: isPassword && !isVisible,
           onChanged: onChanged,
+          onFieldSubmitted: onSubmitted,
+          textInputAction: textInputAction,
           decoration: InputDecoration(
             errorText: errorText,
             hintText: hint,
@@ -277,7 +317,10 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.secondary,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
