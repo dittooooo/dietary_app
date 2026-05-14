@@ -624,6 +624,6 @@ ISBN :978-986-04-8278-2
 著作财產權人：衡生福利部國民健康署
 請洽衛生福利部國民健康署
 （電話：02-25220888)
-@allright reserved. Any forms of using or quotation, part or all should be Authorized by
+@allright reserved. Any forms of using or quotation, part "../../../src/chronic_disease_rules/data/disease_rules_txt_data"or all should be Authorized by
 copyright holder Health Promotion Administration,Ministry of Health and Welfare,R.O.C..
 (TEL:886-2-25220888)

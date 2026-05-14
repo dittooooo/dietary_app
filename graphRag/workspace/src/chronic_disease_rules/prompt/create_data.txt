@@ -1,225 +1,407 @@
-你是一位「醫療知識結構化工程師 + 知識圖譜資料建構專家」。
+你現在要協助我整理「慢性疾病飲食規則資料」，目標是產出可直接用於 Knowledge Graph 與 Recommendation System 的 JSON 檔案。
 
-我目前正在建置一套 AI 飲食建議系統，核心架構為：
+請你依照 workspace/src/chronic_disease_rules 資料夾中現有的程式碼、資料格式與附檔內容進行修改與產出，不要重新設計完全不同的架構，請盡量沿用現有欄位命名、資料結構與處理流程。
 
-Dish → Ingredient → Nutrition → Disease
+一、任務目標
 
-最終會把資料做成 Knowledge Graph，並提供 GraphRAG 檢索，讓 AI 根據使用者健康狀況推薦飲食。
+我要建立一份慢性疾病飲食規則 JSON。
 
----
+這份資料未來會用在知識圖譜中，主要處理「疾病節點」與「營養成分節點」之間的關係。
 
-## 你的任務
+知識圖譜的核心不是：
 
-我會提供你數份與「慢性病飲食建議 / 疾病營養守則 / 醫療飲食指南」相關的文件。
+Disease → Food
 
-請你完整閱讀所有檔案內容，萃取出其中提到的：
+而是：
 
-1. 疾病（Disease）
-2. 營養素（Nutrition）
-3. 食物 / 食材（Food / Ingredient）
-4. 疾病相關指標（如血壓、血糖、LDL、eGFR 等）※ 作為疾病屬性，不獨立成 node
-5. 飲食限制條件（攝取上限、避免、增加、適量）
-6. 疾病與營養素之間的關係
-7. 疾病與食物之間的關係
-8. 疾病與臨床指標之間的關係
-9. 特殊條件（分期、年齡、體重、透析、藥物等）
+Disease → Nutrient
 
-並整理成可直接建立 Knowledge Graph 的 JSON 格式。
+食物只能作為 example_foods 或輔助說明，不應該成為疾病直接連結的主要對象。
 
----
+也就是說，原始參考資料可能會寫：
 
-## Graph 設計原則（重要）
+高血壓應少吃鹹食、泡麵、醃漬品
 
-本次圖譜以「疾病」為核心節點。
+但你要整理成：
 
-不建立 biomarker node。
+高血壓 limit 鈉 Sodium
 
-所有 biomarker / clinical marker（如：
+而不是：
 
-- Blood Pressure
-- HbA1c
-- LDL-C
-- Triglycerides
-- eGFR
-- Creatinine
-- Potassium
+高血壓 limit 泡麵
 
-）改存為 disease 的：
+原因是泡麵被限制，是因為它通常含有高鈉。
 
-- diagnostic_markers
-- monitoring_markers
-- risk_markers
+二、疾病種類
 
-或出現在 rules.condition 中。
+請整理以下 10 種疾病，不要增加、刪除或替換疾病：
 
----
+disease_rows = [
+    ("Hypertension", "高血壓"),
+    ("Hyperlipidemia", "高血脂"),
+    ("Diabetes Mellitus", "糖尿病"),
+    ("Cardiovascular Disease", "心血管疾病"),
+    ("Chronic Kidney Disease", "慢性腎臟病"),
+    ("Stroke", "腦中風"),
+    ("Metabolic Syndrome", "代謝症候群"),
+    ("Gout", "痛風"),
+    ("Hyperuricemia", "高尿酸血症"),
+    ("Gastroesophageal Reflux Disease", "胃食道逆流")
+]
 
-## 請遵守以下抽取原則
+三、核心知識圖譜規則
 
-### 1. 不要摘要，要完整抽取規則
+每一種疾病都要整理成 disease node 與 nutrient node 的關係。
 
-例如：
+疾病與營養成分之間只允許以下三種 relation：
 
-- 高血壓患者每日鈉攝取應低於 2000mg
-- 糖尿病患者避免高 GI 食物
-- 慢性腎臟病第三期蛋白質建議 0.6~0.8 g/kg/day
-
-都必須保留。
-
----
-
-### 2. 優先轉成標準實體名稱
+1. recommend
+代表此疾病建議增加、優先選擇、適量攝取的營養成分。
 
 例如：
+高血脂 recommend 可溶性膳食纖維
+高血脂 recommend 不飽和脂肪
+糖尿病 recommend 膳食纖維
 
-高血壓 → Hypertension  
-糖尿病 → Diabetes Mellitus  
-高血脂 → Hyperlipidemia  
-慢性腎臟病 → Chronic Kidney Disease  
-鈉 → Sodium  
-鉀 → Potassium  
-蛋白質 → Protein
-
----
-
-### 3. 規則類型分類
-
-relation_type 可使用：
-
-increase_intake
-decrease_intake
-avoid
-limit
-recommend
-contraindicated
-monitor
-beneficial_for
-risk_for
-requires_control
-
----
-
-### 4. 單位保留
+2. limit
+代表此疾病需要限制、減少、控制攝取量的營養成分。
 
 例如：
+高血壓 limit 鈉
+高血脂 limit 飽和脂肪
+糖尿病 limit 添加糖
+慢性腎臟病 limit 鈉、磷、鉀、蛋白質
 
-2000 mg/day
-0.8 g/kg/day
-<5 g salt/day
+3. prohibit
+代表此疾病應避免或盡量不要攝取的營養成分。
 
----
+注意：
+prohibit 不代表醫學上絕對禁止，而是對推薦系統而言屬於高風險、應強烈避免的項目。
 
-## JSON 輸出格式（非常重要）
+例如：
+高血脂 prohibit 反式脂肪
+痛風 prohibit 酒精
+胃食道逆流 prohibit 酒精、咖啡因或刺激性成分，可依參考資料判斷
+
+四、資料整理原則
+
+請將原始參考資料中的「推薦食物」、「限制食物」、「禁止食物」轉換成背後對應的營養成分原因。
+
+轉換範例：
+
+1. 若參考資料說「高血壓少吃泡麵、醃漬品、加工食品」
+應轉換成：
+疾病：Hypertension
+relation：limit
+nutrient：Sodium
+reason：高鈉攝取會提高血壓並增加心血管風險
+example_foods：泡麵、醃漬品、加工食品
+
+2. 若參考資料說「高血脂少吃肥肉、奶油、香腸」
+應轉換成：
+疾病：Hyperlipidemia
+relation：limit
+nutrient：Saturated Fat
+reason：飽和脂肪會提高 LDL-C
+example_foods：肥肉、奶油、香腸
+
+3. 若參考資料說「糖尿病避免含糖飲料、甜點」
+應轉換成：
+疾病：Diabetes Mellitus
+relation：limit 或 prohibit
+nutrient：Added Sugar
+reason：添加糖會使血糖快速上升，增加血糖控制困難
+example_foods：含糖飲料、甜點
+
+4. 若參考資料說「痛風避免內臟、海鮮、啤酒」
+應轉換成：
+疾病：Gout
+relation：limit 或 prohibit
+nutrient：Purine 或 Alcohol
+reason：高普林食物與酒精會提高尿酸生成或影響尿酸代謝
+example_foods：內臟、部分海鮮、啤酒
+
+五、每個疾病 JSON 格式
+
+每一個疾病都應整理成以下格式。
+
+請注意：
+1. disease_name_zh 使用繁體中文
+2. disease_name_en 使用英文正式名稱
+3. disease_nutrient_relations 是主要資料
+4. example_foods 只是輔助，不是主要關係
+5. 所有 target_rule 與 food_level_rule 都要盡量保留可被系統判斷的欄位
+6. 無法確定精準數值時，可以標記為 null 或寫明「需依資料庫校正」，但不要亂編過度精確的數字
+
+資料格式如下：
 
 {
+  "disease_id": "hyperlipidemia",
+  "disease_name_zh": "高血脂",
+  "disease_name_en": "Hyperlipidemia",
+  "disease_nutrient_relations": [
+    {
+      "relation": "recommend",
+      "nutrient_name_zh": "可溶性膳食纖維",
+      "nutrient_name_en": "Soluble Fiber",
+      "target_rule": {
+        "daily_target": "5–10 g/day",
+        "unit": "g/day",
+        "direction": "increase",
+        "note": "有助降低 LDL-C"
+      },
+      "food_level_rule": {
+
+        "basis": "per_100g",
+        "level": "rich",
+        "operator": ">=",
+        "amount": 3,
+        "unit": "g",
+        "note": "此為系統判斷門檻，可依台灣營養宣稱標準或資料庫分布再校正"
+      },
+      "example_foods": ["燕麥", "大麥", "豆類", "蘋果", "梨子", "秋葵", "茄子"],
+      "reason": "可溶性纖維可降低膽固醇吸收，幫助改善 LDL-C"
+    }
+  ],
+  "diet_pattern": {
+    "recommended_patterns": ["地中海飲食", "DASH"],
+    "core_principle": "提高纖維與不飽和脂肪，限制飽和脂肪、反式脂肪、膽固醇、添加糖與高鈉"
+  },
+  "risk_notes": [
+    "此資料用於飲食建議與知識圖譜推論，不可取代醫師診斷或藥物治療",
+    "若使用者同時有其他慢性疾病，應合併其他疾病規則重新加權"
+  ]
+}
+
+六、每個 disease_nutrient_relation 的欄位要求
+
+每一筆 disease_nutrient_relation 至少包含：
+
+1. relation
+只能是 recommend、limit、prohibit 三者之一。
+
+2. nutrient_name_zh
+繁體中文營養成分名稱。
+
+3. nutrient_name_en
+英文營養成分名稱。
+
+4. target_rule
+描述每日目標、限制、方向、單位、注意事項。
+常見欄位可以包含：
+daily_target
+daily_limit
+weekly_target
+max
+optimal
+unit
+direction
+note
+
+direction 只能使用以下語意：
+increase：建議增加
+decrease：建議減少
+avoid：建議避免
+replace：建議取代
+maintain：建議維持
+adjust_by_stage：依疾病階段調整
+
+5. food_level_rule
+用於推薦系統判斷某個食物或料理是否符合高風險或推薦條件。
+常見欄位可以包含：
+basis
+level
+operator
+amount
+unit
+condition
+note
+
+basis 只能使用：
+per_100g
+
+
+6. example_foods
+保留原始參考文件中提到的代表性食物。
+注意：這只是輔助說明，不是知識圖譜主要關係。
+
+7. reason
+用一句話說明此疾病為什麼和這個營養成分有關。
+
+七、疾病整理方向
+
+請依照以下疾病特性整理，但仍需根據參考文件內容修正。
+
+1. Hypertension 高血壓
+常見營養關係：
+limit sodium
+recommend potassium
+recommend dietary_fiber
+limit saturated_fat
+limit alcohol
+diet_pattern 可包含 DASH
+
+2. Hyperlipidemia 高血脂
+常見營養關係：
+recommend soluble_fiber
+recommend omega_3_fatty_acids
+recommend unsaturated_fat
+limit saturated_fat
+prohibit trans_fat
+limit cholesterol
+limit added_sugar
+limit sodium
+
+3. Diabetes Mellitus 糖尿病
+常見營養關係：
+limit added_sugar
+limit refined_carbohydrate
+recommend dietary_fiber
+limit sodium
+limit saturated_fat
+recommend low_glycemic_index_carbohydrate
+需注意碳水化合物總量與血糖影響
+
+4. Cardiovascular Disease 心血管疾病
+常見營養關係：
+limit sodium
+limit saturated_fat
+prohibit trans_fat
+limit cholesterol
+recommend dietary_fiber
+recommend unsaturated_fat
+recommend omega_3_fatty_acids
+limit added_sugar
+
+5. Chronic Kidney Disease 慢性腎臟病
+常見營養關係：
+limit sodium
+limit protein 或 adjust_by_stage protein
+limit potassium
+limit phosphorus
+limit fluid 視情況
+需特別標記：慢性腎臟病飲食限制會依疾病分期、是否洗腎而不同，不可用單一規則套用所有人
+
+6. Stroke 腦中風
+常見營養關係：
+limit sodium
+limit saturated_fat
+prohibit trans_fat
+recommend dietary_fiber
+recommend potassium
+recommend unsaturated_fat
+limit added_sugar
+主要目標是控制血壓、血脂、血糖與心血管風險
+
+7. Metabolic Syndrome 代謝症候群
+常見營養關係：
+limit added_sugar
+limit refined_carbohydrate
+limit saturated_fat
+prohibit trans_fat
+recommend dietary_fiber
+recommend unsaturated_fat
+limit sodium
+與腹部肥胖、血壓、血糖、三酸甘油脂、HDL 有關
+
+8. Gout 痛風
+常見營養關係：
+limit purine
+prohibit alcohol 或 limit alcohol
+limit fructose
+recommend water
+limit organ_meat
+注意：若系統只連營養成分，內臟、海鮮等應放在 example_foods，主要 nutrient 應是 purine
+
+9. Hyperuricemia 高尿酸血症
+常見營養關係：
+limit purine
+limit alcohol
+limit fructose
+recommend water
+與痛風類似，但可比痛風稍微偏向預防與控制尿酸
+
+10. Gastroesophageal Reflux Disease 胃食道逆流
+常見營養關係：
+limit fat
+limit caffeine
+limit alcohol
+limit spicy_compounds
+limit acidic_food_components
+limit carbonated_drinks
+注意：此疾病常與症狀觸發食物有關，因此 food_level_rule 可使用 symptom_trigger
+
+八、輸出總格式
+
+最終請輸出一份完整 JSON。
+
+最外層建議格式：
+
+{
+  "metadata": {
+    "dataset_name": "chronic_disease_nutrient_rules",
+    "version": "1.0",
+    "language": "zh-TW",
+    "description": "慢性疾病與營養成分之間的飲食規則，用於 Knowledge Graph 與 Recommendation System",
+    "relation_types": ["recommend", "limit", "prohibit"]
+  },
   "diseases": [
     {
-      "id": "D001",
-      "name_zh": "高血壓",
-      "name_en": "Hypertension",
-      "diagnostic_markers": [
-        "Blood Pressure"
-      ],
-      "risk_markers": [
-        "Obesity",
-        "High Sodium Intake"
-      ],
-      "monitoring_markers": [
-        "SBP",
-        "DBP"
-      ]
-    }
-  ],
-
-  "nutrients": [
-    {
-      "id": "N001",
-      "name": "Sodium"
-    }
-  ],
-
-  "foods": [
-    {
-      "id": "F001",
-      "name": "Processed Food"
-    }
-  ],
-
-  "rules": [
-    {
-      "source": "filename.pdf",
-      "disease_id": "D001",
-      "target_type": "nutrient",
-      "target_id": "N001",
-      "relation_type": "limit",
-      "condition": null,
-      "value": 2000,
-      "unit": "mg/day",
-      "evidence": "高血壓患者每日鈉攝取應低於2000mg"
-    },
-
-    {
-      "source": "filename.pdf",
-      "disease_id": "D001",
-      "target_type": "food",
-      "target_id": "F001",
-      "relation_type": "avoid",
-      "condition": null,
-      "value": null,
-      "unit": null,
-      "evidence": "避免加工食品"
+      "disease_id": "...",
+      "disease_name_zh": "...",
+      "disease_name_en": "...",
+      "disease_nutrient_relations": [],
+      "diet_pattern": {},
+      "risk_notes": []
     }
   ]
 }
 
----
+九、程式處理要求
 
-## CKD 特殊規則
+請將所有程式處理都放在：
 
-若出現：
+workspace/src/chronic_disease_rules
 
-- CKD stage 3
-- CKD stage 4
-- Dialysis patient
+請先檢查該資料夾中現有檔案與程式碼，再依照現有架構修改。
 
-請分開建立 rules，condition 寫明 stage。
+不要把程式散落到其他資料夾。
 
-例如：
+若需要新增檔案，請放在此資料夾內，並使用清楚命名，例如：
 
-condition: "CKD Stage 3"
+chronic_disease_rules.json
+build_chronic_disease_rules.py
+validate_chronic_disease_rules.py
+nutrient_rule_schema.json
 
----
+如果資料夾中已經有類似檔案，請優先修改既有檔案，不要重複建立功能相同的新檔案。
 
-## 同義詞自動合併
+十、資料品質要求
 
-鹽巴 / 食鹽 / Sodium chloride → Sodium
+1. 不要省略任何疾病(以上十種)，其餘文件內有提到，但不再此範圍內的，都略過
+2. 不要省略任何整理出的規則
+3. 不要只列食物，必須轉成營養成分
+4. 不要讓 disease 直接連 food
+5. example_foods 可以保留，但只能作為輔助說明
+6. relation 必須只能是 recommend、limit、prohibit
+7. 同一疾病中，如果同一 nutrient 已存在，不要重複建立相同 relation
+8. 如果不同疾病都限制 sodium，可以重複出現在不同疾病中，這是合理的
+9. 若規則有共病條件，請放進 note 或 risk_notes，不要硬套成絕對規則
+10. 若參考文件只有食物描述，請推論其主要營養成分原因，但 reason 要寫清楚
+11. 若無法確定某項數值，請標記為「需依資料庫校正」或 null，不要亂填過度精準的數字
 
-血糖 / 空腹血糖 → Glucose（依上下文）
+十一、最終輸出限制
 
-壞膽固醇 → LDL Cholesterol
+最終回覆請遵守：
 
----
-
-## 最終輸出要求
-
-將檔案放至：
-
-workspace/src/chronic_disease_rules/output/chronic_disease_rules_v2.py
-
-只輸出 JSON
-不要解釋
-不要 markdown
-不要省略規則
-同一份文件全部整理完
-只整理和營養成分或食材相關的規則，運動、抽菸、睡眠或是需監測血壓等非飲食相關的注意事項，一律略過
-若是沒有找到相關規則的疾病，就不列出該疾病
-
----
-
-## 最重要原則
-
-Knowledge Graph 主體是：
-
-Disease ←→ Nutrition ←→ Ingredient ←→ dish
-
-現在開始處理我提供的檔案。
+1. 只輸出 JSON
+2. 不要解釋
+3. 不要 markdown
+4. 不要省略任何規則
+5. 將所有參考文件整理成一份 JSON 資料
+6. 所有資訊需可直接用於 Knowledge Graph 或 Recommendation System
+7. 所有程式處理都放在 workspace/src/chronic_disease_rules，並依照資料夾現有的程式碼去做修改
+8. JSON 必須可被程式直接 parse
+9. 不要在 JSON 前後加任何文字
+10. 不要輸出註解，因為 JSON 不支援註解
+11. 除了最終疾病資料檔案以外，請整理一份有用到的所有營養成分 json檔，並顯示是哪些疾病和他有關
