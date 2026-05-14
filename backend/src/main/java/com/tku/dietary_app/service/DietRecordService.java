@@ -3,7 +3,9 @@ package com.tku.dietary_app.service;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.MealType;
+import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ import java.util.List;
 public class DietRecordService {
 
     private final DietRecordRepository dietRecordRepository;
+    private final UserRepository userRepository;
 
     public List<DietRecord> getAllRecords() {
         return dietRecordRepository.findAll();
@@ -25,7 +28,11 @@ public class DietRecordService {
         return dietRecordRepository.findByDishNameContainingIgnoreCase(dishName);
     }
 
-    public List<DietRecord> getAdminRecords(String dishName, LocalDate date, String mealType, LocalDate weekStart) {
+    public List<DietRecord> getRecordsByUser(Long userId) {
+        return dietRecordRepository.findByUserIdOrderByCreatedAtDescIdDesc(userId);
+    }
+
+    public List<DietRecord> getAdminRecords(Long userId, String nickname, String dishName, LocalDate date, String mealType, LocalDate weekStart) {
         if (date != null && weekStart != null) {
             throw new IllegalArgumentException("date 與 weekStart 不能同時使用");
         }
@@ -43,6 +50,8 @@ public class DietRecordService {
 
         MealType normalizedMealType = MealType.from(mealType);
         return dietRecordRepository.findByAdminFilters(
+                userId,
+                normalizeKeyword(nickname),
                 normalizeKeyword(dishName),
                 normalizedMealType == null ? null : normalizedMealType.name(),
                 startAt,
@@ -50,8 +59,11 @@ public class DietRecordService {
         );
     }
 
-    public DietRecord create(DietRecordRequest request) {
+    public DietRecord create(Long userId, DietRecordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("找不到使用者 (ID: " + userId + ")"));
         return dietRecordRepository.save(DietRecord.builder()
+                .user(user)
                 .dishName(request.getDishName())
                 .nutrition(request.getNutrition())
                 .cumulativeNutrition(request.getCumulativeNutrition())

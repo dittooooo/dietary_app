@@ -1,8 +1,11 @@
 package com.tku.dietary_app.controller;
 
+import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.OnboardingRequest;
+import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.service.DietRecordService;
 import com.tku.dietary_app.service.UserProfileService;
 import com.tku.dietary_app.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;//讓 Spring 自動把需要的物件注入進來
@@ -19,7 +22,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
-@Validated//啟用驗證功能。搭配方法裡的 @Valid 使用
+@Validated
 public class UserProfileController {
     @Autowired
     private UserProfileService userProfileService;
@@ -27,13 +30,37 @@ public class UserProfileController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DietRecordService dietRecordService;
+
+    private User getAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+        return userRepository.findByEmail(authentication.getPrincipal().toString()).orElse(null);
+    }
+
+    // 取得自己的飲食紀錄
+    @GetMapping("/diet-records")
+    public ResponseEntity<?> getMyDietRecords() {
+        User user = getAuthenticatedUser();
+        if (user == null) return ResponseEntity.status(401).body(createErrorResponse("使用者未認證"));
+        return ResponseEntity.ok(dietRecordService.getRecordsByUser(user.getId()));
+    }
+
+    // 新增自己的飲食紀錄
+    @PostMapping("/diet-records")
+    public ResponseEntity<?> addMyDietRecord(@RequestBody DietRecordRequest request) {
+        User user = getAuthenticatedUser();
+        if (user == null) return ResponseEntity.status(401).body(createErrorResponse("使用者未認證"));
+        return ResponseEntity.ok(dietRecordService.create(user.getId(), request));
+    }
+
     // 完成用戶 onboarding 流程
     @PostMapping("/onboarding")
     //ResponseEntity<?>：回傳 HTTP 回應
     public ResponseEntity<?> completeOnboarding(@Valid @RequestBody OnboardingRequest request) {
         try {
-            // 從 SecurityContext 取得目前登入的使用者 email
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             //沒有登入資訊，不是已登入狀態
             if (authentication == null || !authentication.isAuthenticated()) {
