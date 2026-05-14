@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
+import '../../color/app_colors.dart';
 import '../home/home_page.dart';
 import 'initial_info_page.dart';
 
@@ -75,27 +76,38 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(40.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.face, size: 80), // 預留位
+              const Icon(Icons.face, size: 80, color: AppColors.primary), 
               const SizedBox(height: 20),
-              Text(widget.title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Text(
+                widget.title, 
+                style: const TextStyle(
+                  fontSize: 24, 
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary
+                )
+              ),
               const SizedBox(height: 20),
               LinearProgressIndicator(
                 value: _progress,
-                backgroundColor: Colors.grey[200],
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                backgroundColor: AppColors.surface,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
                 minHeight: 10,
               ),
               const SizedBox(height: 40),
-              const Icon(Icons.image, size: 100, color: Colors.grey), // 動畫預留位
+              const Icon(Icons.image, size: 100, color: AppColors.secondary), 
               const SizedBox(height: 20),
-              const Text('希望您能享受 App', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              const Text(
+                '希望您能享受 App', 
+                textAlign: TextAlign.center, 
+                style: TextStyle(color: AppColors.textPrimary)
+              ),
             ],
           ),
         ),

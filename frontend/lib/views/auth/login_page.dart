@@ -92,7 +92,7 @@ Future<void> _login() async {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 40.0),
         child: Form(
@@ -109,8 +109,8 @@ Future<void> _login() async {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withOpacity(0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: 3.9,
+                      offset: const Offset(0, 1.95),
                     ),
                   ],
                 ),
@@ -119,30 +119,30 @@ Future<void> _login() async {
               const SizedBox(height: 10),
               const Text(
                 '登入',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               const SizedBox(height: 30),
               
               // 帳號輸入框
-              _buildInputField(
-                label: '帳號',
-                hint: 'example@mail.com',
-                controller: _emailController,
-                errorText: _emailError,
-                onChanged: (value) => setState(() => _emailError = null),
-              ),
-              
-              const SizedBox(height: 20),
-              
-              // 密碼輸入框
-              _buildInputField(
-                label: '密碼',
-                hint: '6-18位數密碼',
-                controller: _passwordController,
-                isPassword: true,
-                errorText: _passwordError,
-                onChanged: (value) => setState(() => _passwordError = null),
-              ),
+                _buildInputField(
+                  label: '帳號',
+                  hint: 'example@mail.com',
+                  controller: _emailController,
+                  errorText: _emailError,
+                  onChanged: (_) => setState(() => _emailError = null),
+                  textInputAction: TextInputAction.next,
+                ),
+                const SizedBox(height: 15),
+                _buildInputField(
+                  label: '密碼',
+                  hint: '6-18位數密碼',
+                  controller: _passwordController,
+                  isPassword: true,
+                  errorText: _passwordError,
+                  onChanged: (_) => setState(() => _passwordError = null),
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _handleLoginClick(),
+                ),
 
               const SizedBox(height: 30),
 
@@ -154,8 +154,8 @@ Future<void> _login() async {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withOpacity(0.2),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      blurRadius: 2.925,
+                      offset: const Offset(0, 1.56),
                     ),
                   ],
                 ),
@@ -187,8 +187,8 @@ Future<void> _login() async {
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withOpacity(0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
+                      blurRadius: 2.925,
+                      offset: const Offset(0, 1.56),
                     ),
                   ],
                 ),
@@ -208,6 +208,7 @@ Future<void> _login() async {
                     child: const Text('尚未註冊', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
               ),
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -221,21 +222,25 @@ Future<void> _login() async {
     required TextEditingController controller,
     bool isPassword = false,
     String? errorText,
+    TextInputAction? textInputAction,
     void Function(String)? onChanged,
+    void Function(String)? onSubmitted,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         const SizedBox(height: 5),
         TextFormField(
           controller: controller,
           obscureText: isPassword && !_isPasswordVisible,
           onChanged: onChanged,
+          onFieldSubmitted: onSubmitted,
+          textInputAction: textInputAction,
           decoration: InputDecoration(
             errorText: errorText,
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey),
+            hintStyle: TextStyle(color: AppColors.textPrimary.withOpacity(0.4)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
             suffixIcon: isPassword 
               ? IconButton(

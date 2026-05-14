@@ -5,23 +5,25 @@ import '../config/api_config.dart';
 
 class ApiClient {
   // 統一處理 POST 請求
-  Future<http.Response> post(String path, Map<String, dynamic> body) async {
+  Future<http.Response> post(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
     
-    // 這裡可以統一印出 Log，方便除錯
-    print('🚀 發送請求至: $url');
+    print('🚀 發送 POST 請求至: $url');
     print('📦 請求內容: $body');
 
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
         body: jsonEncode(body),
       );
       return response;
     } catch (e) {
-      print('❌ 網路連線異常: $e');
-      rethrow; // 將錯誤丟給上層 Service 處理
+      print('❌ POST 網路連線異常: $e');
+      rethrow;
     }
   }
 

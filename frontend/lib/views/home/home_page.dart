@@ -6,7 +6,8 @@ import '../../color/app_colors.dart';
 
 class HomePage extends StatefulWidget {
   final int initialIndex;
-  const HomePage({super.key, this.initialIndex = 0});
+  final bool showChat;
+  const HomePage({super.key, this.initialIndex = 0, this.showChat = false});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -14,19 +15,18 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late int _selectedIndex;
+  late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+    _pages = [
+      HomeView(initialOpenChat: widget.showChat),
+      const DietaryRecordPage(),
+      const ProfilePage(),
+    ];
   }
-
-  // 切換頁面清單
-  final List<Widget> _pages = [
-    const HomeView(),
-    const DietaryRecordPage(),
-    const ProfilePage(),
-  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -46,8 +46,8 @@ class _HomePageState extends State<HomePage> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.15),
-              blurRadius: 20,
-              offset: const Offset(0, -6),
+              blurRadius: 3.9,
+              offset: const Offset(0, -1.17),
             ),
           ],
         ),
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.textSecondary,
+          unselectedItemColor: AppColors.textPrimary.withOpacity(0.4),
           backgroundColor: AppColors.background,
           type: BottomNavigationBarType.fixed,
           selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),

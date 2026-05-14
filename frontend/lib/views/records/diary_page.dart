@@ -62,11 +62,15 @@ class _DiaryPageState extends State<DiaryPage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 1, 
         selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textSecondary,
+        unselectedItemColor: Colors.grey,
         backgroundColor: AppColors.background,
         type: BottomNavigationBarType.fixed,
         onTap: (index) => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)), (route) => false),
-        items: const [BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'), BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'), BottomNavigationBarItem(icon: Icon(Icons.person), label: '個人首頁')],
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'), 
+          BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'), 
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
+        ],
       ),
     );
   }
@@ -98,8 +102,8 @@ class _DiaryPageState extends State<DiaryPage> {
               GestureDetector(
                 onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false),
                 child: Container(
-                  decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 15, offset: const Offset(0, 8))]),
-                  child: const CircleAvatar(radius: 25, backgroundColor: AppColors.background, child: Icon(Icons.person, color: AppColors.accent, size: 35)),
+                  decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]),
+                  child: const CircleAvatar(radius: 25, backgroundColor: AppColors.background, child: Icon(Icons.person, color: AppColors.textPrimary, size: 35)),
                 ),
               ),
             ],
@@ -117,8 +121,8 @@ class _DiaryPageState extends State<DiaryPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
+            blurRadius: 0.975,
+            offset: const Offset(0, 0.39),
           ),
         ],
       ),
@@ -153,8 +157,8 @@ class _DiaryPageState extends State<DiaryPage> {
               boxShadow: [
                 BoxShadow(
                   color: AppColors.primary.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  blurRadius: 1.95,
+                  offset: const Offset(0, 0.78),
                 ),
               ],
             ),
@@ -188,7 +192,7 @@ class _DiaryPageState extends State<DiaryPage> {
                         Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(isExpanded ? items.join("\n") : items.take(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.4, color: AppColors.textPrimary)))),
                         Row(
                           children: [
-                            if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textSecondary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(title); else _expandedMeals.add(title); }); }),
+                             if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textPrimary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(title); else _expandedMeals.add(title); }); }),
                             Container(width: 4, height: 40, margin: const EdgeInsets.only(right: 4), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
                           ],
                         ),
@@ -209,8 +213,8 @@ class _DiaryPageState extends State<DiaryPage> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
+                  blurRadius: 0.975,
+                  offset: const Offset(0, 0.39),
                 ),
               ],
             ),

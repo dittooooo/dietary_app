@@ -92,7 +92,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
                       width: 250, height: 250,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 20)],
+                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 3.9)],
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: kIsWeb 
@@ -123,7 +123,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
                           child: const Text("啊姆！看起來很好吃！", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
                         ),
                       const SizedBox(height: 10),
-                      const Icon(Icons.pets, size: 120, color: AppColors.secondary),
+                      const Icon(Icons.pets, size: 120, color: Colors.black),
                     ],
                   ),
                 ),
@@ -139,7 +139,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.background.withOpacity(0.8),
                   foregroundColor: AppColors.textPrimary,
-                  elevation: 5,
+                  elevation: 0.975,
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
                 ),

@@ -6,7 +6,8 @@ import '../../color/app_colors.dart';
 import '../records/elf_feeding_page.dart';
 
 class HomeView extends StatefulWidget {
-  const HomeView({super.key});
+  final bool initialOpenChat;
+  const HomeView({super.key, this.initialOpenChat = false});
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -16,8 +17,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   final TextEditingController _inputController = TextEditingController();
   final AuthService _authService = AuthService();
   
-  bool _isChatOpen = false;
-  double _chatPanelX = 1.0; 
+  late bool _isChatOpen;
+  late double _chatPanelX; 
   String _userNickname = '使用者';
   String _petType = '奶油皮丘';
   
@@ -26,6 +27,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _isChatOpen = widget.initialOpenChat;
+    _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0;
     _loadHomeData();
   }
 
@@ -68,10 +71,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String petType) {
     switch (petType) {
-      case '奶油皮丘': return Colors.orangeAccent;
-      case '薄荷兔兔': return Colors.greenAccent;
-      case '草莓狐狸': return Colors.pinkAccent;
-      default: return Colors.blueGrey;
+      case '奶油皮丘': return const Color(0xFFD4A373); // Muted orange (retro)
+      case '薄荷兔兔': return const Color(0xFF8A9A5B); // Muted sage (retro)
+      case '草莓狐狸': return const Color(0xFFB07D62); // Muted terracotta (retro)
+      default: return AppColors.secondary;
     }
   }
 
@@ -94,7 +97,26 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     // 模擬回覆
     Future.delayed(const Duration(seconds: 1), () {
       setState(() {
-        if (text.contains("推薦")) {
+        if (text.contains("早午餐")) {
+          _messages.add({
+            'isElf': true, 
+            'text': '嗨 $_userNickname！考慮到您目前的「減脂健康」目標，我為您挑選了幾項附近的早午餐推薦，這些選項的蛋白質含量較高且負擔相對較小喔：',
+            'options': [
+              {
+                'name': '卡拉雞腿堡', 
+                'nutrients': {'calories': 450, 'protein': 22, 'fat': 18, 'carbs': 48}
+              },
+              {
+                'name': '鐵板麵', 
+                'nutrients': {'calories': 520, 'protein': 14, 'fat': 22, 'carbs': 65}
+              },
+              {
+                'name': '烏龍麵', 
+                'nutrients': {'calories': 380, 'protein': 12, 'fat': 8, 'carbs': 60}
+              },
+            ]
+          });
+        } else if (text.contains("推薦")) {
           _messages.add({
             'isElf': true, 
             'text': '已為您搜尋附近的店家向您推薦：\n1. 佳佳\n2. 麥軒\n3. 日初',
@@ -159,13 +181,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                           shape: BoxShape.circle,
                           color: AppColors.background,
                           boxShadow: [
-                            BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 30, spreadRadius: 10)
+                            BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 5.85, spreadRadius: 1.95)
                           ],
                         ),
                         child: Icon(
                           _getPetIcon(_petType), 
                           size: 180, 
-                          color: AppColors.secondary
+                          color: Colors.black
                         ), // 這裡之後換成完整精靈圖片
                       ),
                     ),
@@ -179,7 +201,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                       decoration: BoxDecoration(
                         color: AppColors.background,
                         borderRadius: BorderRadius.circular(20),
-                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10)],
+                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95)],
                       ),
                       child: Text(
                         _messages.isNotEmpty ? _messages[0]['text'] : "載入中...",
@@ -203,7 +225,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 15, offset: const Offset(0, 5))],
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))],
                 ),
                 child: Row(
                   children: [
@@ -213,7 +235,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                         decoration: const InputDecoration(
                           hintText: "輸入訊息...", 
                           border: InputBorder.none,
-                          hintStyle: TextStyle(color: AppColors.textSecondary)
+                          hintStyle: TextStyle(color: AppColors.textPrimary)
                         ),
                         onSubmitted: _handleMessage,
                       ),
@@ -273,43 +295,68 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
                   } else if (msg['type'] == 'nutrient') {
                     return _buildNutrientCard();
                   }
-                  return _buildChatMessage(msg['isElf'], msg['text']);
+                  return _buildChatMessage(msg['isElf'], msg['text'], options: msg['options']);
                 },
               ),
             ),
-            // 面板內也提供輸入框
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.border)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
-                      child: TextField(
-                        controller: _inputController,
-                        decoration: const InputDecoration(
-                          hintText: "詢問建議...", 
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(color: AppColors.textSecondary)
+            // 面板內也提供輸入框 (包含小精靈站位符)
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
+                          child: TextField(
+                            controller: _inputController,
+                            decoration: const InputDecoration(
+                              hintText: "詢問建議...", 
+                              border: InputBorder.none,
+                              hintStyle: TextStyle(color: AppColors.textPrimary)
+                            ),
+                            onSubmitted: _handleMessage,
+                          ),
                         ),
-                        onSubmitted: _handleMessage,
                       ),
+                      const SizedBox(width: 10),
+                      CircleAvatar(
+                        backgroundColor: AppColors.primary,
+                        child: IconButton(
+                          icon: const Icon(Icons.send, color: AppColors.background, size: 20),
+                          onPressed: () => _handleMessage(_inputController.text),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 小精靈站位符 (趴在輸入框上方，放大並置中)
+                Positioned(
+                  top: -65,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _getPetColor(_petType).withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.background, width: 3),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))
+                        ],
+                      ),
+                      child: Icon(_getPetIcon(_petType), size: 64, color: Colors.white),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  CircleAvatar(
-                    backgroundColor: AppColors.primary,
-                    child: IconButton(
-                      icon: const Icon(Icons.send, color: AppColors.background, size: 20),
-                      onPressed: () => _handleMessage(_inputController.text),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -317,22 +364,111 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildChatMessage(bool isElf, String text) {
+  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) {
     return Align(
       alignment: isElf ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
-        decoration: BoxDecoration(
-          color: isElf ? AppColors.background : AppColors.secondary,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 5)],
-          border: isElf ? Border.all(color: AppColors.border) : null,
+      child: Column(
+        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            decoration: BoxDecoration(
+              color: isElf ? AppColors.background : AppColors.secondary,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)],
+              border: isElf ? Border.all(color: AppColors.border) : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(color: isElf ? AppColors.textPrimary : AppColors.background, fontSize: 15),
+                ),
+                if (isElf && options != null) ...[
+                  const SizedBox(height: 15),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  ...options.map((opt) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  )).toList(),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNutrientDetail(String name, Map<String, dynamic> nutrients) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.45,
+        decoration: const BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),
-        child: Text(
-          text,
-          style: TextStyle(color: isElf ? AppColors.textPrimary : AppColors.background, fontSize: 15),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 25),
+            Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            const SizedBox(height: 10),
+            Text("預估攝取熱量: ${nutrients['calories']} kcal", style: const TextStyle(fontSize: 16, color: AppColors.secondary, fontWeight: FontWeight.w600)),
+            const Divider(height: 40),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NutrientInfo(label: "蛋白質", value: "${nutrients['protein']}", unit: "g"),
+                _NutrientInfo(label: "脂肪", value: "${nutrients['fat']}", unit: "g"),
+                _NutrientInfo(label: "碳水", value: "${nutrients['carbs']}", unit: "g"),
+              ],
+            ),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context); // 關閉彈窗
+                _toggleChat(false); // 關閉對話框
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ElfFeedingPage(
+                      imagePath: "", 
+                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}],
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                minimumSize: const Size(double.infinity, 55),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 2,
+              ),
+              child: const Text("確認食用", style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
       ),
     );
@@ -346,7 +482,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 1.95)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +495,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 10),
-          const Text("點擊查看詳細地址與評價", style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+          const Text("點擊查看詳細地址與評價", style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
         ],
       ),
     );
@@ -372,7 +508,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 15)],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925)],
       ),
       child: Column(
         children: [
@@ -420,10 +556,10 @@ class _NutrientInfo extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
         const SizedBox(height: 5),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(unit, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textPrimary)),
       ],
     );
   }

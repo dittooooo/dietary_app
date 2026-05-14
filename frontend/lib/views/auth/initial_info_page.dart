@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../config/api_config.dart';
-import 'home_page.dart';
+import '../../config/api_config.dart';
+import '../home/home_page.dart';
 import 'login_page.dart';
 import '../../color/app_colors.dart';
 
@@ -474,14 +474,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40), // 增加間距
-          _buildHandDrawnTextField(
-            '輸入您的名字',
-            (value) => setState(() {
-              _name = value;
-              _pageErrors.remove(0);
-            }),
-            initialValue: _name,
-          ),
+            _buildHandDrawnTextField(
+              '輸入您的名字',
+              (value) => setState(() {
+                _name = value;
+                _pageErrors.remove(0);
+              }),
+              initialValue: _name,
+              onSubmitted: _nextPage,
+            ),
         ],
       ),
     );
@@ -537,6 +538,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             }),
             isNumber: true,
             initialValue: _age,
+            onSubmitted: _nextPage,
           ),
         ],
       ),
@@ -570,6 +572,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       }),
                       isNumber: true,
                       initialValue: _height,
+                      onSubmitted: _nextPage,
                     ),
                   ],
                 ),
@@ -592,6 +595,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       }),
                       isNumber: true,
                       initialValue: _weight,
+                      onSubmitted: _nextPage,
                     ),
                   ],
                 ),
@@ -755,8 +759,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withOpacity(0.2),
-              blurRadius: 4,
-              offset: const Offset(2, 2),
+              blurRadius: 0.78,
+              offset: const Offset(0.39, 0.39),
             ),
           ], // 陰影
         ),
@@ -774,6 +778,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     Function(String) onChanged, {
     bool isNumber = false,
     String initialValue = '',
+    VoidCallback? onSubmitted,
   }) {
     // 手繪输入框
     return CustomPaint(
@@ -793,6 +798,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             ),
             keyboardType: isNumber ? TextInputType.number : TextInputType.text,
             onChanged: onChanged,
+            onSubmitted: (_) => onSubmitted?.call(),
             style: _inputTextStyle,
             decoration: InputDecoration(
               hintText: hint,
@@ -1244,7 +1250,7 @@ class HandDrawnBoxPainter extends CustomPainter {
       boxPath.shift(const Offset(8, 10)), 
       Paint()
         ..color = AppColors.primary.withOpacity(0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12)
     );
 
     canvas.drawPath(boxPath, fillPaint); // 畫填充
@@ -1356,7 +1362,7 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
       path.shift(const Offset(8, 10)), 
       Paint()
         ..color = AppColors.primary.withOpacity(0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12)
     );
 
     canvas.drawPath(path, fillPaint);
@@ -1461,7 +1467,7 @@ class WashiTapeButtonPainter extends CustomPainter {
       baseShape.shift(const Offset(10, 12)), 
       Paint()
         ..color = Colors.black.withOpacity(0.55)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.9)
     );
 
     canvas.drawPath(baseShape, Paint()..color = Colors.white); // 填充

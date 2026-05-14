@@ -50,10 +50,14 @@ class _ProfilePageState extends State<ProfilePage> {
       if (result['success'] == true) {
         setState(() {
           _fullUserData = result['data'];
+          _email = _fullUserData?['email'] ?? _email;
           _nickname = _fullUserData?['nickname'] ?? '未設定姓名';
-          // 權限判斷：後端為主，前端為輔 (暫時透過 email 判斷，若後端補上 role 則自動對接)
-          _isAdmin = _fullUserData?['role'] == 'ADMIN' || 
-                     _email == 'aaa@aaa.aaa';
+          
+          // 修正後的權限判斷：
+          // 1. 檢查嵌套路徑 (符合 Spring Boot/Jackson 預設序列化)
+          // 2. 檢查字串是否包含 ROLE_ADMIN
+          final String? role = _fullUserData?['user']?['role'] ?? _fullUserData?['role'];
+          _isAdmin = role == 'ROLE_ADMIN';
         });
       } else {
         debugPrint('更新資料失敗: ${result['message']}');
@@ -90,10 +94,10 @@ class _ProfilePageState extends State<ProfilePage> {
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String? petType) {
     switch (petType) {
-      case '奶油皮丘': return Colors.orangeAccent;
-      case '薄荷兔兔': return Colors.greenAccent;
-      case '草莓狐狸': return Colors.pinkAccent;
-      default: return Colors.blueGrey;
+      case '奶油皮丘': return const Color.fromARGB(255, 181, 181, 60); // Muted orange (retro)
+      case '薄荷兔兔': return const Color.fromARGB(255, 110, 215, 154); // Muted sage (retro)
+      case '草莓狐狸': return const Color.fromARGB(255, 186, 84, 84); // Muted terracotta (retro)
+      default: return const Color.fromARGB(255, 66, 92, 65);
     }
   }
 
@@ -186,8 +190,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
+                          blurRadius: 3.9,
+                          offset: const Offset(0, 1.95),
                         ),
                       ],
                     ),
@@ -198,7 +202,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ? MemoryImage(_imageBytes!) 
                           : null,
                       child: _imageBytes == null 
-                          ? const Icon(Icons.person, size: 80, color: AppColors.accent) 
+                          ? const Icon(Icons.person, size: 80, color: Colors.black) 
                           : null,
                     ),
                   ),
@@ -206,9 +210,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     bottom: 5,
                     right: 5,
                     child: Material(
-                      color: Colors.white,
+                      color: AppColors.background,
                       shape: const CircleBorder(),
-                      elevation: 5,
+                      elevation: 0.975,
                       shadowColor: Colors.black.withOpacity(0.5),
                       child: InkWell(
                         onTap: _pickImage,
@@ -231,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 5),
             Text(
               _email, 
-              style: const TextStyle(color: Colors.black87, fontSize: 18),
+              style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
             ),
             const SizedBox(height: 20),
 
@@ -245,8 +249,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.25),
-                        blurRadius: 15,
-                        offset: const Offset(0, 6),
+                        blurRadius: 2.925,
+                        offset: const Offset(0, 1.17),
                       ),
                     ],
                   ),
@@ -267,7 +271,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (updated == true) _loadUserData();
                       }
                     },
-                    icon: const Icon(Icons.edit, color: AppColors.textPrimary, size: 18),
+                    icon: const Icon(Icons.edit, color: Colors.black, size: 18),
                     label: const Text('修改個人檔案', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.background,
@@ -336,37 +340,44 @@ class _ProfilePageState extends State<ProfilePage> {
 
             // 4. 小精靈展示區
             const SizedBox(height: 20),
-            Container(
-              margin: const EdgeInsets.all(20),
-              height: 250,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    blurRadius: 25,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
+            GestureDetector(
+              onTap: () => Navigator.pushAndRemoveUntil(
+                context, 
+                MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0, showChat: true)), 
+                (route) => false
               ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _getPetIcon(_fullUserData?['petType']), 
-                      size: 100, 
-                      color: AppColors.secondary
+              child: Container(
+                margin: const EdgeInsets.all(20),
+                height: 250,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.3),
+                      blurRadius: 4.875,
+                      offset: const Offset(0, 2.34),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      _fullUserData?['petType'] ?? '未選擇小精靈', 
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
-                    ),
-                    const Text('正在休息中...', style: TextStyle(color: AppColors.textSecondary)),
                   ],
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _getPetIcon(_fullUserData?['petType']), 
+                        size: 100, 
+                        color: Colors.black
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _fullUserData?['petType'] ?? '未選擇小精靈', 
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+                      ),
+                      const Text('正在休息中...', style: TextStyle(color: AppColors.textPrimary)),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -378,7 +389,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: const Icon(Icons.logout, color: AppColors.background),
                 label: const Text('登出帳號', style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.secondary,
+                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 ),
@@ -403,8 +414,8 @@ class _ProfilePageState extends State<ProfilePage> {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.25),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
+              blurRadius: 1.95,
+              offset: const Offset(0, 0.975),
             ),
           ],
         ),

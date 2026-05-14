@@ -5,6 +5,7 @@ import '../auth/profile_page.dart';
 import 'diary_page.dart';
 import 'report_page.dart';
 import 'camera_record_page.dart';
+import 'manual_record_page.dart';
 import 'dart:math' as math;
 import '../../color/app_colors.dart';
 
@@ -127,7 +128,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                     decoration: BoxDecoration(
                       color: AppColors.secondary,
                       borderRadius: BorderRadius.circular(25),
-                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 4))],
+                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 1.95, offset: const Offset(0, 0.78))],
                     ),
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
@@ -186,15 +187,15 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.2), 
-                          blurRadius: 15, 
-                          offset: const Offset(0, 8)
+                          blurRadius: 2.925, 
+                          offset: const Offset(0, 1.56)
                         )
                       ]
                     ),
                     child: const CircleAvatar(
                       radius: 25, 
                       backgroundColor: AppColors.background, 
-                      child: Icon(Icons.person, color: AppColors.accent, size: 35)
+                      child: Icon(Icons.person, color: AppColors.textPrimary, size: 35)
                     ),
                   ),
                 ),
@@ -214,35 +215,62 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
+            // 1. 月份/日期框
             GestureDetector(
               onTap: _selectDate,
               child: Container(
                 width: 60, height: 80,
-                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 10, offset: const Offset(4, 6))]),
+                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 1.95, offset: const Offset(0.78, 1.17))]),
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('月', style: TextStyle(fontSize: 14)), Text('${_selectedDate.day}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))]),
               ),
             ),
-            GestureDetector(
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CameraRecordPage())),
-              child: Transform.translate(
-                offset: const Offset(15, 0),
-                child: Container(
-                  width: 160, height: 70,
-                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 15, offset: const Offset(0, 10))]),
-                  child: const Icon(Icons.camera_alt, color: AppColors.background, size: 40),
-                ),
-              ),
-            ),
-            Column(
+            
+            // 2. 相機按鈕與新增按鈕組合
+            Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 5, offset: const Offset(2, 2))]),
-                  child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center),
+                GestureDetector(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CameraRecordPage())),
+                  child: Container(
+                    width: 80, height: 70, // 與新增按鈕等寬
+                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
+                    child: const Icon(Icons.camera_alt, color: AppColors.background, size: 30),
+                  ),
                 ),
-                const SizedBox(height: 5),
-                const Icon(Icons.terrain, color: AppColors.accent, size: 25),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => ManualRecordPage(initialDate: _selectedDate))
+                    );
+                  },
+                  child: Container(
+                    width: 80, height: 70, // 與相機按鈕等寬
+                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
+                    child: const Icon(Icons.add, color: AppColors.background, size: 35),
+                  ),
+                ),
               ],
+            ),
+
+            // 3. 狀態提示與小圖示
+            GestureDetector(
+              onTap: () => Navigator.pushAndRemoveUntil(
+                context, 
+                MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0, showChat: true)), 
+                (route) => false
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 0.975, offset: const Offset(0.39, 0.39))]),
+                    child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center),
+                  ),
+                  const SizedBox(height: 5),
+                  const Icon(Icons.terrain, color: Colors.black, size: 25),
+                ],
+              ),
             ),
           ],
         ),
@@ -253,17 +281,17 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   Widget _buildActionPanel(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.35,
-      decoration: const BoxDecoration(color: AppColors.secondary, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
+      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
       child: Column(
         children: [
           const SizedBox(height: 20),
-          Text("${_selectedDate.month}月${_selectedDate.day}日 飲食記錄", style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text("${_selectedDate.month}月${_selectedDate.day}日 飲食記錄", style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
           const Spacer(),
           Padding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: AppColors.background, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }),
-              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: AppColors.border, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }),
+              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: const Color(0xFFFFFDE7), onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }),
+              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: AppColors.surface, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }),
             ]),
           ),
         ],
@@ -276,7 +304,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       onTap: onTap,
       child: Container(
         width: 140, height: 110,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 10, offset: const Offset(4, 4))]),
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95, offset: const Offset(0.78, 0.78))]),
         child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 45, color: AppColors.textPrimary), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]),
       ),
     );
@@ -333,7 +361,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   width: dotSize, height: dotSize,
-                  decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: isSelected ? 12 : 8, offset: const Offset(2, 2))]),
+                  decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: isSelected ? 2.34 : 1.56, offset: const Offset(0.39, 0.39))]),
                 ),
               ],
             ),
