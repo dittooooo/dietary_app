@@ -22,6 +22,11 @@ public class RestaurantService {
         return restaurantRepository.findByNameContainingIgnoreCase(name);
     }
 
+    public Restaurant getById(Long id) {
+        return restaurantRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("找不到餐廳 (ID: " + id + ")"));
+    }
+
     public Restaurant create(RestaurantRequest request) {
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName())

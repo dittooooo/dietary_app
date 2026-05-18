@@ -81,7 +81,7 @@ public class DietRecordService {
                 .build());
     }
 
-    public DietRecord update(Long id, DietRecordRequest request) {
+    public DietRecord updateByAdmin(Long id, DietRecordRequest request) {
         DietRecord record = dietRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
         record.setDishName(request.getDishName());
@@ -91,7 +91,27 @@ public class DietRecordService {
         return dietRecordRepository.save(record);
     }
 
-    public DietRecord savePhoto(Long id, MultipartFile file) throws IOException {
+    public void deleteByAdmin(Long id) {
+        if (!dietRecordRepository.existsById(id)) {
+            throw new RuntimeException("找不到飲食紀錄 (ID: " + id + ")");
+        }
+        dietRecordRepository.deleteById(id);
+    }
+
+    public DietRecord update(Long id, Long loginUserId, DietRecordRequest request) {
+        DietRecord record = dietRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
+        if (!record.getUser().getId().equals(loginUserId)) {
+            throw new RuntimeException("無權編輯此紀錄");
+        }
+        record.setDishName(request.getDishName());
+        record.setNutrition(request.getNutrition());
+        record.setDescription(request.getDescription());
+        record.setMealType(normalizeMealType(request.getMealType()));
+        return dietRecordRepository.save(record);
+    }
+
+    public DietRecord savePhotoByAdmin(Long id, MultipartFile file) throws IOException {
         DietRecord record = dietRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
 
@@ -109,9 +129,32 @@ public class DietRecordService {
         return dietRecordRepository.save(record);
     }
 
-    public void delete(Long id) {
-        if (!dietRecordRepository.existsById(id)) {
-            throw new RuntimeException("找不到飲食紀錄 (ID: " + id + ")");
+    public DietRecord savePhoto(Long id, Long loginUserId, MultipartFile file) throws IOException {
+        DietRecord record = dietRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
+        if (!record.getUser().getId().equals(loginUserId)) {
+            throw new RuntimeException("無權上傳此紀錄的照片");
+        }
+
+        String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
+                ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."))
+                : ".jpg";
+        String filename = "diet_" + id + "_" + UUID.randomUUID() + ext;
+
+        Path dir = Paths.get(uploadDir.replace("avatars", "diet"));
+        Files.createDirectories(dir);
+        Files.copy(file.getInputStream(), dir.resolve(filename),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+        record.setPhotoUrl("/diet/" + filename);
+        return dietRecordRepository.save(record);
+    }
+
+    public void delete(Long id, Long loginUserId) {
+        DietRecord record = dietRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
+        if (!record.getUser().getId().equals(loginUserId)) {
+            throw new RuntimeException("無權刪除此紀錄");
         }
         dietRecordRepository.deleteById(id);
     }
