@@ -6,7 +6,6 @@ import lombok.Data;
 public class DietRecordRequest {
     private String dishName;
     private String nutrition;
-    private String cumulativeNutrition;
-    private String healthLevel;
+    private String description;
     private String mealType;
 }

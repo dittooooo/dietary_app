@@ -7,11 +7,18 @@ import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +26,9 @@ public class DietRecordService {
 
     private final DietRecordRepository dietRecordRepository;
     private final UserRepository userRepository;
+
+    @Value("${app.upload.dir}")
+    private String uploadDir;
 
     public List<DietRecord> getAllRecords() {
         return dietRecordRepository.findAll();
@@ -66,8 +76,7 @@ public class DietRecordService {
                 .user(user)
                 .dishName(request.getDishName())
                 .nutrition(request.getNutrition())
-                .cumulativeNutrition(request.getCumulativeNutrition())
-                .healthLevel(request.getHealthLevel())
+                .description(request.getDescription())
                 .mealType(normalizeMealType(request.getMealType()))
                 .build());
     }
@@ -77,9 +86,26 @@ public class DietRecordService {
                 .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
         record.setDishName(request.getDishName());
         record.setNutrition(request.getNutrition());
-        record.setCumulativeNutrition(request.getCumulativeNutrition());
-        record.setHealthLevel(request.getHealthLevel());
+        record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
+        return dietRecordRepository.save(record);
+    }
+
+    public DietRecord savePhoto(Long id, MultipartFile file) throws IOException {
+        DietRecord record = dietRecordRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
+
+        String ext = file.getOriginalFilename() != null && file.getOriginalFilename().contains(".")
+                ? file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."))
+                : ".jpg";
+        String filename = "diet_" + id + "_" + UUID.randomUUID() + ext;
+
+        Path dir = Paths.get(uploadDir.replace("avatars", "diet"));
+        Files.createDirectories(dir);
+        Files.copy(file.getInputStream(), dir.resolve(filename),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+        record.setPhotoUrl("/diet/" + filename);
         return dietRecordRepository.save(record);
     }
 

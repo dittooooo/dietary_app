@@ -20,24 +20,25 @@ public class DietRecord {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Column(nullable = false)
     private String dishName;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String nutrition;
 
-    @Column(columnDefinition = "TEXT")
-    private String cumulativeNutrition;
+    @Column(nullable = true)
+    private String description;
 
-    private String healthLevel;
+    @Column(name = "photo_url", nullable = true)
+    private String photoUrl;
 
-    @Column(name = "meal_type")
+    @Column(name = "meal_type", nullable = false)
     private String mealType;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 }
