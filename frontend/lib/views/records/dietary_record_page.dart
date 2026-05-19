@@ -225,32 +225,19 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
               ),
             ),
             
-            // 2. 相機按鈕與新增按鈕組合
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const CameraRecordPage())),
-                  child: Container(
-                    width: 80, height: 70, // 與新增按鈕等寬
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
-                    child: const Icon(Icons.camera_alt, color: AppColors.background, size: 30),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => ManualRecordPage(initialDate: _selectedDate))
-                    );
-                  },
-                  child: Container(
-                    width: 80, height: 70, // 與相機按鈕等寬
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
-                    child: const Icon(Icons.add, color: AppColors.background, size: 35),
-                  ),
-                ),
-              ],
+            // 2. 新增按鈕
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => ManualRecordPage(initialDate: _selectedDate))
+                );
+              },
+              child: Container(
+                width: 160, height: 70,
+                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
+                child: const Icon(Icons.add, color: AppColors.background, size: 35),
+              ),
             ),
 
             // 3. 狀態提示與小圖示

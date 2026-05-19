@@ -95,9 +95,14 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
                         boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 3.9)],
                       ),
                       clipBehavior: Clip.antiAlias,
-                      child: kIsWeb 
-                          ? Image.network(widget.imagePath, fit: BoxFit.cover)
-                          : Image.file(File(widget.imagePath), fit: BoxFit.cover),
+                      child: widget.imagePath.isNotEmpty
+                          ? (kIsWeb 
+                              ? Image.network(widget.imagePath, fit: BoxFit.cover)
+                              : Image.file(File(widget.imagePath), fit: BoxFit.cover))
+                          : Container(
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.restaurant, size: 80, color: Colors.grey),
+                            ),
                     ),
                   ),
                 ),

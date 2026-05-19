@@ -50,7 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
       if (result['success'] == true) {
         setState(() {
           _fullUserData = result['data'];
-          _email = _fullUserData?['email'] ?? _email;
+          _email = _fullUserData?['email'] ?? _fullUserData?['user']?['email'] ?? _email;
           _nickname = _fullUserData?['nickname'] ?? '未設定姓名';
           
           // 修正後的權限判斷：
@@ -144,15 +144,17 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => HomePage(initialIndex: widget.returnIndex)),
-              (route) => false,
-            );
-          },
-        ),
+        leading: !_isAdmin
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+                onPressed: () {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => HomePage(initialIndex: widget.returnIndex)),
+                    (route) => false,
+                  );
+                },
+              )
+            : null,
         title: const Text(
           '個人首頁',
           style: TextStyle(
@@ -299,14 +301,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const AdminUserListPage(),
-                        ),
-                      );
-                    }),
-                    _buildAdminButton('餐廳管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '餐廳管理'),
                         ),
                       );
                     }),

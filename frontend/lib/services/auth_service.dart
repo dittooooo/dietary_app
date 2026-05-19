@@ -63,11 +63,19 @@ class AuthService {
       if (response.statusCode == 200 && (data['success'] == true || data.containsKey('nickname'))) {
         // 更新本地快取
         final userData = data['data'] ?? data;
-        await prefs.setString('user_email', userData['email'] ?? '');
+        final String? email = userData['email'] ?? userData['user']?['email'];
+        if (email != null && email.isNotEmpty) {
+          await prefs.setString('user_email', email);
+        }
         await prefs.setString('user_nickname', userData['nickname'] ?? '');
         await prefs.setString('user_pet_type', userData['petType'] ?? '');
         // 額外儲存更多資訊以便編輯時使用
         await prefs.setString('user_gender', userData['gender'] ?? '男');
+
+        final String? role = userData['user']?['role'] ?? userData['role'];
+        if (role != null) {
+          await prefs.setString('user_role', role);
+        }
         return {'success': true, 'data': userData};
       }
       
