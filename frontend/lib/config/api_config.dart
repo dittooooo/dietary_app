@@ -6,7 +6,9 @@ class ApiConfig {
   static String get baseUrl {
     // 如果是在網頁瀏覽器 (Chrome/Edge) 執行
     if (kIsWeb) {
-      return 'http://localhost:8080/api';
+      // 動態取得網頁當前的 Host (例如 localhost 或 192.168.x.x)，方便在手機上用區網測試
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
+      return 'http://$host:8080/api';
     } 
     // 如果是在 Android 模擬器執行
     else if (Platform.isAndroid) {

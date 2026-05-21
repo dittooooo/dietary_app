@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/api_config.dart';
@@ -43,6 +44,16 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         // 如果能抓到 Profile (200 OK)，代表已經完成過 onboarding 了
         if (response.statusCode == 200) {
           alreadyOnboarded = true;
+          try {
+            final data = jsonDecode(response.body);
+            final userData = data['data'] ?? data;
+            final String? role = userData['user']?['role'] ?? userData['role'];
+            if (role != null) {
+              await prefs.setString('user_role', role);
+            }
+          } catch (e) {
+            debugPrint('SuccessTransitionPage 解析角色失敗: $e');
+          }
         }
       }
     } catch (e) {

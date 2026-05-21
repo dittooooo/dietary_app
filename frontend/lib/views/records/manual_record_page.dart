@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../color/app_colors.dart';
 import 'elf_feeding_page.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:typed_data';
+import 'simple_camera_page.dart';
 
 class ManualRecordPage extends StatefulWidget {
   final DateTime? initialDate;
@@ -14,6 +18,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   late DateTime _selectedDate;
   late String _mealType;
   final List<TextEditingController> _itemControllers = [TextEditingController()];
+  XFile? _selectedImage;
+  Uint8List? _imageBytes;
+  final ImagePicker _picker = ImagePicker();
   
   final List<String> _mealOptions = ['早餐', '午餐', '晚餐', '其他'];
 
@@ -58,6 +65,62 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     }
   }
 
+  Future<void> _pickImage() async {
+    // 彈出選單讓使用者選擇「拍照」或「從相簿選取」
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.textPrimary),
+              title: const Text('拍照', style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.textPrimary),
+              title: const Text('從相簿選取', style: TextStyle(fontWeight: FontWeight.bold)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      try {
+        XFile? image;
+        if (source == ImageSource.camera) {
+          // 使用自訂的 SimpleCameraPage 進行拍照，解決 Web 和行動端相機拉起與預覽問題
+          image = await Navigator.push<XFile>(
+            context,
+            MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
+          );
+        } else {
+          image = await _picker.pickImage(source: ImageSource.gallery);
+        }
+
+        if (image != null) {
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _selectedImage = image;
+            _imageBytes = bytes;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('選取圖片失敗: $e'))
+          );
+        }
+      }
+    }
+  }
+
   void _submit() {
     List<Map<String, String>> items = [];
     for (var controller in _itemControllers) {
@@ -79,7 +142,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       context,
       MaterialPageRoute(
         builder: (context) => ElfFeedingPage(
-          imagePath: "", 
+          imagePath: _selectedImage?.path ?? "", 
           items: items,
         ),
       ),
@@ -102,6 +165,10 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 0. 照片選擇區
+            _buildPhotoSection(),
+            const SizedBox(height: 20),
+            
             // 1. 日期與時段選擇
             _buildSelectionSection(),
             const SizedBox(height: 25),
@@ -253,6 +320,66 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             onTap: () { setState(() => _mealType = m); Navigator.pop(context); },
           )).toList(),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPhotoSection() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 10)],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: _selectedImage == null || _imageBytes == null
+            ? SizedBox(
+                height: 150,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 80, height: 70,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+                        ),
+                        child: const Icon(Icons.camera_alt, color: AppColors.background, size: 30),
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('添加照片 (選填)', style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              )
+            : Stack(
+                children: [
+                  Image.memory(
+                    _imageBytes!,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                  ),
+                  Positioned(
+                    right: 10, top: 10,
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _selectedImage = null;
+                        _imageBytes = null;
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
