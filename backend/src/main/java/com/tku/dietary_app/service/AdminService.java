@@ -67,7 +67,6 @@ public class AdminService {
                 .weight(request.getWeight())
                 .healthConditions(request.getSpecialDisease())
                 .dietGoal(request.getDietGoal())
-                .dietHistory(request.getDietaryHistory())
                 .petType(request.getPetType() != null ? request.getPetType() : "None")
                 .build();
 
@@ -93,7 +92,6 @@ public class AdminService {
         profile.setWeight(request.getWeight());
         profile.setHealthConditions(request.getSpecialDisease());
         profile.setDietGoal(request.getDietGoal());
-        profile.setDietHistory(request.getDietaryHistory());
 
         if (request.getPetType() != null) {
             profile.setPetType(request.getPetType());

@@ -41,11 +41,8 @@ public class UserProfile {
     @Column(nullable = false)
     private Double weight;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String healthConditions;
-
-    @Column(columnDefinition = "TEXT")
-    private String dietHistory;
 
     @Column(nullable = false)
     private String dietGoal;
@@ -60,6 +57,6 @@ public class UserProfile {
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 }

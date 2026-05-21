@@ -65,6 +65,11 @@ public class AdminController {
         return ResponseEntity.ok(restaurantService.getAllRestaurants());
     }
 
+    @GetMapping("/restaurants/{id}")
+    public ResponseEntity<?> getRestaurant(@PathVariable Long id) {
+        return ResponseEntity.ok(restaurantService.getById(id));
+    }
+
     @PostMapping("/restaurants")
     public ResponseEntity<?> addRestaurant(@RequestBody RestaurantRequest request) {
         return ResponseEntity.ok(restaurantService.create(request));
@@ -124,12 +129,17 @@ public class AdminController {
 
     @PutMapping("/diet-records/{id}")
     public ResponseEntity<?> editDietRecord(@PathVariable Long id, @RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(dietRecordService.update(id, request));
+        return ResponseEntity.ok(dietRecordService.updateByAdmin(id, request));
     }
 
     @DeleteMapping("/diet-records/{id}")
     public ResponseEntity<?> removeDietRecord(@PathVariable Long id) {
-        dietRecordService.delete(id);
+        dietRecordService.deleteByAdmin(id);
         return ResponseEntity.ok("刪除成功");
+    }
+
+    @PostMapping("/diet-records/{id}/photo")
+    public ResponseEntity<?> uploadDietPhoto(@PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
+        return ResponseEntity.ok(dietRecordService.savePhotoByAdmin(id, file));
     }
 }

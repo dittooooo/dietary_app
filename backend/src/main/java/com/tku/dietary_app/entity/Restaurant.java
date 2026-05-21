@@ -25,16 +25,13 @@ public class Restaurant {
     private String phone;
 
     @Column(columnDefinition = "TEXT")
-    private String menu;
-
-    @Column(columnDefinition = "TEXT")
     private String review;
 
     private Integer stars;
 
+    @Column(nullable = false)
     private Double latitude;
 
+    @Column(nullable = false)
     private Double longitude;
-
-    private String healthLevel;
 }
