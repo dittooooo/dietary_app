@@ -1,3 +1,15 @@
+```
+cd C:\_AlwaysUndone\dietary_app\graphRag\docker
+docker compose up -d
+docker compose exec graphrag-dev python -m uvicorn src.kg_builder.app:app --host 0.0.0.0 --port 8000
+```
+
+如果成功，終端會停在 Uvicorn 執行畫面。另開一個 PowerShell 測試：
+
+```
+Invoke-RestMethod -Uri "http://localhost:8000/docs"
+```
+
 # kg_builder README
 
 這個資料夾是飲食知識圖譜和 GraphRAG 問答的核心程式區。它主要做兩件事：
