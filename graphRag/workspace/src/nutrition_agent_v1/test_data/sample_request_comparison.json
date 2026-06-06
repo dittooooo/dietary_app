@@ -1,5 +1,5 @@
 {
-  "question": "我有糖尿病，我是適合吃義式千層麵嗎",
+  "question": "你覺得我今天要吃雞排便當還是排骨便當嗎",
   "question_type": "single_dish",
   "user_profile": {
     "height_cm": 170,
@@ -9,7 +9,7 @@
   },
   "health_condition": {
     "has_chronic_disease": true,
-    "chronic_diseases": ["糖尿病"]
+    "chronic_diseases": ["高血壓"]
   },
   "weekly_diet_records": [
     {
