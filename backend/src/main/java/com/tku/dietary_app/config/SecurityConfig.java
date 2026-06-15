@@ -8,6 +8,10 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 /**
  * Spring Security 的主要設定。
@@ -29,6 +33,9 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
+                // 啟用 CORS
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // 後端使用 JWT，不依賴瀏覽器 session/cookie，所以關閉 CSRF。
                 .csrf(csrf -> csrf.disable())
 
@@ -50,6 +57,7 @@ public class SecurityConfig {
                         // 一般使用者功能只要登入即可使用。
                         .requestMatchers("/api/onboarding").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/dietary/**").authenticated()
 
                         // 其他沒明確列出的 API，預設都要登入。
                         .anyRequest().authenticated()
@@ -68,5 +76,20 @@ public class SecurityConfig {
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * CORS 跨網域設定，允許前端 Flutter Web 連線。
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
