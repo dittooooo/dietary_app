@@ -17,7 +17,7 @@ public class DietaryAgentController {
     private final DietaryAgentService dietaryAgentService;
     private final UserRepository userRepository;
 
-    @PostMapping("/ask")
+    @PostMapping("/ask-weekly-analysis")
     public ResponseEntity<?> ask(@RequestBody DietaryAskRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用者不存在"));
