@@ -38,17 +38,34 @@ def load_env_files() -> None:
 
 load_env_files()
 
+APP_ENV = os.getenv("APP_ENV", "local").lower()
+IS_PRODUCTION = APP_ENV in {"production", "prod"}
+
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://localhost:7687")
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
 
 DEFAULT_TOP_N_ROWS = int(os.getenv("NUTRITION_AGENT_TOP_N_ROWS", "80"))
 DISH_MATCH_THRESHOLD = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_THRESHOLD", "60"))
 GRAPH_QUERY_LIMIT = int(os.getenv("NUTRITION_AGENT_GRAPH_QUERY_LIMIT", "1000"))
+
+
+def validate_required_config() -> None:
+    if not IS_PRODUCTION:
+        return
+
+    missing = [
+        key
+        for key in ("OPENAI_API_KEY", "NEO4J_URI", "NEO4J_USER", "NEO4J_PASSWORD")
+        if not os.getenv(key) or os.getenv(key) in {"dummy-key", "password"}
+    ]
+    if missing:
+        joined = ", ".join(missing)
+        raise RuntimeError(f"Missing required production environment variables: {joined}")
 
 
 GRAPH_SCHEMA = """

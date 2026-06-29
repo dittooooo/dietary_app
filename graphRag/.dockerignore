@@ -1,0 +1,17 @@
+.git
+.vscode
+output
+workspace/.env
+workspace/cache
+workspace/data
+workspace/output
+workspace/src/**/__pycache__
+workspace/src/nutrition_agent_v2/__pycache__
+workspace/src/nutrition_agent_v2/test_area
+workspace/src/nutrition_agent_v2/test_data
+workspace/src/nutrition_agent_v2/*.md
+graphrag-local-ollama
+*.ipynb
+*.csv
+*.dump
+*.log

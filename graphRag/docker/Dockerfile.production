@@ -1,0 +1,19 @@
+FROM python:3.12.6-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app/workspace
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY workspace/src/nutrition_agent_v2/requirements.txt /tmp/nutrition_agent_v2_requirements.txt
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install -r /tmp/nutrition_agent_v2_requirements.txt
+
+COPY workspace/src/nutrition_agent_v2 /app/workspace/src/nutrition_agent_v2
+
+CMD ["sh", "-c", "uvicorn src.nutrition_agent_v2.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
