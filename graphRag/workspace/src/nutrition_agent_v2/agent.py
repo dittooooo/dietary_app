@@ -91,7 +91,7 @@ class NutritionAgent:
 
         rows = self.retriever.retrieve(cypher)
         fallback_cypher = None
-        missing_candidates = self._missing_candidates_from_rows(dish_candidates, rows)
+        missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
         if missing_candidates:
             fallback_results = [
                 {
@@ -168,9 +168,33 @@ class NutritionAgent:
         trace.append({"step": step, "message": message, "data": data})
 
     @staticmethod
-    def _missing_candidates_from_rows(dish_candidates: List[str], rows: List[Dict[str, Any]]) -> List[str]:
-        row_dish_names = {str(row.get("dish_name")) for row in rows if row.get("dish_name")}
-        return [candidate for candidate in dish_candidates if candidate not in row_dish_names]
+    def _missing_candidates_from_rows(
+        dish_candidates: List[str],
+        match_results: List[Dict[str, Any]],
+        rows: List[Dict[str, Any]],
+    ) -> List[str]:
+        row_dish_names = {
+            str(name)
+            for row in rows
+            for name in (row.get("dish_name"), row.get("matched_dish_name"))
+            if name
+        }
+        expected_name_by_input = {
+            str(item.get("input_name")): str(item.get("matched_dish_name") or item.get("input_name"))
+            for item in match_results
+        }
+        expected_name_by_input.update(
+            {
+                str(item.get("raw_input_name")): str(item.get("matched_dish_name") or item.get("input_name"))
+                for item in match_results
+                if item.get("raw_input_name")
+            }
+        )
+        return [
+            candidate
+            for candidate in dish_candidates
+            if expected_name_by_input.get(candidate, candidate) not in row_dish_names and candidate not in row_dish_names
+        ]
 
     @staticmethod
     def _join_debug_cypher(primary_cypher: str, fallback_cypher: str | None) -> str:
@@ -193,14 +217,37 @@ class NutritionAgent:
             str(item.get("input_name")): str(item.get("retrieval_strategy") or "unknown")
             for item in match_results
         }
+        match_by_name = {
+            str(item.get("input_name")): item
+            for item in match_results
+        }
+        display_name_by_raw = {
+            str(item.get("raw_input_name")): str(item.get("input_name") or item.get("raw_input_name"))
+            for item in match_results
+            if item.get("raw_input_name")
+        }
         completed = list(dish_nutrition)
         for candidate in dish_candidates:
-            if candidate in existing_names:
+            display_name = display_name_by_raw.get(candidate, candidate)
+            if display_name in existing_names:
                 continue
             completed.append(
                 DishNutrition(
-                    dish_name=candidate,
-                    retrieval_strategy=strategy_by_name.get(candidate, "not_found"),
+                    dish_name=display_name,
+                    matched_name=(
+                        match_by_name.get(display_name, {}).get("matched_dish_name")
+                        or match_by_name.get(display_name, {}).get("matched_food_name")
+                    ),
+                    matched_type=(
+                        "dish"
+                        if match_by_name.get(display_name, {}).get("matched_dish_name")
+                        else "food_item"
+                        if match_by_name.get(display_name, {}).get("matched_food_name")
+                        else None
+                    ),
+                    match_score=match_by_name.get(display_name, {}).get("match_score"),
+                    match_reason=match_by_name.get(display_name, {}).get("match_reason"),
+                    retrieval_strategy=strategy_by_name.get(display_name, "not_found"),
                     nutrients=[
                         NutrientAmount(
                             name="熱量",

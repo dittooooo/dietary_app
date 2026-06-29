@@ -231,7 +231,6 @@ class KnowledgeAgentImporter:
 
     def import_recipes_and_mappings(self, mapping_rows: List[Dict[str, Any]]) -> None:
         recipe_rows: List[Dict[str, Any]] = []
-        ingredient_nutrition: List[Dict[str, Any]] = []
 
         for recipe in mapping_rows:
             recipe_id = recipe.get("recipe_id")
@@ -260,30 +259,6 @@ class KnowledgeAgentImporter:
                         "mapping_method": ing.get("method"),
                     }
                 )
-
-                food_row = self.food_by_id.get(food_id)
-                if not food_row:
-                    continue
-                grams_per_serving = safe_float(ing.get("amount_per_serving"))
-                for source_column, nutrient in self.nutrient_by_column.items():
-                    amount_per_100g = safe_float(food_row.get(source_column))
-                    if amount_per_100g is None:
-                        continue
-                    amount_per_serving = None
-                    if grams_per_serving is not None:
-                        amount_per_serving = round(amount_per_100g * grams_per_serving / 100.0, 6)
-                    ingredient_nutrition.append(
-                        {
-                            "ingredient_name": original,
-                            "food_id": food_id,
-                            "food_name": matched,
-                            "nutrition_id": nutrient["nutrition_id"],
-                            "amount_per_100g": amount_per_100g,
-                            "amount_per_serving": amount_per_serving,
-                            "unit": nutrient.get("unit"),
-                            "source_column": source_column,
-                        }
-                    )
 
             recipe_rows.append(
                 {
@@ -326,23 +301,7 @@ class KnowledgeAgentImporter:
             m.updated_by_version = $version
         """
 
-        ingredient_nutrition_query = """
-        UNWIND $rows AS row
-        MATCH (i:Ingredient {name: row.ingredient_name})
-        MATCH (n:Nutrition {nutrition_id: row.nutrition_id})
-        MERGE (i)-[r:HAS_NUTRITION {food_id: row.food_id}]->(n)
-        SET r.source_food_name = row.food_name,
-            r.source_food_id = row.food_id,
-            r.amount_per_100g = row.amount_per_100g,
-            r.amount_per_serving = row.amount_per_serving,
-            r.amount = row.amount_per_100g,
-            r.unit = row.unit,
-            r.source_column = row.source_column,
-            r.source = $source,
-            r.updated_by_version = $version
-        """
         self._run_batches(recipe_query, recipe_rows, source=str(FOOD_MAPPING_PATH), version=VERSION)
-        self._run_batches(ingredient_nutrition_query, ingredient_nutrition, source=str(FOOD_MAPPING_PATH), version=VERSION)
 
     def import_disease_rules(self, disease_rules: Dict[str, Any]) -> None:
         disease_rows: List[Dict[str, Any]] = []

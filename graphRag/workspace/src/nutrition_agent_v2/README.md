@@ -1,3 +1,7 @@
+# TODO
+
+補充火鍋資料，拔除現有麻辣火鍋資料
+
 # Nutrition Agent
 
 `nutrition_agent` 專注處理 GraphRAG 檢索與回答。知識圖譜建置仍由 `kg_builder` 負責。

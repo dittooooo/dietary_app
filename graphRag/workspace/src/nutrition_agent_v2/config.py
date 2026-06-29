@@ -63,9 +63,10 @@ Nodes:
 
 Relationships:
 - (:Dish)-[:CONTAINS {amount, unit, amount_per_serving, matched_food_id, matched_food_name}]->(:Ingredient)
-- (:Ingredient)-[:HAS_NUTRITION {amount_per_100g, amount_per_serving, unit, source_food_id, source_food_name}]->(:Nutrition)
+- (:Ingredient)-[:MAPS_TO {method, source}]->(:FoodItem)
+- (:FoodItem)-[:HAS_NUTRITION {amount_per_100g, unit, source_column}]->(:Nutrition)
 - (:Disease)-[:HAS_DIET_RULE {relation, direction, note, reason, food_level_condition, sources_json}]->(:Nutrition)
 
 Main retrieval path:
-Dish -> CONTAINS -> Ingredient -> HAS_NUTRITION -> Nutrition <- HAS_DIET_RULE <- Disease
+Dish -> CONTAINS -> Ingredient -> MAPS_TO -> FoodItem -> HAS_NUTRITION -> Nutrition <- HAS_DIET_RULE <- Disease
 """.strip()

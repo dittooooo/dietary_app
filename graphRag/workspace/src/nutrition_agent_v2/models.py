@@ -51,12 +51,20 @@ class NutrientAmount(BaseModel):
 
 class DishNutrition(BaseModel):
     dish_name: str
+    matched_name: Optional[str] = None
+    matched_type: Optional[str] = None
+    match_score: Optional[int] = None
+    match_reason: Optional[str] = None
     retrieval_strategy: Optional[str] = None
     nutrients: List[NutrientAmount]
 
 
 class DishAdvice(BaseModel):
     dish_name: str
+    matched_name: Optional[str] = None
+    matched_type: Optional[str] = None
+    match_score: Optional[int] = None
+    match_reason: Optional[str] = None
     suitability: str
     key_reasons: List[str]
     suggestions: List[str]

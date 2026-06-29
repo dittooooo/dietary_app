@@ -77,8 +77,6 @@ Relationships:
 - (:Dish)-[:CONTAINS {amount, unit, amount_note, name_raw, source}]->(:Ingredient)
 - (:Ingredient)-[:MAPS_TO {method, source}]->(:FoodItem)
 - (:FoodItem)-[:HAS_NUTRITION {amount_per_100g, amount, unit, source_column}]->(:Nutrition)
-- (:Ingredient)-[:HAS_NUTRITION {amount_per_100g, amount_per_serving, amount, unit,
-  source_column, source_food_id, source_food_name}]->(:Nutrition)
 - (:Nutrition)-[:AFFECTS_BIOMARKER {relation, effect}]->(:Biomarker)
 - (:Disease)-[:AFFECTS {source, version}]->(:Biomarker)
 - (:Disease)-[:HAS_DIET_RULE {relation, rule_type, direction, target_note, note,
@@ -86,9 +84,8 @@ Relationships:
   food_level_rule_json, example_foods_json, reason, sources_json}]->(:Nutrition)
 
 Common reasoning paths:
-- Dish -> Ingredient -> Nutrition -> Disease diet rules
 - Dish -> Ingredient -> FoodItem -> Nutrition -> Disease diet rules
-- Disease -> HAS_DIET_RULE -> Nutrition <- HAS_NUTRITION <- Ingredient <- CONTAINS <- Dish
+- Disease -> HAS_DIET_RULE -> Nutrition <- HAS_NUTRITION <- FoodItem <- MAPS_TO <- Ingredient <- CONTAINS <- Dish
 """.strip()
 
 
@@ -117,10 +114,15 @@ Rules:
 
 Good example:
 MATCH (d:Dish)-[c:CONTAINS]->(ing:Ingredient)-[:MAPS_TO]->(f:FoodItem)
-MATCH (ing)-[hn:HAS_NUTRITION]->(n:Nutrition)<-[rule:HAS_DIET_RULE]-(dis:Disease)
+MATCH (f)-[hn:HAS_NUTRITION]->(n:Nutrition)<-[rule:HAS_DIET_RULE]-(dis:Disease)
 WHERE d.name CONTAINS "義式千層麵" AND dis.name CONTAINS "高血壓"
+  AND (c.matched_food_id IS NULL OR f.food_id = c.matched_food_id)
 RETURN d.name AS dish_name, ing.name AS ingredient_name, f.name AS food_item_name,
-       n.name AS nutrition_name, hn.amount_per_serving AS amount_per_serving,
+       n.name AS nutrition_name,
+       CASE
+         WHEN c.amount_per_serving IS NOT NULL THEN round(hn.amount_per_100g * c.amount_per_serving / 100.0, 6)
+         ELSE hn.amount_per_100g
+       END AS amount_per_serving,
        hn.unit AS nutrition_unit, dis.name AS disease_name,
        rule.relation AS diet_rule_relation, rule.direction AS diet_rule_direction,
        rule.note AS diet_rule_note, rule.reason AS diet_rule_reason
@@ -231,17 +233,19 @@ class QueryEngine:
         disease_literal = json.dumps(disease_name, ensure_ascii=False)
         cypher = f"""
         MATCH (d:Dish {{name: {dish_literal}}})-[c:CONTAINS]->(ing:Ingredient)
-        MATCH (ing)-[hn:HAS_NUTRITION]->(n:Nutrition)<-[rule:HAS_DIET_RULE]-(dis:Disease {{name: {disease_literal}}})
-        OPTIONAL MATCH (f:FoodItem {{food_id: hn.source_food_id}})
-        WHERE c.matched_food_id IS NULL OR hn.source_food_id = c.matched_food_id
+        MATCH (ing)-[:MAPS_TO]->(f:FoodItem)-[hn:HAS_NUTRITION]->(n:Nutrition)<-[rule:HAS_DIET_RULE]-(dis:Disease {{name: {disease_literal}}})
+        WHERE c.matched_food_id IS NULL OR f.food_id = c.matched_food_id
         RETURN
           d.name AS dish_name,
           ing.name AS ingredient_name,
-          coalesce(f.name, hn.source_food_name) AS food_item_name,
+          f.name AS food_item_name,
           n.name AS nutrition_name,
           n.name_zh AS nutrition_name_zh,
           n.category AS nutrition_category,
-          hn.amount_per_serving AS amount_per_serving,
+          CASE
+            WHEN c.amount_per_serving IS NOT NULL THEN round(hn.amount_per_100g * c.amount_per_serving / 100.0, 6)
+            ELSE hn.amount_per_100g
+          END AS amount_per_serving,
           hn.amount_per_100g AS amount_per_100g,
           hn.unit AS nutrition_unit,
           dis.name AS disease_name,

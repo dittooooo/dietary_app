@@ -116,6 +116,7 @@ class AnswerGenerator:
                 parsed,
                 dish_nutrition,
             )
+        parsed = self.attach_match_metadata_to_advice(parsed, dish_nutrition)
         parsed = self.sanitize_nutrition_numbers(parsed)
         return parsed
 
@@ -231,6 +232,32 @@ class AnswerGenerator:
         if "insufficient_macros" in calorie_statuses or "unit_invalid" in calorie_statuses:
             return "資料不足"
         return "推薦" if chosen else "較不建議"
+
+    @staticmethod
+    def attach_match_metadata_to_advice(
+        parsed: Dict[str, Any],
+        dish_nutrition: List[DishNutrition],
+    ) -> Dict[str, Any]:
+        if not dish_nutrition:
+            return parsed
+
+        by_user_name = {item.dish_name: item for item in dish_nutrition}
+        by_matched_name = {item.matched_name: item for item in dish_nutrition if item.matched_name}
+        normalized_advice = []
+        for advice in parsed.get("dish_advice", []):
+            advice = dict(advice)
+            source = by_user_name.get(advice.get("dish_name")) or by_matched_name.get(advice.get("dish_name"))
+            if source is None and len(dish_nutrition) == 1:
+                source = dish_nutrition[0]
+            if source is not None:
+                advice["dish_name"] = source.dish_name
+                advice["matched_name"] = source.matched_name
+                advice["matched_type"] = source.matched_type
+                advice["match_score"] = source.match_score
+                advice["match_reason"] = source.match_reason
+            normalized_advice.append(DishAdvice(**advice).model_dump())
+        parsed["dish_advice"] = normalized_advice
+        return parsed
 
     @classmethod
     def sanitize_nutrition_numbers(cls, parsed: Dict[str, Any]) -> Dict[str, Any]:

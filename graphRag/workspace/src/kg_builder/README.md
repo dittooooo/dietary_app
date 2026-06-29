@@ -10,6 +10,15 @@ docker compose exec graphrag-dev python -m uvicorn src.kg_builder.app:app --host
 Invoke-RestMethod -Uri "http://localhost:8000/docs"
 ```
 
+## append_recipe_mapping.py
+
+之後你要再匯入同一份或新版 mapping，可以跑：
+
+```
+$env:NEO4J_URI='bolt://localhost:7687'
+py .\graphRag\workspace\src\kg_builder\append_recipe_mapping.py
+```
+
 # kg_builder README
 
 這個資料夾是飲食知識圖譜和 GraphRAG 問答的核心程式區。它主要做兩件事：
@@ -37,16 +46,13 @@ Invoke-RestMethod -Uri "http://localhost:8000/docs"
 
 ```cypher
 (Dish)-[:CONTAINS]->(Ingredient)
-(Ingredient)-[:HAS_NUTRITION]->(Nutrition)
+(Ingredient)-[:MAPS_TO]->(FoodItem)
+(FoodItem)-[:HAS_NUTRITION]->(Nutrition)
 (Disease)-[:HAS_DIET_RULE]->(Nutrition)
 ```
 
-如果需要知道食材是從哪個食品資料庫項目來，也會走：
+也就是說，`Ingredient` 本身不直接連到 `Nutrition`。食材營養必須先透過 `MAPS_TO` 找到食品資料庫項目，再從 `FoodItem` 的每 100g 營養資料推算。
 
-```cypher
-(Ingredient)-[:MAPS_TO]->(FoodItem)
-(FoodItem)-[:HAS_NUTRITION]->(Nutrition)
-```
 
 ## 檔案總覽
 
@@ -376,17 +382,17 @@ Neo4j Browser 匯出的查詢表格資料。
 - `unit`
 - `source_column`
 
-### Ingredient - HAS_NUTRITION -> Nutrition
+### 每份營養量如何推算
 
-表示某個食材在這道菜裡的營養量。
+目前圖譜不再建立 `Ingredient - HAS_NUTRITION -> Nutrition`。
 
-它會從食品每 100g 營養值和食材份量推算：
+某個食材在這道菜裡的營養量，會在查詢時從 `FoodItem - HAS_NUTRITION -> Nutrition` 的每 100g 營養值和 `Dish - CONTAINS -> Ingredient` 的食材份量推算：
 
 ```text
 amount_per_serving = amount_per_100g * grams_per_serving / 100
 ```
 
-如果食材沒有成功對應到食品資料庫，或沒有可用的份量，就可能沒有完整的每份營養量。
+如果食材沒有成功對應到 `FoodItem`，或沒有可用的份量，就可能沒有完整的每份營養量。
 
 ### Disease - HAS_DIET_RULE -> Nutrition
 

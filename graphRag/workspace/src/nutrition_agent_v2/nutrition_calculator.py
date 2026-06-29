@@ -50,6 +50,7 @@ class NutritionCalculator:
     def summarize_and_recalculate(self, rows: List[Dict[str, Any]]) -> Tuple[List[DishNutrition], List[Dict[str, Any]]]:
         totals: Dict[str, Dict[str, Dict[str, Any]]] = defaultdict(dict)
         strategy_by_dish: Dict[str, str] = {}
+        match_by_dish: Dict[str, Dict[str, Any]] = {}
 
         for row in rows:
             dish_name = row.get("dish_name")
@@ -64,6 +65,15 @@ class NutritionCalculator:
 
             unit = row.get("nutrition_unit")
             strategy_by_dish.setdefault(str(dish_name), row.get("retrieval_strategy") or "unknown")
+            match_by_dish.setdefault(
+                str(dish_name),
+                {
+                    "matched_name": row.get("matched_name") or row.get("matched_dish_name"),
+                    "matched_type": row.get("matched_type"),
+                    "match_score": row.get("match_score"),
+                    "match_reason": row.get("match_reason"),
+                },
+            )
             current = totals[str(dish_name)].setdefault(display_name, {"amount": 0.0, "unit": unit})
             current["amount"] += float(amount)
             current["unit"] = current["unit"] or unit
@@ -93,6 +103,10 @@ class NutritionCalculator:
             summaries.append(
                 DishNutrition(
                     dish_name=dish_name,
+                    matched_name=match_by_dish.get(dish_name, {}).get("matched_name"),
+                    matched_type=match_by_dish.get(dish_name, {}).get("matched_type"),
+                    match_score=match_by_dish.get(dish_name, {}).get("match_score"),
+                    match_reason=match_by_dish.get(dish_name, {}).get("match_reason"),
                     retrieval_strategy=strategy_by_dish.get(dish_name),
                     nutrients=nutrients,
                 )
@@ -147,6 +161,15 @@ class NutritionCalculator:
             }
         else:
             status = "insufficient_macros"
+
+        if graph_calorie is not None:
+            nutrient_map["熱量"] = {
+                "amount": graph_calorie,
+                "unit": "kcal",
+                "calculation_method": "source_data",
+                "formula": None,
+                "calorie_status": status,
+            }
 
         return {
             "dish_name": dish_name,

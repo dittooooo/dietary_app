@@ -4,6 +4,7 @@ from typing import Dict
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from neo4j.exceptions import Neo4jError
 
 from .agent import NutritionAgent
 from .models import NutritionAgentRequest, NutritionAgentResponse
@@ -33,3 +34,5 @@ def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Neo4jError as exc:
+        raise HTTPException(status_code=503, detail=f"Neo4j query failed: {exc}") from exc
