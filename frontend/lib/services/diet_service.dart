@@ -1,0 +1,166 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../core/api_client.dart';
+
+class DietService {
+  final ApiClient _client = ApiClient();
+
+  // 取得當前使用者的歷史飲食紀錄
+  Future<List<dynamic>> getMyDietRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return [];
+
+    try {
+      final response = await _client.get(
+        '/diet-records',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is List) {
+          return data;
+        } else if (data is Map && data.containsKey('data')) {
+          return data['data'] ?? [];
+        }
+        return [];
+      }
+      return [];
+    } catch (e) {
+      print('取得飲食紀錄失敗: $e');
+      return [];
+    }
+  }
+
+  // 新增飲食紀錄
+  Future<Map<String, dynamic>> createDietRecord({
+    required String dishName,
+    required String mealType,
+    required String description,
+    String nutrition = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    try {
+      final response = await _client.post(
+        '/diet-records',
+        {
+          'dishName': dishName,
+          'mealType': mealType,
+          'description': description,
+          'nutrition': nutrition,
+        },
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': '新增失敗 (${response.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'message': '連線失敗: $e'};
+    }
+  }
+
+  // 上傳飲食紀錄照片
+  Future<Map<String, dynamic>> uploadDietPhoto(int recordId, List<int> fileBytes, String filename) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    try {
+      final response = await _client.multipart(
+        '/diet-records/$recordId/photo',
+        fileBytes,
+        filename,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': '照片上傳失敗 (${response.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'message': '照片上傳連線失敗: $e'};
+    }
+  }
+
+  // 刪除飲食紀錄
+  Future<bool> deleteDietRecord(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return false;
+
+    try {
+      final response = await _client.delete(
+        '/diet-records/$id',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print('刪除飲食紀錄失敗: $e');
+      return false;
+    }
+  }
+
+  // 修改飲食紀錄
+  Future<Map<String, dynamic>> updateDietRecord(int id, {
+    required String dishName,
+    required String mealType,
+    required String description,
+    String nutrition = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    try {
+      final response = await _client.put(
+        '/diet-records/$id',
+        {
+          'dishName': dishName,
+          'mealType': mealType,
+          'description': description,
+          'nutrition': nutrition,
+        },
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': '修改失敗 (${response.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'message': '修改連線失敗: $e'};
+    }
+  }
+
+  // 智能小精靈與週報告分析
+  Future<Map<String, dynamic>> askWeeklyAnalysis(String question) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return {'success': false, 'message': '未登入'};
+
+    try {
+      final response = await _client.post(
+        '/dietary/ask-weekly-analysis',
+        {'question': question},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return {'success': true, 'data': data};
+      }
+      return {'success': false, 'message': '智能分析讀取失敗 (${response.statusCode})'};
+    } catch (e) {
+      return {'success': false, 'message': '智能分析連線失敗: $e'};
+    }
+  }
+}

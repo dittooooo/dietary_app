@@ -1,236 +1,577 @@
-import 'package:flutter/material.dart';
-import 'dart:ui';
-import '../home/home_page.dart';
-import '../auth/profile_page.dart';
-import '../../color/app_colors.dart';
+import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
+import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
+import 'package:image_picker/image_picker.dart'; // 匯入相簿套件
+import 'dart:typed_data'; // 處理圖片
+import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
+import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
+import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../services/diet_service.dart'; // 匯入 diet_service.dart
+import '../../config/api_config.dart'; // 匯入 api_config.dart
 
-class DiaryPage extends StatefulWidget {
-  final DateTime date;
-  const DiaryPage({super.key, required this.date});
+class DiaryPage extends StatefulWidget { // 定義 DiaryPage 類別，繼承自 StatefulWidget
+  final DateTime date; // 宣告類別成員或方法內部的區域變數
+  const DiaryPage({super.key, required this.date}); // 建立編譯期常數，優化 Flutter 渲染效能
 
-  @override
-  State<DiaryPage> createState() => _DiaryPageState();
-}
+  @override // 標記此方法為覆寫父類別之方法
+  State<DiaryPage> createState() => _DiaryPageState(); // 執行相對應的邏輯計算或設定屬性參數
+} // 程式碼區塊或元件結構結束
 
-class _DiaryPageState extends State<DiaryPage> {
-  final Set<String> _expandedMeals = {};
-  String? _swipedMeal;
-  double _dragExtent = 0.0;
+class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類別，繼承自 State
+  final Set<String> _expandedMeals = {}; // 宣告類別成員或方法內部的區域變數
+  String? _swipedMeal; // 執行相對應的邏輯計算或設定屬性參數
+  double _dragExtent = 0.0; // 宣告類別成員或方法內部的區域變數
+  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
+  String? _jwtToken; // JWT Token 儲存變數
 
-  void _showActionMsg(String action, String meal) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("正在執行 $meal 的 $action 功能"), duration: const Duration(seconds: 1), behavior: SnackBarBehavior.floating),
-    );
+  List<dynamic> _allRecords = []; // 從後端獲取的所有紀錄
+  bool _isLoading = false;
+
+  @override // 標記此方法為覆寫父類別之方法
+  void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
+    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _loadPetData(); // 執行相對應的邏輯計算或設定屬性參數
+    _fetchRecords(); // 獲取後端飲食紀錄
+  } // 程式碼區塊或元件結構結束
+
+  Future<void> _loadPetData() async { // 定義非同步方法（Future），執行耗時操作
+    final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
+    if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
+      setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
+        _jwtToken = prefs.getString('jwt_token'); // 讀取 JWT Token
+      }); // 程式碼區塊或結構結束
+    } // 程式碼區塊或結構結束
+  } // 程式碼區塊或結構結束
+
+  Future<void> _fetchRecords() async {
+    setState(() => _isLoading = true);
+    try {
+      final records = await DietService().getMyDietRecords();
+      setState(() {
+        _allRecords = records;
+      });
+    } catch (e) {
+      debugPrint('加載飲食紀錄失敗: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    String dateStr = "${widget.date.year}年${widget.date.month}月${widget.date.day}日";
+  // 根據日期過濾今日的飲食紀錄
+  List<dynamic> _getRecordsForSelectedDate() {
+    return _allRecords.where((record) {
+      if (record['createdAt'] == null) return false;
+      try {
+        final createdAt = DateTime.parse(record['createdAt']);
+        return createdAt.year == widget.date.year &&
+               createdAt.month == widget.date.month &&
+               createdAt.day == widget.date.day;
+      } catch (_) {
+        return false;
+      }
+    }).toList();
+  }
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: Stack(
-        children: [
+  @override // 標記此方法為覆寫父類別之方法
+  Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
+    String dateStr = "${widget.date.year}年${widget.date.month}月${widget.date.day}日"; // 宣告類別成員或方法內部的區域變數
+    final todayRecords = _getRecordsForSelectedDate();
+
+    // 依餐點時段分類
+    final breakfastRecords = todayRecords.where((r) => r['mealType'] == 'BREAKFAST').toList();
+    final lunchRecords = todayRecords.where((r) => r['mealType'] == 'LUNCH').toList();
+    final dinnerRecords = todayRecords.where((r) => r['mealType'] == 'DINNER').toList();
+
+    return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
+      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
+      body: Stack( // 設定頁面的主要內容區域（body）
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
           // 內容區域
-          Positioned.fill(
-            child: Column(
-              children: [
-                const SizedBox(height: 80), // 預留標題列高度
-                _buildDateBar(dateStr),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    children: [
-                      _buildMealCard("早餐", Icons.wb_sunny_outlined, ["無糖豆漿", "茶葉蛋", "全麥吐司", "奇異果"]),
-                      const SizedBox(height: 15),
-                      _buildMealCard("中餐", Icons.wb_sunny, ["雞肉飯糰"]),
-                      const SizedBox(height: 15),
-                      _buildMealCard("晚餐", Icons.nights_stay_outlined, ["燒肉便當"]),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
+            child: SafeArea(
+              bottom: false,
+              child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+                children: [ // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 80), // 預留標題列高度
+                  _buildDateBar(dateStr), // 執行相對應的邏輯計算或設定屬性參數
+                  Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+                    child: _isLoading 
+                      ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                      : ListView( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                          children: [ // 執行相對應的邏輯計算或設定屬性參數
+                            _buildMealSection("早餐", Icons.wb_sunny_outlined, breakfastRecords),
+                            const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                            _buildMealSection("中餐", Icons.wb_sunny, lunchRecords),
+                            const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                            _buildMealSection("晚餐", Icons.nights_stay_outlined, dinnerRecords),
+                          ], // 執行相對應的邏輯計算或設定屬性參數
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ], // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
           // 頂部固定標題列
-          Positioned(
-            top: 0, left: 0, right: 0,
-            child: SafeArea(child: _buildHeader(context)),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1, 
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: AppColors.background,
-        type: BottomNavigationBarType.fixed,
-        onTap: (index) => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)), (route) => false),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'), 
-          BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'), 
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
-        ],
-      ),
+          Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+            top: 0, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
+            child: SafeArea(child: _buildHeader(context)), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+      bottomNavigationBar: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
+        currentIndex: 1,  // 執行相對應的邏輯計算或設定屬性參數
+        selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
+        unselectedItemColor: Colors.grey, // 設定顏色數值（Color）
+        backgroundColor: AppColors.background, // 設定顏色數值（Color）
+        type: BottomNavigationBarType.fixed, // 執行相對應的邏輯計算或設定屬性參數
+        onTap: (index) => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
+        items: const [ // 建立編譯期常數，優化 Flutter 渲染效能
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),  // 顯示預設的圖示元件（Icon）
+          BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),  // 顯示預設的圖示元件（Icon）
+          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁') // 顯示預設的圖示元件（Icon）
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  Widget _buildHeader(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
+    return ClipRect( // 回傳建構完成的元件或方法計算結果
+        child: BackdropFilter( // 執行相對應的邏輯計算或設定屬性參數
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), // 執行相對應的邏輯計算或設定屬性參數
+          child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+            height: 80,  // 執行相對應的邏輯計算或設定屬性參數
+            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+              color: AppColors.background.withOpacity(0.5), // 設定顏色數值（Color）
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)), // 設定顏色數值（Color）
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+          child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+            mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
+            children: [ // 執行相對應的邏輯計算或設定屬性參數
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios, size: 28)), // 導航路由返回：關閉當前頁面並返回上一頁
+                const Text( // 建立文字顯示元件（Text）
+                  '日記',  // 執行相對應的邏輯計算或設定屬性參數
+                  style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                    fontSize: 22,  // 執行相對應的邏輯計算或設定屬性參數
+                    fontWeight: FontWeight.bold,  // 執行相對應的邏輯計算或設定屬性參數
+                    color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                    letterSpacing: 1.2 // 執行相對應的邏輯計算或設定屬性參數
+                  ) // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+                onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
+                child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                  decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                  child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+                    radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
+                    backgroundColor: AppColors.background,  // 設定顏色數值（Color）
+                    child: Icon( // 顯示預設的圖示元件（Icon）
+                      Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                      color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                      size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ], // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  Widget _buildDateBar(String dateStr) { // 定義用於重複使用的 UI 封裝建構方法
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+      width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+        color: AppColors.background, // 設定顏色數值（Color）
+        boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+          BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+            color: Colors.black.withOpacity(0.05), // 設定顏色數值（Color）
+            blurRadius: 0.975, // 執行相對應的邏輯計算或設定屬性參數
+            offset: const Offset(0, 0.39), // 建立編譯期常數，優化 Flutter 渲染效能
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+      child: Center(child: Text(dateStr, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500))), // 建立文字顯示元件（Text）
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  // 組合餐點時段與多筆後端飲食紀錄
+  Widget _buildMealSection(String title, IconData icon, List<dynamic> records) {
+    if (records.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.05),
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.grey),
+            const SizedBox(width: 12),
+            Text(
+              "$title - 今日無紀錄",
+              style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: records.map((record) {
+        final List<String> dishItems = (record['dishName'] as String).split(', ');
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: _buildMealCard(title, icon, dishItems, record),
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            height: 80, 
-            decoration: BoxDecoration(
-              color: AppColors.background.withOpacity(0.5),
-              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-            ),
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildMealCard(String title, IconData icon, List<String> items, dynamic record) { // 定義用於重複使用的 UI 封裝建構方法
+    bool isExpanded = _expandedMeals.contains(record['id'].toString()); // 宣告類別成員或方法內部的區域變數
+    bool isSwiped = _swipedMeal == record['id'].toString(); // 宣告類別成員或方法內部的區域變數
+    bool needsExpansion = items.length > 2 || (record['photoUrl'] != null && (record['photoUrl'] as String).isNotEmpty); // 宣告類別成員或方法內部的區域變數
+
+    return Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+      children: [ // 執行相對應的邏輯計算或設定屬性參數
+        GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+          // 支援拖拽與滑動雙模式
+          onHorizontalDragUpdate: (details) { // 執行相對應的邏輯計算或設定屬性參數
+            _dragExtent += details.delta.dx; // 執行相對應的邏輯計算或設定屬性參數
+            if (_dragExtent < -5) setState(() => _swipedMeal = record['id'].toString()); // 更新狀態數據並通知 UI 重新渲染畫面
+            else if (_dragExtent > 5) setState(() => _swipedMeal = null); // 更新狀態數據並通知 UI 重新渲染畫面
+          }, // 程式碼區塊或元件結構結束
+          onHorizontalDragEnd: (details) { // 執行相對應的邏輯計算或設定屬性參數
+            _dragExtent = 0; // 重置拖動計量
+            if (details.primaryVelocity! < -300) setState(() => _swipedMeal = record['id'].toString()); // 更新狀態數據並通知 UI 重新渲染畫面
+            else if (details.primaryVelocity! > 300) setState(() => _swipedMeal = null); // 更新狀態數據並通知 UI 重新渲染畫面
+          }, // 程式碼區塊或元件結構結束
+          child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+            height: 120, // 執行相對應的邏輯計算或設定屬性參數
+            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+              color: Colors.white, // 設定顏色數值（Color）
+              borderRadius: BorderRadius.circular(15), // 設定容器的圓角弧度半徑大小
+              boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+                BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                  color: AppColors.primary.withOpacity(0.1), // 設定顏色數值（Color）
+                  blurRadius: 1.95, // 執行相對應的邏輯計算或設定屬性參數
+                  offset: const Offset(0, 0.78), // 建立編譯期常數，優化 Flutter 渲染效能
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
+                  child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                    color: const Color(0xFFEEEEEE), padding: const EdgeInsets.only(right: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                    child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                      mainAxisAlignment: MainAxisAlignment.end, // 執行相對應的邏輯計算或設定屬性參數
+                      children: [ // 執行相對應的邏輯計算或設定屬性參數
+                        _buildActionBtn(Icons.edit, "編輯", AppColors.secondary, () => _handleEditRecord(record)), // 編輯按鈕
+                        _buildActionBtn(Icons.image, "相片", AppColors.accent, () => _handleUploadPhoto(record)), // 照片上傳
+                        _buildActionBtn(Icons.delete, "刪除", AppColors.danger, () => _handleDeleteRecord(record)), // 刪除按鈕
+                      ], // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                AnimatedPositioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+                  duration: const Duration(milliseconds: 250), curve: Curves.easeOutQuart, // 建立編譯期常數，優化 Flutter 渲染效能
+                  left: isSwiped ? -180 : 0, right: isSwiped ? 180 : 0, // 執行相對應的邏輯計算或設定屬性參數
+                  top: 0, bottom: 0, // 執行相對應的邏輯計算或設定屬性參數
+                  child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                    color: Colors.white, // 設定顏色數值（Color）
+                    child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                      children: [ // 執行相對應的邏輯計算或設定屬性參數
+                        Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                          width: 80, decoration: BoxDecoration(border: Border(right: BorderSide(color: AppColors.border, width: 1.5))), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 30, color: AppColors.secondary), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]), // 建立垂直排列元件（Column），縱向排列多個子元件
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                        Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(isExpanded ? items.join("\n") : items.take(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.4, color: AppColors.textPrimary)))), // 建立間距容器（Padding），用於設定內部邊距
+                        Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                          children: [ // 執行相對應的邏輯計算或設定屬性參數
+                             if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textPrimary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(record['id'].toString()); else _expandedMeals.add(record['id'].toString()); }); }), // 更新狀態數據並通知 UI 重新渲染畫面
+                            Container(width: 4, height: 40, margin: const EdgeInsets.only(right: 4), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))), // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                          ], // 執行相對應的邏輯計算或設定屬性參數
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                      ], // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+        if (isExpanded) 
+          Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+            width: double.infinity, padding: const EdgeInsets.all(12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+              color: AppColors.surface, // 設定顏色數值（Color）
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)), // 建立編譯期常數，優化 Flutter 渲染效能
+              boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+                BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                  color: Colors.black.withOpacity(0.05), // 設定顏色數值（Color）
+                  blurRadius: 0.975, // 執行相對應的邏輯計算或設定屬性參數
+                  offset: const Offset(0, 0.39), // 建立編譯期常數，優化 Flutter 渲染效能
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (items.length > 2)
+                  Text(items.skip(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.5, color: AppColors.textPrimary)),
+                if (record['nutrition'] != null && (record['nutrition'] as String).isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.secondary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "營養分析",
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.secondary),
+                          ),
+                          const SizedBox(height: 6),
+                          ...((record['nutrition'] as String).split(', ')).map((part) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2.0),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.secondary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  part.trim(),
+                                  style: const TextStyle(fontSize: 14, color: AppColors.textPrimary, fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          )).toList(),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (record['photoUrl'] != null && (record['photoUrl'] as String).isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        "${ApiConfig.baseUrl.replaceAll('/api', '')}${record['photoUrl']}",
+                        headers: _jwtToken != null ? {'Authorization': 'Bearer $_jwtToken'} : null,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+              ],
+            ), // 建立文字顯示元件（Text）
+          ), // 執行相對應的邏輯計算或設定屬性參數
+      ], // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  Widget _buildActionBtn(IconData icon, String label, Color color, VoidCallback onTap) { // 定義用於重複使用的 UI 封裝建構方法
+    return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+      onTap: onTap, // 執行相對應的邏輯計算或設定屬性參數
+      child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        margin: const EdgeInsets.symmetric(horizontal: 4), width: 50, // 設定外邊距或內邊距的數值大小（EdgeInsets）
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.1)), child: Icon(icon, color: color, size: 20)), const SizedBox(height: 4), Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold))]), // 建立垂直排列元件（Column），縱向排列多個子元件
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  String _parseNutrient(String? nutritionStr, String pattern) {
+    if (nutritionStr == null || nutritionStr.isEmpty) return '';
+    final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+    final match = regExp.firstMatch(nutritionStr);
+    return match != null ? (match.group(1) ?? '') : '';
+  }
+
+  // 1. 編輯紀錄
+  void _handleEditRecord(dynamic record) {
+    setState(() => _swipedMeal = null);
+    final String nutritionStr = record['nutrition'] ?? '';
+    final calVal = _parseNutrient(nutritionStr, r'(?:熱量|calories|kcal)');
+    final proVal = _parseNutrient(nutritionStr, r'(?:蛋白質|protein)');
+    final fatVal = _parseNutrient(nutritionStr, r'(?:脂肪|fat)');
+    final carbVal = _parseNutrient(nutritionStr, r'(?:碳水化合物|碳水|carbs)');
+
+    final nameController = TextEditingController(text: record['dishName']);
+    final calController = TextEditingController(text: calVal);
+    final proController = TextEditingController(text: proVal);
+    final fatController = TextEditingController(text: fatVal);
+    final carbController = TextEditingController(text: carbVal);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('編輯飲食內容與營養資訊'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios, size: 28)),
-                const Text(
-                  '日記', 
-                  style: TextStyle(
-                    fontSize: 22, 
-                    fontWeight: FontWeight.bold, 
-                    color: AppColors.textPrimary, 
-                    letterSpacing: 1.2
-                  )
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: '飲食項目 (逗號分隔)',
+                  hintText: '例：水煮蛋, 豆漿',
                 ),
-              GestureDetector(
-                onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false),
-                child: Container(
-                  decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]),
-                  child: const CircleAvatar(radius: 25, backgroundColor: AppColors.background, child: Icon(Icons.person, color: AppColors.textPrimary, size: 35)),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: calController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '熱量 (kcal)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: proController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '蛋白質 (g)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: fatController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '脂肪 (g)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: carbController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: '碳水化合物 (g)',
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              if (nameController.text.trim().isNotEmpty) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在更新...')));
 
-  Widget _buildDateBar(String dateStr) {
-    return Container(
-      width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 0.975,
-            offset: const Offset(0, 0.39),
-          ),
+                final c = calController.text.trim();
+                final p = proController.text.trim();
+                final f = fatController.text.trim();
+                final cb = carbController.text.trim();
+                
+                final List<String> nutritionParts = [];
+                if (c.isNotEmpty) nutritionParts.add('熱量: $c kcal');
+                if (p.isNotEmpty) nutritionParts.add('蛋白質: $p g');
+                if (f.isNotEmpty) nutritionParts.add('脂肪: $f g');
+                if (cb.isNotEmpty) nutritionParts.add('碳水化合物: $cb g');
+                final newNutrition = nutritionParts.isNotEmpty 
+                    ? nutritionParts.join(', ') 
+                    : '熱量: 0 kcal, 蛋白質: 0 g, 脂肪: 0 g, 碳水化合物: 0 g';
+
+                final res = await DietService().updateDietRecord(
+                  record['id'],
+                  dishName: nameController.text.trim(),
+                  mealType: record['mealType'],
+                  description: record['description'] ?? '',
+                  nutrition: newNutrition,
+                );
+                if (res['success'] == true) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('更新成功！')));
+                  _fetchRecords();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('更新失敗: ${res['message']}')));
+                }
+              }
+            },
+            child: const Text('儲存', style: TextStyle(fontWeight: FontWeight.bold)),
+          )
         ],
-      ),
-      child: Center(child: Text(dateStr, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500))),
+      )
     );
   }
 
-  Widget _buildMealCard(String title, IconData icon, List<String> items) {
-    bool isExpanded = _expandedMeals.contains(title);
-    bool isSwiped = _swipedMeal == title;
-    bool needsExpansion = items.length > 2;
-
-    return Column(
-      children: [
-        GestureDetector(
-          // 支援拖拽與滑動雙模式
-          onHorizontalDragUpdate: (details) {
-            _dragExtent += details.delta.dx;
-            if (_dragExtent < -5) setState(() => _swipedMeal = title);
-            else if (_dragExtent > 5) setState(() => _swipedMeal = null);
-          },
-          onHorizontalDragEnd: (details) {
-            _dragExtent = 0; // 重置拖動計量
-            if (details.primaryVelocity! < -300) setState(() => _swipedMeal = title);
-            else if (details.primaryVelocity! > 300) setState(() => _swipedMeal = null);
-          },
-          child: Container(
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.1),
-                  blurRadius: 1.95,
-                  offset: const Offset(0, 0.78),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(
-                    color: const Color(0xFFEEEEEE), padding: const EdgeInsets.only(right: 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _buildActionBtn(Icons.edit, "編輯", AppColors.secondary, () => _showActionMsg("編輯", title)),
-                        _buildActionBtn(Icons.image, "相片", AppColors.accent, () => _showActionMsg("圖像", title)),
-                        _buildActionBtn(Icons.delete, "刪除", AppColors.danger, () => _showActionMsg("刪除", title)),
-                      ],
-                    ),
-                  ),
-                ),
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 250), curve: Curves.easeOutQuart,
-                  left: isSwiped ? -180 : 0, right: isSwiped ? 180 : 0,
-                  top: 0, bottom: 0,
-                  child: Container(
-                    color: Colors.white,
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 80, decoration: BoxDecoration(border: Border(right: BorderSide(color: AppColors.border, width: 1.5))),
-                          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 30, color: AppColors.secondary), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]),
-                        ),
-                        Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(isExpanded ? items.join("\n") : items.take(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.4, color: AppColors.textPrimary)))),
-                        Row(
-                          children: [
-                             if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textPrimary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(title); else _expandedMeals.add(title); }); }),
-                            Container(width: 4, height: 40, margin: const EdgeInsets.only(right: 4), decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (isExpanded && items.length > 2)
-          Container(
-            width: double.infinity, padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(15)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 0.975,
-                  offset: const Offset(0, 0.39),
-                ),
-              ],
-            ),
-            child: Text(items.skip(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.5, color: AppColors.textPrimary)),
-          ),
-      ],
-    );
+  // 2. 上傳相片
+  Future<void> _handleUploadPhoto(dynamic record) async {
+    setState(() => _swipedMeal = null);
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在上傳餐點照片...')));
+        final bytes = await image.readAsBytes();
+        final res = await DietService().uploadDietPhoto(record['id'], bytes, image.name);
+        if (res['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('照片上傳成功！')));
+          _fetchRecords();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗: ${res['message']}')));
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('開啟相簿或上傳失敗: $e')));
+    }
   }
 
-  Widget _buildActionBtn(IconData icon, String label, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4), width: 50,
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(shape: BoxShape.circle, color: color.withOpacity(0.1)), child: Icon(icon, color: color, size: 20)), const SizedBox(height: 4), Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.bold))]),
-      ),
+  // 3. 刪除紀錄
+  void _handleDeleteRecord(dynamic record) {
+    setState(() => _swipedMeal = null);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('確認刪除'),
+        content: Text('確定要刪除「${record['dishName']}」這筆飲食紀錄嗎？此動作無法復原。'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在刪除...')));
+              final success = await DietService().deleteDietRecord(record['id']);
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已刪除紀錄！')));
+                _fetchRecords();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('刪除失敗，請再試一次。')));
+              }
+            },
+            child: const Text('確認刪除', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+          )
+        ],
+      )
     );
   }
 }

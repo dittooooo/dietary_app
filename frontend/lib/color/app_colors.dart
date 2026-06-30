@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // 匯入 material.dart 套件或模組
 
-class AppColors {
+class AppColors { // 定義 AppColors 類別，封裝相關功能或資料
   // 核心色調 (僅用於點綴：如圖標、重點文字、細節裝飾)
   static const Color primary = Color(0xFF202808);    // Pine Tree (極深墨綠)
   static const Color secondary = Color(0xFF33432B);  // Kombu Green (墨綠)
@@ -22,5 +22,5 @@ class AppColors {
   
   // 特殊狀態
   static const Color danger = Color(0xFFFF0000);     // 鮮紅
-  static const Color success = Color(0xFF202808);
-}
+  static const Color success = Color(0xFF202808); // 定義靜態常數 success，設定特定 UI 部分的顏色值
+} // 程式碼區塊或結構結束

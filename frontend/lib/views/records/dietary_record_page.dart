@@ -1,415 +1,432 @@
-import 'package:flutter/material.dart';
-import 'dart:ui';
-import '../home/home_page.dart';
-import '../auth/profile_page.dart';
-import 'diary_page.dart';
-import 'report_page.dart';
-import 'camera_record_page.dart';
-import 'manual_record_page.dart';
-import 'dart:math' as math;
-import '../../color/app_colors.dart';
+import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
+import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
+import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
+import 'diary_page.dart'; // 匯入 diary_page.dart 元件庫或套件
+import 'report_page.dart'; // 匯入 report_page.dart 元件庫或套件
+import 'manual_record_page.dart'; // 匯入 manual_record_page.dart 元件庫或套件
+import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
+import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../auth/model_viewer_web_stub.dart' // 匯入 model_viewer_web_stub.dart 元件庫或套件
+    if (dart.library.html) '../auth/model_viewer_web_impl.dart'; // 執行相對應的邏輯計算或設定屬性參數
 
-class DietaryRecordPage extends StatefulWidget {
-  const DietaryRecordPage({super.key});
+class DietaryRecordPage extends StatefulWidget { // 定義 DietaryRecordPage 類別，繼承自 StatefulWidget
+  const DietaryRecordPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
 
-  @override
-  State<DietaryRecordPage> createState() => _DietaryRecordPageState();
-}
+  @override // 標記此方法為覆寫父類別之方法
+  State<DietaryRecordPage> createState() => _DietaryRecordPageState(); // 執行相對應的邏輯計算或設定屬性參數
+} // 程式碼區塊或元件結構結束
 
-class _DietaryRecordPageState extends State<DietaryRecordPage> {
-  final ScrollController _scrollController = ScrollController();
-  bool _showBackToToday = false;
-  DateTime _selectedDate = DateTime.now(); 
-  bool _showOverlay = false;
-  DateTime? _rippleDate; 
+class _DietaryRecordPageState extends State<DietaryRecordPage> { // 定義 _DietaryRecordPageState 類別，繼承自 State
+  final ScrollController _scrollController = ScrollController(); // 宣告類別成員或方法內部的區域變數
+  bool _showBackToToday = false; // 宣告類別成員或方法內部的區域變數
+  DateTime _selectedDate = DateTime.now();  // 執行相對應的邏輯計算或設定屬性參數
+  bool _showOverlay = false; // 宣告類別成員或方法內部的區域變數
+  DateTime? _rippleDate;  // 執行相對應的邏輯計算或設定屬性參數
 
-  final List<DateTime> _pathDates = List.generate(100, (i) => DateTime.now().subtract(Duration(days: i)));
+  final List<DateTime> _pathDates = List.generate(100, (i) => DateTime.now().subtract(Duration(days: i))); // 宣告類別成員或方法內部的區域變數
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(() {
-      if (_scrollController.offset > 200 && !_showBackToToday) {
-        setState(() => _showBackToToday = true);
-      } else if (_scrollController.offset <= 200 && _showBackToToday) {
-        setState(() => _showBackToToday = false);
-      }
-    });
-  }
+  @override // 標記此方法為覆寫父類別之方法
+  void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
+    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _scrollController.addListener(() { // 執行相對應的邏輯計算或設定屬性參數
+      if (_scrollController.offset > 200 && !_showBackToToday) { // 執行相對應的邏輯計算或設定屬性參數
+        setState(() => _showBackToToday = true); // 更新狀態數據並通知 UI 重新渲染畫面
+      } else if (_scrollController.offset <= 200 && _showBackToToday) { // 執行相對應的邏輯計算或設定屬性參數
+        setState(() => _showBackToToday = false); // 更新狀態數據並通知 UI 重新渲染畫面
+      } // 程式碼區塊或元件結構結束
+    }); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  void _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: AppColors.primary, onPrimary: AppColors.background, onSurface: AppColors.textPrimary)),
-        child: child!,
-      ),
-    );
-    if (picked != null) _scrollToDate(picked);
-  }
 
-  void _scrollToDate(DateTime date) {
-    int daysDiff = DateTime.now().difference(date).inDays;
-    if (daysDiff < 0) daysDiff = 0;
+
+  void _selectDate() async { // 執行相對應的邏輯計算或設定屬性參數
+    final DateTime? picked = await showDatePicker( // 宣告類別成員或方法內部的區域變數
+      context: context, // 執行相對應的邏輯計算或設定屬性參數
+      initialDate: _selectedDate, // 執行相對應的邏輯計算或設定屬性參數
+      firstDate: DateTime(2023), // 執行相對應的邏輯計算或設定屬性參數
+      lastDate: DateTime.now(), // 執行相對應的邏輯計算或設定屬性參數
+      builder: (context, child) => Theme( // 執行相對應的邏輯計算或設定屬性參數
+        data: Theme.of(context).copyWith(colorScheme: const ColorScheme.light(primary: AppColors.primary, onPrimary: AppColors.background, onSurface: AppColors.textPrimary)), // 設定顏色數值（Color）
+        child: child!, // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+    if (picked != null) _scrollToDate(picked); // 執行相對應的邏輯計算或設定屬性參數
+  } // 程式碼區塊或元件結構結束
+
+  void _scrollToDate(DateTime date) { // 執行相對應的邏輯計算或設定屬性參數
+    int daysDiff = DateTime.now().difference(date).inDays; // 宣告類別成員或方法內部的區域變數
+    if (daysDiff < 0) daysDiff = 0; // 執行相對應的邏輯計算或設定屬性參數
     
-    int segmentIndex = (daysDiff / 5).floor();
+    int segmentIndex = (daysDiff / 5).floor(); // 宣告類別成員或方法內部的區域變數
     // 壓縮後的高度為 110。
     // 公式：Padding 250 + 圓點在 List 中的位置 30 - 目標螢幕座標 280 = segmentIndex * 110
-    double adjustedOffset = segmentIndex * 110.0;
+    double adjustedOffset = segmentIndex * 110.0; // 宣告類別成員或方法內部的區域變數
     
-    if (adjustedOffset < 0) adjustedOffset = 0;
+    if (adjustedOffset < 0) adjustedOffset = 0; // 執行相對應的邏輯計算或設定屬性參數
     
-    setState(() {
-      _selectedDate = date;
-      _rippleDate = date;
-      _showOverlay = true;
-    });
+    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+      _selectedDate = date; // 執行相對應的邏輯計算或設定屬性參數
+      _rippleDate = date; // 執行相對應的邏輯計算或設定屬性參數
+      _showOverlay = true; // 執行相對應的邏輯計算或設定屬性參數
+    }); // 程式碼區塊或元件結構結束
 
-    Future.microtask(() {
-      if (mounted) {
-        _scrollController.animateTo(
-          adjustedOffset,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutQuart,
-        );
-      }
-    });
-  }
+    Future.microtask(() { // 執行相對應的邏輯計算或設定屬性參數
+      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
+        _scrollController.animateTo( // 執行相對應的邏輯計算或設定屬性參數
+          adjustedOffset, // 執行相對應的邏輯計算或設定屬性參數
+          duration: const Duration(milliseconds: 400), // 建立編譯期常數，優化 Flutter 渲染效能
+          curve: Curves.easeOutQuart, // 執行相對應的邏輯計算或設定屬性參數
+        ); // 程式碼區塊或元件結構結束
+      } // 程式碼區塊或元件結構結束
+    }); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  @override
-  Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-    const double margin = 20.0;
-    const double radius = 50.0;
-    final double pathWidth = screenWidth - (margin * 2) - (radius * 2);
+  @override // 標記此方法為覆寫父類別之方法
+  Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
+    final double screenWidth = MediaQuery.of(context).size.width; // 宣告類別成員或方法內部的區域變數
+    const double margin = 20.0; // 建立編譯期常數，優化 Flutter 渲染效能
+    const double radius = 50.0; // 建立編譯期常數，優化 Flutter 渲染效能
+    final double pathWidth = screenWidth - (margin * 2) - (radius * 2); // 宣告類別成員或方法內部的區域變數
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: Stack(
-          children: [
+    return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
+      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
+      body: SafeArea( // 設定頁面的主要內容區域（body）
+        child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+          children: [ // 執行相對應的邏輯計算或設定屬性參數
             // 1. 路徑區 (高度壓縮至 110)
-            Positioned.fill(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.only(top: 250, bottom: 200), 
-                itemCount: 20,
-                itemBuilder: (context, index) => _buildSPathSegment(index, pathWidth, margin),
-              ),
-            ),
+            Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
+              child: ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
+                controller: _scrollController, // 執行相對應的邏輯計算或設定屬性參數
+                padding: const EdgeInsets.only(top: 250, bottom: 200),  // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                itemCount: 20, // 執行相對應的邏輯計算或設定屬性參數
+                itemBuilder: (context, index) => _buildSPathSegment(index, pathWidth, margin), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
 
-            if (_showOverlay)
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => setState(() { _showOverlay = false; _rippleDate = null; }),
-                  behavior: HitTestBehavior.translucent,
-                  child: Container(color: Colors.black.withOpacity(0.3)),
-                ),
-              ),
+            if (_showOverlay) // 執行相對應的邏輯計算或設定屬性參數
+              Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
+                child: GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+                  onTap: () => setState(() { _showOverlay = false; _rippleDate = null; }), // 更新狀態數據並通知 UI 重新渲染畫面
+                  behavior: HitTestBehavior.translucent, // 執行相對應的邏輯計算或設定屬性參數
+                  child: Container(color: Colors.black.withOpacity(0.3)), // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
 
-            _buildFixedHeader(context),
-            _buildFeatureRow(),
+            _buildFixedHeader(context), // 執行相對應的邏輯計算或設定屬性參數
+            _buildFeatureRow(), // 建立水平排列元件（Row），橫向排列多個子元件
 
-            if (_showOverlay)
-              Positioned(bottom: 0, left: 0, right: 0, child: _buildActionPanel(context)),
+            if (_showOverlay) // 執行相對應的邏輯計算或設定屬性參數
+              Positioned(bottom: 0, left: 0, right: 0, child: _buildActionPanel(context)), // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
 
             // 「回今天」按鈕 (中文 + 雙箭頭)
-            if (_showBackToToday)
-              Positioned(
-                right: 20,
-                bottom: _showOverlay ? MediaQuery.of(context).size.height * 0.35 + 20 : 100,
-                child: GestureDetector(
-                  onTap: () => _scrollToDate(DateTime.now()),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      borderRadius: BorderRadius.circular(25),
-                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 1.95, offset: const Offset(0, 0.78))],
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.keyboard_double_arrow_up, color: Colors.white, size: 20),
-                        SizedBox(width: 4),
-                        Text('回今天', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+            if (_showBackToToday) // 執行相對應的邏輯計算或設定屬性參數
+              Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+                right: 20, // 執行相對應的邏輯計算或設定屬性參數
+                bottom: _showOverlay ? MediaQuery.of(context).size.height * 0.35 + 20 : 100, // 執行相對應的邏輯計算或設定屬性參數
+                child: GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+                  onTap: () => _scrollToDate(DateTime.now()), // 執行相對應的邏輯計算或設定屬性參數
+                  child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                    decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                      color: AppColors.secondary, // 設定顏色數值（Color）
+                      borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
+                      boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.3), blurRadius: 1.95, offset: const Offset(0, 0.78))], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    child: const Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                      mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
+                      children: [ // 執行相對應的邏輯計算或設定屬性參數
+                        Icon(Icons.keyboard_double_arrow_up, color: Colors.white, size: 20), // 設定顏色數值（Color）
+                        SizedBox(width: 4), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                        Text('回今天', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)), // 建立文字顯示元件（Text）
+                      ], // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildFixedHeader(BuildContext context) {
-    return Positioned(
-      top: 0, left: 0, right: 0,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
+  Widget _buildFixedHeader(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
+    return Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+      top: 0, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
+      child: ClipRect( // 執行相對應的邏輯計算或設定屬性參數
+        child: BackdropFilter( // 執行相對應的邏輯計算或設定屬性參數
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), // 執行相對應的邏輯計算或設定屬性參數
+          child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
             height: 80, // 與個人首頁高度一致
-            decoration: BoxDecoration(
-              color: AppColors.background.withOpacity(0.7),
-              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0)), 
-                    (route) => false
-                  ), 
-                  icon: const Icon(Icons.arrow_back_ios, size: 28)
-                ),
-                const Text(
-                  '飲食紀錄', 
-                  style: TextStyle(
-                    fontSize: 22, 
-                    fontWeight: FontWeight.bold, 
-                    color: AppColors.textPrimary, 
-                    letterSpacing: 1.2
-                  )
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1))),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle, 
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2), 
-                          blurRadius: 2.925, 
-                          offset: const Offset(0, 1.56)
-                        )
-                      ]
-                    ),
-                    child: const CircleAvatar(
-                      radius: 25, 
-                      backgroundColor: AppColors.background, 
-                      child: Icon(Icons.person, color: AppColors.textPrimary, size: 35)
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+              color: AppColors.background.withOpacity(0.7), // 設定顏色數值（Color）
+              border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)), // 設定顏色數值（Color）
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+            child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+              mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                IconButton( // 建立點擊圖示按鈕（IconButton）
+                  onPressed: () => Navigator.of(context).pushAndRemoveUntil( // 執行相對應的邏輯計算或設定屬性參數
+                    MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0)),  // 建立編譯期常數，優化 Flutter 渲染效能
+                    (route) => false // 執行相對應的邏輯計算或設定屬性參數
+                  ),  // 執行相對應的邏輯計算或設定屬性參數
+                  icon: const Icon(Icons.arrow_back_ios, size: 28) // 顯示預設的圖示元件（Icon）
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                const Text( // 建立文字顯示元件（Text）
+                  '飲食紀錄',  // 執行相對應的邏輯計算或設定屬性參數
+                  style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                    fontSize: 22,  // 執行相對應的邏輯計算或設定屬性參數
+                    fontWeight: FontWeight.bold,  // 執行相對應的邏輯計算或設定屬性參數
+                    color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                    letterSpacing: 1.2 // 執行相對應的邏輯計算或設定屬性參數
+                  ) // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1))), // 建立編譯期常數，優化 Flutter 渲染效能
+                  child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                    decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                      shape: BoxShape.circle,  // 執行相對應的邏輯計算或設定屬性參數
+                      boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+                        BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                          color: Colors.black.withOpacity(0.2),  // 設定顏色數值（Color）
+                          blurRadius: 2.925,  // 執行相對應的邏輯計算或設定屬性參數
+                          offset: const Offset(0, 1.56) // 建立編譯期常數，優化 Flutter 渲染效能
+                        ) // 執行相對應的邏輯計算或設定屬性參數
+                      ] // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+                      radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
+                      backgroundColor: AppColors.background,  // 設定顏色數值（Color）
+                      child: Icon( // 顯示預設的圖示元件（Icon）
+                        Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                        color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                        size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildFeatureRow() {
-    return Positioned(
-      top: 80, left: 0, right: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
+  Widget _buildFeatureRow() { // 建立水平排列元件（Row），橫向排列多個子元件
+    return Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+      top: 80, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
+      child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        padding: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+        child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+          mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
+          children: [ // 執行相對應的邏輯計算或設定屬性參數
             // 1. 月份/日期框
-            GestureDetector(
-              onTap: _selectDate,
-              child: Container(
-                width: 60, height: 80,
-                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 1.95, offset: const Offset(0.78, 1.17))]),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('月', style: TextStyle(fontSize: 14)), Text('${_selectedDate.day}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))]),
-              ),
-            ),
+            GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+              onTap: _selectDate, // 執行相對應的邏輯計算或設定屬性參數
+              child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                width: 60, height: 80, // 執行相對應的邏輯計算或設定屬性參數
+                decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.2), blurRadius: 1.95, offset: const Offset(0.78, 1.17))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Text('月', style: TextStyle(fontSize: 14)), Text('${_selectedDate.day}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold))]), // 建立垂直排列元件（Column），縱向排列多個子元件
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
             
             // 2. 新增按鈕
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context, 
-                  MaterialPageRoute(builder: (context) => ManualRecordPage(initialDate: _selectedDate))
-                );
-              },
-              child: Container(
-                width: 160, height: 70,
-                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]),
-                child: const Icon(Icons.add, color: AppColors.background, size: 35),
-              ),
-            ),
+            GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+              onTap: () { // 執行相對應的邏輯計算或設定屬性參數
+                Navigator.push( // 導航路由跳轉：開啟並推入新頁面
+                  context,  // 執行相對應的邏輯計算或設定屬性參數
+                  MaterialPageRoute(builder: (context) => ManualRecordPage(initialDate: _selectedDate)) // 執行相對應的邏輯計算或設定屬性參數
+                ); // 程式碼區塊或元件結構結束
+              }, // 程式碼區塊或元件結構結束
+              child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                width: 160, height: 70, // 執行相對應的邏輯計算或設定屬性參數
+                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.5), blurRadius: 2.925, offset: const Offset(0, 1.95))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                child: const Icon(Icons.add, color: AppColors.background, size: 35), // 設定顏色數值（Color）
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
 
             // 3. 狀態提示與小圖示
-            GestureDetector(
-              onTap: () => Navigator.pushAndRemoveUntil(
-                context, 
-                MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0, showChat: true)), 
-                (route) => false
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 0.975, offset: const Offset(0.39, 0.39))]),
-                    child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center),
-                  ),
-                  const SizedBox(height: 5),
-                  const Icon(Icons.terrain, color: Colors.black, size: 25),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+              onTap: () => Navigator.pushAndRemoveUntil( // 導航路由跳轉：開啟並推入新頁面
+                context,  // 執行相對應的邏輯計算或設定屬性參數
+                MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0, showChat: true)),  // 建立編譯期常數，優化 Flutter 渲染效能
+                (route) => false // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+              child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+                children: [ // 執行相對應的邏輯計算或設定屬性參數
+                  Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                    decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(15), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 0.975, offset: const Offset(0.39, 0.39))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                    child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center), // 建立文字顯示元件（Text）
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 5), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                    width: 35, // 執行相對應的邏輯計算或設定屬性參數
+                    height: 35, // 執行相對應的邏輯計算或設定屬性參數
+                    child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
+                      colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
+                      autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
+                      scale: 1.1, // 執行相對應的邏輯計算或設定屬性參數
+                      src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
+                      cameraControls: false, // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ], // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildActionPanel(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.35,
-      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Text("${_selectedDate.month}月${_selectedDate.day}日 飲食記錄", style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50),
-            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: const Color(0xFFFFFDE7), onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }),
-              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: AppColors.surface, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }),
-            ]),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildActionPanel(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+      height: MediaQuery.of(context).size.height * 0.35, // 執行相對應的邏輯計算或設定屬性參數
+      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(30))), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+          Text("${_selectedDate.month}月${_selectedDate.day}日 飲食記錄", style: const TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+          const Spacer(), // 建立編譯期常數，優化 Flutter 渲染效能
+          Padding( // 建立間距容器（Padding），用於設定內部邊距
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [ // 建立水平排列元件（Row），橫向排列多個子元件
+              _buildMenuButton(title: "日記", icon: Icons.restaurant, color: const Color(0xFFFFFDE7), onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => DiaryPage(date: _selectedDate))); }), // 更新狀態數據並通知 UI 重新渲染畫面
+              _buildMenuButton(title: "報告", icon: Icons.assignment_outlined, color: AppColors.surface, onTap: () { setState(() => _showOverlay = false); Navigator.push(context, MaterialPageRoute(builder: (context) => ReportPage(date: _selectedDate))); }), // 更新狀態數據並通知 UI 重新渲染畫面
+            ]), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildMenuButton({required String title, required IconData icon, required Color color, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140, height: 110,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95, offset: const Offset(0.78, 0.78))]),
-        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 45, color: AppColors.textPrimary), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]),
-      ),
-    );
-  }
+  Widget _buildMenuButton({required String title, required IconData icon, required Color color, required VoidCallback onTap}) { // 定義用於重複使用的 UI 封裝建構方法
+    return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+      onTap: onTap, // 執行相對應的邏輯計算或設定屬性參數
+      child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        width: 140, height: 110, // 執行相對應的邏輯計算或設定屬性參數
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(20), boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95, offset: const Offset(0.78, 0.78))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 45, color: AppColors.textPrimary), const SizedBox(width: 8), Text(title, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]), // 建立水平排列元件（Row），橫向排列多個子元件
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildSPathSegment(int index, double pathWidth, double margin) {
-    bool isLeftToRight = index % 2 == 0;
-    return Container(
+  Widget _buildSPathSegment(int index, double pathWidth, double margin) { // 定義用於重複使用的 UI 封裝建構方法
+    bool isLeftToRight = index % 2 == 0; // 宣告類別成員或方法內部的區域變數
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
       height: 110, // 壓縮高度至 110
-      margin: EdgeInsets.symmetric(horizontal: margin),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          CustomPaint(
-            size: const Size(double.infinity, 110),
-            painter: GeometricSPathPainter(isLeftToRight: isLeftToRight),
-          ),
-          ..._buildDotsOnGeometricPath(index, pathWidth, isLeftToRight),
-        ],
-      ),
-    );
-  }
+      margin: EdgeInsets.symmetric(horizontal: margin), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+        clipBehavior: Clip.none, // 執行相對應的邏輯計算或設定屬性參數
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          CustomPaint( // 執行相對應的邏輯計算或設定屬性參數
+            size: const Size(double.infinity, 110), // 建立編譯期常數，優化 Flutter 渲染效能
+            painter: GeometricSPathPainter(isLeftToRight: isLeftToRight), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+          ..._buildDotsOnGeometricPath(index, pathWidth, isLeftToRight), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  List<Widget> _buildDotsOnGeometricPath(int index, double pathWidth, bool isLeftToRight) {
-    List<Widget> dots = [];
-    for (int i = 0; i < 5; i++) {
-      double t = i / 4.0;
-      double dotX = isLeftToRight ? t * pathWidth + 50 : (1 - t) * pathWidth + 50;
-      DateTime dotDate = _pathDates[index * 5 + i];
+  List<Widget> _buildDotsOnGeometricPath(int index, double pathWidth, bool isLeftToRight) { // 執行相對應的邏輯計算或設定屬性參數
+    List<Widget> dots = []; // 執行相對應的邏輯計算或設定屬性參數
+    for (int i = 0; i < 5; i++) { // 執行相對應的邏輯計算或設定屬性參數
+      double t = i / 4.0; // 宣告類別成員或方法內部的區域變數
+      double dotX = isLeftToRight ? t * pathWidth + 50 : (1 - t) * pathWidth + 50; // 宣告類別成員或方法內部的區域變數
+      DateTime dotDate = _pathDates[index * 5 + i]; // 執行相對應的邏輯計算或設定屬性參數
       // 座標精確對位：線條在 30，圓點中心在 30
-      dots.add(Positioned(left: dotX - 30, top: 30 - 45, child: _buildDateDot(dotDate)));
-    }
-    return dots;
-  }
+      dots.add(Positioned(left: dotX - 30, top: 30 - 45, child: _buildDateDot(dotDate))); // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+    } // 程式碼區塊或元件結構結束
+    return dots; // 回傳建構完成的元件或方法計算結果
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildDateDot(DateTime date) {
-    String label = "${date.month}/${date.day}";
-    bool isSelected = date.year == _rippleDate?.year && date.month == _rippleDate?.month && date.day == _rippleDate?.day;
-    double dotSize = isSelected ? 56.0 : 28.0;
+  Widget _buildDateDot(DateTime date) { // 定義用於重複使用的 UI 封裝建構方法
+    String label = "${date.month}/${date.day}"; // 宣告類別成員或方法內部的區域變數
+    bool isSelected = date.year == _rippleDate?.year && date.month == _rippleDate?.month && date.day == _rippleDate?.day; // 宣告類別成員或方法內部的區域變數
+    double dotSize = isSelected ? 56.0 : 28.0; // 宣告類別成員或方法內部的區域變數
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => _scrollToDate(date),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-          SizedBox(
-            width: 60, height: 60,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                if (isSelected) const RippleAnimation(),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  width: dotSize, height: dotSize,
-                  decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: isSelected ? 2.34 : 1.56, offset: const Offset(0.39, 0.39))]),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+    return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+      behavior: HitTestBehavior.opaque, // 執行相對應的邏輯計算或設定屬性參數
+      onTap: () => _scrollToDate(date), // 執行相對應的邏輯計算或設定屬性參數
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+          SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+            width: 60, height: 60, // 執行相對應的邏輯計算或設定屬性參數
+            child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+              alignment: Alignment.center, // 執行相對應的邏輯計算或設定屬性參數
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                if (isSelected) const RippleAnimation(), // 建立編譯期常數，優化 Flutter 渲染效能
+                AnimatedContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                  duration: const Duration(milliseconds: 300), // 建立編譯期常數，優化 Flutter 渲染效能
+                  width: dotSize, height: dotSize, // 執行相對應的邏輯計算或設定屬性參數
+                  decoration: BoxDecoration(color: isSelected ? AppColors.primary : AppColors.secondary, shape: BoxShape.circle, boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: isSelected ? 2.34 : 1.56, offset: const Offset(0.39, 0.39))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+} // 程式碼區塊或元件結構結束
 
-class RippleAnimation extends StatefulWidget {
-  const RippleAnimation({super.key});
-  @override
-  State<RippleAnimation> createState() => _RippleAnimationState();
-}
+class RippleAnimation extends StatefulWidget { // 定義 RippleAnimation 類別，繼承自 StatefulWidget
+  const RippleAnimation({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
+  @override // 標記此方法為覆寫父類別之方法
+  State<RippleAnimation> createState() => _RippleAnimationState(); // 執行相對應的邏輯計算或設定屬性參數
+} // 程式碼區塊或元件結構結束
 
-class _RippleAnimationState extends State<RippleAnimation> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  @override
-  void initState() { super.initState(); _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(); }
-  @override
-  void dispose() { _controller.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) { return AnimatedBuilder(animation: _controller, builder: (context, child) => Container(width: 60, height: 60, child: CustomPaint(painter: RipplePainter(_controller.value)))); }
-}
+class _RippleAnimationState extends State<RippleAnimation> with SingleTickerProviderStateMixin { // 定義 _RippleAnimationState 類別，繼承自 State
+  late AnimationController _controller; // 宣告類別成員或方法內部的區域變數
+  @override // 標記此方法為覆寫父類別之方法
+  void initState() { super.initState(); _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(); } // 初始化狀態生命週期方法，頁面建立時執行一次
+  @override // 標記此方法為覆寫父類別之方法
+  void dispose() { _controller.dispose(); super.dispose(); } // 銷毀狀態生命週期方法，釋放頁面資源與控制器
+  @override // 標記此方法為覆寫父類別之方法
+  Widget build(BuildContext context) { return AnimatedBuilder(animation: _controller, builder: (context, child) => Container(width: 60, height: 60, child: CustomPaint(painter: RipplePainter(_controller.value)))); } // 建立畫面的主要 build 方法，返回元件樹
+} // 程式碼區塊或元件結構結束
 
-class RipplePainter extends CustomPainter {
-  final double animationValue;
-  RipplePainter(this.animationValue);
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (int i = 0; i < 3; i++) {
-      double value = (animationValue + i / 3.0) % 1.0;
-      double radius = (size.width / 2 + 15) * value;
-      double opacity = (1.0 - value).clamp(0.0, 1.0);
-      final paint = Paint()..color = AppColors.accent.withOpacity(opacity * 0.7)..style = PaintingStyle.stroke..strokeWidth = 3.5;
-      canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
-    }
-  }
-  @override
-  bool shouldRepaint(RipplePainter oldDelegate) => true;
-}
+class RipplePainter extends CustomPainter { // 定義 RipplePainter 類別，繼承自 CustomPainter
+  final double animationValue; // 宣告類別成員或方法內部的區域變數
+  RipplePainter(this.animationValue); // 執行相對應的邏輯計算或設定屬性參數
+  @override // 標記此方法為覆寫父類別之方法
+  void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
+    for (int i = 0; i < 3; i++) { // 執行相對應的邏輯計算或設定屬性參數
+      double value = (animationValue + i / 3.0) % 1.0; // 宣告類別成員或方法內部的區域變數
+      double radius = (size.width / 2 + 15) * value; // 宣告類別成員或方法內部的區域變數
+      double opacity = (1.0 - value).clamp(0.0, 1.0); // 宣告類別成員或方法內部的區域變數
+      final paint = Paint()..color = AppColors.accent.withOpacity(opacity * 0.7)..style = PaintingStyle.stroke..strokeWidth = 3.5; // 設定顏色數值（Color）
+      canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint); // 執行相對應的邏輯計算或設定屬性參數
+    } // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+  @override // 標記此方法為覆寫父類別之方法
+  bool shouldRepaint(RipplePainter oldDelegate) => true; // 宣告類別成員或方法內部的區域變數
+} // 程式碼區塊或元件結構結束
 
-class GeometricSPathPainter extends CustomPainter {
-  final bool isLeftToRight;
-  GeometricSPathPainter({required this.isLeftToRight});
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = AppColors.border..style = PaintingStyle.stroke..strokeWidth = 6.0..strokeCap = StrokeCap.round;
-    const double radius = 50.0;
-    double pathWidth = size.width - (radius * 2);
+class GeometricSPathPainter extends CustomPainter { // 定義 GeometricSPathPainter 類別，繼承自 CustomPainter
+  final bool isLeftToRight; // 宣告類別成員或方法內部的區域變數
+  GeometricSPathPainter({required this.isLeftToRight}); // 執行相對應的邏輯計算或設定屬性參數
+  @override // 標記此方法為覆寫父類別之方法
+  void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
+    final paint = Paint()..color = AppColors.border..style = PaintingStyle.stroke..strokeWidth = 6.0..strokeCap = StrokeCap.round; // 設定顏色數值（Color）
+    const double radius = 50.0; // 建立編譯期常數，優化 Flutter 渲染效能
+    double pathWidth = size.width - (radius * 2); // 宣告類別成員或方法內部的區域變數
     // 對接邏輯：線條在 30，弧線高度 110，總高 110。
     // 這樣下一段起始於 110，內部的線條也位於 30 (110+30 = 140)，與上一段弧線結尾 (30+110 = 140) 完美接合
-    if (isLeftToRight) {
-      canvas.drawLine(const Offset(50, 30), Offset(50 + pathWidth, 30), paint);
-      canvas.drawArc(Rect.fromLTWH(50 + pathWidth - radius, 30, radius * 2, 110), -math.pi / 2, math.pi, false, paint);
-    } else {
-      canvas.drawLine(Offset(50 + pathWidth, 30), const Offset(50, 30), paint);
-      canvas.drawArc(Rect.fromLTWH(50 - radius, 30, radius * 2, 110), -math.pi / 2, -math.pi, false, paint);
-    }
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+    if (isLeftToRight) { // 執行相對應的邏輯計算或設定屬性參數
+      canvas.drawLine(const Offset(50, 30), Offset(50 + pathWidth, 30), paint); // 建立編譯期常數，優化 Flutter 渲染效能
+      canvas.drawArc(Rect.fromLTWH(50 + pathWidth - radius, 30, radius * 2, 110), -math.pi / 2, math.pi, false, paint); // 執行相對應的邏輯計算或設定屬性參數
+    } else { // 程式碼區塊或元件結構結束
+      canvas.drawLine(Offset(50 + pathWidth, 30), const Offset(50, 30), paint); // 建立編譯期常數，優化 Flutter 渲染效能
+      canvas.drawArc(Rect.fromLTWH(50 - radius, 30, radius * 2, 110), -math.pi / 2, -math.pi, false, paint); // 執行相對應的邏輯計算或設定屬性參數
+    } // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+  @override // 標記此方法為覆寫父類別之方法
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false; // 宣告類別成員或方法內部的區域變數
+} // 程式碼區塊或元件結構結束

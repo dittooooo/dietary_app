@@ -13,6 +13,8 @@ import '../home/home_page.dart';
 import 'edit_profile_page.dart';
 import 'login_page.dart';
 import '../../services/auth_service.dart';
+import 'model_viewer_web_stub.dart'
+    if (dart.library.html) 'model_viewer_web_impl.dart';
 
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
@@ -84,6 +86,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // 根據小精靈名稱獲取對應圖標
   IconData _getPetIcon(String? petType) {
     switch (petType) {
+      case '狗兒':
       case '奶油皮丘': return Icons.pets;
       case '薄荷兔兔': return Icons.eco;
       case '草莓狐狸': return Icons.star;
@@ -94,6 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String? petType) {
     switch (petType) {
+      case '狗兒':
       case '奶油皮丘': return const Color.fromARGB(255, 181, 181, 60); // Muted orange (retro)
       case '薄荷兔兔': return const Color.fromARGB(255, 110, 215, 154); // Muted sage (retro)
       case '草莓狐狸': return const Color.fromARGB(255, 186, 84, 84); // Muted terracotta (retro)
@@ -101,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 選擇圖片的功能
+  // 選擇圖片與上傳頭像功能
   Future<void> _pickImage() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在開啟圖庫...'), duration: Duration(seconds: 1)));
     try {
@@ -118,9 +122,27 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _imageBytes = bytes;
         });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在上傳頭像至伺服器...')));
+        }
+        
+        final uploadResult = await AuthService().uploadAvatar(bytes, pickedFile.name);
+        
+        if (mounted) {
+          if (uploadResult['success'] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('頭像上傳成功！')));
+            _loadUserData(); // 重新載入最新資料
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('頭像上傳失敗：${uploadResult['message']}')));
+          }
+        }
       }
     } catch (e) {
-      debugPrint('選取圖片失敗: $e');
+      debugPrint('選取圖片或上傳失敗: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('選取或上傳圖片失敗: $e')));
+      }
     }
   }
 
@@ -197,15 +219,27 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ],
                     ),
-                    child: CircleAvatar(
-                      radius: 70,
-                      backgroundColor: AppColors.background,
-                      backgroundImage: _imageBytes != null 
-                          ? MemoryImage(_imageBytes!) 
-                          : null,
-                      child: _imageBytes == null 
-                          ? const Icon(Icons.person, size: 80, color: Colors.black) 
-                          : null,
+                    child: Builder(
+                      builder: (context) {
+                        ImageProvider? avatarImage;
+                        final String? avatarPath = _fullUserData?['avatarUrl'] ?? _fullUserData?['user']?['avatarUrl'];
+                        if (avatarPath != null && avatarPath.isNotEmpty) {
+                          final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+                          final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+                          avatarImage = NetworkImage(fullUrl);
+                        } else if (_imageBytes != null) {
+                          avatarImage = MemoryImage(_imageBytes!);
+                        }
+
+                        return CircleAvatar(
+                          radius: 70,
+                          backgroundColor: AppColors.background,
+                          backgroundImage: avatarImage,
+                          child: avatarImage == null 
+                              ? const Icon(Icons.person, size: 80, color: Colors.black) 
+                              : null,
+                        );
+                      }
                     ),
                   ),
                   Positioned(
@@ -312,14 +346,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     }),
-                    _buildAdminButton('登入管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '登入管理'),
-                        ),
-                      );
-                    }),
                     _buildAdminButton('飲食紀錄管理', () {
                       Navigator.push(
                         context,
@@ -341,8 +367,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 (route) => false
               ),
               child: Container(
-                margin: const EdgeInsets.all(20),
-                height: 250,
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
+                height: 550,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: AppColors.background,
@@ -355,23 +384,32 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _getPetIcon(_fullUserData?['petType']), 
-                        size: 100, 
-                        color: Colors.black
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        _fullUserData?['petType'] ?? '未選擇小精靈', 
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
-                      ),
-                      const Text('正在休息中...', style: TextStyle(color: AppColors.textPrimary)),
-                    ],
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double modelSize = constraints.maxWidth.clamp(0.0, 390.0);
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: modelSize - 20,
+                          height: modelSize + 80,
+                          child: createWebModelView(
+                            colorScheme: 'orange',
+                            autoSpin: false,
+                            scale: 1.4,
+                            src: 'assets/images/0606.glb',
+                          ),
+                        ),
+                        const Text(
+                          '狗兒',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),

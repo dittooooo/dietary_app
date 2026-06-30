@@ -1,566 +1,762 @@
-import 'package:flutter/material.dart';
-import 'dart:ui';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/auth_service.dart';
-import '../../color/app_colors.dart';
-import '../records/elf_feeding_page.dart';
+import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
+import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
+import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
+import '../../services/admin_service.dart'; // 匯入 admin_service.dart 元件庫或套件
+import '../../services/diet_service.dart'; // 匯入 diet_service.dart 元件庫或套件
+import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../records/elf_feeding_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
+import '../auth/model_viewer_web_stub.dart' // 匯入 model_viewer_web_stub.dart 元件庫或套件
+    if (dart.library.html) '../auth/model_viewer_web_impl.dart'; // 執行相對應的邏輯計算或設定屬性參數
 
-class HomeView extends StatefulWidget {
-  final bool initialOpenChat;
-  const HomeView({super.key, this.initialOpenChat = false});
+class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 StatefulWidget
+  final bool initialOpenChat; // 宣告類別成員或方法內部的區域變數
+  const HomeView({super.key, this.initialOpenChat = false}); // 建立編譯期常數，優化 Flutter 渲染效能
 
-  @override
-  State<HomeView> createState() => _HomeViewState();
-}
+  @override // 標記此方法為覆寫父類別之方法
+  State<HomeView> createState() => _HomeViewState(); // 執行相對應的邏輯計算或設定屬性參數
+} // 程式碼區塊或元件結構結束
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin {
-  final TextEditingController _inputController = TextEditingController();
-  final AuthService _authService = AuthService();
+class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 定義 _HomeViewState 類別，繼承自 State
+  final TextEditingController _inputController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
+  final AuthService _authService = AuthService(); // 宣告類別成員或方法內部的區域變數
   
-  late bool _isChatOpen;
-  late double _chatPanelX; 
-  String _userNickname = '使用者';
-  String _petType = '奶油皮丘';
+  late bool _isChatOpen; // 宣告類別成員或方法內部的區域變數
+  late double _chatPanelX;  // 宣告類別成員或方法內部的區域變數
+  String _userNickname = '使用者'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
-  List<Map<String, dynamic>> _messages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _isChatOpen = widget.initialOpenChat;
-    _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0;
-    _loadHomeData();
-  }
-
-  Future<void> _loadHomeData() async {
+  late AnimationController _hoverController; // 宣告類別成員或方法內部的區域變數
+  late Animation<double> _hoverScaleAnimation; // 宣告類別成員或方法內部的區域變數
+  late Animation<double> _hoverOffsetAnimation; // 宣告類別成員或方法內部的區域變數
+  
+  List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
+  @override // 標記此方法為覆寫父類別之方法
+  void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
+    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _isChatOpen = widget.initialOpenChat; // 執行相對應的邏輯計算或設定屬性參數
+    _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
+    
+    // 初始化小精靈漂浮與呼吸動畫
+    _hoverController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
+      duration: const Duration(milliseconds: 2000), // 建立編譯期常數，優化 Flutter 渲染效能
+      vsync: this, // 執行相對應的邏輯計算或設定屬性參數
+    )..repeat(reverse: true); // 執行相對應的邏輯計算或設定屬性參數
+ 
+    _hoverScaleAnimation = Tween<double>(begin: 0.96, end: 1.04).animate( // 執行相對應的邏輯計算或設定屬性參數
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+ 
+    _hoverOffsetAnimation = Tween<double>(begin: -6.0, end: 6.0).animate( // 執行相對應的邏輯計算或設定屬性參數
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+ 
+    _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
+  } // 程式碼區塊或元件結構結束
+ 
+  @override // 標記此方法為覆寫父類別之方法
+  void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
+    _inputController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
+    _hoverController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
+    super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
+  } // 程式碼區塊或元件結構結束
+ 
+  Future<void> _loadHomeData() async { // 定義非同步方法（Future），執行耗時操作
     // 1. 先從本地快取讀取 (前端輔助，速度快)
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userNickname = prefs.getString('user_nickname') ?? '使用者';
-      _petType = prefs.getString('user_pet_type') ?? '奶油皮丘';
-      _messages = [
-        {'isElf': true, 'text': '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！'},
-      ];
-    });
-
+    final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
+    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+      _userNickname = prefs.getString('user_nickname') ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
+      _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+      _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
+      _messages = [ // 執行相對應的邏輯計算或設定屬性參數
+        {'isElf': true, 'text': '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！'}, // 執行相對應的邏輯計算或設定屬性參數
+      ]; // 程式碼區塊或元件結構結束
+    }); // 程式碼區塊或元件結構結束
+ 
     // 2. 向後端請求最新資料 (後端為主，保持同步)
-    final result = await _authService.getUserProfile();
-    if (result['success'] == true) {
-      final userData = result['data'];
-      setState(() {
-        _userNickname = userData['nickname'] ?? '使用者';
-        _petType = userData['petType'] ?? '奶油皮丘';
+    final result = await _authService.getUserProfile(); // 宣告類別成員或方法內部的區域變數
+    if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
+      final userData = result['data']; // 宣告類別成員或方法內部的區域變數
+      final String g = userData['dietGoal'] ?? userData['diet_goal'] ?? '養生'; // 宣告類別成員或方法內部的區域變數
+      await prefs.setString('user_diet_goal', g); // 執行相對應的邏輯計算或設定屬性參數
+      setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+        _userNickname = userData['nickname'] ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _dietGoal = g; // 執行相對應的邏輯計算或設定屬性參數
         // 更新歡迎詞
-        if (_messages.isNotEmpty && _messages[0]['isElf'] == true) {
-          _messages[0]['text'] = '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！';
-        }
-      });
-    }
-  }
+        if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
+          _messages[0]['text'] = '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！'; // 執行相對應的邏輯計算或設定屬性參數
+        } // 程式碼區塊或元件結構結束
+      }); // 程式碼區塊或元件結構結束
+    } // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
   // 根據小精靈名稱獲取對應圖標
-  IconData _getPetIcon(String petType) {
-    switch (petType) {
-      case '奶油皮丘': return Icons.pets;
-      case '薄荷兔兔': return Icons.eco;
-      case '草莓狐狸': return Icons.star;
-      default: return Icons.pets;
-    }
-  }
+  IconData _getPetIcon(String petType) { // 顯示預設的圖示元件（Icon）
+    switch (petType) { // 執行相對應的邏輯計算或設定屬性參數
+      case '奶油皮丘': return Icons.pets; // 回傳建構完成的元件或方法計算結果
+      case '薄荷兔兔': return Icons.eco; // 回傳建構完成的元件或方法計算結果
+      case '草莓狐狸': return Icons.star; // 回傳建構完成的元件或方法計算結果
+      default: return Icons.pets; // 回傳建構完成的元件或方法計算結果
+    } // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+
+  // 獲取 3D 渲染的柴犬精靈圖片路徑
+  String _getPetImagePath(String petType, String dietGoal) { // 宣告類別成員或方法內部的區域變數
+    String path = 'assets/images/shiba_normal.png'; // 宣告類別成員或方法內部的區域變數
+    if (petType == '奶油皮丘' || petType.isNotEmpty) { // 執行相對應的邏輯計算或設定屬性參數
+      if (dietGoal.contains('減脂')) { // 執行相對應的邏輯計算或設定屬性參數
+        path = 'assets/images/shiba_fat.png'; // 執行相對應的邏輯計算或設定屬性參數
+      } else if (dietGoal.contains('增肌')) { // 執行相對應的邏輯計算或設定屬性參數
+        path = 'assets/images/shiba_muscular.png'; // 執行相對應的邏輯計算或設定屬性參數
+      } else if (dietGoal.contains('養生')) { // 執行相對應的邏輯計算或設定屬性參數
+        path = 'assets/images/shiba_thin.png'; // 執行相對應的邏輯計算或設定屬性參數
+      } // 程式碼區塊或元件結構結束
+    } // 程式碼區塊或元件結構結束
+    return path; // 回傳建構完成的元件或方法計算結果
+  } // 程式碼區塊或元件結構結束
 
   // 根據小精靈名稱獲取對應顏色
-  Color _getPetColor(String petType) {
-    switch (petType) {
+  Color _getPetColor(String petType) { // 設定顏色數值（Color）
+    switch (petType) { // 執行相對應的邏輯計算或設定屬性參數
       case '奶油皮丘': return const Color(0xFFD4A373); // Muted orange (retro)
       case '薄荷兔兔': return const Color(0xFF8A9A5B); // Muted sage (retro)
       case '草莓狐狸': return const Color(0xFFB07D62); // Muted terracotta (retro)
-      default: return AppColors.secondary;
-    }
-  }
+      default: return AppColors.secondary; // 設定顏色數值（Color）
+    } // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  void _toggleChat(bool open) {
-    setState(() {
-      _isChatOpen = open;
-      _chatPanelX = open ? 0.0 : 1.0;
-    });
-  }
+  void _toggleChat(bool open) { // 執行相對應的邏輯計算或設定屬性參數
+    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+      _isChatOpen = open; // 執行相對應的邏輯計算或設定屬性參數
+      _chatPanelX = open ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
+    }); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  void _handleMessage(String text) {
-    if (text.trim().isEmpty) return;
-    setState(() {
-      _messages.add({'isElf': false, 'text': text});
-      _inputController.clear();
-      _isChatOpen = true;
-      _chatPanelX = 0.0;
-    });
+  void _handleMessage(String text) { // 執行相對應的邏輯計算或設定屬性參數
+    if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
+    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+      _messages.add({'isElf': false, 'text': text}); // 執行相對應的邏輯計算或設定屬性參數
+      _inputController.clear(); // 執行相對應的邏輯計算或設定屬性參數
+      _isChatOpen = true; // 執行相對應的邏輯計算或設定屬性參數
+      _chatPanelX = 0.0; // 執行相對應的邏輯計算或設定屬性參數
+    }); // 程式碼區塊或元件結構結束
 
     // 模擬回覆
-    Future.delayed(const Duration(seconds: 1), () {
-      setState(() {
-        if (text.contains("早午餐")) {
-          _messages.add({
-            'isElf': true, 
-            'text': '嗨 $_userNickname！考慮到您目前的「減脂健康」目標，我為您挑選了幾項附近的早午餐推薦，這些選項的蛋白質含量較高且負擔相對較小喔：',
-            'options': [
-              {
-                'name': '卡拉雞腿堡', 
-                'nutrients': {'calories': 450, 'protein': 22, 'fat': 18, 'carbs': 48}
-              },
-              {
-                'name': '鐵板麵', 
-                'nutrients': {'calories': 520, 'protein': 14, 'fat': 22, 'carbs': 65}
-              },
-              {
-                'name': '烏龍麵', 
-                'nutrients': {'calories': 380, 'protein': 12, 'fat': 8, 'carbs': 60}
-              },
-            ]
-          });
-        } else if (text.contains("推薦")) {
-          _messages.add({
-            'isElf': true, 
-            'text': '已為您搜尋附近的店家向您推薦：\n1. 佳佳\n2. 麥軒\n3. 日初',
-            'type': 'restaurant'
-          });
-        } else if (text.contains("薯條")) {
+    Future.delayed(const Duration(milliseconds: 500), () { // 建立編譯期常數，優化 Flutter 渲染效能
+      setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
+        if (text.contains("推薦")) {
           _messages.add({
             'isElf': true,
-            'text': '薯條的營養成分如下：\n熱量: 380 kcal\n蛋白質: 4g\n脂肪: 20g',
-            'type': 'nutrient'
+            'text': '正在搜尋附近的店家與健康推薦項目...',
+            'type': 'restaurant'
           });
-        } else {
-          _messages.add({'isElf': true, 'text': '收到！我會根據您的需求提供最好的建議。'});
-        }
-      });
-    });
-  }
+          
+          AdminService().listRestaurants().then((restaurants) {
+            AdminService().listMenuItems().then((menus) {
+              setState(() {
+                if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
+                  _messages.removeLast();
+                }
+                
+                if (restaurants.isEmpty) {
+                  _messages.add({
+                    'isElf': true,
+                    'text': '已為您搜尋附近的推薦項目：\n目前系統暫無推薦餐廳，您可以使用管理員面板的「餐廳管理」新增更多選擇！',
+                    'type': 'restaurant'
+                  });
+                } else {
+                  final String restText = restaurants.asMap().entries.map((entry) {
+                    final idx = entry.key + 1;
+                    final rest = entry.value;
+                    final restName = rest['name'] ?? '店家';
+                    final restAddr = rest['address'] ?? '';
+                    final restStars = '★' * (rest['stars'] ?? 5);
+                    
+                    final matchedMenus = menus.where((m) => m['restaurantName'] == restName).toList();
+                    final menuText = matchedMenus.isNotEmpty
+                        ? '\n   精選推薦：' + matchedMenus.map((m) => '${m['dishName']} (${m['recommendLevel'] ?? '高'}推薦, ${m['nutrition'] ?? ''})').join(', ')
+                        : '';
+                        
+                    return '$idx. $restName $restStars\n   地址: $restAddr$menuText';
+                  }).join('\n\n');
+                  
+                  _messages.add({
+                    'isElf': true,
+                    'text': '已為您搜尋附近的店家與菜單推薦項目：\n\n$restText',
+                    'type': 'restaurant'
+                  });
+                }
+              });
+            }).catchError((e) {
+              setState(() {
+                if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
+                  _messages.removeLast();
+                }
+                _messages.add({'isElf': true, 'text': '推薦菜單載入錯誤: $e'});
+              });
+            });
+          }).catchError((e) {
+            setState(() {
+              if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
+                _messages.removeLast();
+              }
+              _messages.add({'isElf': true, 'text': '推薦餐廳載入錯誤: $e'});
+            });
+          });
+        } else { // 程式碼區塊或元件結構結束
+          _messages.add({
+            'isElf': true,
+            'text': '正在為您載入個人與週飲食紀錄，進行智能評估中...',
+          });
+          
+          DietService().askWeeklyAnalysis(text).then((res) {
+            setState(() {
+              if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+                _messages.removeLast();
+              }
+              
+              if (res['success'] == true) {
+                final payload = res['data'];
+                final profile = payload['user_profile'] ?? {};
+                final health = payload['health_condition'] ?? {};
+                final List<dynamic> records = payload['weekly_diet_records'] ?? [];
+                
+                final String gender = profile['gender'] ?? '未設定';
+                final double height = (profile['height_cm'] as num?)?.toDouble() ?? 0.0;
+                final double weight = (profile['weight_kg'] as num?)?.toDouble() ?? 0.0;
+                final int age = (profile['age'] as num?)?.toInt() ?? 0;
+                final String goal = profile['goal'] ?? '健康維持';
+                
+                final bool hasChronic = health['has_chronic_disease'] ?? false;
+                final List<dynamic> diseases = health['chronic_diseases'] ?? [];
+                
+                double bmi = 0.0;
+                if (height > 0) {
+                  bmi = weight / ((height / 100.0) * (height / 100.0));
+                }
+                
+                String bmiText = bmi > 0 ? bmi.toStringAsFixed(1) : '未知';
+                
+                String recordDetail = '';
+                if (records.isEmpty) {
+                  recordDetail = '• 過去 7 天內尚無飲食紀錄。建議您在「飲食日記」新增近日餐點，讓我能提供更精準的分析喔！';
+                } else {
+                  recordDetail = records.map((r) {
+                    final date = r['date'] ?? '';
+                    final meal = r['meal'] ?? '';
+                    final dish = r['dish_name'] ?? '';
+                    final note = r['description'] ?? r['note'] ?? '';
+                    final noteText = note.isNotEmpty ? ' ($note)' : '';
+                    return '• $date $meal: $dish$noteText';
+                  }).join('\n');
+                }
+                
+                String chronicText = hasChronic
+                    ? '有 (${diseases.join(', ')})'
+                    : '無';
+                    
+                String advice = '';
+                if (goal.contains('減脂')) {
+                  advice = '精靈建議：您的目標是減脂，目前 BMI 為 $bmiText。近一週飲食中請注意控制油鹽，適量攝取優質蛋白質，以維持肌肉量。';
+                } else if (goal.contains('增肌')) {
+                  advice = '精靈建議：您的目標是增肌，目前 BMI 為 $bmiText。請務必補充足量碳水化合物與高蛋白質食物，配合阻力訓練效果更佳！';
+                } else {
+                  advice = '精靈建議：您的目標是養生，目前 BMI 為 $bmiText。請保持均衡飲食，多攝取膳食纖維，維持規律作息。';
+                }
+                
+                String finalMessage = '【飲食智能小精靈 - 週飲食分析】\n\n'
+                    '個人狀態簡介：\n'
+                    ' • 身高/體重：${height.toStringAsFixed(0)} cm / ${weight.toStringAsFixed(0)} kg\n'
+                    ' • 年齡/性別：$age 歲 / $gender\n'
+                    ' • BMI：$bmiText\n'
+                    ' • 飲食目標：$goal\n'
+                    ' • 慢性病歷史：$chronicText\n\n'
+                    '過去 7 天飲食明細：\n'
+                    '$recordDetail\n\n'
+                    '$advice\n\n'
+                    '如果您有任何具體問題（如想吃特定食物或外送推薦），隨時可以問我！';
+                
+                _messages.add({
+                  'isElf': true,
+                  'text': finalMessage,
+                });
+              } else {
+                _messages.add({
+                  'isElf': true,
+                  'text': '分析讀取失敗：${res['message']}',
+                });
+              }
+            });
+          }).catchError((e) {
+            setState(() {
+              if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+                _messages.removeLast();
+              }
+              _messages.add({
+                'isElf': true,
+                'text': '智能分析發生異常: $e',
+              });
+            });
+          });
+        } // 程式碼區塊或元件結構結束
+      }); // 程式碼區塊或元件結構結束
+    }); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragUpdate: (details) {
+  @override // 標記此方法為覆寫父類別之方法
+  Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
+    return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+      onHorizontalDragUpdate: (details) { // 執行相對應的邏輯計算或設定屬性參數
         if (details.delta.dx < -5) _toggleChat(true); // 左滑開啟
         if (details.delta.dx > 5) _toggleChat(false); // 右滑關閉
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.surface,
-        body: Stack(
-          children: [
+      }, // 程式碼區塊或元件結構結束
+      child: Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
+        backgroundColor: AppColors.surface, // 設定顏色數值（Color）
+        body: Stack( // 設定頁面的主要內容區域（body）
+          children: [ // 執行相對應的邏輯計算或設定屬性參數
             // 1. 背景與標題 (毛玻璃效果)
-            Positioned(
-              top: 0, left: 0, right: 0,
-              child: SafeArea(
-                child: Container(
-                  height: 80,
-                  alignment: Alignment.center,
-                  child: const Text(
-                    "精靈助手",
-                    style: TextStyle(
-                      fontSize: 22, 
-                      fontWeight: FontWeight.bold, 
-                      letterSpacing: 1.5,
-                      color: AppColors.textPrimary
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+              top: 0, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
+              child: SafeArea( // 執行相對應的邏輯計算或設定屬性參數
+                child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                  height: 80, // 執行相對應的邏輯計算或設定屬性參數
+                  alignment: Alignment.center, // 執行相對應的邏輯計算或設定屬性參數
+                  child: const Text( // 建立文字顯示元件（Text）
+                    "精靈助手", // 執行相對應的邏輯計算或設定屬性參數
+                    style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                      fontSize: 22,  // 執行相對應的邏輯計算或設定屬性參數
+                      fontWeight: FontWeight.bold,  // 執行相對應的邏輯計算或設定屬性參數
+                      letterSpacing: 1.5, // 執行相對應的邏輯計算或設定屬性參數
+                      color: AppColors.textPrimary // 設定顏色數值（Color）
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
 
             // 2. 中央大精靈
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => _toggleChat(true),
-                    child: Hero(
-                      tag: 'elf',
-                      child: Container(
-                        width: 280, height: 280,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.background,
-                          boxShadow: [
-                            BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 5.85, spreadRadius: 1.95)
-                          ],
-                        ),
-                        child: Icon(
-                          _getPetIcon(_petType), 
-                          size: 180, 
-                          color: Colors.black
-                        ), // 這裡之後換成完整精靈圖片
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
+            Center( // 建立置中對齊元件（Center），將子元件居中顯示
+              child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+                mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
+                children: [ // 執行相對應的邏輯計算或設定屬性參數
+                  GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
+                    onTap: () => _toggleChat(true), // 執行相對應的邏輯計算或設定屬性參數
+                    child: Hero( // 建立跨頁面過渡動畫元件（Hero），點擊時呈現放大或縮小移動特效
+                      tag: 'elf', // 執行相對應的邏輯計算或設定屬性參數
+                      child: AnimatedBuilder( // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
+                        animation: _hoverController, // 執行相對應的邏輯計算或設定屬性參數
+                        builder: (context, child) { // 執行相對應的邏輯計算或設定屬性參數
+                          return Transform.translate( // 回傳建構完成的元件或方法計算結果
+                            offset: Offset(0, _hoverOffsetAnimation.value), // 執行相對應的邏輯計算或設定屬性參數
+                            child: Transform.scale( // 執行相對應的邏輯計算或設定屬性參數
+                              scale: _hoverScaleAnimation.value, // 執行相對應的邏輯計算或設定屬性參數
+                              child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                                width: 280, height: 280, // 執行相對應的邏輯計算或設定屬性參數
+                                decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                                  shape: BoxShape.circle, // 執行相對應的邏輯計算或設定屬性參數
+                                  color: AppColors.background, // 設定顏色數值（Color）
+                                  boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+                                    BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                                      color: _getPetColor(_petType).withOpacity(0.15),  // 設定顏色數值（Color）
+                                      blurRadius: 15,  // 執行相對應的邏輯計算或設定屬性參數
+                                      spreadRadius: 2, // 執行相對應的邏輯計算或設定屬性參數
+                                    ) // 執行相對應的邏輯計算或設定屬性參數
+                                  ], // 執行相對應的邏輯計算或設定屬性參數
+                                ), // 執行相對應的邏輯計算或設定屬性參數
+                                child: ClipRRect( // 建立圓角裁剪元件（ClipRRect），可將子元件裁切為圓角矩形
+                                  borderRadius: BorderRadius.circular(140), // 設定容器的圓角弧度半徑大小
+                                  child: Padding( // 建立間距容器（Padding），用於設定內部邊距
+                                    padding: const EdgeInsets.all(25.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                                    child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
+                                      colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
+                                      autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
+                                      scale: 1.5, // 執行相對應的邏輯計算或設定屬性參數
+                                      src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
+                                    ), // 執行相對應的邏輯計算或設定屬性參數
+                                  ), // 執行相對應的邏輯計算或設定屬性參數
+                                ), // 執行相對應的邏輯計算或設定屬性參數
+                              ), // 執行相對應的邏輯計算或設定屬性參數
+                            ), // 執行相對應的邏輯計算或設定屬性參數
+                          ); // 程式碼區塊或元件結構結束
+                        }, // 程式碼區塊或元件結構結束
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   // 精靈說話框 (初始狀態)
-                  if (!_isChatOpen)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                      margin: const EdgeInsets.symmetric(horizontal: 40),
-                      decoration: BoxDecoration(
-                        color: AppColors.background,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95)],
-                      ),
-                      child: Text(
-                        _messages.isNotEmpty ? _messages[0]['text'] : "載入中...",
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16, 
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+                  if (!_isChatOpen) ...[ // 執行相對應的邏輯計算或設定屬性參數
+                    Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                      margin: const EdgeInsets.symmetric(horizontal: 40), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                      decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                        color: AppColors.background, // 設定顏色數值（Color）
+                        borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
+                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                      child: Text( // 建立文字顯示元件（Text）
+                        _messages.isNotEmpty ? _messages[0]['text'] : "載入中...", // 執行相對應的邏輯計算或設定屬性參數
+                        textAlign: TextAlign.center, // 執行相對應的邏輯計算或設定屬性參數
+                        style: const TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                          fontSize: 16,  // 執行相對應的邏輯計算或設定屬性參數
+                          fontWeight: FontWeight.w500, // 執行相對應的邏輯計算或設定屬性參數
+                          color: AppColors.textPrimary // 設定顏色數值（Color）
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  ], // 執行相對應的邏輯計算或設定屬性參數
+                ], // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
 
             // 3. 底部輸入框
-            Positioned(
-              bottom: 20, left: 20, right: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _inputController,
-                        decoration: const InputDecoration(
-                          hintText: "輸入訊息...", 
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(color: AppColors.textPrimary)
-                        ),
-                        onSubmitted: _handleMessage,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send, color: AppColors.primary),
-                      onPressed: () => _handleMessage(_inputController.text),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+              bottom: 20, left: 20, right: 20, // 執行相對應的邏輯計算或設定屬性參數
+              child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                padding: const EdgeInsets.symmetric(horizontal: 20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                  color: AppColors.background, // 設定顏色數值（Color）
+                  borderRadius: BorderRadius.circular(30), // 設定容器的圓角弧度半徑大小
+                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                  children: [ // 執行相對應的邏輯計算或設定屬性參數
+                    Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+                      child: TextField( // 建立文字輸入框元件（TextField）
+                        controller: _inputController, // 執行相對應的邏輯計算或設定屬性參數
+                        decoration: const InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
+                          hintText: "輸入訊息...",  // 執行相對應的邏輯計算或設定屬性參數
+                          border: InputBorder.none, // 執行相對應的邏輯計算或設定屬性參數
+                          hintStyle: TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                        onSubmitted: _handleMessage, // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    IconButton( // 建立點擊圖示按鈕（IconButton）
+                      icon: const Icon(Icons.send, color: AppColors.primary), // 設定顏色數值（Color）
+                      onPressed: () => _handleMessage(_inputController.text), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ], // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
 
             // 4. 右側滑出的對話面板
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              transform: Matrix4.translationValues(
-                MediaQuery.of(context).size.width * _chatPanelX, 0, 0
-              ),
-              child: _buildChatPanel(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            IgnorePointer( // 執行相對應的邏輯計算或設定屬性參數
+              ignoring: !_isChatOpen, // 執行相對應的邏輯計算或設定屬性參數
+              child: AnimatedContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                duration: const Duration(milliseconds: 300), // 建立編譯期常數，優化 Flutter 渲染效能
+                curve: Curves.easeOutCubic, // 執行相對應的邏輯計算或設定屬性參數
+                transform: Matrix4.translationValues( // 執行相對應的邏輯計算或設定屬性參數
+                  MediaQuery.of(context).size.width * _chatPanelX, 0, 0 // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                child: _buildChatPanel(), // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildChatPanel() {
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      color: AppColors.background.withOpacity(0.98),
-      child: SafeArea(
-        child: Column(
-          children: [
+  Widget _buildChatPanel() { // 定義用於重複使用的 UI 封裝建構方法
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+      width: MediaQuery.of(context).size.width, // 執行相對應的邏輯計算或設定屬性參數
+      color: AppColors.background.withOpacity(0.98), // 設定顏色數值（Color）
+      child: SafeArea( // 執行相對應的邏輯計算或設定屬性參數
+        child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+          children: [ // 執行相對應的邏輯計算或設定屬性參數
             // 對話面板頭部
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-                    onPressed: () => _toggleChat(false),
-                  ),
-                  const Text("與精靈對話", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  if (msg['type'] == 'restaurant') {
-                    return _buildRestaurantCard(msg['text']);
-                  } else if (msg['type'] == 'nutrient') {
-                    return _buildNutrientCard();
-                  }
-                  return _buildChatMessage(msg['isElf'], msg['text'], options: msg['options']);
-                },
-              ),
-            ),
+            Padding( // 建立間距容器（Padding），用於設定內部邊距
+              padding: const EdgeInsets.all(16.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+              child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                children: [ // 執行相對應的邏輯計算或設定屬性參數
+                  IconButton( // 建立點擊圖示按鈕（IconButton）
+                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary), // 設定顏色數值（Color）
+                    onPressed: () => _toggleChat(false), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                  const Text("與精靈對話", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+                ], // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+              child: ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
+                padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                itemCount: _messages.length, // 執行相對應的邏輯計算或設定屬性參數
+                itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
+                  final msg = _messages[index]; // 宣告類別成員或方法內部的區域變數
+                  if (msg['type'] == 'restaurant') { // 執行相對應的邏輯計算或設定屬性參數
+                    return _buildRestaurantCard(msg['text']); // 回傳建構完成的元件或方法計算結果
+                  } else if (msg['type'] == 'nutrient') { // 執行相對應的邏輯計算或設定屬性參數
+                    return _buildNutrientCard(); // 回傳建構完成的元件或方法計算結果
+                  } // 程式碼區塊或元件結構結束
+                  return _buildChatMessage(msg['isElf'], msg['text'], options: msg['options']); // 回傳建構完成的元件或方法計算結果
+                }, // 程式碼區塊或元件結構結束
+              ), // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
             // 面板內也提供輸入框 (包含小精靈站位符)
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: AppColors.border)),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
-                          child: TextField(
-                            controller: _inputController,
-                            decoration: const InputDecoration(
-                              hintText: "詢問建議...", 
-                              border: InputBorder.none,
-                              hintStyle: TextStyle(color: AppColors.textPrimary)
-                            ),
-                            onSubmitted: _handleMessage,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      CircleAvatar(
-                        backgroundColor: AppColors.primary,
-                        child: IconButton(
-                          icon: const Icon(Icons.send, color: AppColors.background, size: 20),
-                          onPressed: () => _handleMessage(_inputController.text),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // 小精靈站位符 (趴在輸入框上方，放大並置中)
-                Positioned(
-                  top: -65,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: _getPetColor(_petType).withOpacity(0.9),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.background, width: 3),
-                        boxShadow: [
-                          BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))
-                        ],
-                      ),
-                      child: Icon(_getPetIcon(_petType), size: 64, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+              clipBehavior: Clip.none, // 執行相對應的邏輯計算或設定屬性參數
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+                  top: -130, // 執行相對應的邏輯計算或設定屬性參數
+                  left: 0, // 執行相對應的邏輯計算或設定屬性參數
+                  right: 0, // 執行相對應的邏輯計算或設定屬性參數
+                  child: Center( // 建立置中對齊元件（Center），將子元件居中顯示
+                    child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                      width: 250, // 執行相對應的邏輯計算或設定屬性參數
+                      height: 250, // 執行相對應的邏輯計算或設定屬性參數
+                      child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
+                        colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
+                        autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
+                        scale: 2.2, // 執行相對應的邏輯計算或設定屬性參數
+                        src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
+                        cameraControls: false, // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                  padding: const EdgeInsets.all(16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                  decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                    color: AppColors.background, // 設定顏色數值（Color）
+                    border: Border(top: BorderSide(color: AppColors.border)), // 設定顏色數值（Color）
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                  child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
+                    children: [ // 執行相對應的邏輯計算或設定屬性參數
+                      Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+                        child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+                          padding: const EdgeInsets.symmetric(horizontal: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                          child: TextField( // 建立文字輸入框元件（TextField）
+                            controller: _inputController, // 執行相對應的邏輯計算或設定屬性參數
+                            decoration: const InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
+                              hintText: "詢問建議...",  // 執行相對應的邏輯計算或設定屬性參數
+                              border: InputBorder.none, // 執行相對應的邏輯計算或設定屬性參數
+                              hintStyle: TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                            ), // 執行相對應的邏輯計算或設定屬性參數
+                            onSubmitted: _handleMessage, // 執行相對應的邏輯計算或設定屬性參數
+                          ), // 執行相對應的邏輯計算或設定屬性參數
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                      const SizedBox(width: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                      CircleAvatar( // 執行相對應的邏輯計算或設定屬性參數
+                        backgroundColor: AppColors.primary, // 設定顏色數值（Color）
+                        child: IconButton( // 建立點擊圖示按鈕（IconButton）
+                          icon: const Icon(Icons.send, color: AppColors.background, size: 20), // 設定顏色數值（Color）
+                          onPressed: () => _handleMessage(_inputController.text), // 執行相對應的邏輯計算或設定屬性參數
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ], // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) {
-    return Align(
-      alignment: isElf ? Alignment.centerLeft : Alignment.centerRight,
-      child: Column(
-        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
-            decoration: BoxDecoration(
-              color: isElf ? AppColors.background : AppColors.secondary,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)],
-              border: isElf ? Border.all(color: AppColors.border) : null,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  text,
-                  style: TextStyle(color: isElf ? AppColors.textPrimary : AppColors.background, fontSize: 15),
-                ),
-                if (isElf && options != null) ...[
-                  const SizedBox(height: 15),
-                  const Divider(height: 1),
-                  const SizedBox(height: 10),
-                  ...options.map((opt) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
-                          elevation: 0,
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  )).toList(),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) { // 定義用於重複使用的 UI 封裝建構方法
+    return Align( // 回傳建構完成的元件或方法計算結果
+      alignment: isElf ? Alignment.centerLeft : Alignment.centerRight, // 執行相對應的邏輯計算或設定屬性參數
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end, // 執行相對應的邏輯計算或設定屬性參數
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+            margin: const EdgeInsets.symmetric(vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75), // 執行相對應的邏輯計算或設定屬性參數
+            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+              color: isElf ? AppColors.background : AppColors.secondary, // 設定顏色數值（Color）
+              borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
+              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+              border: isElf ? Border.all(color: AppColors.border) : null, // 設定容器的四周邊框線條樣式
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+              crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                Text( // 建立文字顯示元件（Text）
+                  text, // 執行相對應的邏輯計算或設定屬性參數
+                  style: TextStyle(color: isElf ? AppColors.textPrimary : AppColors.background, fontSize: 15), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                ), // 執行相對應的邏輯計算或設定屬性參數
+                if (isElf && options != null) ...[ // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  const Divider(height: 1), // 建立編譯期常數，優化 Flutter 渲染效能
+                  const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  ...options.map((opt) => Padding( // 建立間距容器（Padding），用於設定內部邊距
+                    padding: const EdgeInsets.only(bottom: 8.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                    child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                      width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
+                      child: ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
+                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']), // 執行相對應的邏輯計算或設定屬性參數
+                        style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
+                          backgroundColor: AppColors.surface, // 設定顏色數值（Color）
+                          foregroundColor: AppColors.textPrimary, // 設定顏色數值（Color）
+                          elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
+                          side: const BorderSide(color: AppColors.border), // 設定顏色數值（Color）
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
+                        ), // 執行相對應的邏輯計算或設定屬性參數
+                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+                      ), // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  )).toList(), // 執行相對應的邏輯計算或設定屬性參數
+                ], // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  void _showNutrientDetail(String name, Map<String, dynamic> nutrients) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.45,
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 25),
-            Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-            const SizedBox(height: 10),
-            Text("預估攝取熱量: ${nutrients['calories']} kcal", style: const TextStyle(fontSize: 16, color: AppColors.secondary, fontWeight: FontWeight.w600)),
-            const Divider(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NutrientInfo(label: "蛋白質", value: "${nutrients['protein']}", unit: "g"),
-                _NutrientInfo(label: "脂肪", value: "${nutrients['fat']}", unit: "g"),
-                _NutrientInfo(label: "碳水", value: "${nutrients['carbs']}", unit: "g"),
-              ],
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () {
+  void _showNutrientDetail(String name, Map<String, dynamic> nutrients) { // 執行相對應的邏輯計算或設定屬性參數
+    showModalBottomSheet( // 執行相對應的邏輯計算或設定屬性參數
+      context: context, // 執行相對應的邏輯計算或設定屬性參數
+      backgroundColor: Colors.transparent, // 設定顏色數值（Color）
+      isScrollControlled: true, // 執行相對應的邏輯計算或設定屬性參數
+      builder: (context) => Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        height: MediaQuery.of(context).size.height * 0.45, // 執行相對應的邏輯計算或設定屬性參數
+        decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+          color: AppColors.background, // 設定顏色數值（Color）
+          borderRadius: BorderRadius.vertical(top: Radius.circular(30)), // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+        padding: const EdgeInsets.all(24), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+        child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+          children: [ // 執行相對應的邏輯計算或設定屬性參數
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))), // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+            const SizedBox(height: 25), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+            Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+            const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+            Text("預估攝取熱量: ${nutrients['calories']} kcal", style: const TextStyle(fontSize: 16, color: AppColors.secondary, fontWeight: FontWeight.w600)), // 建立文字顯示元件（Text）
+            const Divider(height: 40), // 建立編譯期常數，優化 Flutter 渲染效能
+            Row( // 建立水平排列元件（Row），橫向排列多個子元件
+              mainAxisAlignment: MainAxisAlignment.spaceAround, // 執行相對應的邏輯計算或設定屬性參數
+              children: [ // 執行相對應的邏輯計算或設定屬性參數
+                _NutrientInfo(label: "蛋白質", value: "${nutrients['protein']}", unit: "g"), // 執行相對應的邏輯計算或設定屬性參數
+                _NutrientInfo(label: "脂肪", value: "${nutrients['fat']}", unit: "g"), // 執行相對應的邏輯計算或設定屬性參數
+                _NutrientInfo(label: "碳水", value: "${nutrients['carbs']}", unit: "g"), // 執行相對應的邏輯計算或設定屬性參數
+              ], // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            const Spacer(), // 建立編譯期常數，優化 Flutter 渲染效能
+            ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
+              onPressed: () { // 執行相對應的邏輯計算或設定屬性參數
                 Navigator.pop(context); // 關閉彈窗
                 _toggleChat(false); // 關閉對話框
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ElfFeedingPage(
-                      imagePath: "", 
-                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}],
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: const Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                elevation: 2,
-              ),
-              child: const Text("確認食用", style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+                Navigator.push( // 導航路由跳轉：開啟並推入新頁面
+                  context, // 執行相對應的邏輯計算或設定屬性參數
+                  MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
+                    builder: (context) => ElfFeedingPage( // 執行相對應的邏輯計算或設定屬性參數
+                      imagePath: "",  // 執行相對應的邏輯計算或設定屬性參數
+                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}], // 執行相對應的邏輯計算或設定屬性參數
+                    ), // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ); // 程式碼區塊或元件結構結束
+              }, // 程式碼區塊或元件結構結束
+              style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
+                backgroundColor: AppColors.primary, // 設定顏色數值（Color）
+                minimumSize: const Size(double.infinity, 55), // 建立編譯期常數，優化 Flutter 渲染效能
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // 設定容器的圓角弧度半徑大小
+                elevation: 2, // 執行相對應的邏輯計算或設定屬性參數
+              ), // 執行相對應的邏輯計算或設定屬性參數
+              child: const Text("確認食用", style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildRestaurantCard(String text) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 1.95)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.restaurant, color: AppColors.secondary),
-              const SizedBox(width: 10),
-              Expanded(child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Text("點擊查看詳細地址與評價", style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
-        ],
-      ),
-    );
-  }
+  Widget _buildRestaurantCard(String text) { // 定義用於重複使用的 UI 封裝建構方法
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+      margin: const EdgeInsets.symmetric(vertical: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      padding: const EdgeInsets.all(15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+        color: AppColors.background, // 設定顏色數值（Color）
+        borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
+        border: Border.all(color: AppColors.border), // 設定容器的四周邊框線條樣式
+        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+      ), // 執行相對應的邏輯計算或設定屬性參數
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          Row( // 建立水平排列元件（Row），橫向排列多個子元件
+            children: [ // 執行相對應的邏輯計算或設定屬性參數
+              const Icon(Icons.restaurant, color: AppColors.secondary), // 設定顏色數值（Color）
+              const SizedBox(width: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+              Expanded(child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary))), // 建立文字顯示元件（Text）
+            ], // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+          const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+          const Text("點擊查看詳細地址與評價", style: TextStyle(color: AppColors.textPrimary, fontSize: 12)), // 建立文字顯示元件（Text）
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
 
-  Widget _buildNutrientCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925)],
-      ),
-      child: Column(
-        children: [
-          const Text("薯條 (大份)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const Divider(height: 30),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _NutrientInfo(label: "熱量", value: "380", unit: "kcal"),
-              _NutrientInfo(label: "蛋白質", value: "4", unit: "g"),
-              _NutrientInfo(label: "脂肪", value: "20", unit: "g"),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ElfFeedingPage(
+  Widget _buildNutrientCard() { // 定義用於重複使用的 UI 封裝建構方法
+    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+      margin: const EdgeInsets.symmetric(vertical: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+        color: Colors.white, // 設定顏色數值（Color）
+        borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+      ), // 執行相對應的邏輯計算或設定屬性參數
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          const Text("薯條 (大份)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+          const Divider(height: 30), // 建立編譯期常數，優化 Flutter 渲染效能
+          const Row( // 建立水平排列元件（Row），橫向排列多個子元件
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 執行相對應的邏輯計算或設定屬性參數
+            children: [ // 執行相對應的邏輯計算或設定屬性參數
+              _NutrientInfo(label: "熱量", value: "380", unit: "kcal"), // 執行相對應的邏輯計算或設定屬性參數
+              _NutrientInfo(label: "蛋白質", value: "4", unit: "g"), // 執行相對應的邏輯計算或設定屬性參數
+              _NutrientInfo(label: "脂肪", value: "20", unit: "g"), // 執行相對應的邏輯計算或設定屬性參數
+            ], // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+          const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+          ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
+            onPressed: () { // 執行相對應的邏輯計算或設定屬性參數
+              Navigator.push( // 導航路由跳轉：開啟並推入新頁面
+                context, // 執行相對應的邏輯計算或設定屬性參數
+                MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
+                  builder: (context) => const ElfFeedingPage( // 建立編譯期常數，優化 Flutter 渲染效能
                     imagePath: "", // 這裡可以用預設圖片
-                    items: [{'name': '薯條', 'portion': '大份', 'calories': '380 kcal'}],
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              minimumSize: const Size(double.infinity, 45),
-            ),
-            child: const Text("進行餵食", style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
+                    items: [{'name': '薯條', 'portion': '大份', 'calories': '380 kcal'}], // 執行相對應的邏輯計算或設定屬性參數
+                  ), // 執行相對應的邏輯計算或設定屬性參數
+                ), // 執行相對應的邏輯計算或設定屬性參數
+              ); // 程式碼區塊或元件結構結束
+            }, // 程式碼區塊或元件結構結束
+            style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
+              backgroundColor: AppColors.primary, // 設定顏色數值（Color）
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), // 設定容器的圓角弧度半徑大小
+              minimumSize: const Size(double.infinity, 45), // 建立編譯期常數，優化 Flutter 渲染效能
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            child: const Text("進行餵食", style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
   }
-}
+} // 程式碼區塊或元件結構結束
 
-class _NutrientInfo extends StatelessWidget {
-  final String label, value, unit;
-  const _NutrientInfo({required this.label, required this.value, required this.unit});
+class _NutrientInfo extends StatelessWidget { // 定義 _NutrientInfo 類別，繼承自 StatelessWidget
+  final String label, value, unit; // 宣告類別成員或方法內部的區域變數
+  const _NutrientInfo({required this.label, required this.value, required this.unit}); // 建立編譯期常數，優化 Flutter 渲染效能
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
-        const SizedBox(height: 5),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textPrimary)),
-      ],
-    );
-  }
-}
+  @override // 標記此方法為覆寫父類別之方法
+  Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
+    return Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+      children: [ // 執行相對應的邏輯計算或設定屬性參數
+        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)), // 建立文字顯示元件（Text）
+        const SizedBox(height: 5), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+      ], // 執行相對應的邏輯計算或設定屬性參數
+    ); // 程式碼區塊或元件結構結束
+  } // 程式碼區塊或元件結構結束
+} // 程式碼區塊或元件結構結束
