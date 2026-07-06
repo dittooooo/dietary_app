@@ -27,7 +27,10 @@ public class MenuItemService {
                 .restaurantName(request.getRestaurantName())
                 .dishName(request.getDishName())
                 .ingredients(request.getIngredients())
-                .nutrition(request.getNutrition())
+                .calories(request.getCalories())
+                .protein(request.getProtein())
+                .fat(request.getFat())
+                .carbohydrates(request.getCarbohydrates())
                 .recommendLevel(request.getRecommendLevel())
                 .build());
     }
@@ -38,7 +41,10 @@ public class MenuItemService {
         item.setRestaurantName(request.getRestaurantName());
         item.setDishName(request.getDishName());
         item.setIngredients(request.getIngredients());
-        item.setNutrition(request.getNutrition());
+        item.setCalories(request.getCalories());
+        item.setProtein(request.getProtein());
+        item.setFat(request.getFat());
+        item.setCarbohydrates(request.getCarbohydrates());
         item.setRecommendLevel(request.getRecommendLevel());
         return menuItemRepository.save(item);
     }

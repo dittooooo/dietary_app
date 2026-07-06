@@ -26,8 +26,17 @@ public class DietRecord {
     @Column(nullable = false)
     private String dishName;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String nutrition;
+    @Column(name = "calories")
+    private Double calories;
+
+    @Column(name = "protein")
+    private Double protein;
+
+    @Column(name = "fat")
+    private Double fat;
+
+    @Column(name = "carbohydrates")
+    private Double carbohydrates;
 
     @Column(nullable = true)
     private String description;

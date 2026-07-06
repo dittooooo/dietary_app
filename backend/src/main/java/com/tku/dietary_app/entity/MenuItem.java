@@ -25,8 +25,17 @@ public class MenuItem {
     @Column(columnDefinition = "TEXT")
     private String ingredients;
 
-    @Column(columnDefinition = "TEXT")
-    private String nutrition;
+    @Column(name = "calories")
+    private Double calories;
+
+    @Column(name = "protein")
+    private Double protein;
+
+    @Column(name = "fat")
+    private Double fat;
+
+    @Column(name = "carbohydrates")
+    private Double carbohydrates;
 
     private String recommendLevel;
 }

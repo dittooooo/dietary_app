@@ -1,6 +1,7 @@
 package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.dto.DietRecordRequest;
+import com.tku.dietary_app.dto.DietRecordResponse;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.DietRecordService;
@@ -28,19 +29,28 @@ public class DietRecordController {
     @GetMapping
     public ResponseEntity<?> getRecords() {
         User user = getLoginUser();
-        return ResponseEntity.ok(dietRecordService.getRecordsByUser(user.getId()));
+        return ResponseEntity.ok(
+            dietRecordService.getRecordsByUser(user.getId())
+                .stream()
+                .map(DietRecordResponse::fromEntity)
+                .toList()
+        );
     }
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody DietRecordRequest request) {
         User user = getLoginUser();
-        return ResponseEntity.ok(dietRecordService.create(user.getId(), request));
+        return ResponseEntity.ok(DietRecordResponse.fromEntity(
+            dietRecordService.create(user.getId(), request)
+        ));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody DietRecordRequest request) {
         User user = getLoginUser();
-        return ResponseEntity.ok(dietRecordService.update(id, user.getId(), request));
+        return ResponseEntity.ok(DietRecordResponse.fromEntity(
+            dietRecordService.update(id, user.getId(), request)
+        ));
     }
 
     @DeleteMapping("/{id}")

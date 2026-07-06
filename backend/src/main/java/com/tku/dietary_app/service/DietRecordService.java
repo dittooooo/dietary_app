@@ -75,7 +75,10 @@ public class DietRecordService {
         return dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName())
-                .nutrition(request.getNutrition())
+                .calories(request.getCalories())
+                .protein(request.getProtein())
+                .fat(request.getFat())
+                .carbohydrates(request.getCarbohydrates())
                 .description(request.getDescription())
                 .mealType(normalizeMealType(request.getMealType()))
                 .build());
@@ -85,7 +88,10 @@ public class DietRecordService {
         DietRecord record = dietRecordRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("找不到飲食紀錄 (ID: " + id + ")"));
         record.setDishName(request.getDishName());
-        record.setNutrition(request.getNutrition());
+        record.setCalories(request.getCalories());
+        record.setProtein(request.getProtein());
+        record.setFat(request.getFat());
+        record.setCarbohydrates(request.getCarbohydrates());
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
         return dietRecordRepository.save(record);
@@ -105,7 +111,10 @@ public class DietRecordService {
             throw new RuntimeException("無權編輯此紀錄");
         }
         record.setDishName(request.getDishName());
-        record.setNutrition(request.getNutrition());
+        record.setCalories(request.getCalories());
+        record.setProtein(request.getProtein());
+        record.setFat(request.getFat());
+        record.setCarbohydrates(request.getCarbohydrates());
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
         return dietRecordRepository.save(record);
