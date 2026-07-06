@@ -7,6 +7,9 @@ public class MenuItemRequest {
     private String restaurantName;
     private String dishName;
     private String ingredients;
-    private String nutrition;
+    private Double calories;
+    private Double protein;
+    private Double fat;
+    private Double carbohydrates;
     private String recommendLevel;
 }

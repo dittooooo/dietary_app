@@ -2,7 +2,9 @@ package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.dto.AdminUserRequest;
 import com.tku.dietary_app.dto.DietRecordRequest;
+import com.tku.dietary_app.dto.DietRecordResponse;
 import com.tku.dietary_app.dto.MenuItemRequest;
+import com.tku.dietary_app.dto.MenuItemResponse;
 import com.tku.dietary_app.dto.RestaurantRequest;
 import com.tku.dietary_app.service.AdminService;
 import com.tku.dietary_app.service.DietRecordService;
@@ -90,18 +92,30 @@ public class AdminController {
 
     @GetMapping("/menus")
     public ResponseEntity<?> listMenuItems(@RequestParam(required = false) String dishName) {
-        if (dishName != null) return ResponseEntity.ok(menuItemService.searchByDishName(dishName));
-        return ResponseEntity.ok(menuItemService.getAllMenuItems());
+        if (dishName != null) {
+            return ResponseEntity.ok(
+                menuItemService.searchByDishName(dishName)
+                    .stream()
+                    .map(MenuItemResponse::fromEntity)
+                    .toList()
+            );
+        }
+        return ResponseEntity.ok(
+            menuItemService.getAllMenuItems()
+                .stream()
+                .map(MenuItemResponse::fromEntity)
+                .toList()
+        );
     }
 
     @PostMapping("/menus")
     public ResponseEntity<?> addMenuItem(@RequestBody MenuItemRequest request) {
-        return ResponseEntity.ok(menuItemService.create(request));
+        return ResponseEntity.ok(MenuItemResponse.fromEntity(menuItemService.create(request)));
     }
 
     @PutMapping("/menus/{id}")
     public ResponseEntity<?> editMenuItem(@PathVariable Long id, @RequestBody MenuItemRequest request) {
-        return ResponseEntity.ok(menuItemService.update(id, request));
+        return ResponseEntity.ok(MenuItemResponse.fromEntity(menuItemService.update(id, request)));
     }
 
     @DeleteMapping("/menus/{id}")
@@ -119,17 +133,26 @@ public class AdminController {
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
                                              @RequestParam(required = false) String mealType,
                                              @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
-        return ResponseEntity.ok(dietRecordService.getAdminRecords(userId, nickname, dishName, date, mealType, weekStart));
+        return ResponseEntity.ok(
+            dietRecordService.getAdminRecords(userId, nickname, dishName, date, mealType, weekStart)
+                .stream()
+                .map(DietRecordResponse::fromEntity)
+                .toList()
+        );
     }
 
     @PostMapping("/diet-records")
     public ResponseEntity<?> addDietRecord(@RequestParam Long userId, @RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(dietRecordService.create(userId, request));
+        return ResponseEntity.ok(DietRecordResponse.fromEntity(
+            dietRecordService.create(userId, request)
+        ));
     }
 
     @PutMapping("/diet-records/{id}")
     public ResponseEntity<?> editDietRecord(@PathVariable Long id, @RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(dietRecordService.updateByAdmin(id, request));
+        return ResponseEntity.ok(DietRecordResponse.fromEntity(
+            dietRecordService.updateByAdmin(id, request)
+        ));
     }
 
     @DeleteMapping("/diet-records/{id}")

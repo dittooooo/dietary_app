@@ -44,8 +44,10 @@ public class AvatarController {
     }
 
     private ResponseEntity<?> saveAvatar(MultipartFile file, Long userId) {
+        // 相容前端常把 UserProfile 的 id 傳進來：先用 userId 找，找不到再把參數當成 profileId。
         UserProfile profile = userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("找不到使用者 Profile (userId: " + userId + ")"));
+                .or(() -> userProfileRepository.findById(userId))
+                .orElseThrow(() -> new RuntimeException("找不到使用者 Profile (id/userId: " + userId + ")"));
 
         String ext = getExtension(file.getOriginalFilename());
         String filename = "user_" + userId + "_" + UUID.randomUUID() + ext;
