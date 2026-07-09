@@ -1,0 +1,12 @@
+{
+  "name": "companion-agent-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "main": "companion-agent.js",
+  "scripts": {
+    "start": "node companion-agent.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
