@@ -1,6 +1,7 @@
 package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.dto.DietaryAskRequest;
+import jakarta.validation.Valid;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.DietaryAgentService;
@@ -18,7 +19,7 @@ public class DietaryAgentController {
     private final UserRepository userRepository;
 
     @PostMapping("/ask-weekly-analysis")
-    public ResponseEntity<?> ask(@RequestBody DietaryAskRequest request) {
+    public ResponseEntity<?> ask(@Valid @RequestBody DietaryAskRequest request) {
         String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
         User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用者不存在"));
         return ResponseEntity.ok(dietaryAgentService.ask(user.getId(), request));

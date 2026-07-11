@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -46,6 +47,9 @@ public class DietRecord {
 
     @Column(name = "meal_type", nullable = false)
     private String mealType;
+
+    @Column(name = "meal_date")
+    private LocalDate mealDate;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)

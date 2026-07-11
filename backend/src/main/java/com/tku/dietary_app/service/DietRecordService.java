@@ -81,6 +81,7 @@ public class DietRecordService {
                 .carbohydrates(request.getCarbohydrates())
                 .description(request.getDescription())
                 .mealType(normalizeMealType(request.getMealType()))
+                .mealDate(request.getMealDate())
                 .build());
     }
 
@@ -94,6 +95,7 @@ public class DietRecordService {
         record.setCarbohydrates(request.getCarbohydrates());
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
+        record.setMealDate(request.getMealDate());
         return dietRecordRepository.save(record);
     }
 
@@ -117,6 +119,7 @@ public class DietRecordService {
         record.setCarbohydrates(request.getCarbohydrates());
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
+        record.setMealDate(request.getMealDate());
         return dietRecordRepository.save(record);
     }
 
