@@ -47,7 +47,7 @@ public class DietaryAgentService {
 
         List<DietRecordDto> recordDtos = records.stream()
                 .map(r -> DietRecordDto.builder()
-                        .date(r.getCreatedAt().toLocalDate().toString())
+                        .date(resolveMealDate(r).toString())
                         .meal(r.getMealType().toLowerCase())
                         .dishName(r.getDishName())
                         .description(r.getDescription())
@@ -69,5 +69,12 @@ public class DietaryAgentService {
                         .build())
                 .weeklyDietRecords(recordDtos)
                 .build();
+    }
+
+    private LocalDate resolveMealDate(DietRecord record) {
+        if (record.getMealDate() != null) {
+            return record.getMealDate();
+        }
+        return record.getCreatedAt().toLocalDate();
     }
 }
