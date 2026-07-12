@@ -8,6 +8,7 @@ import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套�
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 import '../../config/api_config.dart'; // 匯入 api_config.dart
+import 'dart:convert'; // 處理 JSON 轉換
 
 class DiaryPage extends StatefulWidget { // 定義 DiaryPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
@@ -49,10 +50,26 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
       final records = await DietService().getMyDietRecords();
       setState(() {
+        _jwtToken = token; // 確保 JWT Token 在 UI 載入前就緒，防止圖片 headers 變更觸發二次下載
         _allRecords = records;
       });
+      // 預加載所有餐點圖片，點擊展開時瞬間顯示
+      for (var record in records) {
+        if (record['photoUrl'] != null && (record['photoUrl'] as String).isNotEmpty) {
+          final imageUrl = "${ApiConfig.baseUrl.replaceAll('/api', '')}${record['photoUrl']}";
+          final provider = NetworkImage(
+            imageUrl,
+            headers: token != null ? {'Authorization': 'Bearer $token'} : null,
+          );
+          precacheImage(provider, context).catchError((e) {
+            debugPrint("Precache image error: $e");
+          });
+        }
+      }
     } catch (e) {
       debugPrint('加載飲食紀錄失敗: $e');
     } finally {
@@ -60,18 +77,64 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     }
   }
 
+  DateTime? _getRecordDate(dynamic record) {
+    if (record == null) return null;
+    
+    // 1. Try mealDate first
+    final mealDateVal = record['mealDate'];
+    if (mealDateVal != null) {
+      if (mealDateVal is String) {
+        try {
+          return DateTime.parse(mealDateVal);
+        } catch (_) {}
+      } else if (mealDateVal is List && mealDateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(mealDateVal[0].toString()),
+            int.parse(mealDateVal[1].toString()),
+            int.parse(mealDateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (mealDateVal is Map) {
+        try {
+          final y = int.parse((mealDateVal['year'] ?? mealDateVal['yearValue']).toString());
+          final m = int.parse((mealDateVal['month'] ?? mealDateVal['monthValue']).toString());
+          final d = int.parse((mealDateVal['day'] ?? mealDateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 2. Fallback to createdAt
+    final createdAtVal = record['createdAt'];
+    if (createdAtVal != null) {
+      if (createdAtVal is String) {
+        try {
+          return DateTime.parse(createdAtVal);
+        } catch (_) {}
+      } else if (createdAtVal is List && createdAtVal.length >= 3) {
+        try {
+          final y = int.parse(createdAtVal[0].toString());
+          final m = int.parse(createdAtVal[1].toString());
+          final d = int.parse(createdAtVal[2].toString());
+          final h = createdAtVal.length > 3 ? int.parse(createdAtVal[3].toString()) : 0;
+          final min = createdAtVal.length > 4 ? int.parse(createdAtVal[4].toString()) : 0;
+          final s = createdAtVal.length > 5 ? int.parse(createdAtVal[5].toString()) : 0;
+          return DateTime(y, m, d, h, min, s);
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
   // 根據日期過濾今日的飲食紀錄
   List<dynamic> _getRecordsForSelectedDate() {
     return _allRecords.where((record) {
-      if (record['createdAt'] == null) return false;
-      try {
-        final createdAt = DateTime.parse(record['createdAt']);
-        return createdAt.year == widget.date.year &&
-               createdAt.month == widget.date.month &&
-               createdAt.day == widget.date.day;
-      } catch (_) {
-        return false;
-      }
+      final rDate = _getRecordDate(record);
+      if (rDate == null) return false;
+      return rDate.year == widget.date.year &&
+             rDate.month == widget.date.month &&
+             rDate.day == widget.date.day;
     }).toList();
   }
 
@@ -244,7 +307,8 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   Widget _buildMealCard(String title, IconData icon, List<String> items, dynamic record) { // 定義用於重複使用的 UI 封裝建構方法
     bool isExpanded = _expandedMeals.contains(record['id'].toString()); // 宣告類別成員或方法內部的區域變數
     bool isSwiped = _swipedMeal == record['id'].toString(); // 宣告類別成員或方法內部的區域變數
-    bool needsExpansion = items.length > 2 || (record['photoUrl'] != null && (record['photoUrl'] as String).isNotEmpty); // 宣告類別成員或方法內部的區域變數
+    bool needsExpansion = true; // 無論是否有相片，都允許展開以顯示營養數值或相片
+    final nutritionParts = _getNutritionParts(record['nutrition']);
 
     return Column( // 建立垂直排列元件（Column），縱向排列多個子元件
       children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -290,7 +354,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 AnimatedPositioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
                   duration: const Duration(milliseconds: 250), curve: Curves.easeOutQuart, // 建立編譯期常數，優化 Flutter 渲染效能
-                  left: isSwiped ? -180 : 0, right: isSwiped ? 180 : 0, // 執行相對應的邏輯計算或設定屬性參數
+                  left: isSwiped ? -200 : 0, right: isSwiped ? 200 : 0, // 執行相對應的邏輯計算或設定屬性參數
                   top: 0, bottom: 0, // 執行相對應的邏輯計算或設定屬性參數
                   child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                     color: Colors.white, // 設定顏色數值（Color）
@@ -315,8 +379,10 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
             ), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
         ), // 執行相對應的邏輯計算或設定屬性參數
-        if (isExpanded) 
-          Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        Visibility(
+          visible: isExpanded,
+          maintainState: true,
+          child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
             width: double.infinity, padding: const EdgeInsets.all(12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
             decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
               color: AppColors.surface, // 設定顏色數值（Color）
@@ -334,7 +400,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
               children: [
                 if (items.length > 2)
                   Text(items.skip(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.5, color: AppColors.textPrimary)),
-                if (record['nutrition'] != null && (record['nutrition'] as String).isNotEmpty)
+                if (nutritionParts.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
                     child: Container(
@@ -352,7 +418,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.secondary),
                           ),
                           const SizedBox(height: 6),
-                          ...((record['nutrition'] as String).split(', ')).map((part) => Padding(
+                          ...nutritionParts.map((part) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 2.0),
                             child: Row(
                               children: [
@@ -387,13 +453,24 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                         width: double.infinity,
                         height: 200,
                         fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[100],
+                            child: const Center(
+                              child: CircularProgressIndicator(color: AppColors.primary),
+                            ),
+                          );
+                        },
                         errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
                       ),
                     ),
                   ),
               ],
             ), // 建立文字顯示元件（Text）
-          ), // 執行相對應的邏輯計算或設定屬性參數
+          ),
+        ), // 執行相對應的邏輯計算或設定屬性參數
       ], // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
@@ -408,6 +485,54 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
+  List<String> _getNutritionParts(dynamic nutritionVal) {
+    if (nutritionVal == null) return [];
+    
+    String formatValue(String key, dynamic val) {
+      final sVal = val.toString().trim();
+      if (key.contains('熱量') || key.toLowerCase().contains('calories') || key.toLowerCase().contains('cal')) {
+        if (sVal.contains('kcal') || sVal.contains('卡')) return sVal;
+        return '$sVal kcal';
+      }
+      if (key.contains('蛋白質') || key.toLowerCase().contains('protein') ||
+          key.contains('脂肪') || key.toLowerCase().contains('fat') ||
+          key.contains('碳水') || key.toLowerCase().contains('carb')) {
+        if (sVal.contains('g') || sVal.contains('克')) return sVal;
+        return '$sVal g';
+      }
+      return sVal;
+    }
+
+    if (nutritionVal is Map) {
+      final List<String> parts = [];
+      nutritionVal.forEach((k, v) {
+        final keyStr = k.toString().trim();
+        final valStr = formatValue(keyStr, v);
+        String displayKey = keyStr;
+        if (keyStr.toLowerCase() == 'calories') displayKey = '熱量';
+        else if (keyStr.toLowerCase() == 'protein') displayKey = '蛋白質';
+        else if (keyStr.toLowerCase() == 'fat') displayKey = '脂肪';
+        else if (keyStr.toLowerCase() == 'carbohydrates' || keyStr.toLowerCase() == 'carbs') displayKey = '碳水化合物';
+        parts.add('$displayKey: $valStr');
+      });
+      return parts;
+    }
+    if (nutritionVal is String) {
+      if (nutritionVal.isEmpty) return [];
+      final trimmed = nutritionVal.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          final parsed = jsonDecode(trimmed);
+          if (parsed is Map) {
+            return _getNutritionParts(parsed);
+          }
+        } catch (_) {}
+      }
+      return nutritionVal.split(', ').where((s) => s.trim().isNotEmpty).toList();
+    }
+    return [nutritionVal.toString()];
+  }
+
   String _parseNutrient(String? nutritionStr, String pattern) {
     if (nutritionStr == null || nutritionStr.isEmpty) return '';
     final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
@@ -418,7 +543,9 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   // 1. 編輯紀錄
   void _handleEditRecord(dynamic record) {
     setState(() => _swipedMeal = null);
-    final String nutritionStr = record['nutrition'] ?? '';
+    final String nutritionStr = record['nutrition'] is Map 
+        ? _getNutritionParts(record['nutrition']).join(', ')
+        : (record['nutrition']?.toString() ?? '');
     final calVal = _parseNutrient(nutritionStr, r'(?:熱量|calories|kcal)');
     final proVal = _parseNutrient(nutritionStr, r'(?:蛋白質|protein)');
     final fatVal = _parseNutrient(nutritionStr, r'(?:脂肪|fat)');

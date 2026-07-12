@@ -24,7 +24,14 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   // 注入 Ticker 以支援小精靈動畫
   late PageController _pageController; // 宣告分頁控制器
   late AnimationController _pacmanController; // 宣告小精靈嘴巴動畫控制器
+  late AnimationController _peelController; // 宣告自訂撕紙頁面轉場動畫控制器
   int _currentPage = 0; // 追蹤當前所在頁碼
+
+  // 新增：用於自訂撕紙轉場動畫的狀態變數，保證頁面完全靜態不滑動
+  bool _isAnimatingPage = false;
+  bool _isBackAnimating = false; // 新增：是否正在向後（返回）播放動畫
+  int _animatingFromPage = 0;
+  int _animatingToPage = 0;
 
   static const TextStyle _titleStyle = TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
     fontSize: 28, // 執行相對應的邏輯計算或設定屬性參數
@@ -54,6 +61,12 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   String _age = ''; // 保存：年齡
   String _height = ''; // 保存：身高
   String _weight = ''; // 保存 : 體重
+  
+  // 持續性控制器，避免每一次 setState 重建 Widget 時重建模擬文字控制器導致焦點流失或數據重設
+  late TextEditingController _nameController;
+  late TextEditingController _ageController;
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
   Set<String> _diseases = {}; // 保存：疾病集 (對應 backend: healthConditions)
   Set<String> _goals = {}; // 保存：目標集 (對應 backend: dietGoal)
   
@@ -75,6 +88,34 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
       vsync: this, // 綁定 Ticker 
       duration: const Duration(milliseconds: 300), // 動畫週期
     )..repeat(reverse: true); // 循環往復播放
+    
+    // 初始化自訂撕紙動畫控制器，長度為 1 秒
+    _peelController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _peelController.addStatusListener((status) {
+      if (_isAnimatingPage) {
+        // 區分前進與返回的動畫結束判定：
+        // 1. 前進 (正放) 結束於 completed (進度從 0.0 到 1.0)
+        // 2. 返回 (倒放) 結束於 dismissed (進度從 1.0 到 0.0)
+        // 這樣可以避免倒放初始化設定 value = 1.0 時，瞬間觸發 completed 導致動畫直接結束跳轉的 Bug
+        if ((!_isBackAnimating && status == AnimationStatus.completed) ||
+            (_isBackAnimating && status == AnimationStatus.dismissed)) {
+          setState(() {
+            _isAnimatingPage = false;
+            _pageController.jumpToPage(_animatingToPage);
+          });
+          _peelController.reset();
+        }
+      }
+    });
+    
+    // 初始化持續性控制器，帶入初始狀態值
+    _nameController = TextEditingController(text: _name);
+    _ageController = TextEditingController(text: _age);
+    _heightController = TextEditingController(text: _height);
+    _weightController = TextEditingController(text: _weight);
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -82,11 +123,17 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     // 狀態銷毀時執行
     _pageController.dispose(); // 釋放分頁控制器資源
     _pacmanController.dispose(); // 釋放嘴巴動畫控制器
+    _peelController.dispose(); // 釋放自訂撕紙動畫控制器
+    _nameController.dispose(); // 釋放姓名控制器
+    _ageController.dispose(); // 釋放年齡控制器
+    _heightController.dispose(); // 釋放身高控制器
+    _weightController.dispose(); // 釋放體重控制器
     super.dispose(); // 執行父類銷毀
   } // 程式碼區塊或元件結構結束
 
   void _nextPage() { // 執行相對應的邏輯計算或設定屬性參數
-    // 下一頁處理邏輯
+    // 下一頁處理邏輯，首先關閉軟鍵盤，防止鍵盤殘留到無輸入框的頁面
+    FocusManager.instance.primaryFocus?.unfocus(); 
     print('DEBUG: [邏輯執行] _nextPage 啟動, 目前頁碼: $_currentPage'); // 執行相對應的邏輯計算或設定屬性參數
     if (!_canProceed()) { // 執行相對應的邏輯計算或設定屬性參數
       // 檢查當前頁面是否完成
@@ -103,12 +150,19 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
 
     if (_currentPage < 6) { // 執行相對應的邏輯計算或設定屬性參數
       // 若非最後一頁
-      debugPrint('執行翻頁動畫...'); // 執行相對應的邏輯計算或設定屬性參數
-      _pageController.nextPage( // 執行相對應的邏輯計算或設定屬性參數
-        // 執行翻頁動畫
-        duration: const Duration(milliseconds: 500), // 設定動畫時長
-        curve: Curves.easeInOut, // 設定動畫曲線
-      ); // 程式碼區塊或元件結構結束
+      final targetPage = _currentPage + 1;
+      debugPrint('啟動自訂撕紙翻頁動畫 (前進) -> 從 $_currentPage 到 $targetPage'); // 執行相對應的邏輯計算或設定屬性參數
+      if (_isAnimatingPage) return; // 避免動畫中重複點擊
+      setState(() {
+        _isAnimatingPage = true;
+        _isBackAnimating = false; // 標記為前進轉場
+        _animatingFromPage = _currentPage;
+        _animatingToPage = targetPage;
+        _currentPage = targetPage; // 立即同步更新頁碼，保證導航點吃豆子動畫同步
+        _peelController.value = 0.0; // 關鍵：在第一幀渲染前將進度歸零，防止瞬間閃爍
+      });
+      _pageController.jumpToPage(targetPage); // 前進時，底層 PageView 先瞬間切換至新頁面
+      _peelController.forward(); // 播放撕角動畫，覆蓋在 PageView 上方
     } else { // 程式碼區塊或元件結構結束
       // 若為最後一頁
       debugPrint('已在最後一頁，啟動完成設定流程...'); // 執行相對應的邏輯計算或設定屬性參數
@@ -117,14 +171,22 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   } // 程式碼區塊或元件結構結束
 
   void _previousPage() { // 執行相對應的邏輯計算或設定屬性參數
-    // 上一頁處理邏輯
+    // 上一頁處理邏輯，首先關閉軟鍵盤
+    FocusManager.instance.primaryFocus?.unfocus();
     if (_currentPage > 0) { // 執行相對應的邏輯計算或設定屬性參數
-      // 若非第一頁
-      _pageController.previousPage( // 執行相對應的邏輯計算或設定屬性參數
-        // 執行回翻動畫
-        duration: const Duration(milliseconds: 400), // 動畫時長
-        curve: Curves.easeInOut, // 動畫曲線
-      ); // 程式碼區塊或元件結構結束
+      final targetPage = _currentPage - 1;
+      debugPrint('啟動自訂倒放撕紙動畫 (返回) -> 從 $_currentPage 到 $targetPage');
+      if (_isAnimatingPage) return; // 避免動畫中重複點擊
+      setState(() {
+        _isAnimatingPage = true;
+        _isBackAnimating = true; // 標記為返回轉場
+        _animatingFromPage = _currentPage;
+        _animatingToPage = targetPage;
+        _currentPage = targetPage; // 立即同步更新頁碼，保證導航點吃豆子動畫同步
+        _peelController.value = 1.0; // 關鍵：在第一幀渲染前將進度設為最大，確保上一頁起初處於完全裁剪（不可見）狀態，防止閃爍
+      });
+      // 返回時，底層 PageView 維持不變，等上一頁從左上角完全「撕下覆蓋」後，再於 StatusListener 中 jump 頁碼
+      _peelController.reverse(); // 倒放撕角動畫：讓捲曲角從左上角捲回來覆蓋畫面
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -274,10 +336,15 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     // 建立畫面 UI
-    return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      body: Container( // 設定頁面的主要內容區域（body）
-        // 主容器
-        color: AppColors.surface, // 改為主題淺灰背景
+    final double topPadding = MediaQuery.of(context).padding.top;
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(), // 點擊畫面空白處自動收回鍵盤
+      child: Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
+        body: Container( // 設定頁面的主要內容區域（body）
+          // 主容器
+          color: AppColors.surface, // 改為主題淺灰背景
         child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
         // 疊層佈局
         children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -288,20 +355,22 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
               _pacmanController, // 執行相對應的邏輯計算或設定屬性參數
             ]), // 整合兩個動畫源
             builder: (context, child) { // 執行相對應的邏輯計算或設定屬性參數
-              return CustomPaint( // 回傳建構完成的元件或方法計算結果
+              return CustomPaint( // 回傳建構完成的元件 or 方法計算結果
                 // 背景手繪筆記本畫布
                 painter: HandDrawnNotebookPainter( // 執行相對應的邏輯計算或設定屬性參數
                   scrollProgress: _pageController.hasClients // 執行相對應的邏輯計算或設定屬性參數
                       ? (_pageController.page ?? 0) // 執行相對應的邏輯計算或設定屬性參數
                       : 0, // 傳遞平滑滾動進度
                   mouthProgress: _pacmanController.value, // 傳遞嘴巴張合值
+                  topPadding: topPadding, // 傳送頂部安全邊距
+                  bottomPadding: bottomPadding, // 傳送底部安全邊距
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 size: Size.infinite, // 鋪滿全屏
               ); // 程式碼區塊或元件結構結束
             }, // 程式碼區塊或元件結構結束
           ), // 執行相對應的邏輯計算或設定屬性參數
           PageView.builder( // 執行相對應的邏輯計算或設定屬性參數
-            // 分頁滾動組件
+            // 分頁滾動組件，始終常駐在樹中，確保 PageController 始終有客戶端連結
             controller: _pageController, // 控制器連結
             scrollDirection: Axis.vertical, // 垂直捲動模式
             onPageChanged: (index) { // 執行相對應的邏輯計算或設定屬性參數
@@ -312,13 +381,74 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
               }); // 程式碼區塊或元件結構結束
             }, // 程式碼區塊或元件結構結束
             pageSnapping: true, // 啟用頁面捕捉 (整頁對齊)
-            physics: const PageScrollPhysics(), // 設定分頁物理效果
+            physics: const NeverScrollableScrollPhysics(), // 禁用手勢滑動，強制必須點擊「下一頁」並通過欄位校驗
             itemCount: 7, // 總頁數
             itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
               // 構建分頁內容
               return _buildPageByIndex(index); // 根據索引調用子頁面
             }, // 程式碼區塊或元件結構結束
           ), // 執行相對應的邏輯計算或設定屬性參數
+          if (_isAnimatingPage) // 新增：如果正在播放動畫，將舊紙張覆蓋在 PageView 上並撕走
+            AnimatedBuilder(
+              animation: _peelController,
+              builder: (context, child) {
+                final progress = _peelController.value;
+                return Stack(
+                  children: [
+                    if (_isBackAnimating) ...[
+                      // 返回上一步轉場：
+                      // 1. 底層渲染當前頁面 (即將被覆蓋的舊頁面)
+                      _buildPageByIndex(_animatingFromPage),
+                      // 2. 頂層渲染上一頁 (目標頁面)，並套用隨著動畫倒放逐漸展開的剪裁
+                      ClipPath(
+                        clipper: PagePeelClipper(progress: progress),
+                        child: _buildPageByIndex(_animatingToPage),
+                      ),
+                    ] else ...[
+                      // 前進下一步轉場：
+                      // 1. 底層渲染新頁面
+                      _buildPageByIndex(_animatingToPage),
+                      // 2. 頂層渲染當前頁面 (被撕走的頁面)，並套用漸隱剪裁
+                      ClipPath(
+                        clipper: PagePeelClipper(progress: progress),
+                        child: _buildPageByIndex(_animatingFromPage),
+                      ),
+                    ],
+                    // 3. 在最上層繪製捲角與摺痕陰影
+                    CustomPaint(
+                      painter: PageFlipPainter(progress: progress),
+                      size: Size.infinite,
+                    ),
+                  ],
+                );
+              },
+            ),
+          // 1. 全局唯一的小精靈進度條，在轉場最後 20% 的階段平滑淡入，消除時間差與重影
+          Positioned(
+            top: topPadding + 75,
+            left: 20,
+            right: 20,
+            height: 30,
+            child: AnimatedBuilder(
+              animation: Listenable.merge([
+                _peelController,
+                _pacmanController,
+              ]),
+              builder: (context, child) {
+                final opacityVal = _isAnimatingPage ? 0.0 : 1.0;
+                return Opacity(
+                  opacity: opacityVal,
+                  child: CustomPaint(
+                    painter: SinglePagePacmanProgressPainter(
+                      pageIndex: _currentPage,
+                      mouthProgress: _pacmanController.value,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+
           AnimatedBuilder( // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
             // 動畫建構器
             animation: _pageController, // 監聽控制器
@@ -333,7 +463,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                   _pageController.page ?? _currentPage.toDouble(); // 獲取當前偏移值
 
               if ((pageValue - pageValue.floor()).abs() > 0.01 && // 若正在翻頁過渡中
-                  (pageValue - pageValue.floor()).abs() < 0.99) { // 執行相對應的邏輯計算或設定屬性參數
+                   (pageValue - pageValue.floor()).abs() < 0.99) { // 執行相對應的邏輯計算或設定屬性參數
                 // 判定過渡區間
                 return CustomPaint( // 回傳建構完成的元件或方法計算結果
                   // 顯示翻頁特效畫布
@@ -349,7 +479,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
-    )); // 執行相對應的邏輯計算或設定屬性參數
+    ))); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
 
   Widget _buildPageContainer({ // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
@@ -358,9 +488,12 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     required Widget content, // 內容組件
     bool scrollable = true, // 是否可捲動
   }) { // 執行相對應的邏輯計算或設定屬性參數
+    final double topPadding = MediaQuery.of(context).padding.top;
+    final double bottomPadding = MediaQuery.of(context).padding.bottom;
+    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
     return Padding( // 建立間距容器（Padding），用於設定內部邊距
-      // 內容邊距設定
-      padding: const EdgeInsets.fromLTRB(60, 140, 60, 70), // 設定四邊間距
+      // 內容邊距設定，將底部邊距加上 bottomPadding，配合紙張底邊下移
+      padding: EdgeInsets.fromLTRB(40, 140 + topPadding, 40, 30 + bottomPadding), // 底部邊距減小至 30 + bottomPadding，使 Stack 範圍延伸至最下方
       child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
         // 頁面內部疊層
         clipBehavior: Clip.none, // 允許裝飾物溢出
@@ -389,9 +522,10 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
               SizedBox(height: scrollable ? 60 : 20), // 底部保留緩衝空間
             ], // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
-          Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
-            // 按鈕定位
-            bottom: 10, // 執行相對應的邏輯計算或設定屬性參數
+          if (!isKeyboardOpen) // 新增：在鍵盤彈出時隱藏下方按鈕，保證畫面上不顯示該按鈕
+            Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+              // 按鈕定位：設為 5，使其 100% 處於父 Stack 邊界內部，保證觸控事件 100% 靈敏
+              bottom: 5, // 執行相對應的邏輯計算或設定屬性參數
             left: 0, // 執行相對應的邏輯計算或設定屬性參數
             right: 0, // 執行相對應的邏輯計算或設定屬性參數
             child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
@@ -478,12 +612,12 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
           const SizedBox(height: 40), // 增加間距
             _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
               '輸入您的名字', // 執行相對應的邏輯計算或設定屬性參數
+              _nameController, // 傳入持續性的姓名控制器
               (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
                 _name = value; // 執行相對應的邏輯計算或設定屬性參數
                 _pageErrors.remove(0); // 執行相對應的邏輯計算或設定屬性參數
               }), // 執行相對應的邏輯計算或設定屬性參數
-              initialValue: _name, // 執行相對應的邏輯計算或設定屬性參數
-              onSubmitted: _nextPage, // 執行相對應的邏輯計算或設定屬性參數
+              onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
             ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -534,13 +668,13 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
           const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
           _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
             '年齡', // 執行相對應的邏輯計算或設定屬性參數
+            _ageController, // 傳入持續性的年齡控制器
             (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
               _age = value; // 執行相對應的邏輯計算或設定屬性參數
               _pageErrors.remove(2); // 執行相對應的邏輯計算或設定屬性參數
             }), // 執行相對應的邏輯計算或設定屬性參數
             isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-            initialValue: _age, // 執行相對應的邏輯計算或設定屬性參數
-            onSubmitted: _nextPage, // 執行相對應的邏輯計算或設定屬性參數
+            onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -568,13 +702,13 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                     const SizedBox(height: 12), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                     _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
                       'cm', // 執行相對應的邏輯計算或設定屬性參數
+                      _heightController, // 傳入持續性的身高控制器
                       (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
                         _height = value; // 執行相對應的邏輯計算或設定屬性參數
                         _pageErrors.remove(3); // 執行相對應的邏輯計算或設定屬性參數
                       }), // 執行相對應的邏輯計算或設定屬性參數
                       isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-                      initialValue: _height, // 執行相對應的邏輯計算或設定屬性參數
-                      onSubmitted: _nextPage, // 執行相對應的邏輯計算或設定屬性參數
+                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ], // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
@@ -591,13 +725,13 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                     const SizedBox(height: 12), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                     _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
                       'kg', // 執行相對應的邏輯計算或設定屬性參數
+                      _weightController, // 傳入持續性的體重控制器
                       (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
                         _weight = value; // 執行相對應的邏輯計算或設定屬性參數
                         _pageErrors.remove(3); // 執行相對應的邏輯計算或設定屬性參數
                       }), // 執行相對應的邏輯計算或設定屬性參數
                       isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-                      initialValue: _weight, // 執行相對應的邏輯計算或設定屬性參數
-                      onSubmitted: _nextPage, // 執行相對應的邏輯計算或設定屬性參數
+                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ], // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
@@ -629,7 +763,15 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                           if (_diseases.contains(disease)) { // 執行相對應的邏輯計算或設定屬性參數
                             _diseases.remove(disease); // 執行相對應的邏輯計算或設定屬性參數
                           } else { // 程式碼區塊或元件結構結束
-                            _diseases.add(disease); // 執行相對應的邏輯計算或設定屬性參數
+                            if (disease == '無疾病') {
+                              // 若選擇的是「無疾病」，則將其他所有已選疾病清空，僅保留「無疾病」
+                              _diseases.clear();
+                              _diseases.add('無疾病');
+                            } else {
+                              // 若選擇的是其他特定疾病，則將原本選中的「無疾病」自動移除
+                              _diseases.remove('無疾病');
+                              _diseases.add(disease);
+                            }
                           } // 程式碼區塊或元件結構結束
                           if (_diseases.isNotEmpty) _pageErrors.remove(4); // 執行相對應的邏輯計算或設定屬性參數
                         }); // 程式碼區塊或元件結構結束
@@ -755,9 +897,9 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
 
   Widget _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
     String hint, // 宣告類別成員或方法內部的區域變數
+    TextEditingController controller, // 修改：改為接收 TextEditingController
     Function(String) onChanged, { // 執行相對應的邏輯計算或設定屬性參數
     bool isNumber = false, // 宣告類別成員或方法內部的區域變數
-    String initialValue = '', // 宣告類別成員或方法內部的區域變數
     VoidCallback? onSubmitted, // 執行相對應的邏輯計算或設定屬性參數
   }) { // 執行相對應的邏輯計算或設定屬性參數
     // 手繪输入框
@@ -768,14 +910,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
         child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 17), // 放大 0.4 倍
           child: TextField( // 建立文字輸入框元件（TextField）
-            controller: TextEditingController.fromValue( // 執行相對應的邏輯計算或設定屬性參數
-              TextEditingValue( // 執行相對應的邏輯計算或設定屬性參數
-                text: initialValue, // 執行相對應的邏輯計算或設定屬性參數
-                selection: TextSelection.fromPosition( // 執行相對應的邏輯計算或設定屬性參數
-                  TextPosition(offset: initialValue.length), // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
+            controller: controller, // 使用外部傳入的持續性控制器，避免焦點被重置
             keyboardType: isNumber ? TextInputType.number : TextInputType.text, // 執行相對應的邏輯計算或設定屬性參數
             onChanged: onChanged, // 執行相對應的邏輯計算或設定屬性參數
             onSubmitted: (_) => onSubmitted?.call(), // 執行相對應的邏輯計算或設定屬性參數
@@ -869,9 +1004,13 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
   // 定義畫筆類別
   final double scrollProgress; // 保存平滑滾動偏移量
   final double mouthProgress; // 保存嘴巴張合進度 (0~1)
+  final double topPadding; // 新增：頂部安全邊距
+  final double bottomPadding; // 新增：底部安全邊距
   HandDrawnNotebookPainter({ // 執行相對應的邏輯計算或設定屬性參數
     required this.scrollProgress, // 執行相對應的邏輯計算或設定屬性參數
     required this.mouthProgress, // 執行相對應的邏輯計算或設定屬性參數
+    required this.topPadding, // 新增：傳遞頂部安全邊距
+    required this.bottomPadding, // 新增：傳遞底部安全邊距
   }); // 建構子
 
   @override // 標記此方法為覆寫父類別之方法
@@ -883,9 +1022,11 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
 
     // 計算「紙張」的範圍 (留出邊緣)
     double margin = 20; // 邊距
+    double topMargin = margin + topPadding; // 加上頂部安全邊距 (避免被動態島/狀態欄遮擋)
+    double bottomMargin = margin + bottomPadding; // 加上底部安全邊距 (避免被虛擬導航列遮擋)
     double paperW = size.width - margin * 2; // 紙張寬度
-    double paperH = size.height - margin * 2; // 紙張高度
-    Offset paperOrigin = Offset(margin, margin); // 紙張起點
+    double paperH = size.height - bottomMargin - topMargin; // 紙張高度
+    Offset paperOrigin = Offset(margin, topMargin); // 紙張起點
 
     // 1. 繪製紙張底色 (白色，帶一點手繪不規則感)
     Paint paperPaint = Paint()..color = Colors.white; // 白色畫筆
@@ -909,14 +1050,10 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     // 3. 繪製活頁孔位與圈環 (位於頂部，製造筆記本感)
     _drawBinderRings(canvas, paperOrigin, paperW); // 調用子函數繪製
 
-    // 4. 繪製頁面進度 UI (Pac-Man 升級版：大尺寸 + 動畫)
-    _drawPacManProgress(canvas, paperOrigin, paperW); // 調用子函數繪製
+    // 4. 繪製頁面進度 UI 已移至各子分頁中繪製，以便能隨著撕紙翻頁動畫一起翻動
+    // _drawPacManProgress(canvas, paperOrigin, paperW); // 已停用全域繪製
 
-    // 5. 繪製右下角的裝飾性山丘與小人 (最後一頁精靈選擇頁不顯示，且上移避免被按鈕擋住)
-    if (scrollProgress < 5.5) { // 執行相對應的邏輯計算或設定屬性參數
-      // 判斷是否接近最後一頁
-      _drawHillAndFigure(canvas, paperOrigin, paperW, paperH); // 調用子函數繪製
-    } // 程式碼區塊或元件結構結束
+    // 5. 原先繪製右下角山丘與小人佔位符已改為 Flutter 樹中的真實 3D 寵物模型
   } // 程式碼區塊或元件結構結束
 
   // 生成不規則的手繪感矩形路徑
@@ -1388,24 +1525,105 @@ class ArrowPainter extends CustomPainter { // 定義 ArrowPainter 類別，繼�
 
 // ===== 翻頁動畫繪製器 =====
 class PageFlipPainter extends CustomPainter { // 定義 PageFlipPainter 類別，繼承自 CustomPainter
-  // 翻頁視覺效果
+  // 翻頁視覺效果：右下角掀起模擬撕掉便利紙
   final double progress; // 進度 0~1
   PageFlipPainter({required this.progress}); // 執行相對應的邏輯計算或設定屬性參數
 
   @override // 標記此方法為覆寫父類別之方法
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
-    double y = size.height * (1 - progress); // 翻轉邊緣線 Y
-    Paint shadowPaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = Colors.black.withOpacity(progress * 0.25) // 設定顏色數值（Color）
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12); // 建立編譯期常數，優化 Flutter 渲染效能
-    canvas.drawRect( // 執行相對應的邏輯計算或設定屬性參數
-      Rect.fromLTWH(0, y - 30, size.width, 60), // 執行相對應的邏輯計算或設定屬性參數
-      shadowPaint, // 執行相對應的邏輯計算或設定屬性參數
-    ); // 畫出滾動陰影
-    Paint edgePaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = Colors.white.withOpacity(progress * 0.4) // 設定顏色數值（Color）
-      ..strokeWidth = 3; // 執行相對應的邏輯計算或設定屬性參數
-    canvas.drawLine(Offset(0, y), Offset(size.width, y), edgePaint); // 手繪邊緣光澤
+    final double W = size.width;
+    final double H = size.height;
+    
+    // 使用非線性插值，讓撕紙的拉扯感前半段微慢、後半段迅速飛出，更有擬真感
+    final double curveProgress = Curves.easeInOut.transform(progress);
+    
+    // 撕起進度係數 (t)，2.0 代表完全飛出螢幕範圍之外，確保起點/終點完全透明無殘留
+    final double t = curveProgress * 2.0;
+    
+    // 摺疊線在紙張右邊界與底邊界的交點
+    final Offset pBottom = Offset((W - t * W).clamp(0.0, W), H);
+    final Offset pRight = Offset(W, (H - t * H).clamp(0.0, H));
+    
+    // 紙張翻折過來後，捲起角 (角頂點) 飛向左上方的座標
+    final Offset pCurl = Offset(
+      W - t * W * 1.25,
+      H - t * H * 1.25,
+    );
+
+    // 1. 繪製底部投射陰影 (撕起的紙在底頁上留下的柔和陰影)
+    final Path shadowPath = Path();
+    shadowPath.moveTo(pBottom.dx, pBottom.dy);
+    shadowPath.quadraticBezierTo(
+      pCurl.dx - 20 * (1 - progress), pCurl.dy - 20 * (1 - progress), // 陰影偏向左上方，帶有深度感
+      pRight.dx, pRight.dy,
+    );
+    shadowPath.lineTo(W, H);
+    shadowPath.close();
+
+    final Paint shadowPaint = Paint()
+      ..color = Colors.black.withOpacity((1 - progress) * 0.28)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16); // 柔和邊緣模糊
+    canvas.drawPath(shadowPath, shadowPaint);
+
+    // 2. 繪製未被撕去的舊紙張區域 (左上方)
+    final Path unpeeledPath = Path();
+    unpeeledPath.moveTo(0, 0);
+    unpeeledPath.lineTo(W, 0);
+    unpeeledPath.lineTo(pRight.dx, pRight.dy);
+    // 摺疊交接面微帶弧度，比直線更像被捲起的紙
+    unpeeledPath.quadraticBezierTo(
+      pCurl.dx + (W - pCurl.dx) * 0.12, 
+      pCurl.dy + (H - pCurl.dy) * 0.12, 
+      pBottom.dx, pBottom.dy
+    );
+    unpeeledPath.lineTo(0, H);
+    unpeeledPath.close();
+
+    // 2. 繪製尚未撕去的舊頁面遮罩 (左上方)，使用白色底紙，在撕下過程中完全覆蓋底頁，直到被摺疊撕去
+    // 這能讓底下的新頁面瞬間切換完畢，但最上層被本底紙蓋住，隨著撕角逐漸掀開，達成精細擬真的撕紙撕書頁效果！
+    final Paint paperPaint = Paint()..color = const Color(0xFFFFFFFF);
+    canvas.drawPath(unpeeledPath, paperPaint);
+
+    final Paint edgeLinePaint = Paint()
+      ..color = Colors.black.withOpacity(0.08)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawPath(unpeeledPath, edgeLinePaint);
+
+    // 3. 繪製翻折過來、捲起來的便利紙背面區域 (捲邊與三角形翻折)
+    final Path curlBackPath = Path();
+    curlBackPath.moveTo(pBottom.dx, pBottom.dy);
+    curlBackPath.quadraticBezierTo(
+      pCurl.dx + (W - pCurl.dx) * 0.12, 
+      pCurl.dy + (H - pCurl.dy) * 0.12, 
+      pRight.dx, pRight.dy
+    );
+    // 連接翻折後隆起的頂點 (pCurl)
+    curlBackPath.quadraticBezierTo(
+      pCurl.dx + 30 * (1 - progress), pCurl.dy + 30 * (1 - progress),
+      pCurl.dx, pCurl.dy
+    );
+    curlBackPath.quadraticBezierTo(
+      pCurl.dx + 30 * (1 - progress), pCurl.dy + 30 * (1 - progress),
+      pBottom.dx, pBottom.dy
+    );
+    curlBackPath.close();
+
+    // 便利紙背面的立體光影漸層 (背光處呈現微黃/微灰手帳感)
+    final Paint curlPaint = Paint()
+      ..shader = LinearGradient(
+        colors: [
+          const Color(0xFFF9F6F0), // 亮面
+          const Color(0xFFEFECE5), // 漸深
+          const Color(0xFFD4CFC7), // 暗面 shadow
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(Rect.fromPoints(pCurl, Offset(W, H)));
+
+    // 為翻折捲曲的便利貼背面繪製立體投影
+    canvas.drawShadow(curlBackPath, Colors.black.withOpacity(0.24), 8.0, true);
+    canvas.drawPath(curlBackPath, curlPaint);
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -1487,3 +1705,188 @@ class WashiPainter extends CustomPainter { // 定義 WashiPainter 類別，繼�
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false; // 宣告類別成員或方法內部的區域變數
 } // 程式碼區塊或元件結構結束
 // ===== 檔案結束 =====
+// ===== 撕貼剪裁器 =====
+class PagePeelClipper extends CustomClipper<Path> {
+  final double progress;
+  PagePeelClipper({required this.progress});
+
+  @override
+  Path getClip(Size size) {
+    final double W = size.width;
+    final double H = size.height;
+    final double curveProgress = Curves.easeInOut.transform(progress);
+    final double t = curveProgress * 2.0; // 設為與 Painter 相同的 2.0 係數，確保完全掀開不殘留
+    
+    final Offset pBottom = Offset((W - t * W).clamp(0.0, W), H);
+    final Offset pRight = Offset(W, (H - t * H).clamp(0.0, H));
+    final Offset pCurl = Offset(
+      W - t * W * 1.25,
+      H - t * H * 1.25,
+    );
+
+    final Path unpeeledPath = Path();
+    unpeeledPath.moveTo(0, 0);
+    unpeeledPath.lineTo(W, 0);
+    unpeeledPath.lineTo(pRight.dx, pRight.dy);
+    unpeeledPath.quadraticBezierTo(
+      pCurl.dx + (W - pCurl.dx) * 0.12, 
+      pCurl.dy + (H - pCurl.dy) * 0.12, 
+      pBottom.dx, pBottom.dy
+    );
+    unpeeledPath.lineTo(0, H);
+    unpeeledPath.close();
+    return unpeeledPath;
+  }
+
+  @override
+  bool shouldReclip(PagePeelClipper oldClipper) =>
+      oldClipper.progress != progress;
+}
+
+// ===== 每個頁面獨立的 Pacman 進度條繪製器 =====
+class SinglePagePacmanProgressPainter extends CustomPainter {
+  final int pageIndex;
+  final double mouthProgress;
+
+  SinglePagePacmanProgressPainter({
+    required this.pageIndex,
+    required this.mouthProgress,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double w = size.width;
+    double yPos = size.height / 2;
+    int dotCount = 7;
+    double dotSpacing = w / (dotCount + 1);
+
+    // 1. 繪製尚未吃掉的豆子
+    for (int i = 1; i <= dotCount; i++) {
+      double dotX = dotSpacing * i;
+      if (i > pageIndex + 1) {
+        Paint dotPaint = Paint()..color = Colors.black;
+        canvas.drawCircle(Offset(dotX, yPos), 7, dotPaint); // 豆子半徑為 7
+      }
+    }
+
+    // 2. 繪製當前頁面位置的小精靈
+    double pacX = dotSpacing * (pageIndex + 1);
+    Paint pacPaint = Paint()
+      ..color = const Color(0xFFFFA500)
+      ..style = PaintingStyle.fill;
+
+    // 計算嘴巴開合角度 (動態張合)
+    double openingAngle = 0.1 * pi + (0.25 * pi * mouthProgress);
+    double startAngle = openingAngle;
+    double sweepAngle = 2 * pi - (2 * openingAngle);
+
+    Path pacPath = Path();
+    pacPath.moveTo(pacX, yPos);
+    pacPath.arcTo(
+      Rect.fromCircle(
+        center: Offset(pacX, yPos),
+        radius: 14,
+      ),
+      startAngle,
+      sweepAngle,
+      false,
+    );
+    pacPath.close();
+    canvas.drawPath(pacPath, pacPaint);
+
+    Paint pacStroke = Paint()
+      ..color = Colors.black
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    canvas.drawPath(pacPath, pacStroke);
+  }
+
+  @override
+  bool shouldRepaint(SinglePagePacmanProgressPainter oldDelegate) {
+    return oldDelegate.pageIndex != pageIndex ||
+        oldDelegate.mouthProgress != mouthProgress;
+  }
+}
+
+// ===== 用於每頁獨立遮罩的實心白紙背景繪製器 =====
+class HandDrawnNotebookPaperPainter extends CustomPainter {
+  final double topPadding;
+  final double bottomPadding;
+
+  HandDrawnNotebookPaperPainter({
+    required this.topPadding,
+    required this.bottomPadding,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double margin = 20;
+    double topMargin = margin + topPadding;
+    double bottomMargin = margin + bottomPadding;
+    double paperW = size.width - margin * 2;
+    double paperH = size.height - bottomMargin - topMargin;
+    Offset paperOrigin = Offset(margin, topMargin);
+
+    Paint paperPaint = Paint()..color = Colors.white;
+    Path paperPath = _getHandDrawnRectPath(paperOrigin, paperW, paperH);
+
+    // 繪製紙張陰影
+    canvas.drawShadow(
+      paperPath,
+      Colors.black.withOpacity(0.1),
+      10.0,
+      true,
+    );
+    canvas.drawPath(paperPath, paperPaint);
+  }
+
+  // 使用固定種子的隨機數產生手繪感矩形邊框，防止重繪時線條不斷抖動
+  Path _getHandDrawnRectPath(Offset origin, double w, double h) {
+    Path path = Path();
+    Random rand = Random(42); // 固定種子
+
+    path.moveTo(origin.dx, origin.dy);
+
+    for (double x = 0; x < w; x += 20) {
+      double nextX = origin.dx + x + 20;
+      path.quadraticBezierTo(
+        origin.dx + x + 10 + rand.nextDouble() * 2,
+        origin.dy - 2 + rand.nextDouble() * 2,
+        nextX,
+        origin.dy,
+      );
+    }
+    for (double y = 0; y < h; y += 20) {
+      double nextY = origin.dy + y + 20;
+      path.quadraticBezierTo(
+        origin.dx + w + 2 + rand.nextDouble() * 2,
+        origin.dy + y + 10,
+        origin.dx + w,
+        nextY,
+      );
+    }
+    for (double x = w; x > 0; x -= 20) {
+      double nextX = origin.dx + x - 20;
+      path.quadraticBezierTo(
+        origin.dx + x - 10 + rand.nextDouble() * 2,
+        origin.dy + h + 2 + rand.nextDouble() * 2,
+        nextX,
+        origin.dy + h,
+      );
+    }
+    for (double y = h; y > 0; y -= 20) {
+      double nextY = origin.dy + y - 20;
+      path.quadraticBezierTo(
+        origin.dx - 2 + rand.nextDouble() * 2,
+        origin.dy + y - 10,
+        origin.dx,
+        nextY,
+      );
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldRepaint(HandDrawnNotebookPaperPainter oldDelegate) => false;
+}

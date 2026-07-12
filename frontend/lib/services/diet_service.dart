@@ -39,10 +39,30 @@ class DietService {
     required String mealType,
     required String description,
     String nutrition = '',
+    DateTime? mealDate,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
     if (token == null) return {'success': false, 'message': '未登入'};
+
+    // 解析各個雙精度浮點數欄位
+    double? parseVal(String pattern) {
+      final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+      final match = regExp.firstMatch(nutrition);
+      if (match != null) {
+        return double.tryParse(match.group(1) ?? '');
+      }
+      return null;
+    }
+
+    final calories = parseVal(r'(?:熱量|calories|kcal)');
+    final protein = parseVal(r'(?:蛋白質|protein)');
+    final fat = parseVal(r'(?:脂肪|fat)');
+    final carbohydrates = parseVal(r'(?:碳水化合物|碳水|carbs|carbohydrates)');
+
+    final String? formattedDate = mealDate != null 
+        ? "${mealDate.year}-${mealDate.month.toString().padLeft(2, '0')}-${mealDate.day.toString().padLeft(2, '0')}" 
+        : null;
 
     try {
       final response = await _client.post(
@@ -51,7 +71,11 @@ class DietService {
           'dishName': dishName,
           'mealType': mealType,
           'description': description,
-          'nutrition': nutrition,
+          'calories': calories,
+          'protein': protein,
+          'fat': fat,
+          'carbohydrates': carbohydrates,
+          'mealDate': formattedDate,
         },
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -114,10 +138,30 @@ class DietService {
     required String mealType,
     required String description,
     String nutrition = '',
+    DateTime? mealDate,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token');
     if (token == null) return {'success': false, 'message': '未登入'};
+
+    // 解析字串以傳送後端 Spring Boot 期待的各個雙精度浮點數欄位
+    double? parseVal(String pattern) {
+      final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+      final match = regExp.firstMatch(nutrition);
+      if (match != null) {
+        return double.tryParse(match.group(1) ?? '');
+      }
+      return null;
+    }
+
+    final calories = parseVal(r'(?:熱量|calories|kcal)');
+    final protein = parseVal(r'(?:蛋白質|protein)');
+    final fat = parseVal(r'(?:脂肪|fat)');
+    final carbohydrates = parseVal(r'(?:碳水化合物|碳水|carbs|carbohydrates)');
+
+    final String? formattedDate = mealDate != null 
+        ? "${mealDate.year}-${mealDate.month.toString().padLeft(2, '0')}-${mealDate.day.toString().padLeft(2, '0')}" 
+        : null;
 
     try {
       final response = await _client.put(
@@ -126,7 +170,11 @@ class DietService {
           'dishName': dishName,
           'mealType': mealType,
           'description': description,
-          'nutrition': nutrition,
+          'calories': calories,
+          'protein': protein,
+          'fat': fat,
+          'carbohydrates': carbohydrates,
+          'mealDate': formattedDate,
         },
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -150,7 +198,11 @@ class DietService {
     try {
       final response = await _client.post(
         '/dietary/ask-weekly-analysis',
-        {'question': question},
+        {
+          'question': question,
+          'questionType': 'WEEKLY_ANALYSIS',
+          'dishNames': ['general'],
+        },
         headers: {'Authorization': 'Bearer $token'},
       );
 

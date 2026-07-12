@@ -163,6 +163,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
         mealType: _mealType,
         description: '手動輸入飲食紀錄',
         nutrition: nutritionString,
+        mealDate: _selectedDate,
       );
 
       if (result['success'] == true) {

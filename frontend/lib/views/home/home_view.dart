@@ -19,6 +19,7 @@ class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 St
 
 class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 定義 _HomeViewState 類別，繼承自 State
   final TextEditingController _inputController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
+  final ScrollController _chatScrollController = ScrollController(); // 新增：對話滾動控制器
   final AuthService _authService = AuthService(); // 宣告類別成員或方法內部的區域變數
   
   late bool _isChatOpen; // 宣告類別成員或方法內部的區域變數
@@ -58,6 +59,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   @override // 標記此方法為覆寫父類別之方法
   void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
     _inputController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
+    _chatScrollController.dispose(); // 新增：釋放對話滾動控制器資源
     _hoverController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
     super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
@@ -132,7 +134,22 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _isChatOpen = open; // 執行相對應的邏輯計算或設定屬性參數
       _chatPanelX = open ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
+    if (open) {
+      _scrollToBottom();
+    }
   } // 程式碼區塊或元件結構結束
+
+  void _scrollToBottom() { // 新增：自動滾動對話清單到底部
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chatScrollController.hasClients) {
+        _chatScrollController.animateTo(
+          _chatScrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   void _handleMessage(String text) { // 執行相對應的邏輯計算或設定屬性參數
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
@@ -142,6 +159,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _isChatOpen = true; // 執行相對應的邏輯計算或設定屬性參數
       _chatPanelX = 0.0; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
+    _scrollToBottom(); // 新增：傳送訊息後自動滑到底部
 
     // 模擬回覆
     Future.delayed(const Duration(milliseconds: 500), () { // 建立編譯期常數，優化 Flutter 渲染效能
@@ -152,6 +170,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             'text': '正在搜尋附近的店家與健康推薦項目...',
             'type': 'restaurant'
           });
+          _scrollToBottom(); // 新增：載入中提示滑到底部
           
           AdminService().listRestaurants().then((restaurants) {
             AdminService().listMenuItems().then((menus) {
@@ -189,6 +208,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   });
                 }
               });
+              _scrollToBottom(); // 新增：餐廳推薦完成滑到底部
             }).catchError((e) {
               setState(() {
                 if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
@@ -196,6 +216,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 }
                 _messages.add({'isElf': true, 'text': '推薦菜單載入錯誤: $e'});
               });
+              _scrollToBottom(); // 新增：選單載入錯誤滑到底部
             });
           }).catchError((e) {
             setState(() {
@@ -204,12 +225,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               }
               _messages.add({'isElf': true, 'text': '推薦餐廳載入錯誤: $e'});
             });
+            _scrollToBottom();
           });
         } else { // 程式碼區塊或元件結構結束
           _messages.add({
             'isElf': true,
             'text': '正在為您載入個人與週飲食紀錄，進行智能評估中...',
           });
+          _scrollToBottom(); // 新增：載入中提示滑到底部
           
           DietService().askWeeklyAnalysis(text).then((res) {
             setState(() {
@@ -289,6 +312,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 });
               }
             });
+            _scrollToBottom(); // 新增：智能評估分析完成後滑到底部
           }).catchError((e) {
             setState(() {
               if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
@@ -299,6 +323,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 'text': '智能分析發生異常: $e',
               });
             });
+            _scrollToBottom(); // 新增：發生異常後滑到底部
           });
         } // 程式碼區塊或元件結構結束
       }); // 程式碼區塊或元件結構結束
@@ -483,7 +508,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             ), // 執行相對應的邏輯計算或設定屬性參數
             Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
               child: ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
-                padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                controller: _chatScrollController, // 新增：連結滾動控制器
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 127), // 新增：底部預留 127 像素，防止文字被小精靈 3D 模型遮擋
                 itemCount: _messages.length, // 執行相對應的邏輯計算或設定屬性參數
                 itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
                   final msg = _messages[index]; // 宣告類別成員或方法內部的區域變數

@@ -104,9 +104,12 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
             child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
               mainAxisAlignment: MainAxisAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
               children: [ // 執行相對應的邏輯計算或設定屬性參數
-                const Text( // 建立文字顯示元件（Text）
-                  "小精靈用餐中...", // 執行相對應的邏輯計算或設定屬性參數
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                Transform.translate(
+                  offset: const Offset(0, -100),
+                  child: const Text( // 建立文字顯示元件（Text）
+                    "小精靈用餐中...", // 執行相對應的邏輯計算或設定屬性參數
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                  ),
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                 // 剛才拍的照片
@@ -145,7 +148,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
               child: ScaleTransition( // 執行相對應的邏輯計算或設定屬性參數
                 scale: _elfScale, // 執行相對應的邏輯計算或設定屬性參數
                 child: Padding( // 建立間距容器（Padding），用於設定內部邊距
-                  padding: const EdgeInsets.only(bottom: 150), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                  padding: const EdgeInsets.only(bottom: 310), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                   child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
                     mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
                     children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -168,23 +171,23 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
               ), // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
-          // 跳過按鈕 (改到下方中央)
-          Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
-            bottom: 50, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
-            child: Center( // 建立置中對齊元件（Center），將子元件居中顯示
-              child: ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
-                onPressed: _goToDiary, // 執行相對應的邏輯計算或設定屬性參數
-                style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
-                  backgroundColor: AppColors.background.withOpacity(0.8), // 設定顏色數值（Color）
-                  foregroundColor: AppColors.textPrimary, // 設定顏色數值（Color）
-                  elevation: 0.975, // 執行相對應的邏輯計算或設定屬性參數
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)), // 設定容器的圓角弧度半徑大小
-                ), // 執行相對應的邏輯計算或設定屬性參數
-                child: const Text("跳過動畫 >>", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)), // 建立文字顯示元件（Text）
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+          // 固定位置的「跳過動畫」按鈕 (不隨 SnackBar 浮動)
+          Positioned(
+            bottom: 165.0, // 185.0 - 20.0 = 165.0
+            left: 0,
+            right: 0,
+            child: Center(
+              child: FloatingActionButton.extended(
+                onPressed: _goToDiary,
+                label: const Text("跳過動畫 >>", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                backgroundColor: AppColors.background.withOpacity(0.8),
+                foregroundColor: AppColors.textPrimary,
+                elevation: 1.0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                extendedPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+              ),
+            ),
+          ),
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束

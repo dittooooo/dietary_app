@@ -20,7 +20,7 @@ Widget createWebModelView({ // 定義用於重複使用的 UI 封裝建構方法
   final double fovDeg = (45.0 / scale).clamp(15.0, 90.0); // 宣告類別成員或方法內部的區域變數
 
   return ModelViewer( // 回傳建構完成的元件或方法計算結果
-    key: ValueKey('mobile_mascot_3d_viewer_${resolvedSrc}'), // 靜態 Key，避免重建
+    key: ValueKey('mobile_mascot_3d_viewer_${resolvedSrc}_${scale}'), // 包含 scale 以強制重建並更新相機距離
     src: resolvedSrc, // 執行相對應的邏輯計算或設定屬性參數
     alt: "3D Mascot Pet", // 執行相對應的邏輯計算或設定屬性參數
     autoRotate: false, // 執行相對應的邏輯計算或設定屬性參數
@@ -30,5 +30,6 @@ Widget createWebModelView({ // 定義用於重複使用的 UI 封裝建構方法
     fieldOfView: '${fovDeg.toInt()}deg', // 執行相對應的邏輯計算或設定屬性參數
     animationName: animationName, // 設定動畫名稱
     autoPlay: autoPlay, // 設定自動播放
+    interactionPrompt: InteractionPrompt.none, // 停用點擊/滑動手勢引導的圖示提示
   ); // 程式碼區塊或元件結構結束
 }
