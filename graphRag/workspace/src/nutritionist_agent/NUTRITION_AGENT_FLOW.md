@@ -1,14 +1,14 @@
 # Nutrition Agent v2 架構與生命週期說明
 
-這個資料夾實作的是一個飲食建議 GraphRAG agent。外部呼叫者透過 FastAPI 的 `/ask` 路徑送入使用者問題、個人資料、慢性病資訊與近一周飲食紀錄；系統會抽出料理名稱，對齊 Neo4j 圖譜中的料理或食物節點，查出營養素與疾病飲食規則，重新彙總主要營養資訊，最後呼叫 OpenAI 產生繁體中文飲食建議並回傳。
+這個資料夾實作的是一個飲食建議 GraphRAG agent。外部呼叫者透過 FastAPI 的 `/ask` 路徑送入使用者問題、個人資料、慢性病資訊與近一周飲食紀錄；系統會抽出料理名稱，對齊 Neo4j 圖譜中的料理或食物節點，查出營養素與疾病飲食規則，重新彙總主要營養資訊，最後呼叫 OpenAI 產生繁體中文飲食建議並回傳。若只需要替飲食紀錄取得單一道料理營養成分，則可呼叫 `/dish-nutrition`，它會共用圖譜檢索與營養彙總流程，但不呼叫 OpenAI。
 
 目前主流程不是讓 LLM 即時自由生成 Cypher，而是由 `text_to_cypher.py` 依照料理配對結果用程式化模板產生 read-only Cypher。這樣可以讓圖譜查詢欄位、慢性病條件與安全限制都維持穩定。
 
 ## 主要檔案職責
 
-- `app.py`：FastAPI HTTP 入口，定義 `/health`、`/ready`、`/ask`。
-- `models.py`：Pydantic request/response 與內部資料模型。
-- `agent.py`：整個 Nutrition Agent 的流程協調器。
+- `app.py`：FastAPI HTTP 入口，定義 `/health`、`/ready`、`/ask`、`/dish-nutrition`。
+- `models.py`：Pydantic request/response 與內部資料模型，包含問答與單一料理營養查詢格式。
+- `agent.py`：整個 Nutrition Agent 的流程協調器，另外提供不產生建議的單一料理營養查詢。
 - `text_to_cypher.py`：問題型態判斷、料理候選抽取、payload 標準化、Cypher 組裝。
 - `dish_matcher.py`：將使用者輸入料理名稱配對到 Neo4j 的 `Dish` 或 `FoodItem`。
 - `retriever.py`：執行 Neo4j Cypher，並將 Neo4j 型別轉成一般 Python 資料。
@@ -32,6 +32,16 @@
 - `weekly_diet_records`：近一周飲食紀錄，提供個人化建議背景。
 
 FastAPI 入口在 `app.py` 的 `ask(req: NutritionAgentRequest)`。這個 function 只負責 HTTP 層錯誤轉換，真正流程會呼叫 `agent.ask(req)`。
+
+若只是飲食紀錄要查單一道料理營養成分，可呼叫 `POST /dish-nutrition`，請求模型是 `DishNutritionRequest`：
+
+```json
+{
+  "dish_name": "雞腿便當"
+}
+```
+
+回應模型是 `DishNutritionResponse`，只包含一筆 `dish_nutrition`，不包含 `dish_advice` 或 `conclusion`。
 
 ## 完整生命週期
 
@@ -371,6 +381,21 @@ POST /ask
   -> answer_generator.py: attach_match_metadata_to_advice()
   -> answer_generator.py: sanitize_nutrition_numbers()
   -> models.py: NutritionAgentResponse
+  -> UTF-8 JSON response
+```
+
+```text
+POST /dish-nutrition
+  -> app.py: dish_nutrition()
+  -> agent.py: NutritionAgent.get_dish_nutrition()
+  -> text_to_cypher.py: normalize_request_payload()
+  -> text_to_cypher.py: extract_dish_candidates()
+  -> dish_matcher.py: DishMatcher.match_dishes()
+  -> text_to_cypher.py: TextToCypherTranslator.translate()
+  -> retriever.py: GraphRetriever.retrieve()
+  -> optional ingredient fallback retry
+  -> nutrition_calculator.py: summarize_and_recalculate()
+  -> models.py: DishNutritionResponse
   -> UTF-8 JSON response
 ```
 

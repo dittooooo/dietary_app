@@ -8,7 +8,7 @@ from neo4j.exceptions import Neo4jError
 
 from .agent import NutritionAgent
 from .config import validate_required_config
-from .models import NutritionAgentRequest, NutritionAgentResponse
+from .models import DishNutritionRequest, DishNutritionResponse, NutritionAgentRequest, NutritionAgentResponse
 
 
 # 讓 FastAPI 回應明確帶上 UTF-8，避免繁體中文在呼叫端顯示亂碼。
@@ -50,4 +50,21 @@ def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     except Neo4jError as exc:
+        raise HTTPException(status_code=503, detail=f"Neo4j query failed: {exc}") from exc
+
+
+# 查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不呼叫 OpenAI。
+@app.post("/dish-nutrition", response_model=DishNutritionResponse)
+def dish_nutrition(req: DishNutritionRequest) -> DishNutritionResponse:
+    try:
+        # HTTP 層只負責接收 request 與轉換錯誤碼，實際圖譜檢索交給 NutritionAgent。
+        return agent.get_dish_nutrition(req)
+    except ValueError as exc:
+        # 例如 dish_name 是空字串時回 400，表示呼叫端輸入不合法。
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        # 保留與 /ask 相同的錯誤語意：服務依賴或流程失敗時回 503。
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Neo4jError as exc:
+        # Neo4j 查詢或連線失敗時回 503，呼叫端可稍後重試。
         raise HTTPException(status_code=503, detail=f"Neo4j query failed: {exc}") from exc

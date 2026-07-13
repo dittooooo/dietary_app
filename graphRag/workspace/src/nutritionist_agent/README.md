@@ -6,6 +6,7 @@ Runtime path:
 
 ```text
 POST /ask -> NutritionAgent -> Neo4j retrieval -> nutrition summary -> OpenAI answer
+POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 ```
 
 ## Request
@@ -47,6 +48,34 @@ POST /ask -> NutritionAgent -> Neo4j retrieval -> nutrition summary -> OpenAI an
 - `health_condition`: Optional chronic disease context.
 - `weekly_diet_records`: Optional recent diet records for answer context.
 
+## Dish Nutrition Lookup
+
+Use `POST /dish-nutrition` when another service only needs nutrition data for a single dish, such as writing a diet record. This endpoint does not call OpenAI and does not generate advice.
+
+Request:
+
+```json
+{
+  "dish_name": "雞腿便當"
+}
+```
+
+Response:
+
+```json
+{
+  "dish_nutrition": {
+    "dish_name": "雞腿便當",
+    "matched_name": "雞腿便當",
+    "matched_type": "dish",
+    "match_score": 114,
+    "match_reason": "exact dish match",
+    "retrieval_strategy": "dish_match",
+    "nutrients": []
+  }
+}
+```
+
 ## Environment
 
 Required for a real `/ask` request:
@@ -57,6 +86,8 @@ NEO4J_URI=bolt://host.docker.internal:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=...
 ```
+
+`/dish-nutrition` itself only uses Neo4j and does not call OpenAI.
 
 Optional:
 

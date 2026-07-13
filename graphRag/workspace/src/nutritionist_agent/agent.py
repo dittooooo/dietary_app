@@ -6,7 +6,17 @@ from typing import Any, Dict, List
 from .answer_generator import AnswerGenerator
 from .config import DEFAULT_TOP_N_ROWS, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from .dish_matcher import DishMatcher
-from .models import DishNutrition, HealthCondition, NutrientAmount, NutritionAgentRequest, NutritionAgentResponse, UserProfile
+from .models import (
+    DishNutrition,
+    DishNutritionRequest,
+    DishNutritionResponse,
+    HealthCondition,
+    NutrientAmount,
+    NutritionAgentRequest,
+    NutritionAgentResponse,
+    QuestionType,
+    UserProfile,
+)
 from .nutrition_calculator import NutritionCalculator
 from .retriever import GraphRetriever
 from .text_to_cypher import (
@@ -39,6 +49,94 @@ class NutritionAgent:
     # 關閉 Neo4j 連線資源，通常用於服務關閉或測試清理。
     def close(self) -> None:
         self.retriever.close()
+
+    # 查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不產生 LLM 飲食建議。
+    def get_dish_nutrition(self, request: DishNutritionRequest) -> DishNutritionResponse:
+        # 這支 API 只接受純料理名稱；先 trim 避免空白字串進入圖譜查詢。
+        dish_name = request.dish_name.strip()
+        if not dish_name:
+            raise ValueError("dish_name is required.")
+
+        # 單一料理營養查詢不需要個人資料、慢性病與近期飲食；建立空模型只是為了共用 payload 格式。
+        user_profile = UserProfile()
+        health_condition = HealthCondition()
+        weekly_records: List[Any] = []
+        question_type: QuestionType = "single_dish"
+
+        # 使用 dish_names 明確指定料理，避免把純料理名稱再當成自然語言問題做過度解析。
+        full_payload = normalize_request_payload(
+            question=dish_name,
+            question_type=question_type,
+            user_profile=user_profile,
+            health_condition=health_condition,
+            weekly_diet_records=weekly_records,
+            dish_names=[dish_name],
+        )
+
+        # 沿用 /ask 的候選抽取與圖譜配對邏輯，確保同一個料理名稱在兩支 API 中查到一致結果。
+        dish_candidates = extract_dish_candidates(full_payload)
+        logger.info("[NutritionAgent] nutrition_lookup_candidates=%s", dish_candidates)
+        match_results = self.dish_matcher.match_dishes(dish_candidates)
+        logger.info("[NutritionAgent] nutrition_lookup_match=%s", match_results)
+
+        # 第二次 payload 帶入配對結果，讓 TextToCypherTranslator 能依 retrieval_strategy 組查詢。
+        full_payload = normalize_request_payload(
+            question=dish_name,
+            question_type=question_type,
+            user_profile=user_profile,
+            health_condition=health_condition,
+            weekly_diet_records=weekly_records,
+            dish_names=[dish_name],
+            dish_candidates=dish_candidates,
+            dish_match_results=match_results,
+        )
+        translated = self.translator.translate(full_payload)
+
+        # 執行 Neo4j 查詢後只取營養 rows，不進入 AnswerGenerator，因此不會打 OpenAI。
+        rows = self.retriever.retrieve(translated["cypher"])
+
+        missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
+        if missing_candidates:
+            # 若 Dish 配對有結果但查不到營養列，退回 ingredient_fallback 再查一次，增加飲食紀錄可用率。
+            fallback_results = [
+                {
+                    "input_name": candidate,
+                    "matched_dish_name": None,
+                    "match_score": 0,
+                    "match_reason": "no nutrition rows from dish match",
+                    "retrieval_strategy": "ingredient_fallback",
+                }
+                for candidate in missing_candidates
+            ]
+            fallback_payload = normalize_request_payload(
+                question=dish_name,
+                question_type=question_type,
+                user_profile=user_profile,
+                health_condition=health_condition,
+                weekly_diet_records=weekly_records,
+                dish_names=missing_candidates,
+                dish_candidates=missing_candidates,
+                dish_match_results=fallback_results,
+            )
+            fallback_rows = self.retriever.retrieve(self.translator.translate(fallback_payload)["cypher"])
+            rows.extend(fallback_rows)
+            logger.info(
+                "[NutritionAgent] nutrition_lookup_fallback missing_candidates=%s fallback_row_count=%s",
+                missing_candidates,
+                len(fallback_rows),
+            )
+
+        # 把圖譜明細彙總成前端可存的主要營養素，熱量也會在這裡用三大營養素重算。
+        dish_nutrition, nutrition_debug = self.nutrition_calculator.summarize_and_recalculate(rows)
+        logger.info("[NutritionAgent] nutrition_lookup_debug=%s", nutrition_debug)
+        if dish_nutrition:
+            # 這支 API 只接受單一道料理，因此回傳第一筆營養摘要。
+            return DishNutritionResponse(dish_nutrition=dish_nutrition[0])
+
+        # 完全查不到營養資料時仍回傳固定格式，讓飲食紀錄端不用額外處理缺欄位。
+        return DishNutritionResponse(
+            dish_nutrition=self._empty_single_dish_nutrition(dish_name, dish_candidates, match_results)
+        )
 
     # 執行完整問答生命週期，從 request 轉成圖譜資料，再產生飲食建議。
     def ask(self, request: NutritionAgentRequest) -> NutritionAgentResponse:
@@ -173,6 +271,48 @@ class NutritionAgent:
             for candidate in dish_candidates
             if expected_name_by_input.get(candidate, candidate) not in row_dish_names and candidate not in row_dish_names
         ]
+
+    # 單一道料理查不到營養列時，回傳資料不足的固定營養欄位，讓呼叫端仍有穩定格式可存。
+    @staticmethod
+    def _empty_single_dish_nutrition(
+        dish_name: str,
+        dish_candidates: List[str],
+        match_results: List[Dict[str, Any]],
+    ) -> DishNutrition:
+        # 優先使用清理後的候選名稱作為顯示名稱；若連候選都沒有，就回到原始輸入。
+        display_name = dish_candidates[0] if dish_candidates else dish_name
+        match = match_results[0] if match_results else {}
+        return DishNutrition(
+            dish_name=display_name,
+            matched_name=match.get("matched_dish_name") or match.get("matched_food_name"),
+            matched_type=(
+                "dish"
+                if match.get("matched_dish_name")
+                else "food_item"
+                if match.get("matched_food_name")
+                else None
+            ),
+            match_score=match.get("match_score"),
+            match_reason=match.get("match_reason"),
+            retrieval_strategy=match.get("retrieval_strategy") or "not_found",
+            nutrients=[
+                NutrientAmount(
+                    name="熱量",
+                    amount_per_serving=None,
+                    unit="kcal",
+                    calculation_method="macro_calculation",
+                    formula="protein_g*4 + carbohydrate_g*4 + fat_g*9",
+                    calorie_status="insufficient_macros",
+                ),
+                NutrientAmount(name="蛋白質", amount_per_serving=None, unit="g"),
+                NutrientAmount(name="脂肪", amount_per_serving=None, unit="g"),
+                NutrientAmount(name="碳水化合物", amount_per_serving=None, unit="g"),
+                NutrientAmount(name="糖", amount_per_serving=None, unit="g"),
+                NutrientAmount(name="鈉", amount_per_serving=None, unit="mg"),
+                NutrientAmount(name="膳食纖維", amount_per_serving=None, unit="g"),
+                NutrientAmount(name="飽和脂肪", amount_per_serving=None, unit="g"),
+            ],
+        )
 
     # 比較題時補齊缺資料的候選料理，確保回覆仍涵蓋每個比較選項。
     @staticmethod

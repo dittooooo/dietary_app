@@ -43,6 +43,12 @@ class NutritionAgentRequest(BaseModel):
     weekly_diet_records: Optional[List[DietRecord]] = None
 
 
+# POST /dish-nutrition 的請求格式，只查單一道料理的營養成分。
+class DishNutritionRequest(BaseModel):
+    # 飲食紀錄端傳入的原始料理名稱，後續會拿去做 Dish/FoodItem/Ingredient 配對。
+    dish_name: str = Field(..., description="要查詢營養成分的單一料理名稱")
+
+
 # 單一營養素的摘要值，通常代表每份料理估計含量。
 class NutrientAmount(BaseModel):
     name: str
@@ -83,3 +89,9 @@ class NutritionAgentResponse(BaseModel):
     dish_nutrition: List[DishNutrition]
     dish_advice: List[DishAdvice]
     conclusion: str
+
+
+# POST /dish-nutrition 的回應格式，回傳單一道料理的營養摘要。
+class DishNutritionResponse(BaseModel):
+    # 單一道料理的營養摘要；格式刻意沿用 /ask 裡的 dish_nutrition item，方便前端共用資料結構。
+    dish_nutrition: DishNutrition
