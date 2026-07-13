@@ -9,28 +9,34 @@ import java.util.List;
 
 @Data
 @Builder
-@JsonPropertyOrder({"question", "user_profile", "health_condition", "weekly_diet_records"})
+@JsonPropertyOrder({"question", "question_type", "dish_names", "user_profile", "health_condition", "weekly_diet_records"})
 public class DietaryAgentPayload {
 
     private String question;
 
+    @JsonProperty("question_type")
+    private String question_type;
+
+    @JsonProperty("dish_names")
+    private List<String> dish_names;
+
     @JsonProperty("user_profile")
-    private UserProfileDto userProfile;
+    private UserProfileDto user_profile;
 
     @JsonProperty("health_condition")
-    private HealthConditionDto healthCondition;
+    private HealthConditionDto health_condition;
 
     @JsonProperty("weekly_diet_records")
-    private List<DietRecordDto> weeklyDietRecords;
+    private List<DietRecordDto> weekly_diet_records;
 
     @Data
     @Builder
     public static class UserProfileDto {
         @JsonProperty("height_cm")
-        private Double heightCm;
+        private Double height_cm;
 
         @JsonProperty("weight_kg")
-        private Double weightKg;
+        private Double weight_kg;
 
         private String gender;
         private Integer age;
@@ -41,10 +47,10 @@ public class DietaryAgentPayload {
     @Builder
     public static class HealthConditionDto {
         @JsonProperty("has_chronic_disease")
-        private boolean hasChronicDisease;
+        private boolean has_chronic_disease;
 
         @JsonProperty("chronic_diseases")
-        private List<String> chronicDiseases;
+        private List<String> chronic_diseases;
     }
 
     @Data
@@ -54,9 +60,9 @@ public class DietaryAgentPayload {
         private String meal;
 
         @JsonProperty("dish_name")
-        private String dishName;
+        private String dish_name;
 
         @JsonProperty("note")
-        private String description;
+        private String note;
     }
 }

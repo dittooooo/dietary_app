@@ -26,48 +26,50 @@ public class DietaryAgentService {
 
     public DietaryAgentPayload ask(Long userId, DietaryAskRequest request) {
         // 1. 撈 UserProfile
-        UserProfile profile = userProfileRepository.findByUserId(userId)
+        UserProfile user_profile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("找不到使用者資料"));
 
         // 2. 撈近 7 天飲食紀錄
-        LocalDateTime weekStart = LocalDate.now().minusDays(6).atStartOfDay();
-        LocalDateTime weekEnd = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime week_start = LocalDate.now().minusDays(6).atStartOfDay();
+        LocalDateTime week_end = LocalDate.now().plusDays(1).atStartOfDay();
         List<DietRecord> records = dietRecordRepository.findByAdminFilters(
-                userId, null, null, null, weekStart, weekEnd);
+                userId, null, null, null, week_start, week_end);
 
         // 3. 組裝並回傳
-        return buildPayload(request, profile, records);
+        return buildPayload(request, user_profile, records);
     }
 
-    private DietaryAgentPayload buildPayload(DietaryAskRequest request, UserProfile profile, List<DietRecord> records) {
+    private DietaryAgentPayload buildPayload(DietaryAskRequest request, UserProfile user_profile, List<DietRecord> records) {
         // healthConditions 存的是逗號分隔字串，例如 "高血壓,糖尿病"
-        List<String> diseases = profile.getHealthConditions() != null && !profile.getHealthConditions().isBlank()
-                ? Arrays.asList(profile.getHealthConditions().split(","))
+        List<String> chronic_diseases = user_profile.getHealthConditions() != null && !user_profile.getHealthConditions().isBlank()
+                ? Arrays.asList(user_profile.getHealthConditions().split(","))
                 : List.of();
 
-        List<DietRecordDto> recordDtos = records.stream()
+        List<DietRecordDto> diet_record_dtos = records.stream()
                 .map(r -> DietRecordDto.builder()
                         .date(r.getCreatedAt().toLocalDate().toString())
                         .meal(r.getMealType().toLowerCase())
-                        .dishName(r.getDishName())
-                        .description(r.getDescription())
+                        .dish_name(r.getDishName())
+                        .note(r.getDescription())
                         .build())
                 .toList();
 
         return DietaryAgentPayload.builder()
                 .question(request.getQuestion())
-                .userProfile(UserProfileDto.builder()
-                        .heightCm(profile.getHeight())
-                        .weightKg(profile.getWeight())
-                        .gender(profile.getGender())
-                        .age(profile.getAge())
-                        .goal(profile.getDietGoal())
+                .question_type(request.getQuestionType())
+                .dish_names(request.getDishNames())
+                .user_profile(UserProfileDto.builder()
+                        .height_cm(user_profile.getHeight())
+                        .weight_kg(user_profile.getWeight())
+                        .gender(user_profile.getGender())
+                        .age(user_profile.getAge())
+                        .goal(user_profile.getDietGoal())
                         .build())
-                .healthCondition(HealthConditionDto.builder()
-                        .hasChronicDisease(!diseases.isEmpty())
-                        .chronicDiseases(diseases)
+                .health_condition(HealthConditionDto.builder()
+                        .has_chronic_disease(!chronic_diseases.isEmpty())
+                        .chronic_diseases(chronic_diseases)
                         .build())
-                .weeklyDietRecords(recordDtos)
+                .weekly_diet_records(diet_record_dtos)
                 .build();
     }
 }
