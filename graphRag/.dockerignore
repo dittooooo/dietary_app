@@ -6,11 +6,10 @@ workspace/cache
 workspace/data
 workspace/output
 workspace/src/**/__pycache__
-workspace/src/nutrition_agent_v2/__pycache__
-workspace/src/nutrition_agent_v2/test_area
-workspace/src/nutrition_agent_v2/test_data
-workspace/src/nutrition_agent_v2/*.md
-graphrag-local-ollama
+workspace/src/nutritionist_agent/__pycache__
+workspace/src/nutritionist_agent/test_area
+workspace/src/nutritionist_agent/test_data
+workspace/src/nutritionist_agent/*.md
 *.ipynb
 *.csv
 *.dump

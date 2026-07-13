@@ -35,7 +35,7 @@ except ImportError:  # pragma: no cover
 DEFAULT_MAPPING_PATH = (
     BASE_DIR
     / "src"
-    / "nutrition_agent_v2"
+    / "nutritionist_agent"
     / "test_area"
     / "corrected_issue_recipes_match_reviewed.json"
 )

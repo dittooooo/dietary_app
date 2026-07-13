@@ -30,14 +30,14 @@ docker compose stop
 
 ## 啟動 FastAPI
 
-現在 Docker 預設會啟動新版 `nutrition_agent_v2` FastAPI：
+現在 Docker 預設會啟動新版 `nutritionist_agent` FastAPI：
 
 ```powershell
 cd C:\_AlwaysUndone\dietary_app\graphRag\docker
 docker compose up -d
 ```
 
-這個 compose command 會在容器啟動時先安裝 `workspace/src/nutrition_agent_v2/requirements.txt`，再啟動 API。若你真的改了 Dockerfile 才需要加 `--build`。
+這個 compose command 會在容器啟動時先安裝 `workspace/src/nutritionist_agent/requirements.txt`，再啟動 API。若你真的改了 Dockerfile 才需要加 `--build`。
 
 啟動後測試：
 

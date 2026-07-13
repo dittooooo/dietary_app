@@ -13,14 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY graphrag-local-ollama/requirements.txt /tmp/requirements.txt
+COPY workspace/src/nutritionist_agent/requirements.txt /tmp/nutritionist_agent_requirements.txt
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install -r /tmp/requirements.txt
-
-COPY workspace/src/nutrition_agent_v2/requirements.txt /tmp/nutrition_agent_v2_requirements.txt
-RUN pip install -r /tmp/nutrition_agent_v2_requirements.txt
-
-COPY graphrag-local-ollama /opt/graphrag-local-ollama
-RUN pip install -e /opt/graphrag-local-ollama
+    && pip install -r /tmp/nutritionist_agent_requirements.txt
 
 CMD ["bash"]
