@@ -9,6 +9,31 @@ WRITE_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
+REQUIRED_NUTRITION_RETURN_ALIASES = {
+    "dish_name",
+    "matched_name",
+    "matched_type",
+    "matched_dish_name",
+    "match_score",
+    "match_reason",
+    "retrieval_strategy",
+    "ingredient_name",
+    "food_item_name",
+    "nutrition_name",
+    "nutrition_name_zh",
+    "nutrition_category",
+    "amount_per_serving",
+    "amount_per_100g",
+    "nutrition_unit",
+    "disease_name",
+    "diet_rule_relation",
+    "diet_rule_direction",
+    "diet_rule_note",
+    "diet_rule_reason",
+    "food_level_condition",
+    "sources_json",
+}
+
 
 # 檢查 Cypher 是否只讀、單一語句，且一定有 RETURN 與 LIMIT。
 def validate_read_only_cypher(cypher: str) -> None:
@@ -24,3 +49,18 @@ def validate_read_only_cypher(cypher: str) -> None:
         raise ValueError("Cypher must contain RETURN.")
     if not re.search(r"\bLIMIT\b", cypher, re.IGNORECASE):
         raise ValueError("Cypher must contain LIMIT.")
+
+
+def validate_nutrition_return_schema(cypher: str) -> None:
+    validate_read_only_cypher(cypher)
+    aliases = set(re.findall(r"\bAS\s+`?([A-Za-z_][A-Za-z0-9_]*)`?", cypher, re.IGNORECASE))
+    missing = sorted(REQUIRED_NUTRITION_RETURN_ALIASES - aliases)
+    if missing:
+        raise ValueError(f"Cypher is missing required RETURN aliases: {', '.join(missing)}")
+
+
+def validate_nutrition_rows(rows: list[dict]) -> None:
+    for index, row in enumerate(rows):
+        missing = sorted(REQUIRED_NUTRITION_RETURN_ALIASES - set(row.keys()))
+        if missing:
+            raise ValueError(f"Nutrition row {index} is missing required fields: {', '.join(missing)}")

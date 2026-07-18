@@ -1,6 +1,7 @@
 {
-  "question": "你覺得我今天要吃雞排便當還是排骨便當嗎",
+  "question": "在我有高血壓的情況下，我想增肌，你覺得我今天要吃雞排便當麵還是排骨便當",
   "question_type": "dish_comparison",
+  "dish_names": ["雞排便當", "排骨便當"],
   "user_profile": {
     "height_cm": 170,
     "weight_kg": 70,

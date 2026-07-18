@@ -20,11 +20,12 @@ from .models import (
 from .nutrition_calculator import NutritionCalculator
 from .retriever import GraphRetriever
 from .text_to_cypher import (
-    TextToCypherTranslator,
+    create_text_to_cypher_translator,
     extract_dish_candidates,
     infer_question_type,
     normalize_request_payload,
 )
+from .cypher_guard import validate_nutrition_rows
 
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class NutritionAgent:
         neo4j_password: str = NEO4J_PASSWORD,
     ) -> None:
         self.retriever = GraphRetriever(neo4j_uri, neo4j_user, neo4j_password)
-        self.translator = TextToCypherTranslator()
+        self.translator = create_text_to_cypher_translator()
         self.dish_matcher = DishMatcher(self.retriever.driver)
         self.nutrition_calculator = NutritionCalculator()
         self.answer_generator = AnswerGenerator()
@@ -90,10 +91,10 @@ class NutritionAgent:
             dish_candidates=dish_candidates,
             dish_match_results=match_results,
         )
-        translated = self.translator.translate(full_payload)
+        translated = self.translator.translate_template(full_payload)
 
         # 執行 Neo4j 查詢後只取營養 rows，不進入 AnswerGenerator，因此不會打 OpenAI。
-        rows = self.retriever.retrieve(translated["cypher"])
+        rows = self._retrieve_translated_nutrition_rows(full_payload, translated)
 
         missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
         if missing_candidates:
@@ -118,7 +119,7 @@ class NutritionAgent:
                 dish_candidates=missing_candidates,
                 dish_match_results=fallback_results,
             )
-            fallback_rows = self.retriever.retrieve(self.translator.translate(fallback_payload)["cypher"])
+            fallback_rows = self._retrieve_template_nutrition_rows(fallback_payload)
             rows.extend(fallback_rows)
             logger.info(
                 "[NutritionAgent] nutrition_lookup_fallback missing_candidates=%s fallback_row_count=%s",
@@ -180,7 +181,7 @@ class NutritionAgent:
         logger.info("[NutritionAgent] generated_cypher=%s", cypher)
 
         # 使用受保護的 read-only Cypher 查 Neo4j，回來的是尚未彙總的營養列資料。
-        rows = self.retriever.retrieve(cypher)
+        rows = self._retrieve_translated_nutrition_rows(full_payload, translated)
         missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
         if missing_candidates:
             # 若料理配對成功但沒有查到營養列，改用食材 fallback 再查一次，盡量保留回覆能力。
@@ -204,9 +205,7 @@ class NutritionAgent:
                 dish_candidates=missing_candidates,
                 dish_match_results=fallback_results,
             )
-            translated_fallback = self.translator.translate(fallback_payload)
-            fallback_cypher = translated_fallback["cypher"]
-            fallback_rows = self.retriever.retrieve(fallback_cypher)
+            fallback_rows = self._retrieve_nutrition_rows(fallback_payload)
             rows.extend(fallback_rows)
             logger.info(
                 "[NutritionAgent] ingredient_fallback_retry missing_candidates=%s fallback_row_count=%s",
@@ -243,6 +242,67 @@ class NutritionAgent:
         )
 
     # 找出候選料理中沒有從 Neo4j 查到任何營養資料的項目。
+    def _retrieve_nutrition_rows(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        translated = self.translator.translate(payload)
+        return self._retrieve_translated_nutrition_rows(payload, translated)
+
+    def _retrieve_template_nutrition_rows(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        translated = self.translator.translate_template(payload)
+        return self._retrieve_translated_nutrition_rows(payload, translated)
+
+    def _retrieve_translated_nutrition_rows(
+        self,
+        payload: Dict[str, Any],
+        translated: Dict[str, str],
+    ) -> List[Dict[str, Any]]:
+        try:
+            rows = self.retriever.retrieve(translated["cypher"])
+            validate_nutrition_rows(rows)
+            if self._should_fallback_for_missed_exact_dishes(payload, translated, rows):
+                raise ValueError("LangChain query did not return rows for exact dish matches.")
+            return rows
+        except Exception as exc:
+            if not self.translator.should_fallback_on_retrieval_error(translated):
+                raise
+            logger.warning("[NutritionAgent] langchain cypher retrieval failed; falling back to template: %s", exc)
+            template_translated = self.translator.translate_template(payload)
+            rows = self.retriever.retrieve(template_translated["cypher"])
+            validate_nutrition_rows(rows)
+            return rows
+
+    @staticmethod
+    def _should_fallback_for_missed_exact_dishes(
+        payload: Dict[str, Any],
+        translated: Dict[str, str],
+        rows: List[Dict[str, Any]],
+    ) -> bool:
+        if translated.get("cypher_mode") != "langchain":
+            return False
+
+        exact_targets = {
+            str(item.get("input_name") or item.get("raw_input_name"))
+            for item in payload.get("dish_match_results", [])
+            if item.get("retrieval_strategy") == "dish_match"
+        }
+        exact_targets.update(
+            {
+                str(item.get("matched_dish_name"))
+                for item in payload.get("dish_match_results", [])
+                if item.get("retrieval_strategy") == "dish_match" and item.get("matched_dish_name")
+            }
+        )
+        exact_targets.discard("")
+        if not exact_targets:
+            return False
+
+        returned_names = {
+            str(name)
+            for row in rows
+            for name in (row.get("dish_name"), row.get("matched_dish_name"), row.get("matched_name"))
+            if name
+        }
+        return not exact_targets.issubset(returned_names)
+
     @staticmethod
     def _missing_candidates_from_rows(
         dish_candidates: List[str],

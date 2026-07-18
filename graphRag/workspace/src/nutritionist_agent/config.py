@@ -55,6 +55,9 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
 DEFAULT_TOP_N_ROWS = int(os.getenv("NUTRITION_AGENT_TOP_N_ROWS", "80"))
 DISH_MATCH_THRESHOLD = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_THRESHOLD", "60"))
 GRAPH_QUERY_LIMIT = int(os.getenv("NUTRITION_AGENT_GRAPH_QUERY_LIMIT", "1000"))
+CYPHER_MODE = os.getenv("NUTRITION_AGENT_CYPHER_MODE", "langchain").lower()
+CYPHER_FALLBACK = os.getenv("NUTRITION_AGENT_CYPHER_FALLBACK", "template").lower()
+CYPHER_MODEL = os.getenv("NUTRITION_AGENT_CYPHER_MODEL", OPENAI_MODEL)
 
 
 # 正式環境啟動時檢查必要設定，避免用 dummy-key 或預設密碼上線。
