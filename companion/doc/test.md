@@ -54,7 +54,7 @@
 * **輸入 (Request JSON)**
   ```json
   {
-    "message": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
+    "user_prompt": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
     "user_profile": {
       "height_cm": 165,
       "weight_kg": 60,
@@ -73,7 +73,7 @@
   # -d "{\"message\"...}": 帶有反斜線轉義的雙引號字串，為我們要發送的 JSON 數據主體 (Payload)
   curl -X POST http://localhost:3000/companion/ask \
   -H "Content-Type: application/json" \
-  -d "{\"message\":\"我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。\",\"user_profile\":{\"height_cm\":165,\"weight_kg\":60,\"gender\":\"female\",\"age\":21}}"
+  -d "{\"user_prompt\":\"我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。\",\"user_profile\":{\"height_cm\":165,\"weight_kg\":60,\"gender\":\"female\",\"age\":21}}"
   ```
 
 * **預期輸出結果 (Response JSON)**
@@ -85,8 +85,6 @@
       "should_handle": true,
       "intent_category": "dish_advice",
       "question_type": "single_dish",
-      "requires_more_context": false,
-      "missing_information": [],
       "confidence": 0.95,
       "dishes": ["炸雞", "拉麵"]
     },
@@ -117,7 +115,7 @@
 * **輸入 (Request JSON)**
   ```json
   {
-    "message": "牛肉麵跟水餃哪一個熱量比較高？",
+    "user_prompt": "牛肉麵跟水餃哪一個熱量比較高？",
     "user_profile": {
       "height_cm": 165,
       "weight_kg": 55
@@ -133,7 +131,7 @@
   # -d: 夾帶要比較的內容「牛肉麵跟水餃」，以及使用者的基本身高體重
   curl -X POST http://localhost:3000/companion/ask \
   -H "Content-Type: application/json" \
-  -d "{\"message\":\"牛肉麵跟水餃哪一個熱量比較高？\",\"user_profile\":{\"height_cm\":165,\"weight_kg\":55}}"
+  -d "{\"user_prompt\":\"牛肉麵跟水餃哪一個熱量比較高？\",\"user_profile\":{\"height_cm\":165,\"weight_kg\":55}}"
   ```
 
 * **預期輸出結果 (Response JSON)**
@@ -145,8 +143,6 @@
       "should_handle": true,
       "intent_category": "dish_advice",
       "question_type": "dish_comparison",
-      "requires_more_context": false,
-      "missing_information": [],
       "confidence": 0.98,
       "dishes": ["牛肉麵", "水餃"]
     },
@@ -177,7 +173,7 @@
 * **輸入 (Request JSON)**
   ```json
   {
-    "message": "這個降血糖藥我應該怎麼服用？請幫我診斷。"
+    "user_prompt": "這個降血糖藥我應該怎麼服用？請幫我診斷。"
   }
   ```
 
@@ -189,7 +185,7 @@
   # -d: 夾帶包含「降血糖藥」、「診斷」等醫療字詞的敏感問句
   curl -X POST http://localhost:3000/companion/ask \
   -H "Content-Type: application/json" \
-  -d "{\"message\":\"這個降血糖藥我應該怎麼服用？請幫我診斷。\"}"
+  -d "{\"user_prompt\":\"這個降血糖藥我應該怎麼服用？請幫我診斷。\"}"
   ```
 
 * **預期輸出結果 (Response JSON)**
@@ -201,8 +197,6 @@
       "should_handle": false,
       "intent_category": "medical_out_of_scope",
       "question_type": "unknown",
-      "requires_more_context": false,
-      "missing_information": [],
       "confidence": 0.8,
       "dishes": []
     },
@@ -222,6 +216,110 @@
   ```
 
 ---
+### 🛠️ 情境四：引數錯誤 (HTTP 400 Bad Request 測試)
+此情境驗證當前端發送的請求不含 `user_prompt` 或其值為空字串時的攔截。
+
+* **測試指令 (curl)**
+  ```bash
+  curl -X POST http://localhost:3000/companion/ask \
+  -H "Content-Type: application/json" \
+  -d "{}"
+  ```
+
+* **預期輸出結果 (Response JSON - HTTP 400)**
+  ```json
+  {
+    "success": false,
+    "error_code": "BAD_REQUEST",
+    "error_message": "The 'user_prompt' field is required and must be a non-empty string."
+  }
+  ```
+
+---
+
+### 🛠️ 情境五：OpenAI 服務異常 (HTTP 502 Bad Gateway 測試)
+此情境驗證當 OpenAI API 呼叫失敗（例如 API Key 錯誤、網路超時）時的攔截。
+*測試方法：請先將本機的 `.env` 中的 `OPENAI_API_KEY` 修改為無效值，重啟伺服器後發送請求。*
+
+* **測試指令 (curl)**
+  ```bash
+  curl -X POST http://localhost:3000/companion/ask \
+  -H "Content-Type: application/json" \
+  -d "{\"user_prompt\":\"我今天中午吃炸雞了\"}"
+  ```
+
+* **預期輸出結果 (Response JSON - HTTP 502)**
+  ```json
+  {
+    "success": false,
+    "error_code": "OPENAI_SERVICE_ERROR",
+    "error_message": "Failed to communicate with OpenAI API. Please try again later.",
+    "debug_message": "OpenAI API error..."
+  }
+  ```
+
+---
+
+### 🛠️ 情境六：伺服器內部未知錯誤 (HTTP 500 Internal Server Error 測試)
+此情境驗證當伺服器內部發生未預期的 runtime Exception 時的攔截。
+
+* **預期輸出結果 (Response JSON - HTTP 500)**
+  ```json
+  {
+    "success": false,
+    "error_code": "INTERNAL_SERVER_ERROR",
+    "error_message": "An unexpected error occurred on the server."
+  }
+  ```
+
+---
+### 🛠️ 情境七：三參數有效性攔截測試 (例如無具體食物)
+此情境驗證當使用者提問沒有提到任何食物名時，三參數校驗發揮作用：攔截並不呼叫 Dietary Agent，回傳引導提示。
+
+* **輸入 (Request JSON)**
+  ```json
+  {
+    "user_prompt": "我該怎麼吃比較健康？"
+  }
+  ```
+
+* **測試指令 (curl)**
+  ```bash
+  curl -X POST http://localhost:3000/companion/ask \
+  -H "Content-Type: application/json" \
+  -d "{\"user_prompt\":\"我該怎麼吃比較健康？\"}"
+  ```
+
+* **預期輸出結果 (Response JSON)**
+  ```json
+  {
+    "success": true,
+    "llm_fallback_used": false,
+    "screening": {
+      "should_handle": true,
+      "intent_category": "dish_advice",
+      "question_type": "unknown",
+      "confidence": 0.9,
+      "dishes": []
+    },
+    "emotion": {
+      "primary_emotion": "neutral",
+      "valence": "neutral",
+      "urgency": "medium",
+      "needs_empathy": false,
+      "companion_tone": "neutral",
+      "evidence": []
+    },
+    "dietary_agent_request": null,
+    "dietary_agent_response": null,
+    "dietary_agent_error": null,
+    "companion_reply": "我目前無法從您的問題中提取出具體的食物名稱。可以請您提供想諮詢的餐點名稱嗎？例如：「晚餐吃炸雞適合嗎？」"
+  }
+  ```
+
+---
+
+
 
 ## 4. Windows PowerShell 專用指令
 
@@ -231,7 +329,7 @@
 ```powershell
 # 1. 建立一個包含請求參數 (message 與 user_profile) 的雜湊表 (Hashtable)
 $body = @{
-    message = "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。"
+    user_prompt = "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。"
     user_profile = @{
         height_cm = 165
         weight_kg = 60
@@ -255,7 +353,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/companion/ask" -Method Post -Body 
 ```powershell
 # 1. 建立一個包含請求參數 (message 與 user_profile) 的雜湊表 (Hashtable)
 $body = @{
-    message = "牛肉麵跟水餃哪一個熱量比較高？"
+    user_prompt = "牛肉麵跟水餃哪一個熱量比較高？"
     user_profile = @{
         height_cm = 165
         weight_kg = 55
@@ -273,7 +371,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/companion/ask" -Method Post -Body 
 ```powershell
 # 1. 建立一個包含請求參數 (message) 的雜湊表 (Hashtable)
 $body = @{
-    message = "這個降血糖藥我應該怎麼服用？請幫我診斷。"
+    user_prompt = "這個降血糖藥我應該怎麼服用？請幫我診斷。"
 } | ConvertTo-Json -Depth 4 -Compress
 
 # 2. 將 JSON 字串轉成 UTF-8 位元組陣列，防止中文字在 PowerShell 中傳輸時變成問號亂碼
@@ -331,7 +429,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 #### 1. 前端對您發送的請求 (Request to Companion Agent)
 ```json
 {
-  "message": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
+  "user_prompt": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
   "user_profile": {
     "height_cm": 165,
     "weight_kg": 60,
@@ -370,8 +468,6 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
     "should_handle": true,
     "intent_category": "dish_advice",
     "question_type": "single_dish",
-    "requires_more_context": false,
-    "missing_information": [],
     "confidence": 0.95,
     "dish_names": ["炸雞", "拉麵"]
   },
@@ -437,7 +533,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 * **貼入 Body 的 JSON 內容**：
   ```json
   {
-    "message": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
+    "user_prompt": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
     "user_profile": {
       "height_cm": 165,
       "weight_kg": 60,
@@ -456,7 +552,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 * **貼入 Body 的 JSON 內容**：
   ```json
   {
-    "message": "牛肉麵跟水餃哪一個熱量比較高？",
+    "user_prompt": "牛肉麵跟水餃哪一個熱量比較高？",
     "user_profile": {
       "height_cm": 165,
       "weight_kg": 55
@@ -472,7 +568,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 * **貼入 Body 的 JSON 內容**：
   ```json
   {
-    "message": "這個降血糖藥我應該怎麼服用？請幫我診斷。"
+    "user_prompt": "這個降血糖藥我應該怎麼服用？請幫我診斷。"
   }
   ```
 * **驗證重點**：
