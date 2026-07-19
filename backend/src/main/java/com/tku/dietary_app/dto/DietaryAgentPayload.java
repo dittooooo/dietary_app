@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @Builder
-@JsonPropertyOrder({"question", "question_type", "dish_names", "user_profile", "health_condition", "weekly_diet_records"})
+@JsonPropertyOrder({"question", "question_type", "dish_names", "user_profile"})
 public class DietaryAgentPayload {
 
     private String question;
@@ -23,14 +23,9 @@ public class DietaryAgentPayload {
     @JsonProperty("user_profile")
     private UserProfileDto user_profile;
 
-    @JsonProperty("health_condition")
-    private HealthConditionDto health_condition;
-
-    @JsonProperty("weekly_diet_records")
-    private List<DietRecordDto> weekly_diet_records;
-
     @Data
     @Builder
+    @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age", "recommended_calorie"})
     public static class UserProfileDto {
         @JsonProperty("height_cm")
         private Double height_cm;
@@ -40,29 +35,8 @@ public class DietaryAgentPayload {
 
         private String gender;
         private Integer age;
-        private String goal;
-    }
 
-    @Data
-    @Builder
-    public static class HealthConditionDto {
-        @JsonProperty("has_chronic_disease")
-        private boolean has_chronic_disease;
-
-        @JsonProperty("chronic_diseases")
-        private List<String> chronic_diseases;
-    }
-
-    @Data
-    @Builder
-    public static class DietRecordDto {
-        private String date;
-        private String meal;
-
-        @JsonProperty("dish_name")
-        private String dish_name;
-
-        @JsonProperty("note")
-        private String note;
+        @JsonProperty("recommended_calorie")
+        private Integer recommended_calorie;
     }
 }
