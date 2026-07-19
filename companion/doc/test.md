@@ -405,11 +405,11 @@ String email = SecurityContextHolder.getContext().getAuthentication().getPrincip
 這代表該 API 受到**身分認證保護**。如果我們直接送出請求，對方伺服器會因為沒有 Token 而回傳 **401 Unauthorized (未授權)**，或者因為找不到 anonymousUser 而噴出 `使用者不存在` 錯誤。
 
 **解決對策（二選一）**：
-* **對策 A（推薦測試方法）**：請同學在她的 Spring Security 設定檔（通常是 `SecurityConfig.java`）中，暫時將 `/api/dietary/ask-weekly-analysis` 路徑設定為免驗證放行（`permitAll()`），方便你們在本地開發階段進行無驗證對接測試。
+* **對策 A（推薦測試方法）**：請同學在她的 Spring Security 設定檔（通常是 `SecurityConfig.java`）中，暫時將 `/dietary-agent/ask` 路徑設定為免驗證放行（`permitAll()`），方便你們在本地開發階段進行無驗證對接測試。
 ### TODO: 將 /api/dietary/** 的 Security 規則暫時改成 permitAll()，這樣 our app (frontend) 才能不需要 Token 就能順利串接，之後前後端正式連線，必須要改回來。
 ### 已更動後端 securityconfig.java :                        
 #### 開發階段暫時放行，方便本地無驗證對接測試。
-####  .requestMatchers("/api/dietary/ask-weekly-analysis").permitAll()
+####  .requestMatchers("/dietary-agent/ask").permitAll()
 ####  .requestMatchers("/api/dietary/**").authenticated()
 
 * **對策 B（正式對接方法）**：如果必須認證，您需要向同學索取一個有效的**測試 Token (如 JWT Token)**，並在 `Companion/companion-agent-services.js` 的 `callDietaryAgent` 函數中的 `headers` 加上該 Token（例如：`"Authorization": "Bearer <同學給的Token>"`）。
@@ -440,7 +440,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 ```
 
 #### 2. 您轉傳給同學後端的封裝三元素 (Payload to Java Dietary Agent)
-這是發送到 `POST http://localhost:8080/api/dietary/ask-weekly-analysis` 的資料結構：
+這是發送到 `POST http://localhost:8080/dietary-agent/ask` 的資料結構：
 ```json
 {
   "question": "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。",
@@ -582,7 +582,7 @@ userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("使用
 #### 💡 連線 Dietary Agent (Java/Spring Boot) 聯調測試的補充設定
 
 如果您正在進行 **5.2 對策 B**（需要帶上 Bearer Token 進行身份驗證對接）：
-1. **如果您要利用 Postman 直接測試同學的 Java Dietary Agent API (`POST http://localhost:8080/api/dietary/ask-weekly-analysis`)**：
+1. **如果您要利用 Postman 直接測試同學的 Java Dietary Agent API (`POST http://localhost:8080/dietary-agent/ask`)**：
    * 在該請求的 **Authorization** 頁籤中，將 **Type** 選擇為 **`Bearer Token`**。
    * 在右側的 **Token** 輸入框中貼上同學提供給您的有效測試用 JWT Token。
 2. **如果是透過 Companion Agent 轉傳**：

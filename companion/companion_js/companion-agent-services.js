@@ -77,8 +77,8 @@ async function callDietaryAgent(requestBody, authHeader) {
   if (authHeader) {
     headers["Authorization"] = authHeader;
   }
-  // TODO:根據端點對接 Dietary Agent API 路徑
-  const response = await fetch(`${baseUrl}/api/dietary/ask-weekly-analysis`, {
+  // 根據後端 Controller 的 @RequestMapping("/dietary-agent") 與 @PostMapping("/ask") 進行對接
+  const response = await fetch(`${baseUrl}/dietary-agent/ask`, {
     method: "POST",
     headers,
     body: JSON.stringify(requestBody),
@@ -97,6 +97,7 @@ async function callDietaryAgent(requestBody, authHeader) {
  * 根據意圖與情緒狀態，調整自然語言回覆，將 Dietary Agent 的推論結合安撫前綴。
  */
 function buildCompanionReply({ screening, emotion, dietaryAgentResponse, dietaryAgentRequest }) {
+  // TODO: 跟原本寫死的 isMedicalOutOfScope 不同，其是交給「OpenAI (大語言模型)」去判斷的(對應System_Prompt、tools的intent_catagory)。
   // 醫療超出範圍的柔和拒絕
   if (screening.intent_category === "medical_out_of_scope") {
     return "這類問題比較接近醫療診斷或治療判斷，我目前不能直接替代專業醫療建議。建議您諮詢醫生或合格的醫療專家喔。";
@@ -124,7 +125,7 @@ function buildCompanionReply({ screening, emotion, dietaryAgentResponse, dietary
     ? "我有注意到你現在有點在意這次的選擇，先不用太緊張喔。❤️\n"
     : "我先幫您整理這次的飲食建議：\n";
 
-  // TODO: 等待蔓蔓Dietary Agent 完整回覆結構
+  // TODO: 等待蔓蔓Dietary Agent 完整回覆結構進行調整
   // 將前綴與 Dietary Agent 回傳的建議融合
   let recommendation = "已成功記錄您的問題，正在為您尋求最佳飲食建議。";
   if (dietaryAgentResponse) {

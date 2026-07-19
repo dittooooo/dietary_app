@@ -122,3 +122,105 @@
    * 重新實作 `buildDietaryAgentRequest`，加入針對三參數（`question`, `question_type`, `dish_names`）的嚴格攔截檢查。
 4. **[companion-agent-config.js](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-agent-config.js)**:
    * 內容整併至 LLM 服務檔案後，此檔案可被**刪除 [DELETE]**。
+
+---
+
+## 專案多語言架構設計討論 (Architecture Discussion)
+
+### 問題背景
+在當前的專案架構中，採用了多種不同的程式語言與框架，包括 **Java (Spring Boot)**、**Flutter (Dart)**，以及 **JavaScript (Node.js + Express)**。針對「為何需要使用這麼多種程式語言，以及 Companion Agent 為何選擇 JavaScript + Express」進行以下架構與設計上的說明：
+
+### 1. 為什麼整個專案使用那麼多不同的語言？
+現代微服務（Microservices）與領域驅動設計（Domain-Driven Design, DDD）的核心原則之一就是**「以最適當的工具解決特定的問題 (Right tool for the right job)」**。各個技術選型背後的定位與目的如下：
+
+* **Flutter (前端行動 App)：**
+  * **定位**：跨平台行動端使用者介面。
+  * **目的**：飲食記錄與健康管理高度依賴行動端（隨時隨地記錄、拍照等）。Flutter 可以使用單一 codebase (Dart) 同時編譯出 iOS 與 Android 兩大平台的高效能原生 App，大幅節省開發與維護成本，並提供流暢的 UI/UX。
+* **Java / Spring Boot (Dietary Agent & 核心後端業務服務)：**
+  * **定位**：企業級業務邏輯、資料庫存取與安全性管理。
+  * **目的**：Spring Boot 是企業級後端開發的行業標準，具備極佳的強型態安全（Type Safety）、穩定的多執行緒併發處理能力與成熟的生態系（例如使用 Spring Security 驗證 JWT Token、Spring Data JPA 進行資料庫操作）。Dietary Agent 作為需要處理具體飲食推論、整合使用者 Profile 與進行敏感資料存取的核心後端，使用 Java + Spring Boot 能確保系統的強健性與易維護性。
+* **JavaScript / Node.js + Express (Companion Agent / API Gateway / 中繼協調服務)：**
+  * **定位**：輕量級 API Gateway、請求攔截與流程控制中繼站。
+  * **目的**：負責銜接前端 App 與後端的多個 AI 服務，進行初步的 LLM 語意拆解、輸入驗證、參數攔截與請求分流（如下詳述）。
+
+---
+
+### 2. 為什麼 Companion Agent 要使用 JavaScript + Express？
+Companion Agent 在架構中扮演的是 **API 閘道 (API Gateway) 與中繼器 (Orchestrator)** 的角色。選擇 Node.js + Express 的關鍵考量包括：
+
+* **非阻塞 I/O 與高併發 (Asynchronous & Non-blocking I/O)：**
+  * Node.js 採用單執行緒、事件驅動與非阻塞 I/O 的特性，非常適合用來處理大量「I/O 密集型 (I/O-Bound)」的請求（例如：接收前端 HTTP 請求、呼叫外部 OpenAI API、轉發請求給 Java 後端）。這比多執行緒的傳統後端架構能以更低的記憶體和 CPU 資源承受更高的併發請求量。
+* **輕量、啟動快速 (Lightweight & Low Overhead)：**
+  * Express 是一個極簡的 Web 框架，沒有臃腫的開箱即用功能。這使 Companion Agent 可以保持極度輕量、部署迅速，非常適合微服務架構或 Serverless (如 AWS Lambda, Google Cloud Functions) 的無伺服器部署方案。
+* **前端與中繼層的語言一致性：**
+  * JavaScript/TypeScript 是 Web 開發的通用語言。使用 JavaScript 撰寫 API 中繼站，在 JSON 資料格式處理上（如解析前端 Payload、整理 OpenAI Tool Calls 格式）極為自然且無縫。
+* **強大的軟體生態系 (NPM Ecosystem)：**
+  * NPM 擁有全宇宙最龐大的第三方套件庫。對於 Companion Agent 而言，可以輕鬆整合如官方的 `@google/generative-ai` 或 `openai` SDK，以及 `zod` / `joi` 等強大的資料驗證套件，極大加速了 API 串接與參數攔截機制的實作。
+
+### 總結
+透過這種**混和語言架構 (Polyglot Architecture)**，專案得以兼顧**「前端跨平台開發效率 (Flutter)」**、**「中繼層高併發與輕量傳輸 (JS + Express)」**以及**「後端業務邏輯與系統穩定性 (Java + Spring Boot)」**。每種語言在各自擅長的領域發揮最大優勢，再透過標準化的 RESTful API 進行溝通，這是現代高品質軟體系統非常經典且穩健的架構設計。
+
+---
+
+## 模糊輸入與防呆攔截機制討論 (Ambiguous Input & Safeguard Discussion)
+
+### 1. 目前專案對於輸入較模糊的內容，是如何處理？在哪裡可以看到相關程式碼？
+在當前架構設計中，我們移除了「需要維護上下文狀態的引導補問機制（Stateful）」，改為採用**「無狀態的參數攔截與引導回覆機制（Stateless Safeguard & Guidance）」**。
+
+具體運作流程如下：
+1. **語意解析與特徵擷取 (OpenAI)**：
+   - 當使用者輸入模糊或不完整句（如「晚餐要吃這個嗎」或單純閒聊「你好」），OpenAI 會呼叫 `screen_user_request` 工具。在此過程中，由於沒有具體食物或意圖模糊，LLM 會將 `question_type` 判定為 `"unknown"`，且提取的 `dishes` 陣列為空。
+   - 相關程式碼請參考 [companion-llm.js: L9-L32 (SYSTEM_PROMPT)](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L9-L32) 與 [companion-llm.js: L40-L86 (screen_user_request Schema)](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L40-L86)。
+2. **三元素參數嚴格攔截**：
+   - 在傳遞給後端 Dietary Agent 之前，`buildDietaryAgentRequest` 函數會針對 `question`、`question_type` 及 `dish_names` 進行嚴格的有效性驗證。
+   - 只要有任何一個引數不符條件（如 `question_type === "unknown"` 或 `dish_names` 長度為 0），便會**立刻攔截並回傳 `null`，完全不呼叫後端 Dietary Agent**。
+   - 相關程式碼請參考 [companion-agent-services.js: L18-L45 (buildDietaryAgentRequest)](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-agent-services.js#L18-L45)。
+3. **引導式陪伴回覆組裝**：
+   - 如果意圖被判定為飲食諮詢（`should_handle === true`）但因為上述三元素檢查未過而被攔截時，`buildCompanionReply` 會判斷是缺漏了料理（`dishes` 為空）還是無法識別問題類型，並回傳相對應的具體引導話術（而不是丟出錯誤或空白回覆）。
+   - 相關程式碼請參考 [companion-agent-services.js: L111-L121 (buildCompanionReply 攔截處理)](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-agent-services.js#L111-L121)。
+
+---
+
+### 2. 這樣的補救措施夠嗎？
+**「足夠確保後端穩定，但使用者體驗上還有優化空間。」**
+
+#### 為什麼說它足夠？
+* **百分之百保護後端**：後端 Java Dietary Agent 可以完全信任傳入的三元素 Payload，無需撰寫額外的容錯或特異語意解析。
+* **輕量與無狀態**：Server 不需要快取、資料庫或 Session 來記憶對話歷史（State），極大地維持了 API 中繼站的高效能與易擴展性。
+* **具備明確指引**：相比於回報系統錯誤，提供具體的錯誤說明與提問範例，能引導使用者修正提問。
+
+#### 還有哪些不足與痛點？
+* **重覆的引導語**：若使用者持續輸入無意義或模糊的內容，系統只會重覆返回幾句寫死的引導話術，顯得有些生硬與機械化。
+* **閒聊拒絕過於死板**：對於非飲食相關話題（`should_handle === false`），系統會以固定的硬編碼文字婉拒，破壞了「Companion (陪伴者)」的對話體驗。
+
+---
+
+### 3. 未來可以如何進一步補強？
+
+#### 補強方案一：LLM 閒聊拒絕生成 (LLM-generated Out-of-Scope Response) — 推薦度：⭐⭐⭐⭐
+* **概念**：當 LLM 判定為非飲食問題時，不由程式進行冷冰冰的寫死拒絕，而是讓 LLM 根據當前輸入，自己生成一段溫暖的、導回飲食正軌的陪伴式回覆。
+* **實作方式**：
+  1. 在 `screen_user_request` 的 Tool 定義或 LLM 返回欄位中，增加 `companion_fallback_message` (string) 欄位。
+  2. 若 `should_handle` 為 `false`，則直接回傳 LLM 產生的文字。
+  3. 例如使用者打字：「我今天工作好累。」LLM 回覆：*「辛苦你了！累的時候特別容易想吃甜食或炸雞來放鬆。如果想知道怎麼吃點好吃的又不會有負擔，隨時可以告訴我喔！」*
+
+#### 補強方案二：快捷推薦問句選項 (Quick Suggestions API) — 推薦度：⭐⭐⭐⭐⭐
+* **概念**：當系統攔截到模糊輸入時，後端不要只給提示文字，而是**主動附帶幾個推薦的具體問句**。前端將這些問句渲染為點擊按鈕，點擊後自動送出。
+* **實作方式**：
+  1. 後端 `POST /companion/ask` 回傳 JSON 中，若被攔截，多帶一個陣列 `suggestions`。
+  2. 例如使用者僅輸入「炸雞」，攔截後回傳：
+     ```json
+     {
+       "companion_reply": "您提到了『炸雞』，想了解關於它的什麼呢？",
+       "suggestions": ["減脂期吃炸雞好嗎？", "炸雞熱量是多少？", "炸雞跟烤雞哪個健康？"]
+     }
+     ```
+  3. 前端 Flutter 將建議問句轉化成按鈕，使用者點一下即可送出，免除打字心智負擔。
+
+#### 補強方案三：前端 UI 層級的引導與驗證 (Frontend UX Guide) — 推薦度：⭐⭐⭐
+* **概念**：在使用者送出前，就將不良輸入擋下。
+* **實作方式**：
+  1. 行動端輸入框的 Placeholder 定期輪播健康飲食問句範例。
+  2. 在聊天室初始狀態提供常見提問的推薦按鈕（Chips）。
+  3. 限制提問的最少字數（例如必須大於 3 個字才能送出）。
+

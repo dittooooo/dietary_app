@@ -36,9 +36,7 @@ async function handleCompanionAsk(req, res) {
       error_message: "The 'user_prompt' field is required and must be a non-empty string."
     });
   }
-
   let openAiResult;
-
   // 【第一階段】：執行意圖分析、料理名稱擷取與情緒識別
   try {
     // 優先嘗試執行 OpenAI responses API 流程
@@ -113,7 +111,6 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// TODO:Companion Agent 提供的API
 // 7. 設定主要對話 Endpoint，供 Flutter 呼叫
 app.post("/companion/ask", handleCompanionAsk);
 
