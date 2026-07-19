@@ -6,15 +6,14 @@ class ApiConfig {
   static String get baseUrl {
     if (kIsWeb) {
       // 如果是在網頁瀏覽器 (Chrome/Edge) 執行
-      // 動態取得網頁當前的 Host (例如 localhost 或 192.168.x.x)，方便在手機上用區網測試
-      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
-      return 'http://127.0.0.1:8080/api';
+      return 'http://localhost:8080/api';
     } else if (Platform.isAndroid) {
-      // 如果是在 Android 模擬器執行
-      return 'http://127.0.0.1:8080/api'; //改成電腦IP:PORT
+      // 在實體手機或模擬器上執行，我們使用 adb reverse tcp:8080 tcp:8080 將手機 8080 導向電腦 8080
+      return 'http://127.0.0.1:8080/api';
     } else {
       // 其他平台 (如 Windows 桌面版、iOS 模擬器)
       return 'http://localhost:8080/api';
     }
   }
 }
+

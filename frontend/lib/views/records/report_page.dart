@@ -131,10 +131,12 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   }
 
   void _processRecords() {
-    // 1. Weekly data: from widget.date - 6 days to widget.date
+    // 1. Weekly data: Sunday to Saturday of the week containing widget.date
+    final sundayOffset = widget.date.weekday % 7;
+    final sunday = widget.date.subtract(Duration(days: sundayOffset));
     List<double> weekly = [];
-    for (int i = 6; i >= 0; i--) {
-      final targetDate = widget.date.subtract(Duration(days: i));
+    for (int i = 0; i < 7; i++) {
+      final targetDate = sunday.add(Duration(days: i));
       double dailyTotal = 0.0;
       for (var record in _allRecords) {
         final rDate = _getRecordDate(record);
@@ -188,8 +190,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     if (_viewType == 0) { // 執行相對應的邏輯計算或設定屬性參數
       return "${widget.date.year}年 ${widget.date.month.toString().padLeft(2, '0')}月 ${widget.date.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
     } else { // 程式碼區塊或元件結構結束
-      DateTime startDate = widget.date.subtract(const Duration(days: 6)); // 建立編譯期常數，優化 Flutter 渲染效能
-      return "${startDate.year}年 ${startDate.month.toString().padLeft(2, '0')}月 ${startDate.day.toString().padLeft(2, '0')}日 - ${widget.date.month.toString().padLeft(2, '0')}月 ${widget.date.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
+      DateTime startDate = widget.date.subtract(Duration(days: widget.date.weekday % 7));
+      DateTime endDate = startDate.add(const Duration(days: 6));
+      return "${startDate.year}年 ${startDate.month.toString().padLeft(2, '0')}月 ${startDate.day.toString().padLeft(2, '0')}日 - ${endDate.year == startDate.year ? '' : '${endDate.year}年 '}${endDate.month.toString().padLeft(2, '0')}月 ${endDate.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -462,8 +465,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     double dinnerCal = 0.0;
     double otherCal = 0.0;
 
-    final DateTime startDate = widget.date.subtract(const Duration(days: 6));
-    final DateTime endDate = widget.date;
+    final DateTime startDate = widget.date.subtract(Duration(days: widget.date.weekday % 7));
+    final DateTime endDate = startDate.add(const Duration(days: 6));
     
     final DateTime startLimit = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
     final DateTime endLimit = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
@@ -474,13 +477,13 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       try {
         if (rDate.isAfter(startLimit.subtract(const Duration(seconds: 1))) &&
             rDate.isBefore(endLimit.add(const Duration(seconds: 1)))) {
-          final String meal = (record['meal'] ?? '').toString();
+          final String meal = (record['mealType'] ?? record['meal'] ?? '').toString().toUpperCase();
           final double cal = _getCaloriesFromRecord(record);
-          if (meal.contains('早')) {
+          if (meal.contains('BREAKFAST') || meal.contains('早')) {
             breakfastCal += cal;
-          } else if (meal.contains('午')) {
+          } else if (meal.contains('LUNCH') || meal.contains('午')) {
             lunchCal += cal;
-          } else if (meal.contains('晚')) {
+          } else if (meal.contains('DINNER') || meal.contains('晚')) {
             dinnerCal += cal;
           } else {
             otherCal += cal;

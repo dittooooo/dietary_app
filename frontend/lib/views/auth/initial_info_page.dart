@@ -319,7 +319,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
           throw Exception(result['message'] ?? '設定失敗'); // 執行相對應的邏輯計算或設定屬性參數
         } // 程式碼區塊或元件結構結束
       } else { // 程式碼區塊或元件結構結束
-        throw Exception('連線錯誤: ${response.statusCode}'); // 執行相對應的邏輯計算或設定屬性參數
+        throw Exception('連線錯誤，請稍後再試'); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
     } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
       debugPrint('提交過程發生例外: $e'); // 執行相對應的邏輯計算或設定屬性參數

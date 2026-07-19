@@ -139,7 +139,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
           ); // 程式碼區塊或元件結構結束
         } // 程式碼區塊或元件結構結束
       } else { // 程式碼區塊或元件結構結束
-        throw Exception('註銷失敗: ${response.statusCode}'); // 執行相對應的邏輯計算或設定屬性參數
+        throw Exception('註銷失敗，請稍後再試'); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
     } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數

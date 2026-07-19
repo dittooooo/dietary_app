@@ -84,7 +84,7 @@ class DietService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return {'success': true, 'data': data};
       }
-      return {'success': false, 'message': '新增失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '新增失敗，請檢查網路連線或稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '連線失敗: $e'};
     }
@@ -108,7 +108,7 @@ class DietService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return {'success': true, 'data': data};
       }
-      return {'success': false, 'message': '照片上傳失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '照片上傳失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '照片上傳連線失敗: $e'};
     }
@@ -183,7 +183,7 @@ class DietService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return {'success': true, 'data': data};
       }
-      return {'success': false, 'message': '修改失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '修改失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '修改連線失敗: $e'};
     }
@@ -210,7 +210,7 @@ class DietService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return {'success': true, 'data': data};
       }
-      return {'success': false, 'message': '智能分析讀取失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '智能分析讀取失敗，請確認資料後再試'};
     } catch (e) {
       return {'success': false, 'message': '智能分析連線失敗: $e'};
     }

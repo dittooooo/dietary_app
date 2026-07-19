@@ -153,7 +153,7 @@ class AuthService { // 定義 AuthService 類別，封裝相關功能或資料
       if (response.statusCode == 200) {
         return {'success': true, 'avatarUrl': response.body};
       }
-      return {'success': false, 'message': '上傳失敗 (狀態碼 ${response.statusCode})'};
+      return {'success': false, 'message': '上傳失敗，請檢查檔案格式與網路後再試'};
     } catch (e) {
       return {'success': false, 'message': '連線失敗: $e'};
     }

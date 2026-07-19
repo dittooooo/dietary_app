@@ -224,7 +224,23 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
   void _showEditDietRecordDialog(dynamic record) {
     final nameController = TextEditingController(text: record['dishName']);
     final descController = TextEditingController(text: record['description'] ?? '');
-    final nutritionController = TextEditingController(text: record['nutrition'] ?? '');
+    
+    // Safely format Map or String of nutrition into editable text
+    String nutritionText = '';
+    if (record['nutrition'] != null) {
+      if (record['nutrition'] is Map) {
+        final Map nut = record['nutrition'];
+        final List<String> parts = [];
+        if (nut['calories'] != null) parts.add('熱量: ${nut['calories']}');
+        if (nut['protein'] != null) parts.add('蛋白質: ${nut['protein']}');
+        if (nut['fat'] != null) parts.add('脂肪: ${nut['fat']}');
+        if (nut['carbohydrates'] != null) parts.add('碳水: ${nut['carbohydrates']}');
+        nutritionText = parts.join(', ');
+      } else {
+        nutritionText = record['nutrition'].toString();
+      }
+    }
+    final nutritionController = TextEditingController(text: nutritionText);
     String mealType = record['mealType'] ?? 'LUNCH';
 
     showDialog(
@@ -267,10 +283,28 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在保存更新...')));
                 
+                double? parseVal(String text, String pattern) {
+                  final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+                  final match = regExp.firstMatch(text);
+                  if (match != null) {
+                    return double.tryParse(match.group(1) ?? '');
+                  }
+                  return null;
+                }
+
+                final nutritionStr = nutritionController.text.trim();
+                final calories = parseVal(nutritionStr, r'(?:熱量|calories|kcal)');
+                final protein = parseVal(nutritionStr, r'(?:蛋白質|protein)');
+                final fat = parseVal(nutritionStr, r'(?:脂肪|fat)');
+                final carbohydrates = parseVal(nutritionStr, r'(?:碳水化合物|碳水|carbs|carbohydrates)');
+
                 final payload = {
                   'dishName': nameController.text.trim(),
                   'description': descController.text.trim(),
-                  'nutrition': nutritionController.text.trim(),
+                  'calories': calories,
+                  'protein': protein,
+                  'fat': fat,
+                  'carbohydrates': carbohydrates,
                   'mealType': mealType,
                 };
                 
@@ -400,10 +434,28 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在新增記錄...')));
 
+                  double? parseVal(String text, String pattern) {
+                    final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+                    final match = regExp.firstMatch(text);
+                    if (match != null) {
+                      return double.tryParse(match.group(1) ?? '');
+                    }
+                    return null;
+                  }
+
+                  final nutritionStr = nutritionController.text.trim();
+                  final calories = parseVal(nutritionStr, r'(?:熱量|calories|kcal)');
+                  final protein = parseVal(nutritionStr, r'(?:蛋白質|protein)');
+                  final fat = parseVal(nutritionStr, r'(?:脂肪|fat)');
+                  final carbohydrates = parseVal(nutritionStr, r'(?:碳水化合物|碳水|carbs|carbohydrates)');
+
                   final payload = {
                     'dishName': nameController.text.trim(),
                     'description': descController.text.trim(),
-                    'nutrition': nutritionController.text.trim(),
+                    'calories': calories,
+                    'protein': protein,
+                    'fat': fat,
+                    'carbohydrates': carbohydrates,
                     'mealType': mealType,
                   };
 

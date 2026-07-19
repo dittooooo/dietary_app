@@ -73,7 +73,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '新增失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '新增失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '連線失敗: $e'};
     }
@@ -95,7 +95,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '更新失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '更新失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '連線失敗: $e'};
     }
@@ -149,7 +149,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '新增餐廳失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '新增餐廳失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '新增餐廳連線失敗: $e'};
     }
@@ -164,7 +164,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '更新餐廳失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '更新餐廳失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '更新餐廳連線失敗: $e'};
     }
@@ -213,7 +213,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '新增菜單失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '新增菜單失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '新增菜單連線失敗: $e'};
     }
@@ -228,7 +228,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '更新菜單失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '更新菜單失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '更新菜單連線失敗: $e'};
     }
@@ -285,7 +285,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '更新飲食紀錄失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '更新飲食紀錄失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '更新飲食紀錄連線失敗: $e'};
     }
@@ -317,7 +317,7 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': jsonDecode(response.body)};
       }
-      return {'success': false, 'message': '新增飲食紀錄失敗 (${response.statusCode})'};
+      return {'success': false, 'message': '新增飲食紀錄失敗，請稍後再試'};
     } catch (e) {
       return {'success': false, 'message': '新增飲食紀錄連線失敗: $e'};
     }
