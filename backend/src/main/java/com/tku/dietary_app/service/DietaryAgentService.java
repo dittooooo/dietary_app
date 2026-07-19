@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -21,7 +22,7 @@ import java.util.List;
 public class DietaryAgentService {
 
     private final UserProfileRepository userProfileRepository;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${app.partner.dietary.base-url:}")
     private String partnerApiBaseUrl;
@@ -43,21 +44,6 @@ public class DietaryAgentService {
 
     public Object dishNutrition(DietaryDishNutritionRequest request) {
         return callPartnerApi(partnerApiDishNutritionPath, request);
-    }
-    private DietaryAgentPayload buildPayload(DietaryAskRequest request, UserProfile user_profile, List<DietRecord> records) {
-        // healthConditions 存的是逗號分隔字串，例如 "高血壓,糖尿病"
-        List<String> chronic_diseases = user_profile.getHealthConditions() != null && !user_profile.getHealthConditions().isBlank()
-                ? Arrays.asList(user_profile.getHealthConditions().split(","))
-                : List.of();
-
-        List<DietRecordDto> diet_record_dtos = records.stream()
-                .map(r -> DietRecordDto.builder()
-                        .date(r.getCreatedAt().toLocalDate().toString())
-                        .meal(r.getMealType().toLowerCase())
-                        .dish_name(r.getDishName())
-                        .note(r.getDescription())
-                        .build())
-                .toList();
     }
 
     private DietaryAgentPayload buildPayload(DietaryAskRequest request, UserProfile user_profile) {
