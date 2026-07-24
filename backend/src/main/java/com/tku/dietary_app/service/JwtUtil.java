@@ -2,22 +2,24 @@ package com.tku.dietary_app.service;
 
 import io.jsonwebtoken.*;//匯入 JWT 套件的核心類別，建立 token、解析 token、驗證 token
 import io.jsonwebtoken.security.Keys;//用來建立加密用的 key
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;//代表加密用的金鑰
 import java.util.Date;//匯入 Date 類別。用來設定：token 建立時間，token 過期時間
 
 // JWT 工具類別，提供生成和驗證 JWT Token 的功能
 @Component
 public class JwtUtil {
-    //設定 JWT 的「密鑰」，這是一段用來加密 token 的字串(簽名)
-    private final String SECRET = "DietaryAppSecretKeyForJWTAuthentication123456";
-
-    //把剛剛的 SECRET 字串轉成加密用的 Key 物件，使用HMAC SHA-256加密
-    private final Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
+    private final Key key;
 
     //設定 token 的有效時間
     private final long EXPIRATION = 1000 * 60 * 60; // 1 hour
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
 
     // 生成 JWT Token
     public String generateToken(String email) {

@@ -26,6 +26,7 @@ public class DietRecordService {
 
     private final DietRecordRepository dietRecordRepository;
     private final UserRepository userRepository;
+    private final DietaryAgentService dietaryAgentService;
 
     @Value("${app.upload.dir}")
     private String uploadDir;
@@ -72,13 +73,16 @@ public class DietRecordService {
     public DietRecord create(Long userId, DietRecordRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("找不到使用者 (ID: " + userId + ")"));
+
+        DietaryAgentService.NutritionValues nutritionValues = dietaryAgentService.fetchDishNutrition(request.getDishName());
+
         return dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName())
-                .calories(request.getCalories())
-                .protein(request.getProtein())
-                .fat(request.getFat())
-                .carbohydrates(request.getCarbohydrates())
+                .calories(selectNutritionValue(nutritionValues.calories(), request.getCalories()))
+                .protein(selectNutritionValue(nutritionValues.protein(), request.getProtein()))
+                .fat(selectNutritionValue(nutritionValues.fat(), request.getFat()))
+                .carbohydrates(selectNutritionValue(nutritionValues.carbohydrates(), request.getCarbohydrates()))
                 .description(request.getDescription())
                 .mealType(normalizeMealType(request.getMealType()))
                 .build());
@@ -178,5 +182,9 @@ public class DietRecordService {
             return null;
         }
         return keyword.trim();
+    }
+
+    private Double selectNutritionValue(Double resolvedValue, Double fallbackValue) {
+        return resolvedValue != null ? resolvedValue : fallbackValue;
     }
 }
