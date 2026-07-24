@@ -90,11 +90,13 @@ async function handleCompanionAsk(req, res) {
       dietary_agent_response: dietaryAgentResponse,
       dietary_agent_error: dietaryAgentError,
       // 生成最終顯示在 Flutter UI 上的陪伴式對話文字
-      companion_reply: buildCompanionReply({
+      companion_reply: await buildCompanionReply({
+        userPrompt: user_prompt,
         screening: openAiResult.screening,
         emotion: openAiResult.emotion,
         dietaryAgentResponse,
-        dietaryAgentRequest: openAiResult.dietary_agent_request
+        dietaryAgentRequest: openAiResult.dietary_agent_request,
+        dietaryAgentError
       })
     });
   } catch (error) {
