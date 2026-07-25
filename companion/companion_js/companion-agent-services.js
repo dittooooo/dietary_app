@@ -6,13 +6,6 @@ const {
   generateCompanionReply: runLLMReply
 } = require("./companion-llm");
 
-/**
- * Build Dietary Agent request payload from the LLM screening result.
- * Only well-formed requests are forwarded downstream.
- * @param {Object} screening
- * @param {string} message
- * @returns {Object|null}
- */
 function buildDietaryAgentRequest(screening, message) {
   if (!screening || !screening.should_handle) {
     return null;
@@ -41,11 +34,6 @@ function buildDietaryAgentRequest(screening, message) {
   };
 }
 
-/**
- * Run the first LLM pass to classify the request and extract structured data.
- * @param {string} userPrompt
- * @returns {Promise<Object>}
- */
 async function runOpenAIFlow(userPrompt) {
   const result = await runLLMAnalysis(userPrompt);
   const dietaryAgentRequest = buildDietaryAgentRequest(result.screening, userPrompt);
@@ -57,12 +45,6 @@ async function runOpenAIFlow(userPrompt) {
   };
 }
 
-/**
- * Call the downstream Dietary Agent API when the request is specific enough.
- * @param {Object} requestBody
- * @param {string} authHeader
- * @returns {Promise<Object>}
- */
 async function callDietaryAgent(requestBody, authHeader) {
   const baseUrl = process.env.DIETARY_AGENT_API_URL;
   if (!baseUrl) {
@@ -76,8 +58,8 @@ async function callDietaryAgent(requestBody, authHeader) {
   if (authHeader) {
     headers.Authorization = authHeader;
   }
-  // 根據後端 Controller 的 @RequestMapping("/dietary-agent") 與 @PostMapping("/ask") 進行對接
-  const response = await fetch(`${baseUrl}/dietary-agent/ask`, {
+
+  const response = await fetch(`${baseUrl}/api/dietary/ask-weekly-analysis`, {
     method: "POST",
     headers,
     body: JSON.stringify(requestBody)
@@ -91,33 +73,30 @@ async function callDietaryAgent(requestBody, authHeader) {
   return response.json();
 }
 
-/**
- * 4. 取得最終的陪伴式回覆 (getCompanionReply)
- * 此函數作為後端中控調度器：
- * - 在後端快速攔截非飲食問題或缺失關鍵參數的請求，省下 LLM API 費用。
- * - 只有在正常的飲食諮詢流程下，才異步呼叫 runLLMReply (由大模型重組回覆，免責警語完全交給 LLM Prompt 自行生成)。
- * 
- * @param {Object} params - 包含對話所需的完整上下文資料
- * @returns {Promise<string>} 最終生成的陪伴回覆文字
- */
-async function getCompanionReply({ screening, emotion, dietaryAgentResponse, dietaryAgentRequest, userPrompt, dietaryAgentError }) {
-  // 1. 非飲食諮詢的閒聊與其他不處理類別回覆  - 後端直接攔截防呆，省錢省時
+async function getCompanionReply({
+  screening,
+  emotion,
+  dietaryAgentResponse,
+  dietaryAgentRequest,
+  userPrompt,
+  dietaryAgentError
+}) {
   if (!screening.should_handle) {
-    return "這句話目前不像是飲食建議模組要處理的內容。如果您有關於餐點選擇、熱量或減脂增肌的問題，隨時可以問我！";
+    return "這個問題比較不是飲食助理的處理範圍。如果你願意，我還是可以幫你回到餐點選擇、熱量方向，或日常飲食建議來一起看。";
   }
 
-  // 2. 檢查是否因為參數攔截（未提供具體料理或問題類型未知）而沒有呼叫 Dietary Agent 
   if (screening.should_handle && !dietaryAgentRequest) {
     if (!screening.dishes || screening.dishes.length === 0) {
-      return "我目前無法從您的問題中提取出具體的食物名稱。可以請您提供想諮詢的餐點名稱嗎？例如：「晚餐吃炸雞適合嗎？」";
+      return "我目前還不太確定你想問的是哪一道食物。你可以直接告訴我餐點名稱，或補充你吃了什麼，我再幫你一起看。";
     }
+
     if (screening.question_type !== "single_dish" && screening.question_type !== "dish_comparison") {
-      return "我目前無法判斷您問題的類型，請試著具體詢問單一食物的熱量，或是比較多個食物喔！";
+      return "我有抓到你在問飲食，但還差一點資訊。你可以補充是想問單一道餐點，還是要比較兩種以上的食物嗎？";
     }
-    return "抱歉，我目前無法理解您的問題，請重新輸入更具體的飲食問題。";
+
+    return "我有收到你的問題，但目前資訊還不夠完整。你可以再多描述一點你想問的食物或情境，我就能更準確幫你整理。";
   }
 
-  // 3. 通過攔截後，調用 LLM 動態生成重組後的回覆 (呼叫 runLLMReply 函數)
   let finalReply = "";
   try {
     finalReply = await runLLMReply({
@@ -130,11 +109,13 @@ async function getCompanionReply({ screening, emotion, dietaryAgentResponse, die
     });
   } catch (error) {
     console.error("Failed to generate companion response with LLM:", error.message);
-    // Fallback 保底機制：若 LLM 重組失敗，使用原本的拼接方式
     const empathyPrefix = emotion.needs_empathy
-      ? "我有注意到你現在有點在意這次的選擇，先不用太緊張喔。❤️\n"
-      : "我先幫您整理這次的飲食建議：\n";
-    const recommendation = dietaryAgentResponse?.reply_text || dietaryAgentResponse?.conclusion || JSON.stringify(dietaryAgentResponse) || "已成功記錄您的問題，正在為您尋求最佳飲食建議。";
+      ? "我知道你現在可能有點在意這餐怎麼吃，先別太有壓力，我陪你一起看。\n"
+      : "我先幫你整理目前可用的資訊。\n";
+    const recommendation =
+      dietaryAgentResponse?.reply_text ||
+      dietaryAgentResponse?.conclusion ||
+      (dietaryAgentResponse ? JSON.stringify(dietaryAgentResponse) : "目前還拿不到完整分析結果，稍後再試一次會比較穩。");
     finalReply = `${empathyPrefix}${recommendation}`;
   }
 
