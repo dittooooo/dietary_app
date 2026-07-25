@@ -1,71 +1,75 @@
 // Path: c:\Users\User\Documents\Github_Repo\dietary_app\companion\companion_js\companion-llm.js
-// Description: All LLM-related configuration (prompts, tools schema) and execution logic (fetch call, outputs sanitization)
+// Description: All LLM-related configuration and execution logic
 
-/**
- * 1. 系統 Prompt 定義 (SYSTEM_PROMPT)
- * 這是給 OpenAI 模型的全局系統指令。
- * 用於指導大語言模型扮演飲食推薦應用的 Companion Agent，分析使用者問句的意圖、問題種類、情緒並擷取料理名稱。
- */
-const SYSTEM_PROMPT = `
+// TODO: 移除醫療Catagory
+const ANALYSIS_SYSTEM_PROMPT = `
 You are a Companion Agent classifier and extractor for a dietary recommendation app.
-Your task is to analyze the user's message (which is usually in Traditional Chinese) and determine the intent, question type, emotion, and extract mentioned food/dish names.
+Your task is to analyze the user's message, which is usually in Traditional Chinese.
 
-You MUST execute both functions (parallel tool calls): "screen_user_request" and "analyze_emotion" to return your results.
+You MUST execute both functions in parallel: "screen_user_request" and "analyze_emotion".
 
-Specific Instructions for "screen_user_request":
-1. should_handle (boolean): 
-   - Set to true if the request is about diet, food, meal recommendation, or calorie queries.
-   - Set to false if it involves sensitive medical diagnosis, prescription drugs, disease treatment, seeking a doctor's advice (e.g., "what medicine to take for gastric ulcers"), general chat, or unrelated topics.
-2. intent_category (string):
-   - "dish_advice": User is consulting for dietary advice or recommendation.
-   - "meal_record": User is recording their meal/diet.
-   - "medical_out_of_scope": User mentions medicine, prescriptions, disease treatment, diagnosis, or doctor queries.
-   - "general_chat": General chat or unrelated topics.
-3. question_type (string):
-   - "single_dish": User asks about a single food item or meal.
-   - "dish_comparison": User compares multiple foods (e.g., "A or B, which is better?", "A vs B").
-   - "unknown": None of the above.
-4. dishes (array of strings):
-   - Extract all specific food, dish, or drink names mentioned in the user's input (e.g., ["拉麵", "炸雞"]). 
-   - Extract them in their original language as written in the user message (usually Traditional Chinese, e.g., "拉麵"). 
-   - Return an empty array if no food or dish is mentioned.
+Rules for "screen_user_request":
+1. should_handle:
+   - true when the request is about food, diet, meal choice, meal planning, eating advice, or calories.
+   - false when it is medical diagnosis, medication usage, disease treatment, doctor advice, or unrelated chat.
+2. intent_category:
+   - "dish_advice": asking for dietary advice or recommendation.
+   - "meal_record": recording what they ate.
+   - "general_chat": unrelated small talk, off-topic requests, or medical questions (medicine, diagnosis, disease treatment, doctor advice).
+3. question_type:
+   - "single_dish": asking about one dish or meal.
+   - "dish_comparison": comparing two or more dishes.
+   - "unknown": unclear or not one of the above.
+4. dishes:
+   - extract all specific food, dish, or drink names mentioned in the user's original language.
+   - return [] when none are clearly mentioned.
 `;
 
 /**
- * 2. OpenAI Function Calling (Tools) Schema 定義
- * 這是傳給 OpenAI 的結構化輸出合約。定義了模型「必須呼叫」的函數名稱以及參數的 JSON Schema。
- * 當模型回覆時，會依此格式返回 JSON 參數，後端程式可以直接解析。
+ * 用於第二階段「最終回覆生成」的 System Prompt (REPLY_SYSTEM_PROMPT)
+ * 指導 LLM 將意圖分析、同理心需求與 Dietary Agent 後端的營養分析結果，重組並潤飾為溫馨、台灣繁體中文的口語對話回覆。
  */
+const REPLY_SYSTEM_PROMPT = `
+You are a warm, supportive, and professional dietary assistant called "Companion Agent" (飲食精靈).
+Your task is to rewrite and embellish the raw data and analysis results provided by the "Dietary Agent" into a warm, empathetic, and conversational response for the user.
+
+Follow these rules:
+1. Tone & Style:
+   - Match the tone recommended in the emotional analysis.
+   - If "needs_empathy" is true, start or weave in a warm, caring statement to ease the user's guilt or anxiety about their meal choice. 
+   - Keep the reply friendly, conversational, and written in natural Traditional Chinese (Taiwan). Avoid sounding like a rigid bot or just outputting raw JSON lists.
+2. Context Integration:
+   - Translate the analytical advice (like caloric warnings, food swaps, and macronutrient explanations) into easily understandable sentences.
+   - Do NOT omit key recommendations from the Dietary Agent, but integrate them naturally.
+3. Disclaimer Rule:
+   - If the user's query asks about numbers (calories, fat, protein, carbs, nutrition metrics), you MUST append this exact phrase at the very end of your response: "關於數值類提問，本精靈只可提供參考數值".
+4. Output format: Return ONLY the final dialogue response text. Do not include any JSON wrapping or markdown blocks unless it improves readability for the user.
+`;
+
 const tools = [
   {
-    // 指定 Tool 類型為函數呼叫 (function)
     type: "function",
     function: {
       name: "screen_user_request",
-      // 對此函數用途的描述，幫助 LLM 理解何時以及如何填寫此結構
       description: "Screen the user request to classify question type, intent, and extract mentioned dishes.",
-      // 定義此函數需要接收的參數 (JSON Schema 格式)
       parameters: {
-        type: "object", // 參數最外層為一個 JSON 物件
+        type: "object",
         properties: {
-          // should_handle: 決定 Companion Agent 是否要接手處理此問題的 boolean 值
           should_handle: {
             type: "boolean",
             description: "Whether this request should be processed by the companion agent."
           },
-          // intent_category: 意圖分類，限定模型只能在以下四個選項中選擇其一
           intent_category: {
             type: "string",
-            enum: ["dish_advice", "meal_record", "medical_out_of_scope", "general_chat"]
+            enum: ["dish_advice", "meal_record", "general_chat"]
           },
-          // question_type: 問題的種類 (單料理、料理比較或未知)，決定後續 Dietary Agent 組裝的邏輯
           question_type: {
             type: "string",
             enum: ["single_dish", "dish_comparison", "unknown"]
           },
-          // confidence: 模型對此分類判斷的信心分數 (0.0 到 1.0 之間)
-          confidence: { type: "number" },
-          // dishes: 存放 LLM 從問句中自動抽取出的料理或食物名稱陣列 (例如: ["炸雞", "拉麵"])
+          confidence: {
+            type: "number"
+          },
           dishes: {
             type: "array",
             items: { type: "string" },
@@ -79,7 +83,6 @@ const tools = [
           "confidence",
           "dishes"
         ],
-        // additionalProperties: false 是一項安全設定，嚴格限制模型不可輸出 properties 定義以外的自訂欄位
         additionalProperties: false
       }
     }
@@ -88,34 +91,29 @@ const tools = [
     type: "function",
     function: {
       name: "analyze_emotion",
-      // 描述此函數用途：分析情緒以動態調整回覆語氣
       description: "Analyze the user's emotional state and tone to adjust companion responses.",
       parameters: {
         type: "object",
         properties: {
-          // primary_emotion: 偵測到的主情緒列舉 (中性、好奇、焦慮、罪惡、壓力、挫折、開心)
           primary_emotion: {
             type: "string",
             enum: ["neutral", "curious", "anxiety", "guilt", "stress", "frustration", "joy"]
           },
-          // valence: 情緒的正負向分類 (正向、中性、負向)
           valence: {
             type: "string",
             enum: ["positive", "neutral", "negative"]
           },
-          // urgency: 使用者此時此刻心情的緊迫程度
           urgency: {
             type: "string",
             enum: ["low", "medium", "high"]
           },
-          // needs_empathy: 決定最後回覆前是否需要安撫前綴。若為 true，會觸發同理心文字安撫
-          needs_empathy: { type: "boolean" },
-          // companion_tone: 建議的陪伴者語氣 (冷靜、鼓勵、中性)
+          needs_empathy: {
+            type: "boolean"
+          },
           companion_tone: {
             type: "string",
             enum: ["calm", "encouraging", "neutral"]
           },
-          // evidence: 支撐情緒判斷的對話中關鍵字依據 (例如使用者打的: ["焦慮", "吃太多了"])
           evidence: {
             type: "array",
             items: { type: "string" },
@@ -130,70 +128,32 @@ const tools = [
           "companion_tone",
           "evidence"
         ],
-        // additionalProperties: false 是一項安全設定，嚴格限制模型不可輸出 properties 定義以外的自訂欄位
         additionalProperties: false
       }
     }
   }
 ];
 
-/**
- * 3. Post-check 意圖修正 (sanitizeScreening)
- * 當 OpenAI 回傳結果後，以此函式進行二次檢驗，確保格式正確。
- * @param {Object} raw - OpenAI 回傳的原始 arguments 物件
- * @returns {Object} 經過格式修復與預設值補齊後的意圖預檢結果
- */
-function sanitizeScreening(raw) {
-  if (!raw) {
-    throw new Error("Missing 'screen_user_request' function call arguments from OpenAI response.");
+function getApiKey() {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error("Missing OPENAI_API_KEY.");
   }
-
-  const result = { ...raw };
-
-  // 確保 dishes 必定是陣列結構，若模型漏填，預設為空陣列
-  if (!Array.isArray(result.dishes)) {
-    result.dishes = [];
-  }
-
-  return result;
+  return apiKey;
 }
 
-/**
- * 4. Post-check 情緒修正 (sanitizeEmotion)
- * 驗證 OpenAI 回傳的情緒結構。若無回傳或屬性缺漏，填入預設值防呆。
- * @param {Object} raw - OpenAI 回傳的原始 arguments 物件
- * @returns {Object} 經過格式檢查後的情緒特徵結果
- */
-function sanitizeEmotion(raw) {
-  if (!raw) {
-    throw new Error("Missing 'analyze_emotion' function call arguments from OpenAI response.");
-  }
-  return {
-    primary_emotion: raw.primary_emotion || "neutral",
-    valence: raw.valence || "neutral",
-    urgency: raw.urgency || "medium",
-    // 確保 needs_empathy 是正確的 boolean 型態，不為 undefined
-    needs_empathy: typeof raw.needs_empathy === "boolean" ? raw.needs_empathy : false,
-    companion_tone: raw.companion_tone || "neutral",
-    evidence: Array.isArray(raw.evidence) ? raw.evidence : []
-  };
+function getModel() {
+  return process.env.OPENAI_MODEL || "gpt-4o-mini";
 }
 
-/**
- * 5. 呼叫 OpenAI Responses API
- * 使用原生 fetch 發送 POST 請求至 OpenAI 伺服器端點。
- * @param {Object} body - OpenAI 要求的 Request Payload 格式
- * @param {string} apiKey - 系統載入之 OpenAI API Key 金鑰
- * @returns {Promise<Object>} OpenAI 解析完的 JSON 回應
- */
 async function createOpenAIResponse(body, apiKey) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -204,22 +164,10 @@ async function createOpenAIResponse(body, apiKey) {
   return response.json();
 }
 
-/**
- * 6. 解析並篩選出所有的 Function Call 項目
- * 從 OpenAI Responses API 回傳的 output 陣列中，過濾出屬於 function_call 類型的項目。
- * @param {Object} responseJson - OpenAI 回應的 JSON 數據
- * @returns {Array<Object>} function_call 項目陣列
- */
 function getFunctionCalls(responseJson) {
   return (responseJson.output || []).filter((item) => item.type === "function_call");
 }
 
-/**
- * 7. 收集並轉換所有的 Tool 參數物件
- * 將多個 function call 的 arguments 欄位由 JSON 字串轉換成 JavaScript 物件。
- * @param {Array<Object>} functionCalls - Function Call 項目陣列
- * @returns {Object} 以函數名稱為 Key，參數物件為 Value 的映射
- */
 function collectToolArgsByName(functionCalls) {
   const byName = {};
   for (const call of functionCalls) {
@@ -233,11 +181,135 @@ function collectToolArgsByName(functionCalls) {
 }
 
 /**
- * 8. 執行 OpenAI 主要流程 (runOpenAIFlow)
- * @param {string} userPrompt - 使用者原始文字提問
- * @returns {Promise<Object>} 包含意圖預檢 (screening)、情緒特徵 (emotion)
+ * 【Function Calling 容錯防呆機制說明】：
+ * 當使用者輸入與飲食完全無關的內容（如天氣、用藥等）時，OpenAI API 雖正常成功回傳，
+ * 但會判定不需要調用我們提供的工具。此時 `rawArgs.screen_user_request` 將會是 `undefined`（!raw 為真）。
+ * 為了避免後端在後續讀取 `openAiResult.screening.should_handle` 等欄位時因為讀到 undefined 
+ * 而造成伺服器拋出 500/502 異常，此處主動「虛擬」回傳一個帶有完整欄位的預設物件。
+ * 這會引導後續的 Node.js 程式走入 should_handle: false 的 off-topic 攔截流程，對使用者回傳親切的閒聊防呆提示。
  */
+function sanitizeScreening(raw) {
+  // 容錯防呆：如果 OpenAI 沒有觸發意圖工具調用，預設為不需處理的閒聊分類
+  if (!raw) {
+    return {
+      should_handle: false,
+      intent_category: "general_chat",
+      question_type: "unknown",
+      confidence: 0,
+      dishes: []
+    };
+  }
+
+  const result = { ...raw };
+  if (!Array.isArray(result.dishes)) {
+    result.dishes = [];
+  }
+
+  return result;
+}
+
+function sanitizeEmotion(raw) {
+  // 容錯防呆：如果 OpenAI 沒有觸發情緒工具調用，給予中性情緒預設值
+  if (!raw) {
+    return {
+      primary_emotion: "neutral",
+      valence: "neutral",
+      urgency: "low",
+      needs_empathy: false,
+      companion_tone: "neutral",
+      evidence: []
+    };
+  }
+
+  return {
+    primary_emotion: raw.primary_emotion || "neutral",
+    valence: raw.valence || "neutral",
+    urgency: raw.urgency || "medium",
+    needs_empathy: typeof raw.needs_empathy === "boolean" ? raw.needs_empathy : false,
+    companion_tone: raw.companion_tone || "neutral",
+    evidence: Array.isArray(raw.evidence) ? raw.evidence : []
+  };
+}
+
+function extractOutputText(responseJson) {
+  if (typeof responseJson.output_text === "string" && responseJson.output_text.trim()) {
+    return responseJson.output_text.trim();
+  }
+
+  for (const item of responseJson.output || []) {
+    if (!Array.isArray(item.content)) {
+      continue;
+    }
+
+    for (const content of item.content) {
+      if (content.type === "output_text" && typeof content.text === "string" && content.text.trim()) {
+        return content.text.trim();
+      }
+    }
+  }
+
+  throw new Error("Missing text output from OpenAI response.");
+}
+
 async function runOpenAIFlow(userPrompt) {
+  const response = await createOpenAIResponse(
+    {
+      model: getModel(),
+      parallel_tool_calls: true,
+      tool_choice: "auto",
+      tools: tools.map((tool) => ({
+        type: "function",
+        name: tool.function.name,
+        description: tool.function.description,
+        parameters: tool.function.parameters
+      })),
+      instructions: ANALYSIS_SYSTEM_PROMPT,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: userPrompt
+            }
+          ]
+        }
+      ]
+    },
+    getApiKey()
+  );
+
+  const functionCalls = getFunctionCalls(response);
+  const rawArgs = collectToolArgsByName(functionCalls);
+
+  return {
+    screening: sanitizeScreening(rawArgs.screen_user_request),
+    emotion: sanitizeEmotion(rawArgs.analyze_emotion)
+  };
+}
+
+/**
+ * 9. 呼叫 OpenAI Chat Completions 重組最終的陪伴式回覆 (generateCompanionReply)
+ * 作用：將使用者原始提問、同理心/情緒分析設定與 Dietary Agent 的分析結果，
+ * 包裝後發送給 OpenAI Chat Completions API 重組，生成溫馨自然的陪伴回覆。
+ * 
+ * @param {Object} params - 包含以下屬性：
+ *   - {string} userPrompt - 使用者原始輸入文字
+ *   - {Object} screening - 意圖與食物名稱的預檢篩選結果
+ *   - {Object} emotion - 偵測到的情緒與同理心指標
+ *   - {Object} dietaryAgentResponse - Dietary Agent API 回傳的營養與建議數據
+ *   - {Object} dietaryAgentRequest - 傳送給 Dietary Agent 的 Payload
+ *   - {string} dietaryAgentError - 下游服務 API 呼叫的錯誤訊息 (如有)
+ * @returns {Promise<string>} LLM 重組潤飾後的對話文字
+ */
+async function generateCompanionReply({
+  userPrompt,
+  screening,
+  emotion,
+  dietaryAgentResponse,
+  dietaryAgentRequest,
+  dietaryAgentError
+}) {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
@@ -245,54 +317,57 @@ async function runOpenAIFlow(userPrompt) {
     throw new Error("Missing OPENAI_API_KEY.");
   }
 
-  // 發送至 OpenAI 進行 parallel tool calls
-  const response = await createOpenAIResponse(
-    {
+  // 將 Dietary Agent 回傳的結構化資料轉為易讀的 JSON 字串，以利 LLM 讀取理解
+  const rawDataStr = dietaryAgentResponse
+    ? JSON.stringify(dietaryAgentResponse, null, 2)
+    : "無資料";
+
+  // 呼叫 OpenAI 官方標準的 Chat Completions API
+  // 【API 差異備忘說明】：
+  // 1. 原本程式碼的「第一階段 (意圖與情緒分析)」使用的是 OpenAI Responses API (端點為 /v1/responses)，
+  //    它是屬於新版/實驗性之 Agentic API，傳入參數使用 instructions 與 input 結構。
+  // 2. 此處的「第二階段 (對話回覆生成)」則採用 Chat Completions API (端點為 /v1/chat/completions)，
+  //    這是目前業界最通用的無狀態標準對話格式，藉由 messages (system / user) 陣列傳遞。
+  //    它的相容性最高，未來若想更換成其他大型語言模型 (如 Google Gemini、Anthropic Claude)，程式碼無須重構。
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
       model,
-      parallel_tool_calls: true, // 啟用平行工具呼叫，單次請求同時執行意圖與情緒判定
-      tool_choice: "auto",
-      // 將 tools 陣列元素拉平，轉換成 Responses API 所規定的扁平（Flat）格式
-      tools: tools.map(t => {
-        if (t.type === "function" && t.function) {
-          return {
-            type: "function",
-            name: t.function.name,
-            description: t.function.description,
-            parameters: t.function.parameters
-          };
-        }
-        return t;
-      }),
-      instructions: SYSTEM_PROMPT,
-      input: [
+      messages: [
+        {
+          role: "system",
+          // 帶入重組引導的系統 Prompt 規則 (包含數值免責聲明)
+          content: REPLY_SYSTEM_PROMPT
+        },
         {
           role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: userPrompt,
-            },
-          ],
-        },
+          // 組合完整的上下文，供模型重組出最貼近的對話
+          content: `使用者問句: "${userPrompt}"\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\nDietary Agent 回傳資料:\n${rawDataStr}`
+        }
       ],
-    },
-    apiKey
-  );
+      temperature: 0.2,
+    }),
+  });
 
-  // 收集 Tool arguments 結果
-  const functionCalls = getFunctionCalls(response);
-  const rawArgs = collectToolArgsByName(functionCalls);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenAI Chat API error ${response.status}: ${errorText}`);
+  }
 
-  // 執行 Post-check 驗證與欄位修正
-  const screening = sanitizeScreening(rawArgs.screen_user_request);
-  const emotion = sanitizeEmotion(rawArgs.analyze_emotion);
+  const resJson = await response.json();
+  if (!resJson.choices || resJson.choices.length === 0) {
+    throw new Error("Empty choices returned from OpenAI Chat API");
+  }
 
-  return {
-    screening,
-    emotion
-  };
+  // 取得 LLM 生成並去除首尾空白後的內容
+  return resJson.choices[0].message.content.trim();
 }
 
 module.exports = {
-  runOpenAIFlow
+  runOpenAIFlow,
+  generateCompanionReply
 };

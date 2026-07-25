@@ -1,8 +1,21 @@
 // Path: c:\Users\User\Documents\Github_Repo\dietary_app\companion\companion_js\companion-agent.js
 // Description: Main entry point for Express server, routing HTTP requests, and orchestrating flow
 
-// 載入環境變數設定檔 (.env)，叫 Node.js 去讀取並載入 .env 檔案裡的變數。
-require("dotenv").config();
+//TODO: 確認env檔案的位置 
+const path = require("path");
+const fs = require("fs");
+// 定義最外層目錄 (與 companion 同級) 的 .env 路徑
+const outerEnvPath = path.resolve(__dirname, "../../.env");
+if (fs.existsSync(outerEnvPath)) {
+  // 如果最外層目錄的 .env 存在，則優先載入該環境變數檔
+  require("dotenv").config({ path: outerEnvPath });
+  console.log(`Loaded outer .env from: ${outerEnvPath}`);
+} else {
+  // 如果外層不存在，則讀取 companion_js 當前目錄的 .env 作為 Fallback 備用機制
+  // TODO: ? 
+  require("dotenv").config();
+  console.log("Outer .env not found, loaded local .env instead.");
+}
 
 // 引入 Express 框架用以建立 HTTP API 服務
 const express = require("express");
@@ -12,7 +25,7 @@ const cors = require("cors");
 const {
   runOpenAIFlow,
   callDietaryAgent,
-  buildCompanionReply
+  getCompanionReply
 } = require("./companion-agent-services");
 
 // 1. 初始化 Express App 實例
@@ -88,11 +101,18 @@ async function handleCompanionAsk(req, res) {
       dietary_agent_response: dietaryAgentResponse,
       dietary_agent_error: dietaryAgentError,
       // 生成最終顯示在 Flutter UI 上的陪伴式對話文字
-      companion_reply: buildCompanionReply({
+
+      // 變動說明：
+      // 1. 加上 await：呼叫 getCompanionReply 中控調度器以取得最終的對話文字（非同步操作）。
+      // 2. 傳入 userPrompt：供 LLM 了解原始提問脈絡，並進行數值免責聲明的判定與產生。
+      // 3. 傳入 dietaryAgentError：當下游分析服務發生錯誤時，能供 LLM 保底機制做為友善引導處理。
+      companion_reply: await getCompanionReply({
+        userPrompt: user_prompt,
         screening: openAiResult.screening,
         emotion: openAiResult.emotion,
         dietaryAgentResponse,
-        dietaryAgentRequest: openAiResult.dietary_agent_request
+        dietaryAgentRequest: openAiResult.dietary_agent_request,
+        dietaryAgentError
       })
     });
   } catch (error) {
