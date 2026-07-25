@@ -59,7 +59,7 @@ async function callDietaryAgent(requestBody, authHeader) {
     headers.Authorization = authHeader;
   }
 
-  const response = await fetch(`${baseUrl}/api/dietary/ask-weekly-analysis`, {
+  const response = await fetch(`${baseUrl}/dietary-agent/ask`, {
     method: "POST",
     headers,
     body: JSON.stringify(requestBody)
