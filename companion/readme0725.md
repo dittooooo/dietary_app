@@ -41,10 +41,10 @@
 - `companion/readme0725.md`
   - 這份工作紀錄。
 
-- `companion/doc/codex_companion_test_2026-07-25.md`
+- `companion/doc/companion_test_2026-07-25.md`
   - 這次測試過程留下的測試說明。
 
-- `companion/doc/codex_companion_test_results.json`
+- `companion/doc/companion_test_results.json`
   - 這次測試結果 JSON。
 
 ### Backend 端
