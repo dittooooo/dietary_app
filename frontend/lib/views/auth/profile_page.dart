@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
+import '../../controllers/dog_state_controller.dart';
+import '../../widgets/dog_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,8 +15,6 @@ import '../home/home_page.dart';
 import 'edit_profile_page.dart';
 import 'login_page.dart';
 import '../../services/auth_service.dart';
-import 'model_viewer_web_stub.dart'
-    if (dart.library.html) 'model_viewer_web_impl.dart';
 
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
@@ -29,7 +29,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String _nickname = '載入中...';
   String _email = '...';
   Map<String, dynamic>? _fullUserData;
-  Uint8List? _imageBytes; // 儲存圖片的記憶體數據，相容 Web 與手機
+  Uint8List? _imageBytes;
+  final DogStateController _dogController = DogStateController.instance; // 儲存圖片的記憶體數據，相容 Web 與手機
 
   @override
   void initState() {
@@ -53,6 +54,9 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() {
           _fullUserData = result['data'];
           _email = _fullUserData?['email'] ?? _fullUserData?['user']?['email'] ?? _email;
+          final bodyValue = _fullUserData?['dogBodyType'] ?? _fullUserData?['bodyType'] ?? _fullUserData?['mascotBodyType'] ?? _fullUserData?['avatarBodyType'] ?? _fullUserData?['dietGoal'] ?? _fullUserData?['diet_goal'];
+          _dogController.setBodyTypeFromBackend(bodyValue);
+          _dogController.setState(DogAnimationState.idle);
           _nickname = _fullUserData?['nickname'] ?? '未設定姓名';
           
           // 修正後的權限判斷：
@@ -393,11 +397,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         SizedBox(
                           width: modelSize - 20,
                           height: modelSize + 80,
-                          child: createWebModelView(
-                            colorScheme: 'orange',
-                            autoSpin: false,
+                          child: DogAvatar(
+                            controller: _dogController,
+                            instanceId: 'profile-card',
                             scale: 1.4,
-                            src: 'assets/images/0606.glb',
+                            cameraControls: false,
                           ),
                         ),
                         const Text(

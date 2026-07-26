@@ -1,35 +1,129 @@
-import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
-import 'package:model_viewer_plus/model_viewer_plus.dart'; // 匯入 model_viewer_plus.dart 元件庫或套件
+import 'package:flutter/material.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-Widget createWebModelView({ // 定義用於重複使用的 UI 封裝建構方法
-  required String colorScheme, // 執行相對應的邏輯計算或設定屬性參數
-  required bool autoSpin, // 執行相對應的邏輯計算或設定屬性參數
-  required double scale, // 執行相對應的邏輯計算或設定屬性參數
-  String? src, // 執行相對應的邏輯計算或設定屬性參數
-  bool cameraControls = true, // 宣告類別成員或方法內部的區域變數
-  String? cameraOrbit = '0deg 75deg auto', // 執行相對應的邏輯計算或設定屬性參數
-  String? animationName, // 新增動畫名稱參數
-  bool autoPlay = true, // 新增自動播放參數
-}) { // 執行相對應的邏輯計算或設定屬性參數
-  // On mobile emulator platforms, we ignore the web Base64 Data URI if it is passed,
-  // and load the local asset directly for unmatched reliability and zero CORS issues!
-  final String resolvedSrc = (src != null && !src.startsWith('data:')) // 宣告類別成員或方法內部的區域變數
-      ? src // 執行相對應的邏輯計算或設定屬性參數
-      : 'assets/images/dog_rigged.glb'; // 執行相對應的邏輯計算或設定屬性參數
+Widget createWebModelView({
+  required String colorScheme,
+  required bool autoSpin,
+  required double scale,
+  String? src,
+  bool cameraControls = true,
+  String? cameraOrbit = '0deg 75deg auto',
+  String? animationName,
+  bool autoPlay = true,
+  String instanceId = 'default',
+}) {
+  final String resolvedSrc = (src != null && !src.startsWith('data:'))
+      ? src
+      : 'assets/images/dog_rigged.glb';
 
-  final double fovDeg = (45.0 / scale).clamp(15.0, 90.0); // 宣告類別成員或方法內部的區域變數
+  final double fovDeg = (45.0 / scale).clamp(15.0, 90.0);
 
-  return ModelViewer( // 回傳建構完成的元件或方法計算結果
-    key: ValueKey('mobile_mascot_3d_viewer_${resolvedSrc}_${scale}'), // 包含 scale 以強制重建並更新相機距離
-    src: resolvedSrc, // 執行相對應的邏輯計算或設定屬性參數
-    alt: "3D Mascot Pet", // 執行相對應的邏輯計算或設定屬性參數
-    autoRotate: false, // 執行相對應的邏輯計算或設定屬性參數
-    cameraControls: cameraControls, // 執行相對應的邏輯計算或設定屬性參數
-    cameraOrbit: cameraOrbit, // 執行相對應的邏輯計算或設定屬性參數
-    backgroundColor: Colors.transparent, // 設定顏色數值（Color）
-    fieldOfView: '${fovDeg.toInt()}deg', // 執行相對應的邏輯計算或設定屬性參數
-    animationName: animationName, // 設定動畫名稱
-    autoPlay: autoPlay, // 設定自動播放
-    interactionPrompt: InteractionPrompt.none, // 停用點擊/滑動手勢引導的圖示提示
-  ); // 程式碼區塊或元件結構結束
+  return _MobileModelViewerAnimationSwitcher(
+    key: ValueKey(
+      'mobile_mascot_3d_viewer_${instanceId}_${resolvedSrc}_$scale',
+    ),
+    src: resolvedSrc,
+    autoRotate: autoSpin,
+    cameraControls: cameraControls,
+    cameraOrbit: cameraOrbit,
+    fieldOfView: '${fovDeg.toInt()}deg',
+    animationName: animationName,
+    autoPlay: autoPlay,
+  );
+}
+
+class _MobileModelViewerAnimationSwitcher extends StatefulWidget {
+  final String src;
+  final bool autoRotate;
+  final bool cameraControls;
+  final String? cameraOrbit;
+  final String fieldOfView;
+  final String? animationName;
+  final bool autoPlay;
+
+  const _MobileModelViewerAnimationSwitcher({
+    super.key,
+    required this.src,
+    required this.autoRotate,
+    required this.cameraControls,
+    required this.cameraOrbit,
+    required this.fieldOfView,
+    required this.animationName,
+    required this.autoPlay,
+  });
+
+  @override
+  State<_MobileModelViewerAnimationSwitcher> createState() =>
+      _MobileModelViewerAnimationSwitcherState();
+}
+
+class _MobileModelViewerAnimationSwitcherState
+    extends State<_MobileModelViewerAnimationSwitcher> {
+  WebViewController? _controller;
+
+  @override
+  void didUpdateWidget(covariant _MobileModelViewerAnimationSwitcher oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.animationName != widget.animationName ||
+        oldWidget.autoPlay != widget.autoPlay) {
+      _applyAnimation();
+    }
+  }
+
+  void _handleWebViewCreated(WebViewController controller) {
+    _controller = controller;
+    _applyAnimation();
+  }
+
+  void _applyAnimation() {
+    final controller = _controller;
+    final animationName = widget.animationName;
+    if (controller == null || animationName == null || animationName.isEmpty) {
+      return;
+    }
+
+    final escapedAnimationName = animationName.replaceAll("'", r"\'");
+    final shouldPlay = widget.autoPlay ? 'true' : 'false';
+    for (final delayMs in const [250, 700, 1200]) {
+      Future.delayed(Duration(milliseconds: delayMs), () {
+        _runAnimationSwitchScript(escapedAnimationName, shouldPlay);
+      });
+    }
+  }
+
+  void _runAnimationSwitchScript(String animationName, String shouldPlay) {
+    if (!mounted || _controller == null) return;
+    _controller!.runJavaScript('''
+        (function() {
+          const model = document.querySelector('model-viewer');
+          if (!model) return;
+          model.animationName = '$animationName';
+          model.setAttribute('animation-name', '$animationName');
+          model.currentTime = 0;
+          if ($shouldPlay && model.play) {
+            model.play();
+          } else if (model.pause) {
+            model.pause();
+          }
+        })();
+      ''');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ModelViewer(
+      src: widget.src,
+      alt: '3D Mascot Pet',
+      autoRotate: widget.autoRotate,
+      cameraControls: widget.cameraControls,
+      cameraOrbit: widget.cameraOrbit,
+      backgroundColor: Colors.transparent,
+      fieldOfView: widget.fieldOfView,
+      animationName: widget.animationName,
+      autoPlay: widget.autoPlay,
+      interactionPrompt: InteractionPrompt.none,
+      onWebViewCreated: _handleWebViewCreated,
+    );
+  }
 }

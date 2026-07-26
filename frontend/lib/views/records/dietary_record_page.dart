@@ -7,8 +7,7 @@ import 'report_page.dart'; // 匯入 report_page.dart 元件庫或套件
 import 'manual_record_page.dart'; // 匯入 manual_record_page.dart 元件庫或套件
 import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
-import '../auth/model_viewer_web_stub.dart' // 匯入 model_viewer_web_stub.dart 元件庫或套件
-    if (dart.library.html) '../auth/model_viewer_web_impl.dart'; // 執行相對應的邏輯計算或設定屬性參數
+import '../../widgets/dog_avatar.dart';
 
 class DietaryRecordPage extends StatefulWidget { // 定義 DietaryRecordPage 類別，繼承自 StatefulWidget
   const DietaryRecordPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -262,17 +261,15 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> { // 定義 _Diet
                     child: const Text('今天還沒記錄\n好餓喔...', style: TextStyle(fontSize: 10, color: AppColors.textPrimary), textAlign: TextAlign.center), // 建立文字顯示元件（Text）
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 5), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                    width: 35, // 執行相對應的邏輯計算或設定屬性參數
-                    height: 35, // 執行相對應的邏輯計算或設定屬性參數
-                    child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
-                      colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
-                      autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
-                      scale: 1.1, // 執行相對應的邏輯計算或設定屬性參數
-                      src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
-                      cameraControls: false, // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
+                  SizedBox(
+                    width: 52,
+                    height: 52,
+                    child: DogAvatar(
+                      instanceId: 'diet-record-prompt',
+                      scale: 1.45,
+                      cameraControls: false,
+                    ),
+                  ),
                 ], // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數

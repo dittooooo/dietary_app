@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+﻿import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
+import '../../controllers/dog_state_controller.dart';
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart 元件庫或套件
+import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../widgets/dog_avatar.dart';
 import '../records/elf_feeding_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
-import '../auth/model_viewer_web_stub.dart' // 匯入 model_viewer_web_stub.dart 元件庫或套件
-    if (dart.library.html) '../auth/model_viewer_web_impl.dart'; // 執行相對應的邏輯計算或設定屬性參數
 
 class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 StatefulWidget
   final bool initialOpenChat; // 宣告類別成員或方法內部的區域變數
@@ -21,6 +22,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   final TextEditingController _inputController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
   final ScrollController _chatScrollController = ScrollController(); // 新增：對話滾動控制器
   final AuthService _authService = AuthService(); // 宣告類別成員或方法內部的區域變數
+  final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
+  final DogStateController _dogController = DogStateController.instance;
   
   late bool _isChatOpen; // 宣告類別成員或方法內部的區域變數
   late double _chatPanelX;  // 宣告類別成員或方法內部的區域變數
@@ -28,31 +31,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
-  late AnimationController _hoverController; // 宣告類別成員或方法內部的區域變數
-  late Animation<double> _hoverScaleAnimation; // 宣告類別成員或方法內部的區域變數
-  late Animation<double> _hoverOffsetAnimation; // 宣告類別成員或方法內部的區域變數
-  
   List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _isChatOpen = widget.initialOpenChat; // 執行相對應的邏輯計算或設定屬性參數
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
-    
-    // 初始化小精靈漂浮與呼吸動畫
-    _hoverController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
-      duration: const Duration(milliseconds: 2000), // 建立編譯期常數，優化 Flutter 渲染效能
-      vsync: this, // 執行相對應的邏輯計算或設定屬性參數
-    )..repeat(reverse: true); // 執行相對應的邏輯計算或設定屬性參數
- 
-    _hoverScaleAnimation = Tween<double>(begin: 0.96, end: 1.04).animate( // 執行相對應的邏輯計算或設定屬性參數
-      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
- 
-    _hoverOffsetAnimation = Tween<double>(begin: -6.0, end: 6.0).animate( // 執行相對應的邏輯計算或設定屬性參數
-      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
- 
+    _dogController.setState(DogAnimationState.idle);
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
  
@@ -60,7 +45,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
     _inputController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
     _chatScrollController.dispose(); // 新增：釋放對話滾動控制器資源
-    _hoverController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
     super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
  
@@ -77,6 +61,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     }); // 程式碼區塊或元件結構結束
  
     // 2. 向後端請求最新資料 (後端為主，保持同步)
+    await _syncBodyStatus(prefs);
+    if (!mounted) return;
+
     final result = await _authService.getUserProfile(); // 宣告類別成員或方法內部的區域變數
     if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
       final userData = result['data']; // 宣告類別成員或方法內部的區域變數
@@ -95,6 +82,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   } // 程式碼區塊或元件結構結束
 
   // 根據小精靈名稱獲取對應圖標
+  Future<void> _syncBodyStatus(SharedPreferences prefs) async {
+    try {
+      final status = await _bodyStatusApi.getBodyStatus()
+          .timeout(const Duration(seconds: 6));
+      await prefs.setString('dog_body_type', status.bodyType);
+      if (!mounted) return;
+      _dogController.setBodyTypeFromBackend(status.bodyType);
+    } catch (e) {
+      debugPrint('首頁同步 BodyStatus 失敗: $e');
+    }
+  }
+
   IconData _getPetIcon(String petType) { // 顯示預設的圖示元件（Icon）
     switch (petType) { // 執行相對應的邏輯計算或設定屬性參數
       case '奶油皮丘': return Icons.pets; // 回傳建構完成的元件或方法計算結果
@@ -151,6 +150,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     });
   }
 
+  void _showDogResponseThenIdle() {
+    _dogController.setState(DogAnimationState.response);
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (!mounted || _dogController.state != DogAnimationState.response) return;
+      _dogController.setState(DogAnimationState.idle);
+    });
+  }
   void _handleMessage(String text) { // 執行相對應的邏輯計算或設定屬性參數
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
@@ -159,6 +165,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _isChatOpen = true; // 執行相對應的邏輯計算或設定屬性參數
       _chatPanelX = 0.0; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
+    _dogController.setState(DogAnimationState.thinking);
     _scrollToBottom(); // 新增：傳送訊息後自動滑到底部
 
     // 模擬回覆
@@ -174,6 +181,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           
           AdminService().listRestaurants().then((restaurants) {
             AdminService().listMenuItems().then((menus) {
+              _showDogResponseThenIdle();
               setState(() {
                 if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
                   _messages.removeLast();
@@ -210,6 +218,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               });
               _scrollToBottom(); // 新增：餐廳推薦完成滑到底部
             }).catchError((e) {
+              _showDogResponseThenIdle();
               setState(() {
                 if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
                   _messages.removeLast();
@@ -219,6 +228,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               _scrollToBottom(); // 新增：選單載入錯誤滑到底部
             });
           }).catchError((e) {
+            _showDogResponseThenIdle();
             setState(() {
               if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
                 _messages.removeLast();
@@ -235,6 +245,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           _scrollToBottom(); // 新增：載入中提示滑到底部
           
           DietService().askWeeklyAnalysis(text).then((res) {
+            _showDogResponseThenIdle();
             setState(() {
               if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
                 _messages.removeLast();
@@ -314,6 +325,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             });
             _scrollToBottom(); // 新增：智能評估分析完成後滑到底部
           }).catchError((e) {
+            _showDogResponseThenIdle();
             setState(() {
               if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
                 _messages.removeLast();
@@ -370,13 +382,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                     onTap: () => _toggleChat(true), // 執行相對應的邏輯計算或設定屬性參數
                     child: Hero( // 建立跨頁面過渡動畫元件（Hero），點擊時呈現放大或縮小移動特效
                       tag: 'elf', // 執行相對應的邏輯計算或設定屬性參數
-                      child: AnimatedBuilder( // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
-                        animation: _hoverController, // 執行相對應的邏輯計算或設定屬性參數
-                        builder: (context, child) { // 執行相對應的邏輯計算或設定屬性參數
-                          return Transform.translate( // 回傳建構完成的元件或方法計算結果
-                            offset: Offset(0, _hoverOffsetAnimation.value), // 執行相對應的邏輯計算或設定屬性參數
-                            child: Transform.scale( // 執行相對應的邏輯計算或設定屬性參數
-                              scale: _hoverScaleAnimation.value, // 執行相對應的邏輯計算或設定屬性參數
                               child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                                 width: 280, height: 280, // 執行相對應的邏輯計算或設定屬性參數
                                 decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
@@ -394,19 +399,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                                   borderRadius: BorderRadius.circular(140), // 設定容器的圓角弧度半徑大小
                                   child: Padding( // 建立間距容器（Padding），用於設定內部邊距
                                     padding: const EdgeInsets.all(25.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                                    child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
-                                      colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
-                                      autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
-                                      scale: 1.5, // 執行相對應的邏輯計算或設定屬性參數
-                                      src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
-                                    ), // 執行相對應的邏輯計算或設定屬性參數
+                                    child: DogAvatar(
+                                      controller: _dogController,
+                                      scale: 1.5,
+                                      instanceId: 'home-main-dog',
+                                    ),
                                   ), // 執行相對應的邏輯計算或設定屬性參數
                                 ), // 執行相對應的邏輯計算或設定屬性參數
                               ), // 執行相對應的邏輯計算或設定屬性參數
-                            ), // 執行相對應的邏輯計算或設定屬性參數
-                          ); // 程式碼區塊或元件結構結束
-                        }, // 程式碼區塊或元件結構結束
-                      ), // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
@@ -534,13 +534,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                     child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                       width: 250, // 執行相對應的邏輯計算或設定屬性參數
                       height: 250, // 執行相對應的邏輯計算或設定屬性參數
-                      child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
-                        colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
-                        autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
-                        scale: 2.2, // 執行相對應的邏輯計算或設定屬性參數
-                        src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
-                        cameraControls: false, // 執行相對應的邏輯計算或設定屬性參數
-                      ), // 執行相對應的邏輯計算或設定屬性參數
+                      child: DogAvatar(
+                        controller: _dogController,
+                        scale: 2.2,
+                        cameraControls: false,
+                        instanceId: 'home-chat-dog',
+                      ),
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數

@@ -25,6 +25,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
         }, // 程式碼區塊或結構結束
         body: jsonEncode(body), // 將 Map 結構資料編碼序列化為 JSON 字串形式
       ); // 程式碼區塊或結構結束
+      _logResponse('POST', response);
       _checkResponse(response);
       return response; // 回傳方法執行結果或計算完成的數據
     } catch (e) { // 執行相對應的程式邏輯運算或欄位宣告設定
@@ -46,6 +47,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
           ...?headers, // 執行相對應的程式邏輯運算或欄位宣告設定
         }, // 程式碼區塊或結構結束
       ); // 程式碼區塊或結構結束
+      _logResponse('GET', response);
       _checkResponse(response);
       return response; // 回傳方法執行結果或計算完成的數據
     } catch (e) { // 執行相對應的程式邏輯運算或欄位宣告設定
@@ -69,6 +71,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
         },
         body: jsonEncode(body),
       );
+      _logResponse('PUT', response);
       _checkResponse(response);
       return response;
     } catch (e) {
@@ -96,6 +99,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
       );
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
+      _logResponse('Multipart', response);
       _checkResponse(response);
       return response;
     } catch (e) {
@@ -117,6 +121,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
           ...?headers,
         },
       );
+      _logResponse('DELETE', response);
       _checkResponse(response);
       return response;
     } catch (e) {
@@ -126,6 +131,11 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
   }
 
   // 私有工具：檢查 API 回傳狀態，處理 403 權限降級或未授權攔截
+  void _logResponse(String method, http.Response response) {
+    print('📡 $method 回應狀態碼: ${response.statusCode}');
+    print('📨 $method 回應內容: ${response.body}');
+  }
+
   void _checkResponse(http.Response response) {
     if (response.statusCode == 403 || response.statusCode == 401) {
       final context = navigatorKey.currentContext;
@@ -136,10 +146,12 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
             context: context,
             barrierDismissible: false,
             builder: (ctx) => AlertDialog(
-              title: const Text('存取權限受限'),
-              content: Text(response.statusCode == 403 
-                  ? '您目前的使用者角色沒有權限存取此管理頁面。系統將為您進行導向降級。' 
-                  : '您的登入憑證已過期，請重新登入。'),
+              title: Text(response.statusCode == 403
+                  ? '\u6b0a\u9650\u4e0d\u8db3'
+                  : '\u767b\u5165\u72c0\u614b\u5df2\u5931\u6548'),
+              content: Text(response.statusCode == 403
+                  ? '\u60a8\u76ee\u524d\u6c92\u6709\u6b0a\u9650\u4f7f\u7528\u9019\u500b\u529f\u80fd\uff0c\u8acb\u78ba\u8a8d\u5e33\u865f\u6b0a\u9650\u6216\u91cd\u65b0\u767b\u5165\u3002'
+                  : '\u60a8\u7684\u767b\u5165\u72c0\u614b\u5df2\u904e\u671f\u6216\u7121\u6548\uff0c\u8acb\u91cd\u65b0\u767b\u5165\u3002'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -150,7 +162,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
                       (route) => false,
                     );
                   },
-                  child: const Text('確定'),
+                  child: const Text('\u78ba\u5b9a'),
                 ),
               ],
             ),
