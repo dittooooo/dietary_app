@@ -1,23 +1,28 @@
 // Path: c:\Users\User\Documents\Github_Repo\dietary_app\companion\companion_js\companion-agent.js
 // Description: Main entry point for Express server, routing HTTP requests, and orchestrating flow
 
+// 匯入 Node.js 內建 path 與 fs 模組，用於路徑解析及檔案系統檢查
 const path = require("path");
 const fs = require("fs");
+// 匯入 dotenv 用於讀取 .env 設定，Express 用於建立 Web API，Cors 用於跨來源資源共用
 const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
+// 匯入服務層 (services) 以呼叫各核心流程模組
 const {
   runOpenAIFlow,
   callDietaryAgent,
   getCompanionReply
 } = require("./companion-agent-services");
 
+// 定義 .env 檔案可能的存放路徑 (依序往上層目錄搜尋)
 const envCandidates = [
   path.resolve(__dirname, "../../.env"),
   path.resolve(__dirname, "../.env"),
   path.resolve(__dirname, ".env")
 ];
 
+// 走訪候選路徑，載入第一個找到的 .env 設定檔
 let loadedEnvPath = null;
 for (const candidate of envCandidates) {
   if (!fs.existsSync(candidate)) {
@@ -29,6 +34,7 @@ for (const candidate of envCandidates) {
   break;
 }
 
+// 輸出 .env 載入的狀態日誌
 if (loadedEnvPath) {
   console.log(`Loaded .env from: ${loadedEnvPath}`);
 } else {
@@ -36,11 +42,19 @@ if (loadedEnvPath) {
   console.log("No explicit .env file found. Falling back to process environment.");
 }
 
+// 初始化 Express 應用程式並設定全域中間件 (Middleware)
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // 啟用跨網域請求存取 (CORS)
+app.use(express.json()); // 解析請求主體 (Request Body) 為 JSON 格式
 
+/**
+ * 處理陪伴精靈對話請求的主路由邏輯
+ * 實作流程：1. 意圖/情緒預檢 -> 2. (可選) 呼叫飲食助理服務 -> 3. LLM 重組回覆並回傳
+ * @param {express.Request} req - Express 請求物件，預期包含 body.user_prompt 與 headers.authorization
+ * @param {express.Response} res - Express 回應物件
+ */
 async function handleCompanionAsk(req, res) {
+  // 1. 驗證請求參數 user_prompt 是否符合格式
   const user_prompt = typeof req.body.user_prompt === "string" ? req.body.user_prompt.trim() : "";
   if (!user_prompt) {
     return res.status(400).json({
@@ -50,6 +64,7 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
+  // 2. 執行第一階段 OpenAI 意圖及情緒分析流程
   let openAiResult;
   try {
     openAiResult = await runOpenAIFlow(user_prompt);
@@ -63,20 +78,25 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
+  // 3. 根據預檢結果決定是否呼叫飲食助理服務，並合成陪伴精靈回覆
   try {
     let dietaryAgentResponse = null;
     let dietaryAgentError = null;
 
+    // 若預檢判定需要呼叫後端飲食助理
     if (openAiResult.dietary_agent_request) {
       try {
         const authHeader = req.headers.authorization;
+        // 呼叫飲食助理 API，並代入身分驗證標頭
         dietaryAgentResponse = await callDietaryAgent(openAiResult.dietary_agent_request, authHeader);
       } catch (error) {
+        // 捕獲飲食助理 API 錯誤，但不中斷流程，保留錯誤訊息以利降級回覆處理
         console.error("Dietary Agent call failed:", error.message);
         dietaryAgentError = error.message;
       }
     }
 
+    // 回傳完整的分析與對話結果給客戶端
     return res.json({
       success: true,
       llm_fallback_used: false,
@@ -91,6 +111,7 @@ async function handleCompanionAsk(req, res) {
       dietary_agent_request: openAiResult.dietary_agent_request,
       dietary_agent_response: dietaryAgentResponse,
       dietary_agent_error: dietaryAgentError,
+      // 呼叫重組邏輯，生成最終親切的對話文字
       companion_reply: await getCompanionReply({
         userPrompt: user_prompt,
         screening: openAiResult.screening,
@@ -101,6 +122,7 @@ async function handleCompanionAsk(req, res) {
       })
     });
   } catch (error) {
+    // 捕獲伺服器端非預期的未處理錯誤，回傳 500 狀態碼
     console.error("Server internal error:", error);
     return res.status(500).json({
       success: false,
@@ -110,12 +132,15 @@ async function handleCompanionAsk(req, res) {
   }
 }
 
+// 註冊健康檢查 (Health Check) 路由，用來驗證伺服器是否正常運行
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// 註冊陪伴助理詢問路由
 app.post("/companion/ask", handleCompanionAsk);
 
+// 設定監聽埠口並啟動 Express 伺服器服務
 const port = Number(process.env.COMPANION_API_PORT || 3000);
 app.listen(port, () => {
   console.log(`Companion Agent API listening on port ${port}`);

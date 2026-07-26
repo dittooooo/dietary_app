@@ -24,13 +24,15 @@
 
 ---
 
-### 3. LLM 動態生成最終 Companion Response (非寫死格式)
+### 3. LLM 動態生成與第一階段早退機制 (Early Exit)
 * **需求說明**：
-  * 目前的回覆格式是將同理心安撫前綴與 Dietary Agent 回傳的文字直接拼接，格式較為死板。
-  * **調整方案**：將整個回覆生成流程交給 LLM。把「使用者原始問題」、「情緒分析結果（包含 needs_empathy）」以及「Dietary Agent 回傳的結構化資料」包裝成 Prompt 餵給 LLM，讓 LLM 重組並潤飾為一段更自然、溫馨且口語化的陪伴對話。
+  * 為了提升效能並降低費用，當預檢判定為「非處理範圍 (should_handle is false)」或「飲食範圍但資訊不足以呼叫後端 (!dietaryAgentRequest)」時，系統不應再呼叫第二次 LLM API。
+  * **調整方案**：在第一階段的預檢工具（`screen_user_request`）中，新增一個 `early_reply` 輸出欄位。若預檢失敗或資訊不足，LLM 將在此欄位中直接生成溫馨的拒絕或引導回覆。後端只要偵測到 `early_reply` 有內容，便「早退 (Early Exit)」直接回傳，不再呼叫第二次 Chat Completions API。只有在預檢通過且成功調用 Dietary Agent 取得營養數據時，才會呼叫第二輪 LLM（`generateCompanionReply`）進行重組。
 * **實作細節**：
-  * 於 `companion-llm.js` 重構 `generateCompanionReply` 函數，呼叫標準的 OpenAI Chat Completions API (`/v1/chat/completions`)。
-  * 將 `companion-agent-services.js` 的主要流程函數命名為 `getCompanionReply`，並修改為 `async` 函數，因為它需要等待 LLM 的生成結果。
+  * 在 `companion-llm.js` 調整 `screen_user_request` 工具的定義，新增 `early_reply` 屬性。
+  * 調整第一階段的 `ANALYSIS_SYSTEM_PROMPT` 規則，加入在 `should_handle: false` 或資訊缺失時生成 `early_reply` 的指示。
+  * 在 `companion-agent-services.js` 的 `getCompanionReply` 中，開頭先行判斷是否有 `early_reply`，若有則直接回傳。
+  * 調整第二階段 `generateCompanionReply` 傳入參數，在 messages 內額外傳入 `screening` 資料。
   * 調整 `companion-agent.js` 中對 `getCompanionReply` 的調用，使用 `await` 接收非同步回傳值。
 
 ---
@@ -98,10 +100,9 @@ if (fs.existsSync(outerEnvPath)) {
 
 * **修改 1：引入 `generateCompanionReply` 函數**
   導入對話重組生成模組（別名為 `runLLMReply`）。
-* **修改 2：將原本 `buildCompanionReply` 改名為 `getCompanionReply` 並優化攔截邏輯**
-  * 刪除舊的 `medical_out_of_scope` 獨立醫療過濾（醫療提問現在直接歸類為 `general_chat` 並走閒聊過濾分支）。
-  * 在後端快速攔截非飲食問題或缺失關鍵參數的請求，省下 LLM API 費用。
-  * 通過攔截後才呼叫 `runLLMReply` 進行生成。
+* **修改 2：將原本 `buildCompanionReply` 改名為 `getCompanionReply` 並整合第一階段早退邏輯**
+  * 在開頭檢查 `screening.early_reply`。若有值，則代表無須呼叫第二階段 LLM，直接回傳早退對話，達到省時與省費用的目的。
+  * 舊有的 `!screening.should_handle` 和缺失必要參數的靜態攔截邏輯移入 `catch` 保底區塊中，做為 LLM API 出錯時的 Fallback。
 
 #### 【重要程式碼片段】
 
@@ -116,24 +117,20 @@ const {
 /**
  * 4. 取得最終的陪伴式回覆 (getCompanionReply)
  */
-async function getCompanionReply({ screening, emotion, dietaryAgentResponse, dietaryAgentRequest, userPrompt, dietaryAgentError }) {
-  // 1. 非飲食諮詢的閒聊與其他不處理類別回覆  - 後端直接攔截防呆，省錢省時
-  if (!screening.should_handle) {
-    return "這句話目前不像是飲食建議模組要處理的內容。如果您有關於餐點選擇、熱量或減脂增肌的問題，隨時可以問我！";
+async function getCompanionReply({
+  screening,
+  emotion,
+  dietaryAgentResponse,
+  dietaryAgentRequest,
+  userPrompt,
+  dietaryAgentError
+}) {
+  // 早退機制 (Early Exit)：若第一階段已經由 AI 生好 early_reply（如非飲食範圍或資訊缺失），則直接回傳，省下第二次 API 呼叫
+  if (screening.early_reply) {
+    return screening.early_reply;
   }
 
-  // 2. 檢查是否因為參數攔截（未提供具體料理或問題類型未知）而沒有呼叫 Dietary Agent
-  if (screening.should_handle && !dietaryAgentRequest) {
-    if (!screening.dishes || screening.dishes.length === 0) {
-      return "我目前無法從您的問題中提取出具體的食物名稱。可以請您提供想諮詢的餐點名稱嗎？例如：「晚餐吃炸雞適合嗎？」";
-    }
-    if (screening.question_type !== "single_dish" && screening.question_type !== "dish_comparison") {
-      return "我目前無法判斷您問題的類型，請試著具體詢問單一食物的熱量，或是比較多個食物喔！";
-    }
-    return "抱歉，我目前無法理解您的問題，請重新輸入更具體的飲食問題。";
-  }
-
-  // 3. 通過攔截後，調用 LLM 動態生成重組後的回覆 (呼叫 runLLMReply 函數)
+  // 情況 C：資訊完整，進入 LLM 生成回覆階段
   let finalReply = "";
   try {
     finalReply = await runLLMReply({
@@ -146,11 +143,30 @@ async function getCompanionReply({ screening, emotion, dietaryAgentResponse, die
     });
   } catch (error) {
     console.error("Failed to generate companion response with LLM:", error.message);
-    // Fallback 保底機制：若 LLM 重組失敗，使用原本的拼接方式
+    
+    // Fallback 保底防呆機制：若 AI 生成出錯，依據篩選狀態回傳靜態預設訊息
+    if (!screening.should_handle) {
+      return "這個問題比較不是飲食助理的處理範圍。如果你願意，我還是可以幫你回到餐點選擇、熱量方向，或日常飲食建議來一起看。";
+    }
+
+    if (screening.should_handle && !dietaryAgentRequest) {
+      if (!screening.dishes || screening.dishes.length === 0) {
+        return "我目前還不太確定你想問的是哪一道食物。你可以直接告訴我餐點名稱，或補充你吃了什麼，我再幫你一起看。";
+      }
+      if (screening.question_type !== "single_dish" && screening.question_type !== "dish_comparison") {
+        return "我有抓到你在問飲食，但還差一點資訊。你可以補充是想問單一道餐點，還是要比較兩種以上的食物嗎？";
+      }
+      return "我有收到你的問題，但目前資訊還不夠完整。你可以再多描述一點你想問的食物或情境，我就能更準確幫你整理。";
+    }
+
+    // 正常流程的 Fallback 拼接
     const empathyPrefix = emotion.needs_empathy
-      ? "我有注意到你現在有點在意這次的選擇，先不用太緊張喔。❤️\n"
-      : "我先幫您整理這次的飲食建議：\n";
-    const recommendation = dietaryAgentResponse?.reply_text || dietaryAgentResponse?.conclusion || JSON.stringify(dietaryAgentResponse) || "已成功記錄您的問題，正在為您尋求最佳飲食建議。";
+      ? "我知道你現在可能有點在意這餐怎麼吃，先別太有壓力，我陪你一起看。\n"
+      : "我先幫你整理目前可用的資訊。\n";
+    const recommendation = 
+      dietaryAgentResponse?.reply_text || 
+      dietaryAgentResponse?.conclusion || 
+      (dietaryAgentResponse ? JSON.stringify(dietaryAgentResponse) : "目前還拿不到完整分析結果，稍後再試一次會比較穩。");
     finalReply = `${empathyPrefix}${recommendation}`;
   }
 
@@ -165,14 +181,16 @@ async function getCompanionReply({ screening, emotion, dietaryAgentResponse, die
 * **修改 1：移除 `medical_out_of_scope` 意圖分類**
   * 在 `ANALYSIS_SYSTEM_PROMPT` 中，指示將醫療問答歸入 `general_chat`（其他不處理類別）。
   * 在 `tools` 定義中，將 `"medical_out_of_scope"` 從 `intent_category` 的 enum 清單中刪除。
-* **修改 2：更新 `REPLY_SYSTEM_PROMPT`**
-  * 常數名稱保持為 `REPLY_SYSTEM_PROMPT`，但內容改為 V2 的情緒重組與數值免責引導規則。
+* **修改 2：更新第一階段分析與新增 `early_reply` 欄位**
+  * 在 `ANALYSIS_SYSTEM_PROMPT` 新增 rule 5，要求 LLM 在 `should_handle: false`（閒聊/醫療）或 `should_handle: true` 但資訊缺失時，直接在 `early_reply` 中生成溫馨對話；其餘情況則留空。
+  * 在 `tools` 的 `screen_user_request` 參數中新增屬性 `early_reply`，並設為 `required`。
+  * 修改 `sanitizeScreening`，處理並防呆 `early_reply` 欄位。
 * **修改 3：重構 `generateCompanionReply` 函數**
   * 函數名稱保持為 `generateCompanionReply`。
   * 改用官方標準的 Chat Completions API (`/v1/chat/completions`) 進行 HTTP POST 請求。
   * 設定 `temperature: 0.2` 以確保免責聲明穩定且百分之百觸發。
+  * 在 messages 的 `user` message 中，除了傳入情緒分析，額外傳入意圖預檢 `screening`。
   * 移除重複的 `GENERATE_RESPONSE_PROMPT` 與 `generateCompanionResponse` 函數。
-  * 在 `sanitizeScreening` 與 `sanitizeEmotion` 中加入 `!raw`（未觸發工具）時的安全預設回傳機制，提升系統防崩潰能力。
 
 #### 【重要程式碼片段】
 
@@ -182,10 +200,16 @@ const ANALYSIS_SYSTEM_PROMPT = `
 Rules for "screen_user_request":
 ...
 2. intent_category:
-   - "dish_advice": asking for dietary advice or recommendation.
-   - "meal_record": recording what they ate.
-   - "general_chat": unrelated small talk, off-topic requests, or medical questions (medicine, diagnosis, disease treatment, doctor advice).
-...
+   - "dish_advice": asking for dietary advice, recommendations, or whether they can eat a certain food... If a message contains BOTH recording what they ate and asking for advice, ALWAYS prioritize "dish_advice".
+   - "meal_record": ONLY when the user is purely recording what they ate without asking any questions or seeking advice...
+3. question_type:
+   - "single_dish": asking about one dish or meal...
+   - "dish_comparison": comparing two or more dishes, or asking about eating multiple different dishes in a day (e.g., "中午吃炸雞，晚上還可以吃拉麵嗎").
+5. early_reply:
+   - Generate this response in warm, empathetic Traditional Chinese (Taiwan繁體中文).
+   - If should_handle is false: Write a warm dialog response explaining that you are a dietary helper...
+   - If should_handle is true but dishes is empty OR question_type is "unknown": Write a friendly prompt asking them to specify what dish they are referring to...
+   - If should_handle is true AND dishes is NOT empty AND question_type is single_dish or dish_comparison: Set it to "".
 `;
 ```
 
