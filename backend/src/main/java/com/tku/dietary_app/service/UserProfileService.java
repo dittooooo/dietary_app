@@ -4,16 +4,17 @@ import com.tku.dietary_app.dto.OnboardingRequest;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.repository.UserProfileRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserProfileService {
-    @Autowired
-    private UserProfileRepository userProfileRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final BodyMetricsService bodyMetricsService;
 
     // 創建或更新用戶個人資料
     @Transactional
@@ -41,6 +42,7 @@ public class UserProfileService {
 
         userProfile.setDietGoal(request.getDietGoal());
         userProfile.setPetType(request.getPetType());
+        bodyMetricsService.recalculateAndApply(userProfile);
 
         userProfileRepository.save(userProfile);
 

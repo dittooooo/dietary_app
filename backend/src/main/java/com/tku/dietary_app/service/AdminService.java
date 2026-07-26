@@ -27,6 +27,7 @@ public class AdminService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BodyMetricsService bodyMetricsService;
 
     public List<UserProfile> getAllUsers() {
         return userProfileRepository.findAll();
@@ -69,6 +70,7 @@ public class AdminService {
                 .dietGoal(request.getDietGoal())
                 .petType(request.getPetType() != null ? request.getPetType() : "None")
                 .build();
+        bodyMetricsService.recalculateAndApply(profile);
 
         return userProfileRepository.save(profile);
     }
@@ -96,6 +98,7 @@ public class AdminService {
         if (request.getPetType() != null) {
             profile.setPetType(request.getPetType());
         }
+        bodyMetricsService.recalculateAndApply(profile);
 
         User user = profile.getUser();
 

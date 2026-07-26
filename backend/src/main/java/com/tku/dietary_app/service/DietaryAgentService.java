@@ -85,14 +85,28 @@ public class DietaryAgentService {
     }
 
     private Integer calculateRecommendedCalorie(UserProfile user_profile) {
-        double bmr;
-        if ("女".equals(user_profile.getGender())) {
-            bmr = 10 * user_profile.getWeight() + 6.25 * user_profile.getHeight() - 5 * user_profile.getAge() - 161;
-        } else {
-            bmr = 10 * user_profile.getWeight() + 6.25 * user_profile.getHeight() - 5 * user_profile.getAge() + 5;
+        // 如果資料庫已經有計算好的建議熱量，就直接使用
+        if (user_profile.getRecommendedCalories() != null) {
+            return (int) Math.round(user_profile.getRecommendedCalories());
         }
 
-        String diet_goal = user_profile.getDietGoal() == null ? "" : user_profile.getDietGoal();
+        double bmr;
+        if ("女".equals(user_profile.getGender())) {
+            bmr = 10 * user_profile.getWeight()
+                    + 6.25 * user_profile.getHeight()
+                    - 5 * user_profile.getAge()
+                    - 161;
+        } else {
+            bmr = 10 * user_profile.getWeight()
+                    + 6.25 * user_profile.getHeight()
+                    - 5 * user_profile.getAge()
+                    + 5;
+        }
+
+        String diet_goal = user_profile.getDietGoal() == null
+                ? ""
+                : user_profile.getDietGoal();
+
         if (diet_goal.contains("增肌") || diet_goal.contains("增重")) {
             bmr += 200;
         } else if (diet_goal.contains("減脂") || diet_goal.contains("減重")) {

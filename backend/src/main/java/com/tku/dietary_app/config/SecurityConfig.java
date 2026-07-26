@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/onboarding").authenticated()
                         .requestMatchers("/api/user/**").authenticated()
                         .requestMatchers("/api/dietary/**").authenticated()
+                        .requestMatchers("/api/body-status/**").authenticated()
 
                         // 其他沒明確列出的 API，預設都要登入。
                         .anyRequest().authenticated()
