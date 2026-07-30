@@ -5,7 +5,8 @@
 // runOpenAIFlow 用於分析意圖與情緒，generateCompanionReply 用於生成最終回覆
 const {
   runOpenAIFlow: runLLMAnalysis,
-  generateCompanionReply: runLLMReply
+  generateCompanionReply: runLLMReply,
+  translateDishes
 } = require("./companion-llm");
 
 /**
@@ -58,6 +59,17 @@ function buildDietaryAgentRequest(screening, message) {
 async function runOpenAIFlow(userPrompt) {
   // 呼叫 OpenAI 進行分析
   const result = await runLLMAnalysis(userPrompt);
+
+  // 若有擷取到餐點名稱，進行食品資料庫標準品名翻譯
+  if (result.screening.dishes && result.screening.dishes.length > 0) {
+    try {
+      const translated = await translateDishes(result.screening.dishes);
+      result.screening.dishes = translated;
+    } catch (err) {
+      console.error("Dish translation failed, using original names:", err.message);
+    }
+  }
+
   // 根據分析出的意圖決定是否建立傳送給 Dietary Agent 的請求 payload
   const dietaryAgentRequest = buildDietaryAgentRequest(result.screening, userPrompt);
 
@@ -148,27 +160,11 @@ async function getCompanionReply({
   } catch (error) {
     // 當 LLM 回覆生成失敗時，進入容錯防呆與降級處理機制 (Fallback 保底)
     console.error("Failed to generate companion response with LLM:", error.message);
-
-    // Fallback 保底防呆機制：若 AI 生成出錯，依據篩選狀態回傳靜態預設訊息
-    if (!screening.should_handle) {
-      return "這個問題比較不是飲食助理的處理範圍。如果你願意，我還是可以幫你回到餐點選擇、熱量方向，或日常飲食建議來一起看。";
-    }
-
-    if (screening.should_handle && !dietaryAgentRequest) {
-      if (!screening.dishes || screening.dishes.length === 0) {
-        return "我目前還不太確定你想問的是哪一道食物。你可以直接告訴我餐點名稱，或補充你吃了什麼，我再幫你一起看。";
-      }
-      if (screening.question_type !== "single_dish" && screening.question_type !== "dish_comparison") {
-        return "我有抓到你在問飲食，但還差一點資訊。你可以補充是想問單一道餐點，還是要比較兩種以上的食物嗎？";
-      }
-      return "我有收到你的問題，但目前資訊還不夠完整。你可以再多描述一點你想問的食物或情境，我就能更準確幫你整理。";
-    }
-
-    // 正常流程的 Fallback 拼接
+    // 正常流程的 Fallback 拼接 (因為早退機制，能走到這步代表預檢與餐點資料皆齊全，只需處理對話生成失敗)
     const empathyPrefix = emotion.needs_empathy
       ? "我知道你現在可能有點在意這餐怎麼吃，先別太有壓力，我陪你一起看。\n"
       : "我先幫你整理目前可用的資訊。\n";
-
+    // TODO: 還需要調整
     // 優先使用飲食助理傳回的文字，若無則將其 JSON 化或顯示預設錯誤說明
     const recommendation =
       dietaryAgentResponse?.reply_text ||
