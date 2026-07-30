@@ -60,11 +60,25 @@ async function runOpenAIFlow(userPrompt) {
   // 呼叫 OpenAI 進行分析
   const result = await runLLMAnalysis(userPrompt);
 
+  //TODO:只有在擷取到餐點名稱，才會去做名稱的翻譯
   // 若有擷取到餐點名稱，進行食品資料庫標準品名翻譯
   if (result.screening.dishes && result.screening.dishes.length > 0) {
     try {
-      const translated = await translateDishes(result.screening.dishes);
-      result.screening.dishes = translated;
+      if (result.screening.question_type === "dish_comparison") {
+        // 對於比較類問題，逐一翻譯每個原始餐點，並將翻譯出的多個原料組合回單一字串
+        // 確保最終傳入的元素個數與原始比較項數目一致（如 2 個），避免被拆散導致後端 LLM 解析失敗
+        const translatedList = [];
+        for (const dish of result.screening.dishes) {
+          const translatedIngredients = await translateDishes([dish]);
+          const combined = translatedIngredients.join("");
+          translatedList.push(combined);
+        }
+        result.screening.dishes = translatedList;
+      } else {
+        // 非比較問題（如紀錄或單一餐點建議），直接整批翻譯並展開成扁平的原料陣列
+        const translated = await translateDishes(result.screening.dishes);
+        result.screening.dishes = translated;
+      }
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }
