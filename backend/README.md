@@ -78,3 +78,24 @@ permitAll()
 spring.datasource.username=sa
 spring.datasource.password=TkuProject
 ```
+
+---
+## Environment 設定
+
+專案啟動前會先讀取根目錄的 `.env`:
+
+```properties
+spring.config.import=optional:file:.env[.properties]
+```
+
+建議做法:
+
+1. 複製 `.env.example` 成 `.env`
+2. 填入實際的 `DB_PASSWORD` 與 `JWT_SECRET`
+3. 再啟動專案
+
+注意:
+
+- `.env.example` 只是範本，不放真實密碼
+- `.env` 會被 git 忽略，不應提交
+- 如果沒有提供 `DB_PASSWORD` 或 `JWT_SECRET`，專案會啟動失敗，這是刻意的安全保護

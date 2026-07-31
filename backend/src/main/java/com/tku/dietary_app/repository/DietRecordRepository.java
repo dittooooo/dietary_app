@@ -11,9 +11,28 @@ import java.util.List;
 
 @Repository
 public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
+    interface DailyNutritionSummary {
+        Long getRecordCount();
+        Double getTotalCalories();
+        Double getTotalProtein();
+    }
+
     List<DietRecord> findByDishNameContainingIgnoreCase(String dishName);
 
     List<DietRecord> findByUserIdOrderByCreatedAtDescIdDesc(Long userId);
+
+    @Query("""
+            SELECT COUNT(d) AS recordCount,
+                   COALESCE(SUM(d.calories), 0) AS totalCalories,
+                   COALESCE(SUM(d.protein), 0) AS totalProtein
+            FROM DietRecord d
+            WHERE d.user.id = :userId
+              AND d.createdAt >= :startAt
+              AND d.createdAt < :endAt
+            """)
+    DailyNutritionSummary summarizeByUserAndCreatedAtRange(@Param("userId") Long userId,
+                                                           @Param("startAt") LocalDateTime startAt,
+                                                           @Param("endAt") LocalDateTime endAt);
 
     @Query("""
             SELECT d
