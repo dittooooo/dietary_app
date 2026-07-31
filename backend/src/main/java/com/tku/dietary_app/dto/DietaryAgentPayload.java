@@ -1,42 +1,75 @@
 package com.tku.dietary_app.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
 @Builder
-@JsonPropertyOrder({"question", "question_type", "dish_names", "user_profile"})
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"question", "dish_names", "question_type", "user_profile", "health_condition", "weekly_diet_records"})
 public class DietaryAgentPayload {
 
     private String question;
 
-    @JsonProperty("question_type")
-    private String question_type;
-
     @JsonProperty("dish_names")
-    private List<String> dish_names;
+    private List<String> dishNames;
+
+    @JsonProperty("question_type")
+    private String questionType;
 
     @JsonProperty("user_profile")
-    private UserProfileDto user_profile;
+    private UserProfileDto userProfile;
+
+    @JsonProperty("health_condition")
+    private HealthConditionDto healthCondition;
+
+    @JsonProperty("weekly_diet_records")
+    private List<WeeklyDietRecordDto> weeklyDietRecords;
 
     @Data
     @Builder
-    @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age", "recommended_calorie"})
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age"})
     public static class UserProfileDto {
         @JsonProperty("height_cm")
-        private Double height_cm;
+        private Double heightCm;
 
         @JsonProperty("weight_kg")
-        private Double weight_kg;
+        private Double weightKg;
 
         private String gender;
         private Integer age;
+    }
 
-        @JsonProperty("recommended_calorie")
-        private Integer recommended_calorie;
+    @Data
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"has_chronic_disease", "chronic_diseases"})
+    public static class HealthConditionDto {
+        @JsonProperty("has_chronic_disease")
+        private Boolean hasChronicDisease;
+
+        @JsonProperty("chronic_diseases")
+        private List<String> chronicDiseases;
+    }
+
+    @Data
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"date", "meal", "dish_name", "note"})
+    public static class WeeklyDietRecordDto {
+        private LocalDate date;
+        private String meal;
+
+        @JsonProperty("dish_name")
+        private String dishName;
+
+        private String note;
     }
 }
