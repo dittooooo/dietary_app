@@ -5,9 +5,9 @@ import 'dart:convert'; // 匯入 json 處理套件
 import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../controllers/dog_state_controller.dart';
+import '../../widgets/dog_avatar.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
-import '../auth/model_viewer_web_stub.dart' // 匯入 model_viewer_web_stub.dart 元件庫或套件
-    if (dart.library.html) '../auth/model_viewer_web_impl.dart'; // 執行相對應的邏輯計算或設定屬性參數
 
 class ReportPage extends StatefulWidget { // 定義 ReportPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
@@ -24,6 +24,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   late AnimationController _hoverController; // 宣告類別成員或方法內部的區域變數
   late Animation<double> _hoverScaleAnimation; // 宣告類別成員或方法內部的區域變數
   late Animation<double> _hoverOffsetAnimation; // 宣告類別成員或方法內部的區域變數
+  final DogStateController _dogController = DogStateController.instance;
 
   List<dynamic> _allRecords = [];
   bool _isLoading = false;
@@ -33,6 +34,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _dogController.setState(DogAnimationState.idle);
     
     // 初始化呼吸與懸浮動畫
     _hoverController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
@@ -252,12 +254,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                               ), // 執行相對應的邏輯計算或設定屬性參數
                               child: Padding( // 建立間距容器（Padding），用於設定內部邊距
                                 padding: const EdgeInsets.all(20.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                                child: createWebModelView( // 執行相對應的邏輯計算或設定屬性參數
-                                  colorScheme: 'orange', // 執行相對應的邏輯計算或設定屬性參數
-                                  autoSpin: false, // 執行相對應的邏輯計算或設定屬性參數
-                                  scale: 1.5, // 執行相對應的邏輯計算或設定屬性參數
-                                  src: 'assets/images/dog_rigged.glb', // 執行相對應的邏輯計算或設定屬性參數
-                                ), // 執行相對應的邏輯計算或設定屬性參數
+                                child: DogAvatar(
+                                  controller: _dogController,
+                                  scale: 1.5,
+                                  instanceId: 'report-idle-dog',
+                                ),
                               ), // 執行相對應的邏輯計算或設定屬性參數
                             ), // 執行相對應的邏輯計算或設定屬性參數
                           ), // 執行相對應的邏輯計算或設定屬性參數

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'dart:io'; // 匯入 dart:io 元件庫或套件
 import 'package:flutter/foundation.dart' show kIsWeb; // 匯入 foundation.dart 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
-import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
+import '../home/home_page.dart';
+import '../../controllers/dog_state_controller.dart';
+import '../../widgets/dog_avatar.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 
 class ElfFeedingPage extends StatefulWidget { // 定義 ElfFeedingPage 類別，繼承自 StatefulWidget
@@ -26,11 +28,13 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
   bool _isEaten = false; // 宣告類別成員或方法內部的區域變數
   String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
+  final DogStateController _dogController = DogStateController.instance;
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
-    _loadPetData(); // 執行相對應的邏輯計算或設定屬性參數
+    _loadPetData();
+    _dogController.setState(DogAnimationState.eating); // 執行相對應的邏輯計算或設定屬性參數
     _elfController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
       vsync: this, // 執行相對應的邏輯計算或設定屬性參數
       duration: const Duration(seconds: 7), // 建立編譯期常數，優化 Flutter 渲染效能
@@ -60,6 +64,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
     if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
         _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _dogController.setBodyTypeFromBackend(prefs.getString('dog_body_type') ?? prefs.getString('user_diet_goal'));
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
@@ -159,12 +164,16 @@ class _ElfFeedingPageState extends State<ElfFeedingPage> with TickerProviderStat
                           child: const Text("啊姆！看起來很好吃！", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
                         ), // 執行相對應的邏輯計算或設定屬性參數
                       const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                      Image.asset( // 執行相對應的邏輯計算或設定屬性參數
-                        _getPetImagePath(_petType, _dietGoal), // 執行相對應的邏輯計算或設定屬性參數
-                        width: 180, // 執行相對應的邏輯計算或設定屬性參數
-                        height: 180, // 執行相對應的邏輯計算或設定屬性參數
-                        fit: BoxFit.contain, // 執行相對應的邏輯計算或設定屬性參數
-                      ), // 執行相對應的邏輯計算或設定屬性參數
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: DogAvatar(
+                          controller: _dogController,
+                          instanceId: 'feeding-eating',
+                          scale: 1.8,
+                          cameraControls: false,
+                        ),
+                      ),
                     ], // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
