@@ -391,27 +391,35 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final double modelSize = constraints.maxWidth.clamp(0.0, 390.0);
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: modelSize - 20,
-                          height: modelSize + 80,
-                          child: DogAvatar(
-                            controller: _dogController,
-                            instanceId: 'profile-card',
-                            scale: 1.4,
-                            cameraControls: false,
-                          ),
-                        ),
-                        const Text(
-                          '狗兒',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    return AnimatedBuilder(
+                      animation: _dogController,
+                      builder: (context, _) {
+                        final bool isThin = _dogController.bodyType == DogBodyType.thin;
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: modelSize - 20,
+                              height: modelSize + 80,
+                              child: DogAvatar(
+                                controller: _dogController,
+                                instanceId: 'profile-card',
+                                scale: isThin ? 1.15 : 1.4,
+                                cameraControls: false,
+                                clipBehavior: Clip.none,
+                                contentOffset: Offset(isThin ? -20 : -16, isThin ? 16 : 0),
+                              ),
+                            ),
+                            const Text(
+                              '狗兒',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
                 ),

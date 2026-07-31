@@ -10,6 +10,10 @@ class DogAvatar extends StatelessWidget {
   final bool cameraControls;
   final String? cameraOrbit;
   final String instanceId;
+  final Clip clipBehavior;
+  final Offset contentOffset;
+  final double? bodyTypeScaleOverride;
+  final Offset? bodyTypeOffsetOverride;
 
   DogAvatar({
     super.key,
@@ -17,6 +21,10 @@ class DogAvatar extends StatelessWidget {
     this.scale = 1.6,
     this.cameraControls = false,
     this.cameraOrbit = '0deg 75deg auto',
+    this.clipBehavior = Clip.none,
+    this.contentOffset = Offset.zero,
+    this.bodyTypeScaleOverride,
+    this.bodyTypeOffsetOverride,
     required this.instanceId,
   }) : controller = controller ?? DogStateController.instance;
 
@@ -47,17 +55,19 @@ class DogAvatar extends StatelessWidget {
     return AnimatedBuilder(
       animation: controller,
       builder: (context, _) {
-        final bodyTypeScale = _bodyTypeScaleMultiplier(controller.bodyType);
-        final bodyTypeOffset = _bodyTypeOffset(controller.bodyType);
+        final bodyTypeScale =
+            bodyTypeScaleOverride ?? _bodyTypeScaleMultiplier(controller.bodyType);
+        final bodyTypeOffset =
+            bodyTypeOffsetOverride ?? _bodyTypeOffset(controller.bodyType);
         final adjustedScale = scale * bodyTypeScale;
 
         return Stack(
-          clipBehavior: Clip.none,
+          clipBehavior: clipBehavior,
           alignment: Alignment.center,
           children: [
             Positioned.fill(
               child: Transform.translate(
-                offset: bodyTypeOffset,
+                offset: bodyTypeOffset + contentOffset,
                 child: Transform.scale(
                   scale: bodyTypeScale,
                   child: createWebModelView(
