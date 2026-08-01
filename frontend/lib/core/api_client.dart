@@ -20,8 +20,8 @@ class ApiClient {
     // 發送 HTTP POST 請求方法，封裝相關 API 呼叫
     final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
 
-    print('🚀 發送 POST 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
-    print('📦 請求內容: $body'); // 執行相對應的程式邏輯運算或欄位宣告設定
+    print('發送 POST 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
+    print('請求內容: $body'); // 執行相對應的程式邏輯運算或欄位宣告設定
 
     try {
       // 執行相對應的程式邏輯運算或欄位宣告設定
@@ -40,7 +40,7 @@ class ApiClient {
       return response; // 回傳方法執行結果或計算完成的數據
     } catch (e) {
       // 執行相對應的程式邏輯運算或欄位宣告設定
-      print('❌ POST 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
+      print('POST 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
       rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
     } // 程式碼區塊或結構結束
   } // 程式碼區塊或結構結束
@@ -49,7 +49,7 @@ class ApiClient {
   Future<http.Response> get(String path, {Map<String, String>? headers}) async {
     // 發送 HTTP GET 請求方法，封裝相關 API 呼叫
     final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
-    print('🚀 GET 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
+    print('GET 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
 
     try {
       // 執行相對應的程式邏輯運算或欄位宣告設定
@@ -67,7 +67,7 @@ class ApiClient {
       return response; // 回傳方法執行結果或計算完成的數據
     } catch (e) {
       // 執行相對應的程式邏輯運算或欄位宣告設定
-      print('❌ GET 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
+      print('GET 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
       rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
     } // 程式碼區塊或結構結束
   } // 程式碼區塊或結構結束
@@ -79,8 +79,8 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('🚀 PUT 請求至: $url');
-    print('📦 請求內容: $body');
+    print('PUT 請求至: $url');
+    print('請求內容: $body');
 
     try {
       final response = await http.put(
@@ -92,7 +92,7 @@ class ApiClient {
       _checkResponse(response);
       return response;
     } catch (e) {
-      print('❌ PUT 網路連線異常: $e');
+      print('PUT 網路連線異常: $e');
       rethrow;
     }
   }
@@ -105,7 +105,7 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('🚀 發送 Multipart 請求至: $url');
+    print('發送 Multipart 請求至: $url');
 
     try {
       final request = http.MultipartRequest('POST', url);
@@ -121,7 +121,7 @@ class ApiClient {
       _checkResponse(response);
       return response;
     } catch (e) {
-      print('❌ Multipart 網路連線異常: $e');
+      print('Multipart 網路連線異常: $e');
       rethrow;
     }
   }
@@ -132,7 +132,7 @@ class ApiClient {
     Map<String, String>? headers,
   }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('🚀 DELETE 請求至: $url');
+    print('DELETE 請求至: $url');
 
     try {
       final response = await http.delete(
@@ -143,46 +143,53 @@ class ApiClient {
       _checkResponse(response);
       return response;
     } catch (e) {
-      print('❌ DELETE 網路連線異常: $e');
+      print('DELETE 網路連線異常: $e');
       rethrow;
     }
   }
 
   // 私有工具：檢查 API 回傳狀態，處理 403 權限降級或未授權攔截
   void _logResponse(String method, http.Response response) {
-    print('📡 $method 回應狀態碼: ${response.statusCode}');
-    print('📨 $method 回應內容: ${response.body}');
+    print('$method 回應狀態碼: ${response.statusCode}');
+    print('$method 回應內容: ${response.body}');
   }
 
   void _checkResponse(http.Response response) {
     if (response.statusCode == 403 || response.statusCode == 401) {
       final context = navigatorKey.currentContext;
       if (context != null) {
+        final requestUrl = response.request?.url.path ?? '';
+        final isLogin = requestUrl.contains('/login');
+
         // 延遲執行，避免與當前 Build 衝突
         Future.delayed(Duration.zero, () {
           showDialog(
             context: context,
             barrierDismissible: false,
             builder: (ctx) => AlertDialog(
-              title: Text(response.statusCode == 403
-                  ? '\u6b0a\u9650\u4e0d\u8db3'
-                  : '\u767b\u5165\u72c0\u614b\u5df2\u5931\u6548'),
-              content: Text(response.statusCode == 403
-                  ? '\u60a8\u76ee\u524d\u6c92\u6709\u6b0a\u9650\u4f7f\u7528\u9019\u500b\u529f\u80fd\uff0c\u8acb\u78ba\u8a8d\u5e33\u865f\u6b0a\u9650\u6216\u91cd\u65b0\u767b\u5165\u3002'
-                  : '\u60a8\u7684\u767b\u5165\u72c0\u614b\u5df2\u904e\u671f\u6216\u7121\u6548\uff0c\u8acb\u91cd\u65b0\u767b\u5165\u3002'),
+              title: Text(isLogin
+                  ? '登入失敗'
+                  : (response.statusCode == 403 ? '權限不足' : '登入狀態已失效')),
+              content: Text(isLogin
+                  ? '帳號或密碼錯誤，請確認後再試。'
+                  : (response.statusCode == 403
+                      ? '您目前沒有權限使用這個功能，請確認帳號權限或重新登入。'
+                      : '您的登入狀態已過期或無效，請重新登入。')),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(ctx).pop();
-                    // 強制重導向至登入頁面
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                        builder: (context) => const LoginPage(),
-                      ),
-                      (route) => false,
-                    );
+                    if (!isLogin) {
+                      // 強制重導向至登入頁面
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                        (route) => false,
+                      );
+                    }
                   },
-                  child: const Text('\u78ba\u5b9a'),
+                  child: const Text('確定'),
                 ),
               ],
             ),

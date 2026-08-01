@@ -164,15 +164,18 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
         description: '手動輸入飲食紀錄',
         nutrition: nutritionString,
         mealDate: _selectedDate,
-      );
+      ).timeout(const Duration(seconds: 2));
 
       if (result['success'] == true) {
         final recordData = result['data'];
         final int? recordId = recordData['id'];
 
         if (recordId != null && _imageBytes != null && _selectedImage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在上傳餐點照片...')));
-          await DietService().uploadDietPhoto(recordId, _imageBytes!, _selectedImage!.name);
+          // 上傳照片改為背景執行，不阻礙使用者
+          DietService().uploadDietPhoto(recordId, _imageBytes!, _selectedImage!.name).catchError((e) {
+            debugPrint('背景上傳圖片失敗: $e');
+            return {'success': false, 'message': e.toString()};
+          });
         }
 
         if (mounted) {

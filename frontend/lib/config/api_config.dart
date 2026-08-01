@@ -9,7 +9,7 @@ class ApiConfig {
       return 'http://localhost:8080/api';
     } else if (Platform.isAndroid) {
       // 在實體手機或模擬器上執行，我們使用 adb reverse tcp:8080 tcp:8080 將手機 8080 導向電腦 8080
-      return 'http://10.0.2.2:8080/api';
+      return 'http://127.0.0.1:8080/api';
     } else {
       // 其他平台 (如 Windows 桌面版、iOS 模擬器)
       return 'http://localhost:8080/api';

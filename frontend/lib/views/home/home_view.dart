@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
@@ -40,7 +40,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     _dogController.setState(DogAnimationState.idle);
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
     
-    // 檢查並顯示 7/26 飲食總結報告彈窗
+    // 檢查並顯示飲食總結報告彈窗
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAndShowDietSummaryDialog();
     });
@@ -61,7 +61,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
       _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
-        {'isElf': true, 'text': '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！'}, // 執行相對應的邏輯計算或設定屬性參數
+        {
+          'isElf': true, 
+          'text': '嗨 $_userNickname！我是您的$_petType助理。\n在下方輸入餐點時，請遵循以下規則，我才能給出精準的建議：\n1. 避免抽象名稱（例如：午餐、家常菜）\n2. 抽象餐點稍微翻譯一下餐點（抽象餐點例如：冷露歐蕾)\n3. 建議說明大致份量（例如：排骨飯一盒）'
+        }, // 執行相對應的邏輯計算或設定屬性參數
       ]; // 程式碼區塊或元件結構結束
     }); // 程式碼區塊或元件結構結束
  
@@ -80,7 +83,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         _dietGoal = g; // 執行相對應的邏輯計算或設定屬性參數
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-          _messages[0]['text'] = '嗨 $_userNickname！\n我是您的$_petType助理。\n可以在下方輸入框輸入\n你需要我提供的飲食建議喔！'; // 執行相對應的邏輯計算或設定屬性參數
+          _messages[0]['text'] = '嗨 $_userNickname！我是您的$_petType助理。\n在下方輸入餐點時，請遵循以下規則，我才能給出精準的建議：\n1. 避免抽象名稱（例如：午餐、家常菜）\n2. 抽象餐點稍微翻譯一下餐點（抽象餐點例如：冷露歐蕾)\n3. 建議說明大致份量（例如：排骨飯一盒）'; // 執行相對應的邏輯計算或設定屬性參數
         } // 程式碼區塊或元件結構結束
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
@@ -88,17 +91,151 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
 
   static bool _hasShownSummaryDialogThisRun = false;
 
-  void _checkAndShowDietSummaryDialog() {
+  DateTime? _getRecordDate(dynamic record) {
+    if (record == null) return null;
+    
+    // 1. Try mealDate first
+    final mealDateVal = record['mealDate'];
+    if (mealDateVal != null) {
+      if (mealDateVal is String) {
+        try {
+          return DateTime.parse(mealDateVal);
+        } catch (_) {}
+      } else if (mealDateVal is List && mealDateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(mealDateVal[0].toString()),
+            int.parse(mealDateVal[1].toString()),
+            int.parse(mealDateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (mealDateVal is Map) {
+        try {
+          final y = int.parse((mealDateVal['year'] ?? mealDateVal['yearValue']).toString());
+          final m = int.parse((mealDateVal['month'] ?? mealDateVal['monthValue']).toString());
+          final d = int.parse((mealDateVal['day'] ?? mealDateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 2. Fallback to createdAt
+    final createdAtVal = record['createdAt'];
+    if (createdAtVal != null) {
+      if (createdAtVal is String) {
+        try {
+          return DateTime.parse(createdAtVal);
+        } catch (_) {}
+      } else if (createdAtVal is List && createdAtVal.length >= 3) {
+        try {
+          final y = int.parse(createdAtVal[0].toString());
+          final m = int.parse(createdAtVal[1].toString());
+          final d = int.parse(createdAtVal[2].toString());
+          final h = createdAtVal.length > 3 ? int.parse(createdAtVal[3].toString()) : 0;
+          final min = createdAtVal.length > 4 ? int.parse(createdAtVal[4].toString()) : 0;
+          final s = createdAtVal.length > 5 ? int.parse(createdAtVal[5].toString()) : 0;
+          return DateTime(y, m, d, h, min, s);
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
+  void _checkAndShowDietSummaryDialog() async {
     if (_hasShownSummaryDialogThisRun) return;
-    final now = DateTime.now();
-    // 方便測試：當月份為 7 月，且日期在 26 到 29 日之間時，自動跳出彈窗報告
-    if (now.month == 7 && (now.day >= 26 && now.day <= 29)) {
+    
+    // 管理者不需要顯示昨日飲食總結報告
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('user_role') ?? '';
+    if (role == 'ROLE_ADMIN' || role == 'ADMIN') {
       _hasShownSummaryDialogThisRun = true;
-      _showDietSummaryDialog();
+      return;
+    }
+    
+    _hasShownSummaryDialogThisRun = true;
+
+    try {
+      final records = await DietService().getMyDietRecords();
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      
+      double totalCalories = 0;
+      double totalProtein = 0;
+      double totalFat = 0;
+      double totalCarbs = 0;
+      List<String> yesterdayDishes = [];
+
+      for (var record in records) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) continue;
+        if (rDate.year == yesterday.year &&
+            rDate.month == yesterday.month &&
+            rDate.day == yesterday.day) {
+          final nut = record['nutrition'];
+          double cal = 0;
+          double prot = 0;
+          double fatVal = 0;
+          double carb = 0;
+          
+          if (nut is Map) {
+            cal = (nut['calories'] as num?)?.toDouble() ?? 0;
+            prot = (nut['protein'] as num?)?.toDouble() ?? 0;
+            fatVal = (nut['fat'] as num?)?.toDouble() ?? 0;
+            carb = (nut['carbohydrates'] as num?)?.toDouble() ?? 0;
+          } else if (record['calories'] != null || record['protein'] != null || record['fat'] != null || record['carbohydrates'] != null) {
+            cal = (record['calories'] as num?)?.toDouble() ?? 0;
+            prot = (record['protein'] as num?)?.toDouble() ?? 0;
+            fatVal = (record['fat'] as num?)?.toDouble() ?? 0;
+            carb = (record['carbohydrates'] as num?)?.toDouble() ?? 0;
+          } else if (nut is String) {
+            final regCal = RegExp(r'(?:熱量|calories|kcal)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
+            final regProt = RegExp(r'(?:蛋白質|protein)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
+            final regFat = RegExp(r'(?:脂肪|fat)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
+            final regCarb = RegExp(r'(?:碳水化合物|碳水|carbs)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
+            
+            cal = double.tryParse(regCal.firstMatch(nut)?.group(1) ?? '') ?? 0;
+            prot = double.tryParse(regProt.firstMatch(nut)?.group(1) ?? '') ?? 0;
+            fatVal = double.tryParse(regFat.firstMatch(nut)?.group(1) ?? '') ?? 0;
+            carb = double.tryParse(regCarb.firstMatch(nut)?.group(1) ?? '') ?? 0;
+          }
+
+          totalCalories += cal;
+          totalProtein += prot;
+          totalFat += fatVal;
+          totalCarbs += carb;
+          
+          if (record['dishName'] != null) {
+            yesterdayDishes.add(record['dishName'].toString());
+          }
+        }
+      }
+
+      if (!mounted) return;
+      _showDietSummaryDialog(
+        date: yesterday,
+        calories: totalCalories,
+        protein: totalProtein,
+        fat: totalFat,
+        carbs: totalCarbs,
+        dishes: yesterdayDishes,
+      );
+    } catch (e) {
+      debugPrint('取得昨日飲食總結失敗: $e');
     }
   }
 
-  void _showDietSummaryDialog() {
+  void _showDietSummaryDialog({
+    required DateTime date,
+    required double calories,
+    required double protein,
+    required double fat,
+    required double carbs,
+    required List<String> dishes,
+  }) {
+    final String dateStr = '${date.month}/${date.day}';
+    final String comment = dishes.isEmpty
+        ? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
+        : '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -109,174 +246,89 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           ),
           backgroundColor: AppColors.background,
           elevation: 10,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 標題與日期
-                  const Text(
-                    '📅 7/26 飲食總結報告',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 標題與日期
+                Text(
+                  '$dateStr 飲食總結報告',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '（今日模擬日期：7/29）',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textPrimary.withOpacity(0.5),
-                    ),
+                ),
+                
+                // 留出空白區域，位置留大一點 (1.6x of 120 = 192)
+                const SizedBox(height: 192),
+                
+                // 飲食營養素匯總與圓餅圖
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16.0),
                   ),
-                  const SizedBox(height: 20),
-                  
-                  // 小精靈動畫播放預留區
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // 動態呼吸背景環
-                        Positioned.fill(
-                          child: AnimatedBuilder(
-                            animation: _hoverScaleAnimation,
-                            builder: (context, child) {
-                              return Transform.scale(
-                                scale: _hoverScaleAnimation.value,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.primary.withOpacity(0.2),
-                                      width: 4,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        // 小精靈動畫播放佔位/GIF/圖片
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.auto_awesome,
-                              color: AppColors.secondary,
-                              size: 24,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '【精靈動畫播放區】\n($_petType)',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: AppColors.secondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // 飲食營養素匯總
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildSummaryRow('總熱量攝取', '1,450 kcal', Icons.local_fire_department, AppColors.danger),
-                        const Divider(height: 16, thickness: 0.5),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            _buildNutrientItem('蛋白質', '68g', AppColors.primary),
-                            _buildNutrientItem('脂肪', '45g', AppColors.secondary),
-                            _buildNutrientItem('碳水化合物', '192g', Colors.orange),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // 精靈評語
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12.0),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('💬 ', style: TextStyle(fontSize: 16)),
-                        Expanded(
-                          child: Text(
-                            '汪！7/26 的整體熱量控制得很好喔！蛋白質的補充也符合標準，唯獨晚餐的澱粉稍微多了一點點，明天晚餐可以多搭配蔬菜喔！',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: AppColors.textPrimary.withOpacity(0.85),
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // 按鈕區
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.background,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
+                  child: Column(
+                    children: [
+                      _buildSummaryRow('總熱量攝取', '${calories.toStringAsFixed(0)} kcal', Icons.local_fire_department, AppColors.danger),
+                      const Divider(height: 16, thickness: 0.5),
+                      MacronutrientPieChart(
+                        protein: protein,
+                        fat: fat,
+                        carbs: carbs,
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      '太棒了，我知道了！',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                
+                // 精靈評語
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          comment,
+                          style: TextStyle(
+                            fontSize: 13.0,
+                            color: AppColors.textPrimary.withOpacity(0.85),
+                            height: 1.35,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // 按鈕區
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    '太棒了，我知道了！',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -670,7 +722,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   if (!_isChatOpen) ...[ // 執行相對應的邏輯計算或設定屬性參數
                     Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                      margin: const EdgeInsets.symmetric(horizontal: 40), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                      margin: const EdgeInsets.symmetric(horizontal: 20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                       decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                         color: AppColors.background, // 設定顏色數值（Color）
                         borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
@@ -678,7 +730,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       ), // 執行相對應的邏輯計算或設定屬性參數
                       child: Text( // 建立文字顯示元件（Text）
                         _messages.isNotEmpty ? _messages[0]['text'] : "載入中...", // 執行相對應的邏輯計算或設定屬性參數
-                        textAlign: TextAlign.center, // 執行相對應的邏輯計算或設定屬性參數
+                        textAlign: TextAlign.left, // 執行相對應的邏輯計算或設定屬性參數
                         style: const TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
                           fontSize: 16,  // 執行相對應的邏輯計算或設定屬性參數
                           fontWeight: FontWeight.w500, // 執行相對應的邏輯計算或設定屬性參數
@@ -1041,3 +1093,126 @@ class _NutrientInfo extends StatelessWidget { // 定義 _NutrientInfo 類別，�
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 } // 程式碼區塊或元件結構結束
+
+
+class MacronutrientPieChart extends StatelessWidget {
+  final double protein;
+  final double fat;
+  final double carbs;
+
+  const MacronutrientPieChart({
+    super.key,
+    required this.protein,
+    required this.fat,
+    required this.carbs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final total = protein + fat + carbs;
+    if (total == 0) {
+      return const SizedBox(
+        height: 60,
+        child: Center(
+          child: Text(
+            '昨日無三大營養素數據',
+            style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 70,
+          height: 70,
+          child: CustomPaint(
+            painter: PieChartPainter(
+              protein: protein,
+              fat: fat,
+              carbs: carbs,
+            ),
+          ),
+        ),
+        const SizedBox(width: 24),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLegendItem('蛋白質', protein, total, AppColors.primary),
+            const SizedBox(height: 6),
+            _buildLegendItem('脂肪', fat, total, AppColors.secondary),
+            const SizedBox(height: 6),
+            _buildLegendItem('碳水化合物', carbs, total, Colors.orange),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLegendItem(String label, double val, double total, Color color) {
+    final pct = (val / total * 100).toStringAsFixed(0);
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          '$label: ${val.toStringAsFixed(0)}g ($pct%)',
+          style: const TextStyle(fontSize: 11, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}
+
+class PieChartPainter extends CustomPainter {
+  final double protein;
+  final double fat;
+  final double carbs;
+
+  PieChartPainter({
+    required this.protein,
+    required this.fat,
+    required this.carbs,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final total = protein + fat + carbs;
+    if (total == 0) return;
+
+    final paint = Paint()..style = PaintingStyle.fill;
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    
+    double startAngle = -3.1415926 / 2; // Start from top
+    
+    // Draw Protein
+    final proteinSweep = (protein / total) * 2 * 3.1415926;
+    paint.color = AppColors.primary;
+    canvas.drawArc(rect, startAngle, proteinSweep, true, paint);
+    startAngle += proteinSweep;
+
+    // Draw Fat
+    final fatSweep = (fat / total) * 2 * 3.1415926;
+    paint.color = AppColors.secondary;
+    canvas.drawArc(rect, startAngle, fatSweep, true, paint);
+    startAngle += fatSweep;
+
+    // Draw Carbs
+    final carbsSweep = (carbs / total) * 2 * 3.1415926;
+    paint.color = Colors.orange;
+    canvas.drawArc(rect, startAngle, carbsSweep, true, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
