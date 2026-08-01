@@ -348,6 +348,46 @@ const REPLY_SYSTEM_PROMPT = `
 `;
 
 /**
+ * 簡化 Dietary Agent 回傳的資料，去除 LLM 不需要的一般 Metadata，以節省 Token 並降低干擾。
+ * @param {Object} response - 原始 Dietary Agent API 回傳物件
+ * @returns {Object|null} 簡化後的資料結構，若無資料則回傳 null
+ */
+function minimizeDietaryResponse(response) {
+  if (!response) return null;
+
+  const minimized = {};
+
+  // 1. 簡化餐點營養數據 (僅保留名稱、營養素項目、數值與單位)
+  if (Array.isArray(response.dish_nutrition)) {
+    minimized.dish_nutrition = response.dish_nutrition.map(dish => ({
+      dish_name: dish.dish_name,
+      nutrients: (dish.nutrients || []).map(n => ({
+        name: n.name,
+        amount_per_serving: n.amount_per_serving,
+        unit: n.unit
+      }))
+    }));
+  }
+
+  // 2. 簡化飲食建議 (只保留對話重組所需的適合度與建議)
+  if (Array.isArray(response.dish_advice)) {
+    minimized.dish_advice = response.dish_advice.map(advice => ({
+      dish_name: advice.dish_name,
+      suitability: advice.suitability,
+      key_reasons: advice.key_reasons,
+      suggestions: advice.suggestions
+    }));
+  }
+
+  // 3. 保留整體結論
+  if (response.conclusion) {
+    minimized.conclusion = response.conclusion;
+  }
+
+  return minimized;
+}
+
+/**
  * 9. 呼叫 OpenAI Chat Completions 重組最終的陪伴式回覆 (generateCompanionReply)
  * 作用：將使用者原始提問、同理心/情緒分析設定與 Dietary Agent 的分析結果，
  * 包裝後發送給 OpenAI Chat Completions API 重組，生成溫馨自然的陪伴回覆。
@@ -373,9 +413,9 @@ async function generateCompanionReply({
     throw new Error("Missing OPENAI_API_KEY.");
   }
 
-  // 將 Dietary Agent 回傳的結構化資料轉為易讀的 JSON 字串，以利 LLM 讀取理解
+  // 將 Dietary Agent 回傳的結構化資料進行簡化降噪後轉為易讀的 JSON 字串，以利 LLM 讀取理解
   const rawDataStr = dietaryAgentResponse
-    ? JSON.stringify(dietaryAgentResponse, null, 2)
+    ? JSON.stringify(minimizeDietaryResponse(dietaryAgentResponse), null, 2)
     : "無資料";
 
   // TODO: 第二階段API
@@ -521,5 +561,6 @@ async function translateDishes(dishes) {
 module.exports = {
   runOpenAIFlow,
   generateCompanionReply,
-  translateDishes
+  translateDishes,
+  minimizeDietaryResponse
 };

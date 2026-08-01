@@ -269,9 +269,36 @@ async function runOpenAIFlow(userPrompt) {
 
 ---
 
-## 四、 修正步驟規劃 (等待確認後執行)
+## 四、 Dietary Agent 回傳資料剪枝優化方案
 
-1. **第一步：** 與您確認此修正計畫（包含 Prompt 中文化、`question_type` 條件化以及二次呼叫餐點翻譯）。
-2. **第二步：** 修改 `companion/companion_js/companion-llm.js`，加入 `translateDishes` 函數，並修改 Prompt 及 `tools`。
-3. **第三步：** 修改 `companion/companion_js/companion-agent-services.js`，在 `runOpenAIFlow` 整合 `translateDishes` 邏輯。
-4. **第四步：** 執行測試驗證，確認翻譯機制正常運作，且當輸入花俏名稱時，Dietary Agent 收到的是標準餐點名。
+### 1. 修改說明
+為節省 Token 成本、降低延遲並避免 LLM 被內部配對分數與計算公式干擾，在將 `dietaryAgentResponse` 傳遞給第二階段 `generateCompanionReply` 的 LLM 之前，將對其進行剪枝（Pruning）。
+
+### 2. 剪枝過濾邏輯（在 [companion-llm.js](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js) 實作）
+* **保留欄位**：
+  * `dish_nutrition`：包含 `dish_name`，以及各項營養素的 `name`、`amount_per_serving` 與 `unit`。
+  * `dish_advice`：包含 `dish_name`、`suitability`（適合度）、`key_reasons`（關鍵原因）、`suggestions`（建議）。
+  * `conclusion`：結論段落。
+* **捨棄欄位**：
+  * 資料庫檢索相關的 metadata（如 `matched_name`, `matched_type`, `match_score`, `match_reason`, `retrieval_strategy`）。
+  * 營養素計算的內部細節（如 `calculation_method`, `formula`, `calorie_status`）。
+
+### 3. 代碼修改示意 (在 [companion-llm.js](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js))
+新增一個輔助函數 `minimizeDietaryResponse(response)`，並在 `generateCompanionReply` 中，將 `dietaryAgentResponse` 經由該函數過濾後再轉為 JSON 字串。
+
+---
+
+## 五、 修正步驟規劃 (等待確認後執行)
+
+1. **第一步：** 與您確認此修正計畫（包含 Prompt 中文化、`question_type` 條件化、二次呼叫餐點翻譯、以及 Dietary Agent 回傳資料剪枝）。
+2. **第二步：** 修改 `companion/companion_js/companion-llm.js`：
+   - 修改 Prompt 內容（改為繁體中文、調整 `should_handle` / `question_type` 說明）。
+   - 修改 `tools` 宣告（移去 `question_type` 必填屬性）。
+   - 修改 `sanitizeScreening` 防呆函數（主動清除 `intent_category !== 'dish_advice'` 時的 `question_type`）。
+   - 新增 `translateDishes` 翻譯函數。
+   - 新增 `minimizeDietaryResponse` 剪枝過濾函數，並在 `generateCompanionReply` 中調用它。
+3. **第三步：** 修改 `companion/companion_js/companion-agent-services.js`，在 `runOpenAIFlow` 中整合 `translateDishes` 邏輯。
+4. **第四步：** 執行測試驗證，確認：
+   - 翻譯機制運作正常。
+   - `question_type` 條件出現規則符合預期。
+   - 傳送給第二階段 LLM 的 `rawDataStr` 已被精簡，移除了資料庫與計算相關的無用 metadata。

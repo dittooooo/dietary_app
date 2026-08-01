@@ -60,25 +60,16 @@ async function runOpenAIFlow(userPrompt) {
   // 呼叫 OpenAI 進行分析
   const result = await runLLMAnalysis(userPrompt);
 
-  //TODO:只有在擷取到餐點名稱，才會去做名稱的翻譯
-  // 若有擷取到餐點名稱，進行食品資料庫標準品名翻譯
   if (result.screening.dishes && result.screening.dishes.length > 0) {
     try {
-      if (result.screening.question_type === "dish_comparison") {
-        // 對於比較類問題，逐一翻譯每個原始餐點，並將翻譯出的多個原料組合回單一字串
-        // 確保最終傳入的元素個數與原始比較項數目一致（如 2 個），避免被拆散導致後端 LLM 解析失敗
-        const translatedList = [];
-        for (const dish of result.screening.dishes) {
-          const translatedIngredients = await translateDishes([dish]);
-          const combined = translatedIngredients.join("");
-          translatedList.push(combined);
-        }
-        result.screening.dishes = translatedList;
-      } else {
-        // 非比較問題（如紀錄或單一餐點建議），直接整批翻譯並展開成扁平的原料陣列
-        const translated = await translateDishes(result.screening.dishes);
-        result.screening.dishes = translated;
+      // 逐一翻譯每個原始餐點，並將翻譯出的多個原料組合回單一字串，確保最終元素個數與原始品項數目一致
+      const translatedList = [];
+      for (const dish of result.screening.dishes) {
+        const translatedIngredients = await translateDishes([dish]);
+        const combined = translatedIngredients.join("");
+        translatedList.push(combined);
       }
+      result.screening.dishes = translatedList;
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }
@@ -174,19 +165,25 @@ async function getCompanionReply({
   } catch (error) {
     // 當 LLM 回覆生成失敗時，進入容錯防呆與降級處理機制 (Fallback 保底)
     console.error("Failed to generate companion response with LLM:", error.message);
-    // 正常流程的 Fallback 拼接 (因為早退機制，能走到這步代表預檢與餐點資料皆齊全，只需處理對話生成失敗)
+    // 能走到這步代表預檢與餐點資料皆齊全，只需處理對話生成失敗
     const empathyPrefix = emotion.needs_empathy
       ? "我知道你現在可能有點在意這餐怎麼吃，先別太有壓力，我陪你一起看。\n"
       : "我先幫你整理目前可用的資訊。\n";
-    // TODO: 還需要調整
-    // 優先使用飲食助理傳回的文字，若無則將其 JSON 化或顯示預設錯誤說明
-    const recommendation =
-      dietaryAgentResponse?.reply_text ||
-      dietaryAgentResponse?.conclusion ||
-      (dietaryAgentResponse ? JSON.stringify(dietaryAgentResponse) : "目前還拿不到完整分析結果，稍後再試一次會比較穩。");
+
+    // 優先使用飲食助理傳回的 conclusion 段落
+    const recommendation = dietaryAgentResponse?.conclusion || "目前還拿不到完整分析結果，稍後再試一次會比較穩。";
 
     // 拼接成備用回覆
     finalReply = `${empathyPrefix}${recommendation}`;
+
+    // 數值免責聲明保底：如果使用者提問或回傳資料中含有熱量、克數等數值關鍵字，強制在結尾附加免責聲明
+    const hasNutrients = Array.isArray(dietaryAgentResponse?.dish_nutrition) &&
+      dietaryAgentResponse.dish_nutrition.some(d => Array.isArray(d.nutrients) && d.nutrients.length > 0);
+    const mentionsNumbers = /熱量|卡路里|卡|克|g|kcal|蛋白質|脂肪|碳水化合物/i.test(userPrompt);
+
+    if (hasNutrients || mentionsNumbers) {
+      finalReply += "\n\n關於數值類提問，本精靈只可提供參考數值";
+    }
   }
 
   return finalReply;
