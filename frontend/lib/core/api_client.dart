@@ -1,25 +1,35 @@
 //負責所有網路請求的共通邏輯
-import 'dart:convert'; // 匯入 dart:convert 套件或模組
+import 'dart:convert';
 import 'package:flutter/material.dart'; // 匯入 material.dart 以便使用 Dialog/Snackbar
-import 'package:http/http.dart' as http; // 匯入 http.dart 套件或模組
+import 'package:http/http.dart' as http;
 import '../config/api_config.dart'; // 匯入 api_config.dart 套件或模組
 import '../views/auth/login_page.dart'; // 匯入登入頁面以便權限降級/未授權跳轉
 
-class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
+class ApiClient {
+  // 定義 ApiClient 類別，封裝相關功能或資料
   // 全域 NavigatorKey 用於無 Context 導航與攔截處理
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   // 統一處理 POST 請求
-  Future<http.Response> post(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async { // 發送 HTTP POST 請求方法，封裝相關 API 呼叫
+  Future<http.Response> post(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? headers,
+  }) async {
+    // 發送 HTTP POST 請求方法，封裝相關 API 呼叫
     final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
-    
+
     print('🚀 發送 POST 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
     print('📦 請求內容: $body'); // 執行相對應的程式邏輯運算或欄位宣告設定
 
-    try { // 執行相對應的程式邏輯運算或欄位宣告設定
-      final response = await http.post( // 宣告類別屬性或方法內部的區域變數
+    try {
+      // 執行相對應的程式邏輯運算或欄位宣告設定
+      final response = await http.post(
+        // 宣告類別屬性或方法內部的區域變數
         url, // 執行相對應的程式邏輯運算或欄位宣告設定
-        headers: { // 執行相對應的程式邏輯運算或欄位宣告設定
+        headers: {
+          // 執行相對應的程式邏輯運算或欄位宣告設定
           'Content-Type': 'application/json', // 執行相對應的程式邏輯運算或欄位宣告設定
           ...?headers, // 執行相對應的程式邏輯運算或欄位宣告設定
         }, // 程式碼區塊或結構結束
@@ -28,21 +38,26 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
       _logResponse('POST', response);
       _checkResponse(response);
       return response; // 回傳方法執行結果或計算完成的數據
-    } catch (e) { // 執行相對應的程式邏輯運算或欄位宣告設定
+    } catch (e) {
+      // 執行相對應的程式邏輯運算或欄位宣告設定
       print('❌ POST 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
       rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
     } // 程式碼區塊或結構結束
   } // 程式碼區塊或結構結束
 
   // 統一處理 GET 請求
-  Future<http.Response> get(String path, {Map<String, String>? headers}) async { // 發送 HTTP GET 請求方法，封裝相關 API 呼叫
+  Future<http.Response> get(String path, {Map<String, String>? headers}) async {
+    // 發送 HTTP GET 請求方法，封裝相關 API 呼叫
     final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
     print('🚀 GET 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
 
-    try { // 執行相對應的程式邏輯運算或欄位宣告設定
-      final response = await http.get( // 宣告類別屬性或方法內部的區域變數
+    try {
+      // 執行相對應的程式邏輯運算或欄位宣告設定
+      final response = await http.get(
+        // 宣告類別屬性或方法內部的區域變數
         url, // 執行相對應的程式邏輯運算或欄位宣告設定
-        headers: { // 執行相對應的程式邏輯運算或欄位宣告設定
+        headers: {
+          // 執行相對應的程式邏輯運算或欄位宣告設定
           'Content-Type': 'application/json', // 執行相對應的程式邏輯運算或欄位宣告設定
           ...?headers, // 執行相對應的程式邏輯運算或欄位宣告設定
         }, // 程式碼區塊或結構結束
@@ -50,14 +65,19 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
       _logResponse('GET', response);
       _checkResponse(response);
       return response; // 回傳方法執行結果或計算完成的數據
-    } catch (e) { // 執行相對應的程式邏輯運算或欄位宣告設定
+    } catch (e) {
+      // 執行相對應的程式邏輯運算或欄位宣告設定
       print('❌ GET 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
       rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
     } // 程式碼區塊或結構結束
   } // 程式碼區塊或結構結束
 
   // 統一處理 PUT 請求
-  Future<http.Response> put(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
+  Future<http.Response> put(
+    String path,
+    Map<String, dynamic> body, {
+    Map<String, String>? headers,
+  }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
     print('🚀 PUT 請求至: $url');
     print('📦 請求內容: $body');
@@ -65,10 +85,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
     try {
       final response = await http.put(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          ...?headers,
-        },
+        headers: {'Content-Type': 'application/json', ...?headers},
         body: jsonEncode(body),
       );
       _logResponse('PUT', response);
@@ -81,7 +98,12 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
   }
 
   // 統一處理 Multipart/Form-data 檔案上傳請求
-  Future<http.Response> multipart(String path, List<int> fileBytes, String filename, {Map<String, String>? headers}) async {
+  Future<http.Response> multipart(
+    String path,
+    List<int> fileBytes,
+    String filename, {
+    Map<String, String>? headers,
+  }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
     print('🚀 發送 Multipart 請求至: $url');
 
@@ -91,11 +113,7 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
         request.headers.addAll(headers);
       }
       request.files.add(
-        http.MultipartFile.fromBytes(
-          'file',
-          fileBytes,
-          filename: filename,
-        ),
+        http.MultipartFile.fromBytes('file', fileBytes, filename: filename),
       );
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
@@ -109,17 +127,17 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
   }
 
   // 統一處理 DELETE 請求
-  Future<http.Response> delete(String path, {Map<String, String>? headers}) async {
+  Future<http.Response> delete(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
     final url = Uri.parse('${ApiConfig.baseUrl}$path');
     print('🚀 DELETE 請求至: $url');
 
     try {
       final response = await http.delete(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          ...?headers,
-        },
+        headers: {'Content-Type': 'application/json', ...?headers},
       );
       _logResponse('DELETE', response);
       _checkResponse(response);
@@ -158,7 +176,9 @@ class ApiClient { // 定義 ApiClient 類別，封裝相關功能或資料
                     Navigator.of(ctx).pop();
                     // 強制重導向至登入頁面
                     Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
                       (route) => false,
                     );
                   },

@@ -39,6 +39,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
+    
+    // 檢查並顯示 7/26 飲食總結報告彈窗
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAndShowDietSummaryDialog();
+    });
   } // 程式碼區塊或元件結構結束
  
   @override // 標記此方法為覆寫父類別之方法
@@ -80,6 +85,257 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
+
+  static bool _hasShownSummaryDialogThisRun = false;
+
+  void _checkAndShowDietSummaryDialog() {
+    if (_hasShownSummaryDialogThisRun) return;
+    final now = DateTime.now();
+    // 方便測試：當月份為 7 月，且日期在 26 到 29 日之間時，自動跳出彈窗報告
+    if (now.month == 7 && (now.day >= 26 && now.day <= 29)) {
+      _hasShownSummaryDialogThisRun = true;
+      _showDietSummaryDialog();
+    }
+  }
+
+  void _showDietSummaryDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          backgroundColor: AppColors.background,
+          elevation: 10,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 標題與日期
+                  const Text(
+                    '📅 7/26 飲食總結報告',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '（今日模擬日期：7/29）',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.textPrimary.withOpacity(0.5),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // 小精靈動畫播放預留區
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 動態呼吸背景環
+                        Positioned.fill(
+                          child: AnimatedBuilder(
+                            animation: _hoverScaleAnimation,
+                            builder: (context, child) {
+                              return Transform.scale(
+                                scale: _hoverScaleAnimation.value,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.primary.withOpacity(0.2),
+                                      width: 4,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        // 小精靈動畫播放佔位/GIF/圖片
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.auto_awesome,
+                              color: AppColors.secondary,
+                              size: 24,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '【精靈動畫播放區】\n($_petType)',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1.5,
+                                color: AppColors.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // 飲食營養素匯總
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow('總熱量攝取', '1,450 kcal', Icons.local_fire_department, AppColors.danger),
+                        const Divider(height: 16, thickness: 0.5),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildNutrientItem('蛋白質', '68g', AppColors.primary),
+                            _buildNutrientItem('脂肪', '45g', AppColors.secondary),
+                            _buildNutrientItem('碳水化合物', '192g', Colors.orange),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // 精靈評語
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('💬 ', style: TextStyle(fontSize: 16)),
+                        Expanded(
+                          child: Text(
+                            '汪！7/26 的整體熱量控制得很好喔！蛋白質的補充也符合標準，唯獨晚餐的澱粉稍微多了一點點，明天晚餐可以多搭配蔬菜喔！',
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              color: AppColors.textPrimary.withOpacity(0.85),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // 按鈕區
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      '太棒了，我知道了！',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value, IconData icon, Color iconColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: iconColor, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+          ],
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: iconColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNutrientItem(String name, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          name,
+          style: TextStyle(fontSize: 12, color: AppColors.textPrimary.withOpacity(0.5)),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   // 根據小精靈名稱獲取對應圖標
   Future<void> _syncBodyStatus(SharedPreferences prefs) async {

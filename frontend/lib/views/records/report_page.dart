@@ -71,29 +71,41 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0.0;
     
-    // 1. Try to parse from record['nutrition']
-    final nutritionStr = record['nutrition'] ?? '';
-    if (nutritionStr.isNotEmpty) {
-      try {
-        final cleanStr = nutritionStr.toString().trim();
-        if (cleanStr.startsWith('{') && cleanStr.endsWith('}')) {
-          final parsed = jsonDecode(cleanStr);
-          if (parsed is Map && parsed.containsKey('calories')) {
-            return double.tryParse(parsed['calories'].toString()) ?? 0.0;
+    final nutrition = record['nutrition'];
+    if (nutrition != null) {
+      if (nutrition is Map) {
+        final calVal = nutrition['calories'];
+        if (calVal != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(calVal.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
           }
         }
-      } catch (_) {}
+      } else {
+        final nutritionStr = nutrition.toString().trim();
+        if (nutritionStr.isNotEmpty) {
+          try {
+            if (nutritionStr.startsWith('{') && nutritionStr.endsWith('}')) {
+              final parsed = jsonDecode(nutritionStr);
+              if (parsed is Map && parsed.containsKey('calories')) {
+                final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(parsed['calories'].toString());
+                if (numMatch != null) {
+                  return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+                }
+              }
+            }
+          } catch (_) {}
 
-      // Try parsing standard formats like "195 kcal" or just raw number
-      final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
-      final match = numRegExp.firstMatch(nutritionStr.toString());
-      if (match != null) {
-        final val = double.tryParse(match.group(1) ?? '');
-        if (val != null) return val;
+          final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
+          final match = numRegExp.firstMatch(nutritionStr);
+          if (match != null) {
+            final val = double.tryParse(match.group(1) ?? '');
+            if (val != null) return val;
+          }
+        }
       }
     }
 
-    // 2. Try to parse from dishName or description if they contain numbers
     final dishName = record['dishName'] ?? '';
     final desc = record['description'] ?? '';
     final combined = '$dishName $desc';
@@ -103,18 +115,41 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       if (val != null) return val;
     }
 
-    // Fallback default: if there is a dishName, return a default like 400.0, otherwise 0.0
     return dishName.toString().trim().isNotEmpty ? 400.0 : 0.0;
   }
 
   double _getNutrientFromRecord(dynamic record, String pattern) {
     if (record == null) return 0.0;
-    final nutritionStr = record['nutrition'] ?? '';
-    if (nutritionStr.isNotEmpty) {
-      final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
-      final match = regExp.firstMatch(nutritionStr.toString());
-      if (match != null) {
-        return double.tryParse(match.group(1) ?? '') ?? 0.0;
+    final nutrition = record['nutrition'];
+    if (nutrition == null) return 0.0;
+
+    String englishKey = '';
+    if (pattern.contains('蛋白質') || pattern.contains('protein')) {
+      englishKey = 'protein';
+    } else if (pattern.contains('脂肪') || pattern.contains('fat')) {
+      englishKey = 'fat';
+    } else if (pattern.contains('碳水') || pattern.contains('carbohydrate') || pattern.contains('carb')) {
+      englishKey = 'carbohydrates';
+    }
+
+    if (nutrition is Map) {
+      if (englishKey.isNotEmpty) {
+        final val = nutrition[englishKey];
+        if (val != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(val.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+          }
+        }
+      }
+    } else {
+      final nutritionStr = nutrition.toString().trim();
+      if (nutritionStr.isNotEmpty) {
+        final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+        final match = regExp.firstMatch(nutritionStr);
+        if (match != null) {
+          return double.tryParse(match.group(1) ?? '') ?? 0.0;
+        }
       }
     }
     return 0.0;
