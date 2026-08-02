@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +39,7 @@ public class DietRecordService {
     }
 
     public List<DietRecord> getRecordsByUser(Long userId) {
-        return dietRecordRepository.findByUserIdOrderByCreatedAtDescIdDesc(userId);
+        return dietRecordRepository.findByUserIdOrderByDateDescCreatedAtDescIdDesc(userId);
     }
 
     public List<DietRecord> getAdminRecords(Long userId, String nickname, String dishName, LocalDate date, String mealType, LocalDate weekStart) {
@@ -48,15 +47,15 @@ public class DietRecordService {
             throw new IllegalArgumentException("date 與 weekStart 不能同時使用");
         }
 
-        LocalDateTime startAt = null;
-        LocalDateTime endAt = null;
+        LocalDate startDate = null;
+        LocalDate endDate = null;
 
         if (date != null) {
-            startAt = date.atStartOfDay();
-            endAt = date.plusDays(1).atStartOfDay();
+            startDate = date;
+            endDate = date.plusDays(1);
         } else if (weekStart != null) {
-            startAt = weekStart.atStartOfDay();
-            endAt = weekStart.plusDays(7).atStartOfDay();
+            startDate = weekStart;
+            endDate = weekStart.plusDays(7);
         }
 
         MealType normalizedMealType = MealType.from(mealType);
@@ -65,8 +64,8 @@ public class DietRecordService {
                 normalizeKeyword(nickname),
                 normalizeKeyword(dishName),
                 normalizedMealType == null ? null : normalizedMealType.name(),
-                startAt,
-                endAt
+                startDate,
+                endDate
         );
     }
 
@@ -83,6 +82,7 @@ public class DietRecordService {
                 .protein(selectNutritionValue(nutritionValues.protein(), request.getProtein()))
                 .fat(selectNutritionValue(nutritionValues.fat(), request.getFat()))
                 .carbohydrates(selectNutritionValue(nutritionValues.carbohydrates(), request.getCarbohydrates()))
+                .date(resolveRecordDate(request.getDate()))
                 .description(request.getDescription())
                 .mealType(normalizeMealType(request.getMealType()))
                 .build());
@@ -96,6 +96,9 @@ public class DietRecordService {
         record.setProtein(request.getProtein());
         record.setFat(request.getFat());
         record.setCarbohydrates(request.getCarbohydrates());
+        if (request.getDate() != null) {
+            record.setDate(request.getDate());
+        }
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
         return dietRecordRepository.save(record);
@@ -119,6 +122,9 @@ public class DietRecordService {
         record.setProtein(request.getProtein());
         record.setFat(request.getFat());
         record.setCarbohydrates(request.getCarbohydrates());
+        if (request.getDate() != null) {
+            record.setDate(request.getDate());
+        }
         record.setDescription(request.getDescription());
         record.setMealType(normalizeMealType(request.getMealType()));
         return dietRecordRepository.save(record);
@@ -186,5 +192,9 @@ public class DietRecordService {
 
     private Double selectNutritionValue(Double resolvedValue, Double fallbackValue) {
         return resolvedValue != null ? resolvedValue : fallbackValue;
+    }
+
+    private LocalDate resolveRecordDate(LocalDate requestedDate) {
+        return requestedDate != null ? requestedDate : LocalDate.now();
     }
 }

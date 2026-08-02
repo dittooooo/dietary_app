@@ -2,6 +2,8 @@ package com.tku.dietary_app.dto;
 
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class DietRecordRequest {
     private String dishName;
@@ -9,6 +11,7 @@ public class DietRecordRequest {
     private Double protein;
     private Double fat;
     private Double carbohydrates;
+    private LocalDate date;
     private String description;
     private String mealType;
 }

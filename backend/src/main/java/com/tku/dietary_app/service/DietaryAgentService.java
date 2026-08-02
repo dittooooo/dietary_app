@@ -1,10 +1,14 @@
 package com.tku.dietary_app.service;
 
 import com.tku.dietary_app.dto.DietaryAgentPayload;
+import com.tku.dietary_app.dto.DietaryAgentPayload.HealthConditionDto;
 import com.tku.dietary_app.dto.DietaryAgentPayload.UserProfileDto;
+import com.tku.dietary_app.dto.DietaryAgentPayload.WeeklyDietRecordDto;
 import com.tku.dietary_app.dto.DietaryAskRequest;
 import com.tku.dietary_app.dto.DietaryDishNutritionRequest;
+import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +20,13 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +38,7 @@ public class DietaryAgentService {
     private static final String[] FAT_KEYS = {"fat", "脂肪"};
     private static final String[] CARBOHYDRATES_KEYS = {"carbohydrates", "carbohydrate", "carbs", "carb", "碳水化合物", "碳水"};
 
-
+    private final DietRecordRepository dietRecordRepository;
     private final UserProfileRepository userProfileRepository;
     private final RestTemplate restTemplate;
 
@@ -45,11 +52,10 @@ public class DietaryAgentService {
     private String partnerApiDishNutritionPath;
 
     public Object ask(Long userId, DietaryAskRequest request) {
-        // 1. 撈 UserProfile
         UserProfile user_profile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("找不到使用者資料"));
 
-        DietaryAgentPayload payload = buildPayload(request, user_profile);
+        DietaryAgentPayload payload = buildPayload(userId, request, user_profile);
         return callPartnerApi(partnerApiAskPath, payload);
     }
 
@@ -69,19 +75,83 @@ public class DietaryAgentService {
         return parseNutritionValues(response);
     }
 
-    private DietaryAgentPayload buildPayload(DietaryAskRequest request, UserProfile user_profile) {
+    private DietaryAgentPayload buildPayload(Long userId, DietaryAskRequest request, UserProfile user_profile) {
+        DietaryAgentPayload.UserProfileDto userProfileDto = request.getUserProfile() != null
+                ? DietaryAgentPayload.UserProfileDto.builder()
+                .heightCm(request.getUserProfile().getHeightCm())
+                .weightKg(request.getUserProfile().getWeightKg())
+                .gender(request.getUserProfile().getGender())
+                .age(request.getUserProfile().getAge())
+                .build()
+                : DietaryAgentPayload.UserProfileDto.builder()
+                .heightCm(user_profile.getHeight())
+                .weightKg(user_profile.getWeight())
+                .gender(user_profile.getGender())
+                .age(user_profile.getAge())
+                .build();
+
+        HealthConditionDto healthConditionDto = request.getHealthCondition() != null
+                ? DietaryAgentPayload.HealthConditionDto.builder()
+                .hasChronicDisease(request.getHealthCondition().getHasChronicDisease())
+                .chronicDiseases(request.getHealthCondition().getChronicDiseases())
+                .build()
+                : buildHealthConditionDto(user_profile);
+
+        List<WeeklyDietRecordDto> weeklyDietRecords = request.getWeeklyDietRecords() != null
+                ? request.getWeeklyDietRecords().stream()
+                .map(record -> DietaryAgentPayload.WeeklyDietRecordDto.builder()
+                        .date(record.getDate())
+                        .meal(record.getMeal())
+                        .dishName(record.getDishName())
+                        .note(record.getNote())
+                        .build())
+                .collect(Collectors.toList())
+                : fetchWeeklyDietRecords(userId);
+
         return DietaryAgentPayload.builder()
                 .question(request.getQuestion())
-                .question_type(request.getQuestionType())
-                .dish_names(request.getDishNames())
-                .user_profile(UserProfileDto.builder()
-                        .height_cm(user_profile.getHeight())
-                        .weight_kg(user_profile.getWeight())
-                        .gender(user_profile.getGender())
-                        .age(user_profile.getAge())
-                        .recommended_calorie(calculateRecommendedCalorie(user_profile))
-                        .build())
+                .questionType(request.getQuestionType())
+                .dishNames(request.getDishNames())
+                .userProfile(userProfileDto)
+                .healthCondition(healthConditionDto)
+                .weeklyDietRecords(weeklyDietRecords)
                 .build();
+    }
+
+    private HealthConditionDto buildHealthConditionDto(UserProfile user_profile) {
+        List<String> chronicDiseases = parseHealthConditions(user_profile.getHealthConditions());
+        return HealthConditionDto.builder()
+                .hasChronicDisease(!chronicDiseases.isEmpty())
+                .chronicDiseases(chronicDiseases)
+                .build();
+    }
+
+    private List<WeeklyDietRecordDto> fetchWeeklyDietRecords(Long userId) {
+        LocalDateTime startAt = LocalDate.now().minusDays(7).atStartOfDay();
+        List<DietRecord> records = dietRecordRepository
+                .findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDescIdDesc(userId, startAt);
+
+        return records.stream()
+                .map(record -> DietaryAgentPayload.WeeklyDietRecordDto.builder()
+                        .date(record.getDate() != null
+                                ? record.getDate()
+                                : (record.getCreatedAt() == null ? null : record.getCreatedAt().toLocalDate()))
+                        .meal(record.getMealType())
+                        .dishName(record.getDishName())
+                        .note(record.getDescription())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> parseHealthConditions(String healthConditions) {
+        if (healthConditions == null || healthConditions.isBlank()) {
+            return List.of();
+        }
+
+        return List.of(healthConditions.split(",")).stream()
+                .map(String::trim)
+                .filter(value -> !value.isBlank())
+                .collect(Collectors.toList());
     }
 
     private Integer calculateRecommendedCalorie(UserProfile user_profile) {

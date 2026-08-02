@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,6 +39,9 @@ public class DietRecord {
     @Column(name = "carbohydrates")
     private Double carbohydrates;
 
+    @Column(name = "record_date")
+    private LocalDate date;
+
     @Column(nullable = true)
     private String description;
 
@@ -50,4 +54,11 @@ public class DietRecord {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    private void onCreate() {
+        if (date == null) {
+            date = LocalDate.now();
+        }
+    }
 }
