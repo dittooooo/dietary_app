@@ -1,0 +1,128 @@
+[
+    {
+        "biomarker": "血糖",
+        "nutrient": "糖",
+        "relation": "INDICATES",
+        "effect": "direct_positive"
+    },
+    {
+        "biomarker": "血糖",
+        "nutrient": "熱量",
+        "relation": "RELATED_TO",
+        "effect": "indirect_positive"
+    },
+    {
+        "biomarker": "胰島素敏感性",
+        "nutrient": "糖",
+        "relation": "RELATED_TO",
+        "effect": "inverse_risk"
+    },
+    {
+        "biomarker": "代謝風險",
+        "nutrient": "熱量",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "代謝風險",
+        "nutrient": "脂肪",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "代謝風險",
+        "nutrient": "糖",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "血壓",
+        "nutrient": "鈉",
+        "relation": "INDICATES",
+        "effect": "direct_positive"
+    },
+    {
+        "biomarker": "血管張力",
+        "nutrient": "鈉",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "血脂",
+        "nutrient": "脂肪",
+        "relation": "INDICATES",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "血脂",
+        "nutrient": "飽和脂肪",
+        "relation": "INDICATES",
+        "effect": "direct_positive"
+    },
+    {
+        "biomarker": "總膽固醇",
+        "nutrient": "飽和脂肪",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "三酸甘油脂",
+        "nutrient": "糖",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "LDL",
+        "nutrient": "飽和脂肪",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "心血管風險",
+        "nutrient": "鈉",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "心血管風險",
+        "nutrient": "脂肪",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "腎功能",
+        "nutrient": "蛋白質",
+        "relation": "INDICATES",
+        "effect": "burden_related"
+    },
+    {
+        "biomarker": "腎功能",
+        "nutrient": "鈉",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    },
+    {
+        "biomarker": "腎絲球過濾率",
+        "nutrient": "蛋白質",
+        "relation": "RELATED_TO",
+        "effect": "burden_related"
+    },
+    {
+        "biomarker": "蛋白尿",
+        "nutrient": "蛋白質",
+        "relation": "RELATED_TO",
+        "effect": "burden_related"
+    },
+    {
+        "biomarker": "癌症風險",
+        "nutrient": "糖",
+        "relation": "RELATED_TO",
+        "effect": "possible_positive"
+    },
+    {
+        "biomarker": "慢性發炎",
+        "nutrient": "糖",
+        "relation": "RELATED_TO",
+        "effect": "positive"
+    }
+]

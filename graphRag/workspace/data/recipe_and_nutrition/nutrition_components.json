@@ -1,0 +1,847 @@
+{
+  "source_file": "nutrition_data.json",
+  "description": "Nutrition component list extracted from the nutrition data column names. Food metadata fields are excluded.",
+  "excluded_fields": [
+    "整合編號",
+    "食品分類",
+    "樣品名稱",
+    "內容物描述",
+    "俗名",
+    "廢棄率(%)"
+  ],
+  "count": 104,
+  "nutrients": [
+    {
+      "nutrition_id": "NUT001",
+      "name_zh": "熱量",
+      "name_en": "Energy",
+      "unit": "kcal",
+      "category": "energy",
+      "source_column": "熱量(kcal)"
+    },
+    {
+      "nutrition_id": "NUT002",
+      "name_zh": "修正熱量",
+      "name_en": "Adjusted Energy",
+      "unit": "kcal",
+      "category": "energy",
+      "source_column": "修正熱量(kcal)"
+    },
+    {
+      "nutrition_id": "NUT003",
+      "name_zh": "水分",
+      "name_en": "Water",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "水分(g)"
+    },
+    {
+      "nutrition_id": "NUT004",
+      "name_zh": "粗蛋白",
+      "name_en": "Crude Protein",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "粗蛋白(g)"
+    },
+    {
+      "nutrition_id": "NUT005",
+      "name_zh": "粗脂肪",
+      "name_en": "Crude Fat",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "粗脂肪(g)"
+    },
+    {
+      "nutrition_id": "NUT006",
+      "name_zh": "飽和脂肪",
+      "name_en": "Saturated Fat",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "飽和脂肪(g)"
+    },
+    {
+      "nutrition_id": "NUT007",
+      "name_zh": "灰分",
+      "name_en": "Ash",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "灰分(g)"
+    },
+    {
+      "nutrition_id": "NUT008",
+      "name_zh": "總碳水化合物",
+      "name_en": "Total Carbohydrate",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "總碳水化合物(g)"
+    },
+    {
+      "nutrition_id": "NUT009",
+      "name_zh": "膳食纖維",
+      "name_en": "Dietary Fiber",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "膳食纖維(g)"
+    },
+    {
+      "nutrition_id": "NUT010",
+      "name_zh": "糖質總量",
+      "name_en": "Total Sugars",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "糖質總量(g)"
+    },
+    {
+      "nutrition_id": "NUT011",
+      "name_zh": "葡萄糖",
+      "name_en": "Glucose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "葡萄糖(g)"
+    },
+    {
+      "nutrition_id": "NUT012",
+      "name_zh": "果糖",
+      "name_en": "Fructose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "果糖(g)"
+    },
+    {
+      "nutrition_id": "NUT013",
+      "name_zh": "半乳糖",
+      "name_en": "Galactose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "半乳糖(g)"
+    },
+    {
+      "nutrition_id": "NUT014",
+      "name_zh": "麥芽糖",
+      "name_en": "Maltose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "麥芽糖(g)"
+    },
+    {
+      "nutrition_id": "NUT015",
+      "name_zh": "蔗糖",
+      "name_en": "Sucrose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "蔗糖(g)"
+    },
+    {
+      "nutrition_id": "NUT016",
+      "name_zh": "乳糖",
+      "name_en": "Lactose",
+      "unit": "g",
+      "category": "sugar",
+      "source_column": "乳糖(g)"
+    },
+    {
+      "nutrition_id": "NUT017",
+      "name_zh": "鈉",
+      "name_en": "Sodium",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鈉(mg)"
+    },
+    {
+      "nutrition_id": "NUT018",
+      "name_zh": "鉀",
+      "name_en": "Potassium",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鉀(mg)"
+    },
+    {
+      "nutrition_id": "NUT019",
+      "name_zh": "鈣",
+      "name_en": "Calcium",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鈣(mg)"
+    },
+    {
+      "nutrition_id": "NUT020",
+      "name_zh": "鎂",
+      "name_en": "Magnesium",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鎂(mg)"
+    },
+    {
+      "nutrition_id": "NUT021",
+      "name_zh": "鐵",
+      "name_en": "Iron",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鐵(mg)"
+    },
+    {
+      "nutrition_id": "NUT022",
+      "name_zh": "鋅",
+      "name_en": "Zinc",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "鋅(mg)"
+    },
+    {
+      "nutrition_id": "NUT023",
+      "name_zh": "磷",
+      "name_en": "Phosphorus",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "磷(mg)"
+    },
+    {
+      "nutrition_id": "NUT024",
+      "name_zh": "銅",
+      "name_en": "Copper",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "銅(mg)"
+    },
+    {
+      "nutrition_id": "NUT025",
+      "name_zh": "錳",
+      "name_en": "Manganese",
+      "unit": "mg",
+      "category": "mineral",
+      "source_column": "錳(mg)"
+    },
+    {
+      "nutrition_id": "NUT026",
+      "name_zh": "維生素A總量",
+      "name_en": "Total Vitamin A",
+      "unit": "IU",
+      "category": "vitamin",
+      "source_column": "維生素A總量(IU)"
+    },
+    {
+      "nutrition_id": "NUT027",
+      "name_zh": "視網醇當量(RE)",
+      "name_en": "Retinol Equivalent",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "視網醇當量(RE)(ug)"
+    },
+    {
+      "nutrition_id": "NUT028",
+      "name_zh": "視網醇",
+      "name_en": "Retinol",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "視網醇(ug)"
+    },
+    {
+      "nutrition_id": "NUT029",
+      "name_zh": "α-胡蘿蔔素",
+      "name_en": "Alpha-Carotene",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "α-胡蘿蔔素(ug)"
+    },
+    {
+      "nutrition_id": "NUT030",
+      "name_zh": "β-胡蘿蔔素",
+      "name_en": "Beta-Carotene",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "β-胡蘿蔔素(ug)"
+    },
+    {
+      "nutrition_id": "NUT031",
+      "name_zh": "維生素D總量",
+      "name_en": "Total Vitamin D",
+      "unit": "IU",
+      "category": "vitamin",
+      "source_column": "維生素D總量(IU)"
+    },
+    {
+      "nutrition_id": "NUT032",
+      "name_zh": "維生素D總量",
+      "name_en": "Total Vitamin D",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素D總量(ug)"
+    },
+    {
+      "nutrition_id": "NUT033",
+      "name_zh": "維生素D2",
+      "name_en": "Vitamin D2",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素D2(ug)"
+    },
+    {
+      "nutrition_id": "NUT034",
+      "name_zh": "維生素D3",
+      "name_en": "Vitamin D3",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素D3(ug)"
+    },
+    {
+      "nutrition_id": "NUT035",
+      "name_zh": "維生素E總量",
+      "name_en": "Total Vitamin E",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "維生素E總量(mg)"
+    },
+    {
+      "nutrition_id": "NUT036",
+      "name_zh": "α-維生素E當量(α-TE)",
+      "name_en": "Alpha-Tocopherol Equivalent",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "α-維生素E當量(α-TE)(mg)"
+    },
+    {
+      "nutrition_id": "NUT037",
+      "name_zh": "α-生育酚",
+      "name_en": "Alpha-Tocopherol",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "α-生育酚(mg)"
+    },
+    {
+      "nutrition_id": "NUT038",
+      "name_zh": "β-生育酚",
+      "name_en": "Beta-Tocopherol",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "β-生育酚(mg)"
+    },
+    {
+      "nutrition_id": "NUT039",
+      "name_zh": "γ-生育酚",
+      "name_en": "Gamma-Tocopherol",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "γ-生育酚(mg)"
+    },
+    {
+      "nutrition_id": "NUT040",
+      "name_zh": "δ-生育酚",
+      "name_en": "Delta-Tocopherol",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "δ-生育酚(mg)"
+    },
+    {
+      "nutrition_id": "NUT041",
+      "name_zh": "維生素K1",
+      "name_en": "Vitamin K1",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素K1(ug)"
+    },
+    {
+      "nutrition_id": "NUT042",
+      "name_zh": "維生素K2 (MK-4)",
+      "name_en": "Vitamin K2",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素K2 (MK-4)(ug)"
+    },
+    {
+      "nutrition_id": "NUT043",
+      "name_zh": "維生素K2 (MK-7)",
+      "name_en": "Vitamin K2",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素K2 (MK-7)(ug)"
+    },
+    {
+      "nutrition_id": "NUT044",
+      "name_zh": "維生素B1",
+      "name_en": "Vitamin B1",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "維生素B1(mg)"
+    },
+    {
+      "nutrition_id": "NUT045",
+      "name_zh": "維生素B2",
+      "name_en": "Vitamin B2",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "維生素B2(mg)"
+    },
+    {
+      "nutrition_id": "NUT046",
+      "name_zh": "菸鹼素",
+      "name_en": "Niacin",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "菸鹼素(mg)"
+    },
+    {
+      "nutrition_id": "NUT047",
+      "name_zh": "維生素B6",
+      "name_en": "Vitamin B6",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "維生素B6(mg)"
+    },
+    {
+      "nutrition_id": "NUT048",
+      "name_zh": "維生素B12",
+      "name_en": "Vitamin B12",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "維生素B12(ug)"
+    },
+    {
+      "nutrition_id": "NUT049",
+      "name_zh": "葉酸",
+      "name_en": "Folate",
+      "unit": "ug",
+      "category": "vitamin",
+      "source_column": "葉酸(ug)"
+    },
+    {
+      "nutrition_id": "NUT050",
+      "name_zh": "維生素C",
+      "name_en": "Vitamin C",
+      "unit": "mg",
+      "category": "vitamin",
+      "source_column": "維生素C(mg)"
+    },
+    {
+      "nutrition_id": "NUT051",
+      "name_zh": "脂肪酸S總量",
+      "name_en": "Total Saturated Fatty Acids",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "脂肪酸S總量(mg)"
+    },
+    {
+      "nutrition_id": "NUT052",
+      "name_zh": "酪酸(4:0)",
+      "name_en": "Butyric Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "酪酸(4:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT053",
+      "name_zh": "己酸(6:0)",
+      "name_en": "Caproic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "己酸(6:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT054",
+      "name_zh": "辛酸(8:0)",
+      "name_en": "Caprylic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "辛酸(8:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT055",
+      "name_zh": "癸酸(10:0)",
+      "name_en": "Capric Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "癸酸(10:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT056",
+      "name_zh": "月桂酸(12:0)",
+      "name_en": "Lauric Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "月桂酸(12:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT057",
+      "name_zh": "十三酸(13:0)",
+      "name_en": "Tridecanoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "十三酸(13:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT058",
+      "name_zh": "肉豆蔻酸(14:0)",
+      "name_en": "Myristic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "肉豆蔻酸(14:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT059",
+      "name_zh": "十五酸(15:0)",
+      "name_en": "Pentadecanoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "十五酸(15:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT060",
+      "name_zh": "棕櫚酸(16:0)",
+      "name_en": "Palmitic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "棕櫚酸(16:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT061",
+      "name_zh": "十七酸(17:0)",
+      "name_en": "Heptadecanoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "十七酸(17:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT062",
+      "name_zh": "硬脂酸(18:0)",
+      "name_en": "Stearic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "硬脂酸(18:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT063",
+      "name_zh": "十九酸(19:0)",
+      "name_en": "Nonadecanoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "十九酸(19:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT064",
+      "name_zh": "花生酸(20:0)",
+      "name_en": "Arachidic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "花生酸(20:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT065",
+      "name_zh": "山酸(22:0)",
+      "name_en": "Behenic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "山酸(22:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT066",
+      "name_zh": "廿四酸(24:0)",
+      "name_en": "Lignoceric Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "廿四酸(24:0)(mg)"
+    },
+    {
+      "nutrition_id": "NUT067",
+      "name_zh": "脂肪酸M總量",
+      "name_en": "Total Monounsaturated Fatty Acids",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "脂肪酸M總量(mg)"
+    },
+    {
+      "nutrition_id": "NUT068",
+      "name_zh": "肉豆蔻烯酸(14:1)",
+      "name_en": "Myristoleic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "肉豆蔻烯酸(14:1)(mg)"
+    },
+    {
+      "nutrition_id": "NUT069",
+      "name_zh": "棕櫚烯酸(16:1)",
+      "name_en": "Palmitoleic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "棕櫚烯酸(16:1)(mg)"
+    },
+    {
+      "nutrition_id": "NUT070",
+      "name_zh": "油酸(18:1)",
+      "name_en": "Oleic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "油酸(18:1)(mg)"
+    },
+    {
+      "nutrition_id": "NUT071",
+      "name_zh": "鱈烯酸(20:1)",
+      "name_en": "Gadoleic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "鱈烯酸(20:1)(mg)"
+    },
+    {
+      "nutrition_id": "NUT072",
+      "name_zh": "芥子酸(22:1)",
+      "name_en": "Erucic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "芥子酸(22:1)(mg)"
+    },
+    {
+      "nutrition_id": "NUT073",
+      "name_zh": "脂肪酸P總量",
+      "name_en": "Total Polyunsaturated Fatty Acids",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "脂肪酸P總量(mg)"
+    },
+    {
+      "nutrition_id": "NUT074",
+      "name_zh": "亞麻油酸(18:2)",
+      "name_en": "Linoleic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "亞麻油酸(18:2)(mg)"
+    },
+    {
+      "nutrition_id": "NUT075",
+      "name_zh": "次亞麻油酸(18:3)",
+      "name_en": "Alpha-Linolenic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "次亞麻油酸(18:3)(mg)"
+    },
+    {
+      "nutrition_id": "NUT076",
+      "name_zh": "十八碳四烯酸(18:4)",
+      "name_en": "Stearidonic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "十八碳四烯酸(18:4)(mg)"
+    },
+    {
+      "nutrition_id": "NUT077",
+      "name_zh": "花生油酸(20:4)",
+      "name_en": "Arachidonic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "花生油酸(20:4)(mg)"
+    },
+    {
+      "nutrition_id": "NUT078",
+      "name_zh": "廿碳五烯酸(20:5)",
+      "name_en": "Eicosapentaenoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "廿碳五烯酸(20:5)(mg)"
+    },
+    {
+      "nutrition_id": "NUT079",
+      "name_zh": "廿二碳五烯酸(22:5)",
+      "name_en": "Docosapentaenoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "廿二碳五烯酸(22:5)(mg)"
+    },
+    {
+      "nutrition_id": "NUT080",
+      "name_zh": "廿二碳六烯酸(22:6)",
+      "name_en": "Docosahexaenoic Acid",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "廿二碳六烯酸(22:6)(mg)"
+    },
+    {
+      "nutrition_id": "NUT081",
+      "name_zh": "其他脂肪酸",
+      "name_en": "Other Fatty Acids",
+      "unit": "mg",
+      "category": "fatty_acid",
+      "source_column": "其他脂肪酸(mg)"
+    },
+    {
+      "nutrition_id": "NUT082",
+      "name_zh": "P/M/S",
+      "name_en": "P/M/S Ratio",
+      "unit": null,
+      "category": "fatty_acid",
+      "source_column": "P/M/S"
+    },
+    {
+      "nutrition_id": "NUT083",
+      "name_zh": "反式脂肪",
+      "name_en": "Trans Fat",
+      "unit": "mg",
+      "category": "general_nutrition",
+      "source_column": "反式脂肪(mg)"
+    },
+    {
+      "nutrition_id": "NUT084",
+      "name_zh": "水解胺基酸總量",
+      "name_en": "Total Hydrolyzed Amino Acids",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "水解胺基酸總量(mg)"
+    },
+    {
+      "nutrition_id": "NUT085",
+      "name_zh": "天門冬胺酸(Asp)",
+      "name_en": "Aspartic Acid",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "天門冬胺酸(Asp)(mg)"
+    },
+    {
+      "nutrition_id": "NUT086",
+      "name_zh": "酥胺酸(Thr)",
+      "name_en": "Threonine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "酥胺酸(Thr)(mg)"
+    },
+    {
+      "nutrition_id": "NUT087",
+      "name_zh": "絲胺酸(Ser)",
+      "name_en": "Serine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "絲胺酸(Ser)(mg)"
+    },
+    {
+      "nutrition_id": "NUT088",
+      "name_zh": "麩胺酸(Glu)",
+      "name_en": "Glutamic Acid",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "麩胺酸(Glu)(mg)"
+    },
+    {
+      "nutrition_id": "NUT089",
+      "name_zh": "脯胺酸(Pro)",
+      "name_en": "Proline",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "脯胺酸(Pro)(mg)"
+    },
+    {
+      "nutrition_id": "NUT090",
+      "name_zh": "甘胺酸(Gly)",
+      "name_en": "Glycine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "甘胺酸(Gly)(mg)"
+    },
+    {
+      "nutrition_id": "NUT091",
+      "name_zh": "丙胺酸(Ala)",
+      "name_en": "Alanine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "丙胺酸(Ala)(mg)"
+    },
+    {
+      "nutrition_id": "NUT092",
+      "name_zh": "胱胺酸(Cys)",
+      "name_en": "Cystine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "胱胺酸(Cys)(mg)"
+    },
+    {
+      "nutrition_id": "NUT093",
+      "name_zh": "纈胺酸(Val)",
+      "name_en": "Valine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "纈胺酸(Val)(mg)"
+    },
+    {
+      "nutrition_id": "NUT094",
+      "name_zh": "甲硫胺酸(Met)",
+      "name_en": "Methionine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "甲硫胺酸(Met)(mg)"
+    },
+    {
+      "nutrition_id": "NUT095",
+      "name_zh": "異白胺酸(Ile)",
+      "name_en": "Isoleucine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "異白胺酸(Ile)(mg)"
+    },
+    {
+      "nutrition_id": "NUT096",
+      "name_zh": "白胺酸(Leu)",
+      "name_en": "Leucine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "白胺酸(Leu)(mg)"
+    },
+    {
+      "nutrition_id": "NUT097",
+      "name_zh": "酪胺酸(Tyr)",
+      "name_en": "Tyrosine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "酪胺酸(Tyr)(mg)"
+    },
+    {
+      "nutrition_id": "NUT098",
+      "name_zh": "苯丙胺酸(Phe)",
+      "name_en": "Phenylalanine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "苯丙胺酸(Phe)(mg)"
+    },
+    {
+      "nutrition_id": "NUT099",
+      "name_zh": "離胺酸(Lys)",
+      "name_en": "Lysine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "離胺酸(Lys)(mg)"
+    },
+    {
+      "nutrition_id": "NUT100",
+      "name_zh": "組胺酸(His)",
+      "name_en": "Histidine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "組胺酸(His)(mg)"
+    },
+    {
+      "nutrition_id": "NUT101",
+      "name_zh": "精胺酸(Arg)",
+      "name_en": "Arginine",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "精胺酸(Arg)(mg)"
+    },
+    {
+      "nutrition_id": "NUT102",
+      "name_zh": "色胺酸(Trp)",
+      "name_en": "Tryptophan",
+      "unit": "mg",
+      "category": "amino_acid",
+      "source_column": "色胺酸(Trp)(mg)"
+    },
+    {
+      "nutrition_id": "NUT103",
+      "name_zh": "膽固醇",
+      "name_en": "Cholesterol",
+      "unit": "mg",
+      "category": "general_nutrition",
+      "source_column": "膽固醇(mg)"
+    },
+    {
+      "nutrition_id": "NUT104",
+      "name_zh": "酒精含量",
+      "name_en": "Alcohol",
+      "unit": "g",
+      "category": "general_nutrition",
+      "source_column": "酒精含量(g)"
+    }
+  ]
+}

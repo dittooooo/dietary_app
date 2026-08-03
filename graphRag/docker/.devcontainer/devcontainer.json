@@ -1,0 +1,17 @@
+{
+  "name": "graphrag-local-ollama",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "graphrag-dev",
+  "workspaceFolder": "/app/workspace",
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -e /app/graphrag-local-ollama"
+}

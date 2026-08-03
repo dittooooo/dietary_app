@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Chronic Disease Nutrient Rules",
+  "type": "object",
+  "required": ["metadata", "diseases"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["dataset_name", "version", "language", "description", "relation_types"],
+      "properties": {
+        "dataset_name": { "type": "string" },
+        "version": { "type": "string" },
+        "language": { "const": "zh-TW" },
+        "description": { "type": "string" },
+        "relation_types": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "recommend" },
+            { "const": "limit" },
+            { "const": "prohibit" }
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "diseases": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": [
+          "disease_id",
+          "disease_name_zh",
+          "disease_name_en",
+          "disease_nutrient_relations",
+          "diet_pattern",
+          "risk_notes"
+        ],
+        "properties": {
+          "disease_id": { "type": "string" },
+          "disease_name_zh": { "type": "string" },
+          "disease_name_en": { "type": "string" },
+          "disease_nutrient_relations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "relation",
+                "nutrient_name_zh",
+                "nutrient_name_en",
+                "target_rule",
+                "food_level_rule",
+                "example_foods",
+                "reason"
+              ],
+              "properties": {
+                "relation": { "enum": ["recommend", "limit", "prohibit"] },
+                "nutrient_name_zh": { "type": "string" },
+                "nutrient_name_en": { "type": "string" },
+                "target_rule": {
+                  "type": "object",
+                  "required": ["direction"],
+                  "properties": {
+                    "daily_target": { "type": ["string", "null"] },
+                    "daily_limit": { "type": ["string", "null"] },
+                    "weekly_target": { "type": ["string", "null"] },
+                    "max": { "type": ["string", "null"] },
+                    "optimal": { "type": ["string", "null"] },
+                    "unit": { "type": ["string", "null"] },
+                    "direction": {
+                      "enum": ["increase", "decrease", "avoid", "replace", "maintain", "adjust_by_stage"]
+                    },
+                    "note": { "type": ["string", "null"] }
+                  }
+                },
+                "food_level_rule": {
+                  "type": "object",
+                  "required": ["basis"],
+                  "properties": {
+                    "basis": { "const": "per_100g" },
+                    "level": { "type": ["string", "null"] },
+                    "operator": { "type": ["string", "null"] },
+                    "amount": { "type": ["number", "null"] },
+                    "unit": { "type": ["string", "null"] },
+                    "condition": { "type": ["string", "null"] },
+                    "note": { "type": ["string", "null"] }
+                  }
+                },
+                "example_foods": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "reason": { "type": "string" },
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["source_file", "evidence"],
+                    "properties": {
+                      "source_file": { "type": "string" },
+                      "evidence": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "diet_pattern": {
+            "type": "object",
+            "required": ["recommended_patterns", "core_principle"],
+            "properties": {
+              "recommended_patterns": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "core_principle": { "type": "string" }
+            }
+          },
+          "risk_notes": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,2266 @@
+[
+  {
+    "disease_id": "metabolic_syndrome",
+    "disease_name_zh": "代謝症候群",
+    "disease_name_en": "Metabolic Syndrome",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "應依體型與活動量調整，依照六大類食物建議量攝取。"
+      },
+      "sodium": {
+        "target": "",
+        "note": "低鹽（避免鹽、醬油、重鹹、加工食品、調味醬料）"
+      },
+      "protein": {
+        "target": "",
+        "note": "適量攝取蛋白質，建議多選豆類、魚類或家禽類，取代豬牛羊等紅肉。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "動物油脂及皮、椰子油、棕櫚油、奶油含量高，應減少攝取",
+        "trans_fat": "避免攝取反式脂肪酸（含於酥油、硬質瑪琳、氫化油、酥脆食物、糕餅類）",
+        "cholesterol": "動物內臟、蛋黃、魚卵、蟹黃等膽固醇含量高，應減少攝取",
+        "note": "低油飲食為原則（含減少油炸、油煎、炒很油的食物和加工製品）"
+      },
+      "sugar": {
+        "target": "",
+        "note": "低糖（減少精製甜點、高果糖飲料、市售茶飲、果汁、汽水、可樂等，若需甜食可用少量砂糖、蜂蜜、果乾或代糖）"
+      },
+      "fiber": {
+        "soluble_fiber": "多攝取水溶性纖維：燕麥、香菇、木耳、海帶、山藥、秋葵等",
+        "total_fiber": "蔬菜每日3-5份，水果2-3份，維生素及纖維攝取量強調『高纖』",
+        "note": "多吃高纖維食物（糙米、全穀根莖、蔬菜水果）可幫助油脂和膽固醇排出，降低血脂"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "全穀根莖類",
+          "foods": [
+            "糙米",
+            "五穀雜糧",
+            "燕麥",
+            "薏仁",
+            "地瓜",
+            "山藥"
+          ],
+          "benefit": "提升纖維攝取，促進腸道健康及血糖、血脂控制"
+        },
+        {
+          "category": "蔬菜類",
+          "foods": [
+            "各式葉菜",
+            "菇類",
+            "木耳",
+            "海帶",
+            "秋葵"
+          ],
+          "benefit": "高纖維，富含維生素，幫助膽固醇排除"
+        },
+        {
+          "category": "水果類",
+          "foods": [
+            "新鮮各類水果"
+          ],
+          "benefit": "適量攝取，多樣化營養、幫助提供膳食纖維和維生素"
+        },
+        {
+          "category": "低脂乳製品",
+          "foods": [
+            "低脂奶",
+            "脫脂奶"
+          ],
+          "benefit": "提供鈣質與蛋白質，減少脂肪攝取"
+        },
+        {
+          "category": "豆魚蛋肉類（以豆、魚、家禽為主）",
+          "foods": [
+            "豆類",
+            "黃豆製品",
+            "魚類",
+            "家禽（去皮）"
+          ],
+          "benefit": "提升優質蛋白質，替代紅肉降低飽和脂肪及膽固醇攝取"
+        },
+        {
+          "category": "堅果種子類",
+          "foods": [
+            "核桃",
+            "腰果",
+            "杏仁",
+            "花生"
+          ],
+          "benefit": "可取代部份食用油，提供好油脂"
+        },
+        {
+          "category": "植物油",
+          "foods": [
+            "花生油",
+            "苦茶油",
+            "橄欖油",
+            "葵花油",
+            "大豆油"
+          ],
+          "benefit": "替代動物油，降低飽和脂肪和膽固醇攝取"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高油脂食物",
+          "foods": [
+            "肥肉",
+            "動物皮",
+            "鴨皮",
+            "鵝皮",
+            "肥油",
+            "油炸食物",
+            "油煎食物",
+            "炒很油的食物",
+            "紅燒肉",
+            "熱狗",
+            "肉鬆",
+            "魚漿類",
+            "素肉",
+            "加工肉品"
+          ]
+        },
+        {
+          "category": "高膽固醇食物",
+          "foods": [
+            "動物內臟",
+            "蛋黃",
+            "魚卵",
+            "蟹黃"
+          ]
+        },
+        {
+          "category": "反式脂肪含量高的食物",
+          "foods": [
+            "酥油",
+            "硬質瑪琳",
+            "氫化油",
+            "酥脆食品",
+            "糕餅類"
+          ]
+        },
+        {
+          "category": "高糖食物/飲料",
+          "foods": [
+            "中西式糕餅",
+            "冰淇淋",
+            "甜麵包",
+            "市售茶飲",
+            "果汁",
+            "汽水",
+            "可樂",
+            "高果糖糖飲料"
+          ]
+        },
+        {
+          "category": "高鹽食物/加工食品",
+          "foods": [
+            "醬瓜",
+            "醬菜",
+            "泡菜",
+            "豆腐乳",
+            "鹽",
+            "醬油",
+            "重口味調味料",
+            "加工食品",
+            "麵線",
+            "罐頭"
+          ]
+        },
+        {
+          "category": "全脂乳品",
+          "foods": [
+            "全脂奶",
+            "全脂奶製品"
+          ]
+        },
+        {
+          "category": "酒類",
+          "foods": [
+            "啤酒",
+            "米酒",
+            "紹興酒",
+            "高粱酒",
+            "葡萄酒",
+            "威士忌"
+          ]
+        },
+        {
+          "category": "吸菸/煙草製品",
+          "foods": []
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [
+        "三低一高（低油、低鹽、低糖、高纖）",
+        "營養均衡六大類攝取"
+      ],
+      "core_principle": "均衡各類營養素攝取（全穀根莖、蔬菜水果、低脂或脫脂乳品、豆魚白肉蛋、堅果植物油脂），避免高油、高鹽、高糖與高膽固醇、加工食品及過量飲酒。每日適量規律運動配合健康飲食。"
+    },
+    "risk_notes": [
+      "肥胖（特別是腹部肥胖，男性腰圍≥90公分，女性腰圍≥80公分）為最重要危險因子。",
+      "具家族史（高血壓、糖尿病、高脂血症）者易得代謝症候群。",
+      "吸菸者比不吸者風險高1.5倍。",
+      "活動量低者比活動量高者風險高1.7~2倍。",
+      "罹患代謝症候群未來罹患糖尿病、高血壓、高脂血症、心臟病和腦中風機率增加（分別為正常者6、4、3、2倍）。",
+      "應避免吸菸與過量飲酒（女性每日不超過1個酒精當量；男性每日不超過2個酒精當量；1個酒精當量=15公克酒精）。",
+      "壓力、生活失衡與胰島素阻抗也是主要發生因子。",
+      "鼓勵每週至少150分鐘中度身體活動，兒童及青少年每日至少60分鐘中度活動。",
+      "建議定期健康檢查（40-65歲每3年1次；65歲以上每年1次，內容包括腰圍、血壓、血糖、三酸甘油脂及高密度脂蛋白膽固醇等）"
+    ]
+  },
+  {
+    "disease_id": "diabetes_mellitus",
+    "disease_name_zh": "糖尿病",
+    "disease_name_en": "Diabetes Mellitus",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "依個人需求控制飲食份量，維持理想體重，忌肥胖"
+      },
+      "sodium": {
+        "target": "",
+        "note": "烹調遵守少鹽原則"
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "減少飽和脂肪酸攝取（如:肥肉、動物油、動物皮、全脂奶、椰子油）",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "少油，烹調方式應避免油炸、油煎、油酥，炒菜可用單元不飽和脂肪酸含量高油脂（橄欖油、菜籽油）"
+      },
+      "sugar": {
+        "target": "",
+        "note": "少糖，避免精緻甜食、含糖飲料、糖果餅乾、水果罐頭等加糖製品。嗜甜者可用代糖"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多選擇高纖維食物，如：全穀雜糧、蔬菜（葉菜、菇類、竹筍、絲瓜、胡瓜、莢豆類、海帶）"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "全穀雜糧類",
+          "foods": [
+            "全穀類",
+            "雜糧飯"
+          ],
+          "benefit": "增加纖維，可平衡血糖控制"
+        },
+        {
+          "category": "蔬菜類",
+          "foods": [
+            "葉菜類",
+            "菇類",
+            "竹筍",
+            "絲瓜",
+            "胡瓜",
+            "莢豆類",
+            "海帶"
+          ],
+          "benefit": "提供纖維及多元營養素"
+        },
+        {
+          "category": "健康用油",
+          "foods": [
+            "橄欖油",
+            "菜籽油"
+          ],
+          "benefit": "富含單元不飽和脂肪酸，有助血脂控制"
+        },
+        {
+          "category": "乳品類",
+          "foods": [
+            "鮮奶"
+          ],
+          "benefit": "特殊情況下（如延遲進餐、低血糖預防）建議隨身攜帶"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "精緻糖/加糖食品",
+          "foods": [
+            "精緻甜食",
+            "含糖飲料",
+            "各式糖果",
+            "餅乾",
+            "水果罐頭",
+            "加糖製品"
+          ]
+        },
+        {
+          "category": "高油脂/高飽和脂肪",
+          "foods": [
+            "油炸食品",
+            "油煎食品",
+            "油酥食品",
+            "豬皮",
+            "雞皮",
+            "鴨皮",
+            "魚皮",
+            "肥肉",
+            "動物油",
+            "全脂奶",
+            "椰子油"
+          ]
+        },
+        {
+          "category": "酒精",
+          "foods": [
+            "酒"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "定時定量，均衡攝取各類食物，烹調方式以少油、少鹽、少糖為原則，全穀雜糧替換精製主食，多高纖維蔬菜"
+    },
+    "risk_notes": [
+      "若血液膽固醇過高，需特別減少飽和脂肪酸攝取並控制肉品份量",
+      "注射胰島素或口服降血糖藥物後，若延緩用餐需先食用小點心、攜帶糖果防止低血糖",
+      "低血糖症狀需立刻進食10-15g易吸收糖類食品（含糖飲料120-150ml、3-4顆方糖、一匙蜂蜜）",
+      "額外或劇烈運動前應進食點心如一份吐司（25g）或一杯鮮奶（240ml）或一份水果",
+      "與營養師共同協商訂定個人化飲食計畫"
+    ]
+  },
+  {
+    "disease_id": "hypertension",
+    "disease_name_zh": "高血壓",
+    "disease_name_en": "Hypertension",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "控制體重，體重過重者應利用飲食與運動減重，有助血壓控制"
+      },
+      "sodium": {
+        "target": "",
+        "note": "少用鹽、醬油、味精、烏醋等含鈉調味料，加工食品鈉含量高（如麵線、油麵、蘇打餅乾、乳酪、加工肉類、雞精、蜜餞、運動飲料、碳酸飲料、花生醬、罐頭食品）應少用"
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "低油，避免肥肉、豬（雞）皮及油酥糕點，烹調以蒸、煮、烤、滷、涼拌方式減少油脂"
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多攝取纖維促進排便，避免因用力排便致血壓上升"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "新鮮蔬果",
+          "foods": [],
+          "benefit": "高鉀，可幫助血壓控制"
+        },
+        {
+          "category": "含鈣食物",
+          "foods": [
+            "低脂奶類及製品",
+            "小魚乾",
+            "豆乾",
+            "豆腐",
+            "深綠色蔬菜",
+            "海菜類"
+          ],
+          "benefit": "補充鈣，有助血壓控制"
+        },
+        {
+          "category": "含鎂食物",
+          "foods": [
+            "海藻",
+            "髮菜",
+            "海鮮",
+            "堅果類",
+            "全穀類",
+            "綠色蔬菜"
+          ],
+          "benefit": "提供鎂，有助高血壓調控"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高油脂/高飽和脂肪",
+          "foods": [
+            "肥肉",
+            "豬皮",
+            "雞皮",
+            "油酥糕點"
+          ]
+        },
+        {
+          "category": "高鈉食品/調味料",
+          "foods": [
+            "鹽",
+            "醬油",
+            "味精",
+            "烏醋",
+            "麵線",
+            "油麵",
+            "蘇打餅乾",
+            "乳酪",
+            "加工肉類",
+            "香腸",
+            "火腿",
+            "雞精",
+            "蜜餞",
+            "運動飲料",
+            "碳酸飲料",
+            "花生醬",
+            "罐頭食品"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "均衡飲食，低鈉低油，增加高鉀蔬果、含鈣及鎂食物，控制體重，少刺激性食物"
+    },
+    "risk_notes": [
+      "多選新鮮食材自行烹調",
+      "適當生活型態調整如戒菸酒、規律運動、壓力調適"
+    ]
+  },
+  {
+    "disease_id": "hyperlipidemia",
+    "disease_name_zh": "高血脂",
+    "disease_name_en": "Hyperlipidemia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "維持理想體重，避免肥胖"
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "控制油脂攝取量，減少油炸與油煎",
+        "saturated_fat": "少吃含飽和脂肪酸食物，豬油、奶油、牛油、椰子油，避免雞皮、豬皮、鴨皮、焢肉、三層肉、梅花肉，多白肉少紅肉",
+        "trans_fat": "少吃含反式脂肪酸食物，酥油、白油、乳瑪琳、各式甜鹹麵包、油酥糕餅、蛋糕、各式餅乾",
+        "cholesterol": "",
+        "note": "多選單元不飽和脂肪酸高的油脂（橄欖油、芥花油），並避免高溫烹調"
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多選高纖維食物（全穀雜糧、未加工豆類、蔬菜、水果）"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "全穀雜糧類",
+          "foods": [
+            "全穀雜糧類"
+          ],
+          "benefit": "豐富膳食纖維，有助調節血脂"
+        },
+        {
+          "category": "豆類",
+          "foods": [
+            "未加工豆類"
+          ],
+          "benefit": "提高膳食纖維，有益血脂"
+        },
+        {
+          "category": "蔬菜水果",
+          "foods": [
+            "蔬菜",
+            "水果"
+          ],
+          "benefit": "提供高纖維，幫助血脂調控"
+        },
+        {
+          "category": "健康用油",
+          "foods": [
+            "橄欖油",
+            "芥花油"
+          ],
+          "benefit": "單元不飽和脂肪酸，有助血脂改善"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高飽和脂肪食物",
+          "foods": [
+            "豬油",
+            "奶油",
+            "牛油",
+            "椰子油",
+            "雞皮",
+            "豬皮",
+            "鴨皮",
+            "焢肉",
+            "三層肉",
+            "梅花肉",
+            "紅肉"
+          ]
+        },
+        {
+          "category": "高反式脂肪食物",
+          "foods": [
+            "酥油",
+            "白油",
+            "乳瑪琳",
+            "甜鹹麵包",
+            "油酥糕餅",
+            "蛋糕",
+            "餅乾"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "維持理想體重，控制油脂攝取，多選高纖維食物，避免高飽和及反式脂肪"
+    },
+    "risk_notes": [
+      "多選白肉少紅肉",
+      "適當生活調整如戒菸酒、運動、壓力管理"
+    ]
+  },
+  {
+    "disease_id": "hypertriglyceridemia",
+    "disease_name_zh": "高三酸甘油酯血症",
+    "disease_name_en": "Hypertriglyceridemia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "控制體重有助於降低三酸甘油酯"
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "控制油脂攝取量，減少油炸、油煎、油酥",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "炒菜多用單元不飽和脂肪酸高的油脂（橄欖油、芥花油），避免高溫烹調。多攝取富含ω-3脂肪酸的魚類"
+      },
+      "sugar": {
+        "target": "",
+        "note": "避免精緻甜食、含蔗糖或果糖的飲料、糖果、餅乾、水果罐頭、加糖製品"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多攝取複合式醣類如全穀根莖類"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "全穀根莖類",
+          "foods": [
+            "全穀根莖類"
+          ],
+          "benefit": "複合醣類來源，有助血脂"
+        },
+        {
+          "category": "omega-3魚類",
+          "foods": [
+            "秋刀魚",
+            "鮭魚",
+            "鯖魚",
+            "鰻魚",
+            "白鯧魚",
+            "牡蠣"
+          ],
+          "benefit": "提供ω-3脂肪酸，有益降低三酸甘油酯"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "精緻糖/加糖食品",
+          "foods": [
+            "精緻甜食",
+            "含蔗糖或果糖飲料",
+            "各式糖果",
+            "餅乾",
+            "水果罐頭",
+            "加糖製品"
+          ]
+        },
+        {
+          "category": "高油脂食物",
+          "foods": [
+            "油炸食品",
+            "油煎食品",
+            "油酥食品",
+            "豬皮",
+            "雞皮",
+            "鴨皮",
+            "魚皮"
+          ]
+        },
+        {
+          "category": "酒精",
+          "foods": [
+            "酒"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "控制體重，避免精緻糖、嚴格控制油脂，避酒，多攝取複合式醣類及富含omega-3的魚類。"
+    },
+    "risk_notes": [
+      "不宜飲酒",
+      "避免高油脂烹調，首選低脂、不油膩的健康烹飪方式"
+    ]
+  },
+  {
+    "disease_id": "hypertension",
+    "disease_name_zh": "高血壓",
+    "disease_name_en": "Hypertension",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "控制總熱量攝取以維持適當體重，有助於控制症狀。"
+      },
+      "sodium": {
+        "target": "< 2000 mg/day（約5克鹽）",
+        "note": "限制食鹽，選擇低鈉食物，避免醃製和加工食品，新鮮食材為主。"
+      },
+      "protein": {
+        "target": "",
+        "note": "攝取足夠蛋白質，優質蛋白。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "適量攝取健康脂肪如橄欖油、深海魚。"
+      },
+      "sugar": {
+        "target": "",
+        "note": "避免過多糖分攝取。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多蔬菜、多纖維。"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "高鉀食物",
+          "foods": [
+            "香蕉",
+            "番茄",
+            "菠菜"
+          ],
+          "benefit": "有助於控制血壓。"
+        },
+        {
+          "category": "健康脂肪來源",
+          "foods": [
+            "橄欖油",
+            "深海魚"
+          ],
+          "benefit": "促進心血管健康。"
+        },
+        {
+          "category": "蔬菜",
+          "foods": [
+            "各類蔬菜"
+          ],
+          "benefit": "提供纖維，促進健康。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高鈉食品",
+          "foods": [
+            "醃製食品",
+            "加工食品",
+            "罐頭食品",
+            "鹹魚"
+          ]
+        },
+        {
+          "category": "添加鹽分高的調味品",
+          "foods": [
+            "鹽",
+            "醬油",
+            "味精"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "少鹽（低鈉）飲食，控制熱量。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "diabetes_mellitus",
+    "disease_name_zh": "糖尿病",
+    "disease_name_en": "Diabetes Mellitus",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "控制總熱量攝取，維持適當體重。"
+      },
+      "sodium": {
+        "target": "",
+        "note": "避免高鈉食品以預防高血壓併發症。"
+      },
+      "protein": {
+        "target": "",
+        "note": "選擇優質蛋白質。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "選擇健康脂肪攝取，減少飽和脂肪。"
+      },
+      "sugar": {
+        "target": "",
+        "note": "避免精製糖及高GI食物。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "多攝取膳食纖維，25–30 g/day為常見建議（文件未明列具體數值）。"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "低GI全穀雜糧類",
+          "foods": [
+            "糙米",
+            "燕麥",
+            "藜麥",
+            "全麥麵包",
+            "地瓜",
+            "南瓜",
+            "綠豆",
+            "紅豆",
+            "鷹嘴豆"
+          ],
+          "benefit": "穩定血糖，延緩葡萄糖吸收。"
+        },
+        {
+          "category": "非澱粉類蔬菜",
+          "foods": [
+            "花椰菜",
+            "菠菜",
+            "苦瓜",
+            "番茄"
+          ],
+          "benefit": "高纖維、低GI，幫助血糖控制。"
+        },
+        {
+          "category": "高纖維食物",
+          "foods": [
+            "全穀類",
+            "豆類",
+            "堅果與種子",
+            "深綠色葉菜"
+          ],
+          "benefit": "延緩葡萄糖吸收，穩定血糖。"
+        },
+        {
+          "category": "優質蛋白質",
+          "foods": [
+            "魚類（鮭魚、鯖魚、秋刀魚）",
+            "去皮雞肉",
+            "瘦牛肉",
+            "蛋白",
+            "豆腐",
+            "無糖優格",
+            "低脂起司",
+            "核桃",
+            "杏仁",
+            "腰果"
+          ],
+          "benefit": "穩定血糖，增加飽足感。"
+        },
+        {
+          "category": "健康脂肪",
+          "foods": [
+            "橄欖油",
+            "椰子油",
+            "酪梨",
+            "深海魚（鮭魚、鯖魚）",
+            "核桃",
+            "亞麻籽",
+            "黑巧克力（85%以上）"
+          ],
+          "benefit": "改善胰島素敏感性，減少血糖波動。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高GI食物",
+          "foods": [
+            "白飯",
+            "白麵條",
+            "白麵包",
+            "玉米粉",
+            "馬鈴薯"
+          ]
+        },
+        {
+          "category": "精製糖類及甜食",
+          "foods": [
+            "糖果",
+            "蛋糕",
+            "果汁",
+            "含糖飲料",
+            "冰淇淋"
+          ]
+        },
+        {
+          "category": "加工食品",
+          "foods": [
+            "餅乾",
+            "速食",
+            "加工肉品（香腸、培根）"
+          ]
+        },
+        {
+          "category": "高鈉食品",
+          "foods": [
+            "醃漬食品（泡菜、鹹魚）",
+            "罐頭食品"
+          ]
+        },
+        {
+          "category": "酒精飲料",
+          "foods": [
+            "啤酒",
+            "調酒",
+            "高糖含量的酒類"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "控制碳水化合物（GI值管理）、增加膳食纖維、選擇健康蛋白與脂肪、避免精製糖、加工食品及高GI食物、保持規律進食。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "hyperlipidemia",
+    "disease_name_zh": "高血脂",
+    "disease_name_en": "Hyperlipidemia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "控制總熱量攝取。"
+      },
+      "sodium": {
+        "target": "",
+        "note": "避免加工食品。"
+      },
+      "protein": {
+        "target": "",
+        "note": "選擇優質蛋白質。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "限制（文件未明列具體數值）",
+        "trans_fat": "避免（文件未明列具體數值）",
+        "cholesterol": "",
+        "note": "減少飽和脂肪（如紅肉、奶油）、反式脂肪（如速食、糕點），多健康脂肪與Omega-3。"
+      },
+      "sugar": {
+        "target": "",
+        "note": "少糖。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "增加膳食纖維攝取（燕麥、蔬菜等）。"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "健康脂肪",
+          "foods": [
+            "橄欖油",
+            "酪梨油",
+            "堅果（核桃、杏仁、腰果、亞麻籽、奇亞籽）",
+            "深海魚（鮭魚、鯖魚、秋刀魚）",
+            "酪梨",
+            "椰子（適量）"
+          ],
+          "benefit": "取代飽和脂肪及反式脂肪，保護心血管，降低壞膽固醇。"
+        },
+        {
+          "category": "高纖維食物",
+          "foods": [
+            "燕麥",
+            "蔬菜"
+          ],
+          "benefit": "降低膽固醇。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "動物性脂肪與反式脂肪",
+          "foods": [
+            "豬油",
+            "奶油",
+            "棕櫚油",
+            "人造奶油"
+          ]
+        },
+        {
+          "category": "速食類、糕點類",
+          "foods": [
+            "速食",
+            "糕點"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "限制飽和脂肪與反式脂肪、增加Omega-3與膳食纖維。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "irritable_bowel_syndrome",
+    "disease_name_zh": "腸躁症",
+    "disease_name_en": "Irritable Bowel Syndrome",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": "選擇易消化蛋白質。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "易消化蛋白質",
+          "foods": [
+            "雞肉",
+            "魚",
+            "糙米",
+            "地瓜"
+          ],
+          "benefit": "減少腸胃刺激，易於消化吸收。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高FODMAP食物",
+          "foods": [
+            "豆類",
+            "洋蔥",
+            "牛奶",
+            "小麥"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [
+        "低FODMAP飲食"
+      ],
+      "core_principle": "避免高FODMAP食物、選易消化食材。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "gastroesophageal_reflux_disease",
+    "disease_name_zh": "胃食道逆流",
+    "disease_name_en": "Gastroesophageal Reflux Disease",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "建議多吃低脂、易消化食物。"
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "低脂易消化食物",
+          "foods": [
+            "燕麥",
+            "蒸煮蔬菜"
+          ],
+          "benefit": "減少胃酸逆流，促進舒適消化。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "酸性食物",
+          "foods": [
+            "柑橘類",
+            "番茄",
+            "咖啡"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "避免酸性、高脂飲食，多攝取低脂、易消化食材。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "gout",
+    "disease_name_zh": "痛風",
+    "disease_name_en": "Gout",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "低嘌呤食物",
+          "foods": [
+            "蔬菜",
+            "牛奶",
+            "蛋"
+          ],
+          "benefit": "減少尿酸積聚。"
+        },
+        {
+          "category": "水分",
+          "foods": [
+            "水"
+          ],
+          "benefit": "多喝水（每日2L以上）可促進尿酸排泄。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高嘌呤食物",
+          "foods": [
+            "內臟",
+            "海鮮",
+            "紅肉"
+          ]
+        },
+        {
+          "category": "酒精",
+          "foods": [
+            "啤酒"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "限制高嘌呤食物及酒精，多喝水。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "hyperuricemia",
+    "disease_name_zh": "高尿酸血症",
+    "disease_name_en": "Hyperuricemia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "低嘌呤食物",
+          "foods": [
+            "蔬菜",
+            "牛奶",
+            "蛋"
+          ],
+          "benefit": "預防尿酸升高。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高嘌呤食物",
+          "foods": [
+            "內臟",
+            "海鮮",
+            "紅肉"
+          ]
+        },
+        {
+          "category": "酒精",
+          "foods": [
+            "啤酒"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "限制高嘌呤食物及酒精。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "rheumatoid_arthritis",
+    "disease_name_zh": "類風濕性關節炎",
+    "disease_name_en": "Rheumatoid Arthritis",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "抗發炎食物",
+          "foods": [
+            "薑黃",
+            "Omega-3",
+            "綠葉蔬菜"
+          ],
+          "benefit": "減少發炎反應。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "加工食品與高糖食物",
+          "foods": [
+            "加工食品",
+            "高糖飲食"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "避免高糖與加工食物，增加抗發炎食物攝取。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "iron_deficiency_anemia",
+    "disease_name_zh": "缺鐵性貧血",
+    "disease_name_en": "Iron Deficiency Anemia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "富含鐵食物",
+          "foods": [
+            "紅肉",
+            "動物肝臟",
+            "深綠葉蔬菜"
+          ],
+          "benefit": "補充鐵質，預防貧血。"
+        },
+        {
+          "category": "維生素C食物",
+          "foods": [
+            "柑橘類"
+          ],
+          "benefit": "促進鐵吸收。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": []
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "多補鐵，搭配維生素C促進吸收。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "hypotension",
+    "disease_name_zh": "低血壓",
+    "disease_name_en": "Hypotension",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": "適量攝取鹽分，避免過量。"
+      },
+      "protein": {
+        "target": "",
+        "note": "增加蛋白質攝取。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "優質蛋白質",
+          "foods": [
+            "雞蛋",
+            "魚肉"
+          ],
+          "benefit": "增加血容量，幫助維持血壓。"
+        },
+        {
+          "category": "水分",
+          "foods": [
+            "水"
+          ],
+          "benefit": "保持充足水分，預防低血壓。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": []
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "適量鹽分與水分，多攝取蛋白質。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "insomnia",
+    "disease_name_zh": "失眠",
+    "disease_name_en": "Insomnia",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "含色胺酸食物",
+          "foods": [
+            "牛奶",
+            "香蕉",
+            "堅果"
+          ],
+          "benefit": "促進睡眠品質。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "刺激性飲品",
+          "foods": [
+            "咖啡因",
+            "酒精"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "避免咖啡因與酒精，多攝取色胺酸來源食物。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "anxiety_disorders",
+    "disease_name_zh": "焦慮",
+    "disease_name_en": "Anxiety Disorders",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": "避免高糖飲食。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "富含Omega-3食物",
+          "foods": [
+            "魚油等"
+          ],
+          "benefit": "可能幫助神經穩定。"
+        },
+        {
+          "category": "富含B群維生素",
+          "foods": [
+            "全穀類",
+            "雞蛋"
+          ],
+          "benefit": "維持神經健康。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高糖食品",
+          "foods": []
+        },
+        {
+          "category": "高咖啡因飲食",
+          "foods": []
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "增加Omega-3、B群維生素攝取，避免高糖與高咖啡因飲食。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "depression",
+    "disease_name_zh": "憂鬱症",
+    "disease_name_en": "Depression",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": ""
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "",
+        "note": ""
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": ""
+      },
+      "sugar": {
+        "target": "",
+        "note": "避免高糖飲食。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "富含Omega-3食物",
+          "foods": [
+            "魚油等"
+          ],
+          "benefit": "可能幫助神經穩定。"
+        },
+        {
+          "category": "富含B群維生素",
+          "foods": [
+            "全穀類",
+            "雞蛋"
+          ],
+          "benefit": "維持神經健康。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高糖食品",
+          "foods": []
+        },
+        {
+          "category": "高咖啡因飲食",
+          "foods": []
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "增加Omega-3、B群維生素攝取，避免高糖與高咖啡因飲食。"
+    },
+    "risk_notes": []
+  },
+  {
+    "disease_id": "chronic_kidney_disease",
+    "disease_name_zh": "慢性腎臟病",
+    "disease_name_en": "Chronic Kidney Disease",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "",
+        "note": "攝取足夠熱量，避免營養不良。"
+      },
+      "sodium": {
+        "target": "< 2000 mg/day（約5克鹽）",
+        "note": "減少鈉攝取，減少水腫與高血壓風險。"
+      },
+      "protein": {
+        "target": "CKD stage 3–4: 0.6-0.8 g/kg/day；CKD stage 5未透析: 0.3–0.6 g/kg/day（需補充必需胺基酸）；透析: 1.2–1.5 g/kg/day",
+        "note": "控制蛋白質攝取以減少腎負擔；分期調整。"
+      },
+      "fat": {
+        "total_fat": "",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "選擇健康脂肪，適量碳水化合物。"
+      },
+      "sugar": {
+        "target": "",
+        "note": ""
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": ""
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "低蛋白澱粉",
+          "foods": [
+            "低氮澱粉（玉米粉、地瓜粉）"
+          ],
+          "benefit": "適合非透析期患者，減少腎臟負擔。"
+        },
+        {
+          "category": "高生物價值蛋白質",
+          "foods": [
+            "雞蛋",
+            "魚肉",
+            "豆腐",
+            "雞肉（適量）"
+          ],
+          "benefit": "提升營養品質。"
+        },
+        {
+          "category": "低鉀食物",
+          "foods": [
+            "蘋果",
+            "葡萄",
+            "梨子",
+            "白米",
+            "南瓜",
+            "白花椰菜"
+          ],
+          "benefit": "預防高血鉀。"
+        },
+        {
+          "category": "低磷食物",
+          "foods": [
+            "白米",
+            "冬粉",
+            "蛋白",
+            "菜心",
+            "低磷奶粉"
+          ],
+          "benefit": "控制血磷、保護骨骼與血管。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高蛋白食物（非透析期）",
+          "foods": [
+            "紅肉",
+            "大量魚肉",
+            "乳製品",
+            "豆類"
+          ]
+        },
+        {
+          "category": "高鈉食品",
+          "foods": [
+            "鹹魚",
+            "泡菜",
+            "醬油",
+            "味精",
+            "香腸",
+            "培根",
+            "加工食品"
+          ]
+        },
+        {
+          "category": "高鉀食物",
+          "foods": [
+            "未川燙深綠色蔬菜（如菠菜、地瓜葉）"
+          ]
+        },
+        {
+          "category": "高磷食品",
+          "foods": [
+            "高磷乳製品"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [],
+      "core_principle": "飲食建議因CKD分期而異：蛋白質控制，鈉、鉀、磷、水分依病情調整。"
+    },
+    "risk_notes": [
+      "腎病 3–4 期：蛋白質 0.6–0.8g/kg/day。",
+      "腎病 5 期（未透析）：蛋白質 0.3–0.6g/kg/day，需補充必需胺基酸。",
+      "透析患者：蛋白質 1.2–1.5g/kg/day，鈉 <2000mg，鉀 2000–3000mg/day，磷 <1000mg/day，必要時需限制水分。"
+    ]
+  },
+  {
+    "disease_id": "healthy_general_population",
+    "disease_name_zh": "健康一般族群",
+    "disease_name_en": "Healthy General Population",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "依性別、年齡、體重、活動強度不同，約為 1200–2700 kcal/day",
+        "note": "建議以健康體重與活動強度查表得熱量需求，如男性19-30歲適度活動 2400 kcal；女性19-30歲適度活動 1950 kcal"
+      },
+      "sodium": {
+        "target": "",
+        "note": ""
+      },
+      "protein": {
+        "target": "10–20% of total calories",
+        "note": "估算 1 份豆魚蛋肉類=7g 蛋白質，依建議份數攝取"
+      },
+      "fat": {
+        "total_fat": "20–30% of total calories",
+        "saturated_fat": "",
+        "trans_fat": "",
+        "cholesterol": "",
+        "note": "鼓勵選用原態堅果種子與不飽和脂肪植物油，減少飽和脂肪與反式脂肪來源"
+      },
+      "sugar": {
+        "target": "",
+        "note": "乳製品、優酪乳等勿選加糖產品"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "鼓勵攝取未精製全穀雜糧、深色蔬菜與水果，增加膳食纖維"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "whole grains and cereals",
+          "foods": [
+            "糙米飯",
+            "紫米飯",
+            "胚芽米飯",
+            "全麥麵包",
+            "全麥麵",
+            "全麥饅頭",
+            "燕麥",
+            "全蕎麥",
+            "全粒玉米",
+            "糙薏仁",
+            "小米",
+            "紅藜",
+            "甘藷",
+            "馬鈴薯",
+            "芋頭",
+            "南瓜",
+            "山藥",
+            "蓮藕",
+            "紅豆",
+            "綠豆",
+            "花豆",
+            "蠶豆",
+            "皇帝豆",
+            "栗子",
+            "蓮子",
+            "菱角"
+          ],
+          "benefit": "提供熱量、膳食纖維、維生素B群、E、礦物質，促進腸道健康與心血管保護"
+        },
+        {
+          "category": "legumes, fish, eggs, and meat",
+          "foods": [
+            "黃豆及豆製品（豆腐、豆乾、豆皮、素肉等）",
+            "高鈣豆製品（大豆干、傳統豆腐、小三角油豆腐、臭豆腐、五香豆干、素肉羹、凍豆腐、豆棗、豆干絲）",
+            "魚類、海鮮（蝦、貝類、甲殼類、頭足類、小魚乾、帶骨魚罐頭）",
+            "蛋類（以雞蛋為主，其它禽蛋）",
+            "禽肉（雞胸、鴨肉）",
+            "瘦畜肉（豬小里肌、牛腱）"
+          ],
+          "benefit": "提供高品質蛋白質與鈣質，強調豆類和魚類優先，降低飽和脂肪攝取"
+        },
+        {
+          "category": "dairy",
+          "foods": [
+            "鮮奶",
+            "低脂乳",
+            "脫脂乳",
+            "保久乳",
+            "奶粉",
+            "優酪乳",
+            "優格",
+            "乳酪（起司）"
+          ],
+          "benefit": "提供鈣質及優質蛋白質，助於骨骼健康"
+        },
+        {
+          "category": "vegetables",
+          "foods": [
+            "深色葉菜（地瓜葉、小白菜、青江菜、菠菜、芥蘭菜、莧菜、空心菜、油菜、紅鳳菜、山芹菜、龍葵、紅莧菜、山茼蒿、千寶菜、荷葉白菜、川七、豆瓣菜）",
+            "其他蔬菜（菠菜、高麗菜、大白菜、綠花椰菜、白花椰菜、韭菜花、金針花、蘿蔔、胡蘿蔔、青椒、茄子、冬瓜、絲瓜、苦瓜、小黃瓜、四季豆、豌豆夾、綠豆芽、香菇、洋菇、杏鮑菇、金針菇、雪白菇、鴻禧菇、紫菜、海帶）"
+          ],
+          "benefit": "維生素、礦物質、膳食纖維、植化素（抗氧化、抗發炎、抗癌）"
+        },
+        {
+          "category": "fruits",
+          "foods": [
+            "芒果",
+            "木瓜",
+            "鳳梨",
+            "芭樂",
+            "番茄",
+            "葡萄",
+            "香蕉",
+            "橘子",
+            "西瓜",
+            "桃",
+            "李",
+            "桑葚",
+            "草莓",
+            "黑棗",
+            "葡萄乾"
+          ],
+          "benefit": "維生素C、膳食纖維、植化素，促進腸胃與免疫健康"
+        },
+        {
+          "category": "oils and nuts",
+          "foods": [
+            "橄欖油",
+            "苦茶油",
+            "芥花油",
+            "油菜籽油",
+            "高油酸葵花油",
+            "花生油",
+            "原態堅果類（花生、瓜子、葵瓜子、芝麻、腰果、杏仁、核桃、夏威夷豆、黑芝麻）",
+            "酪梨"
+          ],
+          "benefit": "提供必需脂肪酸、維生素E，心血管與腦血管保護"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "refined grains and starches",
+          "foods": [
+            "白米飯",
+            "白麵條",
+            "白麵包",
+            "饅頭",
+            "加工食品基於精製穀類",
+            "高糖高油食品"
+          ]
+        },
+        {
+          "category": "high-fat meats and processed meats",
+          "foods": [
+            "高脂肪肉類（五花肉、梅花肉、培根、魚肚、豬小腸、豬大腸、霜降肉、大理石紋牛羊排、牛腩、火腿）",
+            "加工絞肉製品（香腸、熱狗、貢丸、包子肉餡、肉鬆、肉脯、火鍋餃類、炸雞、炸豬排、炸蝦等）"
+          ]
+        },
+        {
+          "category": "animal and hydrogenated fats",
+          "foods": [
+            "動物油脂（豬油、牛油）",
+            "氫化植物油（人造奶油、人工奶油、人造植物奶油）",
+            "含氫化油脂加工食品（餅乾、薯條、甜甜圈、洋芋片）",
+            "抹醬、醬料（奶油、美乃滋、沙拉醬、乳瑪琳、花生醬、芝麻醬、沙茶醬）"
+          ]
+        },
+        {
+          "category": "added sugars",
+          "foods": [
+            "糖",
+            "加糖乳品與飲料"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [
+        "飲食均衡六大類",
+        "高植物性、多元多樣飲食",
+        "強調未精製全穀、深色蔬菜和原態堅果的飲食"
+      ],
+      "core_principle": "依個人熱量需求，均衡攝取六大類食物，1/3主食為未精製全穀、適量蛋白質、多蔬果、低脂、少油炸加工、植物油脂與堅果"
+    },
+    "risk_notes": [
+      "活動量與年齡會影響熱量需求，請依個人條件查表調整",
+      "乳糖不耐者可嘗試分次或少量逐步增加乳製品攝取，或選擇優格、起司、低乳糖奶",
+      "素食者需以高鈣豆製品、蔬菜與強化食品替代乳品取得鈣質",
+      "蛋類攝取：高血脂、心血管疾病、脂肪肝或肥胖者應減少蛋黃（<1顆/天）",
+      "建議深色蔬菜至少占蔬菜一半，高鈣豆製品比例佔豆魚蛋肉類1/3確保鈣質充足"
+    ]
+  },
+  {
+    "disease_id": "chronic_kidney_disease",
+    "disease_name_zh": "慢性腎臟病",
+    "disease_name_en": "Chronic Kidney Disease",
+    "nutrition_guideline": {
+      "calories": {
+        "target": "依體重與個人狀況設計，一般為 1500-2000 kcal/day",
+        "note": "晚期 CKD（stage 4-5）需特別重視熱量攝取以維持營養。"
+      },
+      "sodium": {
+        "target": "限制攝取，避免高鹽，通常建議每日鈉攝取 < 2000 mg（約5g鹽）",
+        "note": "過多鹽分會導致高血壓、水腫；應減少鹽與醬油的使用量，避免高鹽食品及湯品。"
+      },
+      "protein": {
+        "target": "Stage 1-3: 0.8-1.0 g/kg/day，不超過1.5g/kg/day；Stage 4: 0.6 g/kg/day（若合併糖尿病，0.8g/kg/day）",
+        "note": "蛋白質攝取依分期明顯不同，詳細須遵營養師指示。初期不需嚴格限制，中～晚期需逐步減量。"
+      },
+      "fat": {
+        "total_fat": "適量，選擇植物油和不飽和脂肪為主，減少飽和脂肪與反式脂肪",
+        "saturated_fat": "盡量減少（避免肥肉、油炸、奶油等）",
+        "trans_fat": "避免",
+        "cholesterol": "",
+        "note": "高脂血患者總膽固醇<200mg/dl，三酸甘油脂<150mg/dl，HDL男性≧55、女性≧60mg/dl，LDL<100mg/dl。"
+      },
+      "sugar": {
+        "target": "",
+        "note": "糖尿病合併者血糖控制標準: 餐前血糖90-130mg/dl，HbA1c<7%。"
+      },
+      "fiber": {
+        "soluble_fiber": "",
+        "total_fiber": "",
+        "note": "蔬菜攝取3-4份/日，水果2-3份/日，根據血鉀狀態適度調整。"
+      }
+    },
+    "beneficial_foods": {
+      "recommended_food_groups": [
+        {
+          "category": "高品質蛋白質",
+          "foods": [
+            "雞蛋",
+            "豬肉",
+            "雞肉",
+            "鴨肉",
+            "魚肉",
+            "牛肉",
+            "豆腐",
+            "豆乾",
+            "豆包"
+          ],
+          "benefit": "高生物價蛋白，減少尿毒素產生，避免腎臟負擔。"
+        },
+        {
+          "category": "能量來源",
+          "foods": [
+            "地瓜",
+            "米粉",
+            "冬粉",
+            "粄條",
+            "太白粉",
+            "番薯粉",
+            "藕粉",
+            "澄粉",
+            "粉圓",
+            "西谷米",
+            "低蛋白米"
+          ],
+          "benefit": "提供足夠熱量但蛋白質含量低，有助於營養與體重維持。"
+        },
+        {
+          "category": "不飽和脂肪油",
+          "foods": [
+            "芥花油",
+            "沙拉油",
+            "橄欖油",
+            "大豆油",
+            "葵花油",
+            "玉米油",
+            "紅花子油"
+          ],
+          "benefit": "有助於控制血脂、提供必需脂肪酸。"
+        },
+        {
+          "category": "蔬菜",
+          "foods": [
+            "各式葉菜、瓜類蔬菜"
+          ],
+          "benefit": "提供纖維、維生素及礦物質，須根據血鉀情況調整、烹煮後食用為佳。"
+        },
+        {
+          "category": "水果",
+          "foods": [
+            "蘋果",
+            "西洋梨",
+            "水梨",
+            "鳳梨",
+            "柑橘",
+            "葡萄柚",
+            "小玉西瓜",
+            "蓮霧",
+            "葡萄",
+            "芭樂",
+            "白柚",
+            "玫瑰桃",
+            "棗子"
+          ],
+          "benefit": "適量攝取可提供維生素C及纖維，但須避免高鉀水果。"
+        }
+      ]
+    },
+    "foods_to_limit": {
+      "avoid_or_reduce": [
+        {
+          "category": "高鹽／高鈉食品",
+          "foods": [
+            "榨菜",
+            "酸菜",
+            "泡菜",
+            "味噌",
+            "醬瓜",
+            "鹹蛋",
+            "肉燥",
+            "泡麵",
+            "鹽酥雞",
+            "洋芋片",
+            "海苔",
+            "豆瓣醬",
+            "沙茶醬",
+            "辣椒醬",
+            "番茄醬"
+          ]
+        },
+        {
+          "category": "低生物價蛋白質（高尿毒素食物）",
+          "foods": [
+            "麵筋",
+            "麵腸",
+            "麵輪",
+            "烤麩",
+            "腰果",
+            "松子",
+            "杏仁",
+            "夏威夷果",
+            "花生",
+            "瓜子",
+            "芝麻",
+            "綠豆",
+            "紅豆",
+            "蓮子",
+            "薏仁",
+            "皇帝豆",
+            "蠶豆",
+            "碗豆"
+          ]
+        },
+        {
+          "category": "高磷食物",
+          "foods": [
+            "牛奶",
+            "羊奶",
+            "奶粉",
+            "鮮奶",
+            "優酪乳",
+            "優格",
+            "發酵乳",
+            "起司",
+            "乳酪",
+            "火鍋丸類",
+            "火腿",
+            "香腸",
+            "臘肉",
+            "鵝肝",
+            "雞胗",
+            "豬肝",
+            "可樂",
+            "汽水",
+            "咖啡",
+            "巧克力",
+            "蛋黃",
+            "花生糖",
+            "芝麻糊",
+            "健素糖",
+            "酵母粉",
+            "燕麥奶",
+            "糙米",
+            "全麥麵包",
+            "小麥胚芽"
+          ]
+        },
+        {
+          "category": "高鉀食物",
+          "foods": [
+            "香蕉",
+            "奇異果",
+            "哈密瓜",
+            "香瓜",
+            "火龍果",
+            "櫻桃",
+            "草莓",
+            "蓮霧",
+            "蕃茄",
+            "乾果類",
+            "純果汁",
+            "果菜汁",
+            "菜湯",
+            "肉湯",
+            "燉補湯",
+            "咖啡",
+            "運動飲料",
+            "健美鹽",
+            "低鈉鹽"
+          ]
+        },
+        {
+          "category": "湯汁類及濃縮汁",
+          "foods": [
+            "各式濃湯",
+            "燉補品",
+            "雞湯",
+            "牛肉湯",
+            "火鍋湯",
+            "肉汁",
+            "菜湯"
+          ]
+        },
+        {
+          "category": "加工食品／高鹽高磷食品",
+          "foods": [
+            "香腸",
+            "火腿",
+            "臘肉",
+            "罐頭食品",
+            "鹹魚",
+            "皮蛋",
+            "醃漬蔬菜",
+            "加鹽冷凍蔬菜"
+          ]
+        },
+        {
+          "category": "藥物及中草藥",
+          "foods": [
+            "非類固醇消炎止痛劑（NSAIDs）",
+            "部分抗生素如 Aminoglycosides",
+            "Metformin",
+            "中藥（含馬兜鈴酸等）",
+            "來路不明藥物或偏方"
+          ]
+        },
+        {
+          "category": "奶類與乳製品",
+          "foods": [
+            "牛奶",
+            "羊奶",
+            "優格",
+            "乳酪",
+            "乾酪"
+          ]
+        }
+      ]
+    },
+    "diet_pattern": {
+      "recommended_patterns": [
+        "清淡、均衡飲食",
+        "低蛋白飲食（分期階段考量）",
+        "充分熱量攝取",
+        "限制鹽分攝取"
+      ],
+      "core_principle": "適量蛋白、控制鹽分、足夠熱量。視分期與個人體重調整蛋白質與熱量攝取，保持均衡、避免缺乏，並配合清淡飲食原則與避免高磷/高鉀/高鹽食物。"
+    },
+    "risk_notes": [
+      "CKD分期必須依 eGFR 調整蛋白質攝取量。Stage 1-3：0.8-1.0 g/kg/day；Stage 4（未合併糖尿病）：降至0.6 g/kg/day。有糖尿病者4期仍 0.8 g/kg/day。",
+      "合併高血壓者：血壓控制目標 < 130/80 mmHg。",
+      "合併糖尿病者： HbA1c < 7%，餐前血糖 90-130 mg/dl。",
+      "合併高脂血症：總膽固醇 < 200 mg/dl、三酸甘油脂 < 150 mg/dl、HDL（男≧55, 女≧60）mg/dl、LDL < 100 mg/dl。",
+      "合併痛風或高尿酸者：UA<6。",
+      "嚴重水腫需依醫囑嚴格限制水份攝取，每天水分=前一日尿量+500-700ml。",
+      "有嚴重高血鉀應限制高鉀食物及湯品。",
+      "腎臟病患者不可自用藥，應避免 NSAID、特定抗生素及來路不明中藥。",
+      "奶類污磷高利用率，需限制攝取。",
+      "特殊族群：合併心血管疾病、高血脂、貧血、自體免疫疾病等皆需個別飲食或用藥調整。"
+    ]
+  }
+]

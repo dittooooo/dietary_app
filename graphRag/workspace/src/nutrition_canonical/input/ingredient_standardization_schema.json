@@ -1,0 +1,251 @@
+{
+  "version": "1.0.0",
+  "description": "Schema for ingredient standardization and nutrition item classification in dietary knowledge graph construction.",
+  "entity": "nutrition_item",
+  "source_fields": {
+    "id": "整合編號",
+    "category": "食品分類",
+    "name": "樣品名稱",
+    "description": "內容物描述",
+    "aliases": "俗名"
+  },
+  "normalized_fields": {
+    "raw_name": {
+      "type": "string",
+      "required": true,
+      "description": "Original item name from nutrition_data.json"
+    },
+    "raw_category": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "required": false,
+      "description": "Original food category"
+    },
+    "raw_description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "required": false,
+      "description": "Original content description"
+    },
+    "raw_aliases": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": "string",
+      "required": false,
+      "description": "Original aliases split into a list"
+    },
+    "canonical_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "required": true,
+      "description": "Normalized ingredient name used for search, mapping, and KG node merging"
+    },
+    "canonical_group": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "穀物雜糧",
+        "乳品",
+        "蛋類",
+        "豆類豆製品",
+        "肉類",
+        "內臟",
+        "海鮮水產",
+        "蔬菜",
+        "水果",
+        "菇菌藻類",
+        "堅果種子",
+        "油脂",
+        "辛香料",
+        "調味料",
+        "飲品",
+        "加工食品",
+        "混合料理",
+        "其他"
+      ],
+      "required": false,
+      "description": "High-level group used by the application and knowledge graph"
+    },
+    "match_type": {
+      "type": "string",
+      "enum": [
+        "exact_base_food",
+        "alias_of_base_food",
+        "subtype_of_base_food",
+        "state_variant",
+        "part_variant",
+        "processing_variant",
+        "derived_product",
+        "seasoning_or_sauce",
+        "beverage_variant",
+        "brand_or_commercial_item",
+        "mixed_food",
+        "uncertain"
+      ],
+      "required": true,
+      "description": "How this raw item relates to the canonical ingredient"
+    },
+    "entity_role": {
+      "type": "string",
+      "enum": [
+        "base_food",
+        "subtype",
+        "derived_food",
+        "seasoning",
+        "beverage",
+        "commercial_product",
+        "mixed_item",
+        "unknown"
+      ],
+      "required": true,
+      "description": "Practical role of the item in query and nutrition matching"
+    },
+    "is_base_food": {
+      "type": "boolean",
+      "required": true,
+      "description": "Whether this item can serve as a base ingredient node in the KG"
+    },
+    "is_query_default": {
+      "type": "boolean",
+      "required": true,
+      "description": "Whether this item may appear in default query results for the canonical ingredient"
+    },
+    "is_search_hidden_by_default": {
+      "type": "boolean",
+      "required": true,
+      "description": "Whether to hide the item from default UI search results unless user expands or asks specifically"
+    },
+    "search_priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "required": true,
+      "description": "Higher number means more suitable as a default representative item"
+    },
+    "specificity_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "required": false,
+      "description": "How specific the raw item is relative to canonical_name"
+    },
+    "processing_level": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "raw",
+        "fresh",
+        "dried",
+        "frozen",
+        "powder",
+        "paste",
+        "sauce",
+        "canned",
+        "pickled",
+        "fermented",
+        "smoked",
+        "fried",
+        "baked",
+        "boiled",
+        "roasted",
+        "instant",
+        "ready_to_eat",
+        "sterilized",
+        "ultra_heat_treated",
+        "unknown",
+        null
+      ],
+      "required": false,
+      "description": "Normalized processing level"
+    },
+    "state_tags": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Tags such as 生, 熟, 去皮, 帶骨, 無鹽, 低脂, 全脂, 嫩, 板"
+    },
+    "flavor_tags": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Flavor descriptors such as 巧克力, 草莓, 布丁"
+    },
+    "brand_tags": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Detected commercial or retailer brand tokens"
+    },
+    "exclude_reasons": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Reasons why the item is hidden or excluded from default matching"
+    },
+    "representative_candidate_rank": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "required": false,
+      "description": "Rank among siblings inside the same canonical_name"
+    },
+    "sibling_group_key": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "required": false,
+      "description": "Key used to group similar variants, e.g. 牛奶::鮮乳::全脂"
+    },
+    "canonical_query_terms": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Search terms that should map to the same canonical ingredient"
+    }
+  },
+  "canonical_entity_schema": {
+    "canonical_name": "string",
+    "canonical_group": "string",
+    "default_search_items": [
+      "string"
+    ],
+    "allowed_subtypes": [
+      "string"
+    ],
+    "hidden_subtypes": [
+      "string"
+    ],
+    "excluded_patterns": [
+      "string"
+    ],
+    "notes": "string"
+  },
+  "recommended_pipeline": [
+    "Normalize raw strings and aliases",
+    "Detect exclusion, brand, flavor, and processing markers",
+    "Resolve canonical_name using alias map and lexical rules",
+    "Assign match_type and entity_role",
+    "Decide is_base_food and is_query_default",
+    "Group sibling variants and pick representative items",
+    "Persist normalized index for query-time lookup"
+  ],
+  "query_behavior": {
+    "default_result_policy": "Return only items where is_query_default=true, sorted by search_priority desc",
+    "expanded_result_policy": "Include subtypes and processing variants, but still hide excluded commercial or heavily flavored products unless explicitly requested",
+    "strict_result_policy": "Return only exact_base_food and subtype_of_base_food"
+  }
+}
