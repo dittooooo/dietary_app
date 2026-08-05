@@ -1,0 +1,10 @@
+{
+  "recipes_path": "workspace\\src\\recipe_nutrition_unmatch\\data\\input\\recipes.json",
+  "nutrition_path": "workspace\\src\\recipe_nutrition_unmatch\\data\\input\\nutrition_data.json",
+  "total_ingredients": 16441,
+  "matched_ingredients": 7740,
+  "unmatched_ingredients": 8701,
+  "match_rate": 0.4708,
+  "unique_unmatched_names": 2012,
+  "output_dir": "workspace\\src\\recipe_nutrition_unmatch\\data\\output"
+}

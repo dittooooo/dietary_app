@@ -1,0 +1,70 @@
+{
+  "question": "我今天想吃義式千層麵，你覺得如何",
+  "question_type": "single_dish",
+  "dish_nutrition": [
+    {
+      "dish_name": "義式千層麵",
+      "nutrients": [
+        {
+          "name": "熱量",
+          "amount_per_serving": 1974.96,
+          "unit": "kcal"
+        },
+        {
+          "name": "蛋白質",
+          "amount_per_serving": 35.14,
+          "unit": "g"
+        },
+        {
+          "name": "脂質",
+          "amount_per_serving": 33.31,
+          "unit": "g"
+        },
+        {
+          "name": "碳水化合物",
+          "amount_per_serving": 149.87,
+          "unit": "g"
+        },
+        {
+          "name": "糖質總量",
+          "amount_per_serving": 11.71,
+          "unit": "g"
+        },
+        {
+          "name": "膳食纖維",
+          "amount_per_serving": 5.33,
+          "unit": "g"
+        },
+        {
+          "name": "鈉",
+          "amount_per_serving": 1804.88,
+          "unit": "mg"
+        },
+        {
+          "name": "飽和脂肪",
+          "amount_per_serving": 19.62,
+          "unit": "g"
+        }
+      ]
+    }
+  ],
+  "dish_advice": [
+    {
+      "dish_name": "義式千層麵",
+      "suitability": "可少量吃",
+      "key_reasons": [
+        "熱量高（約1975 kcal），對於糖尿病患者及過重者不宜大量攝取。",
+        "鈉含量極高（約1805 mg），糖尿病飲食需限制高鈉以減少併發症風險。",
+        "含較多飽和脂肪（約19.6 g），糖尿病患者應限制飽和脂肪攝取。"
+      ],
+      "suggestions": [
+        "建議控制份量，避免一次食用過多。",
+        "搭配低鈉、低脂的配菜，減少整體鹽分與脂肪攝取。",
+        "注意當日其他餐次的熱量與鈉攝取，避免累積過量。"
+      ]
+    }
+  ],
+  "conclusion": "義式千層麵熱量、鈉和飽和脂肪含量均偏高，對糖尿病患者不宜大量食用，建議可少量吃並注意整日飲食均衡。近期飲食有偏鹹情況，請特別留意鹽分攝取。實際仍需依個人血糖、病況與醫囑調整。",
+  "cypher_used": null,
+  "graph_rows": null
+}

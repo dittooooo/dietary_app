@@ -1,0 +1,5 @@
+{
+    "dart.projectRoot": "frontend",
+    "dart.flutterSdkPath": null,
+    "debug.onTaskErrors": "debugAnyway"
+}

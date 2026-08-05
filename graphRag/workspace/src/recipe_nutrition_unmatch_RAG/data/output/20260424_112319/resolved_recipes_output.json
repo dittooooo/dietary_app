@@ -1,0 +1,182 @@
+[
+  {
+    "recipe_id": "r481009",
+    "recipe_name": "麻藥蝦",
+    "resolved_ingredients": [
+      {
+        "original": "白蝦",
+        "matched": "白對蝦(小)",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "洋蔥",
+        "matched": "洋蔥頭",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "辣椒",
+        "matched": "辣椒醬",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "大蒜",
+        "matched": "大蒜",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "青蔥",
+        "matched": "青蔥平均值",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "醬油",
+        "matched": "醬油",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "砂糖",
+        "matched": "精製砂糖",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "水",
+        "matched": "純水",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481010",
+    "recipe_name": "金針貢丸湯",
+    "resolved_ingredients": [
+      {
+        "original": "金針花",
+        "matched": "金針花",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "貢丸",
+        "matched": "冷凍貢丸",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "青蔥",
+        "matched": "青蔥平均值",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "胡椒鹽",
+        "matched": "精製食鹽",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "香油",
+        "matched": "香油",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "鹽巴",
+        "matched": "精製食鹽",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481011",
+    "recipe_name": "九層塔炒蛤蜊",
+    "resolved_ingredients": [
+      {
+        "original": "蛤蜊",
+        "matched": "文蛤",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "九層塔",
+        "matched": "九層塔",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "薑",
+        "matched": "薑",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "大蒜",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481012",
+    "recipe_name": "金沙豆腐",
+    "resolved_ingredients": [
+      {
+        "original": "豆腐",
+        "matched": "傳統豆腐",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "金沙豆腐醬",
+        "matched": "金沙豆腐醬",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "大蒜",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "太白粉",
+        "matched": "太白粉",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "青蔥",
+        "matched": "青蔥平均值",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481013",
+    "recipe_name": "雞腿排",
+    "resolved_ingredients": [
+      {
+        "original": "雞腿排",
+        "matched": "去皮去骨雞腿(肉雞)",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "醬油",
+        "matched": "醬油",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蠔油膏",
+        "matched": "蠔油",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "大蒜",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "冰糖",
+        "matched": "冰糖",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "味醂",
+        "matched": "味醂",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "米酒",
+        "matched": "米酒",
+        "method": "Global Search + LLM"
+      }
+    ]
+  }
+]

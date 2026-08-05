@@ -1,0 +1,284 @@
+[
+  {
+    "recipe_id": "r481014",
+    "recipe_name": "清炒苦瓜",
+    "resolved_ingredients": [
+      {
+        "original": "苦瓜",
+        "matched": "苦瓜(白皮)",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "蒜",
+        "matched": "大蒜",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "朝天椒",
+        "matched": "[選中的名稱]",
+        "整合編號": "[該項目的整合編號]",
+        "method": "Cache"
+      },
+      {
+        "original": "鹽巴",
+        "matched": "[精製食鹽]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "糖",
+        "matched": "紅砂糖",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "水",
+        "matched": "[純水]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "油",
+        "matched": "[純植物油]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "鰹魚粉",
+        "matched": "鰹魚粉",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481015",
+    "recipe_name": "酪梨輕食早餐",
+    "resolved_ingredients": [
+      {
+        "original": "酪梨",
+        "matched": "酪梨(綠皮)",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "紫色洋蔥",
+        "matched": "紫洋蔥",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "烤地瓜",
+        "matched": "荸薺",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "水煮蛋",
+        "matched": "雞蛋(高維生素A&E)",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "蘋果",
+        "matched": "[蘋果平均值(混色)]",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "核桃",
+        "matched": "核桃油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "胡麻醬",
+        "matched": "麻醬",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481017",
+    "recipe_name": "薑片虱目魚皮湯",
+    "resolved_ingredients": [
+      {
+        "original": "虱目魚皮",
+        "matched": "虱目魚(含皮): Unknown",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "老薑",
+        "matched": "老薑",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "鹽巴",
+        "matched": "[精製食鹽]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "糖",
+        "matched": "紅砂糖",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "水",
+        "matched": "[純水]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "麻油",
+        "matched": "香油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "米酒",
+        "matched": "米酒",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481018",
+    "recipe_name": "肉燥豆腐",
+    "resolved_ingredients": [
+      {
+        "original": "瘦豬絞肉",
+        "matched": "豬絞肉(70％瘦肉率)",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "豆腐",
+        "matched": "[傳統豆腐]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "雪白菇",
+        "matched": "花菇",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "大蒜",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "金蘭無添加醬油",
+        "matched": "醬油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "橄欖油",
+        "matched": "橄欖油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "水",
+        "matched": "[純水]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481019",
+    "recipe_name": "椒麻皮蛋拌麵",
+    "resolved_ingredients": [
+      {
+        "original": "皮蛋",
+        "matched": "雞皮蛋",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "花椒粉",
+        "matched": "花椒粉",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "大蒜",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "青蔥",
+        "matched": "青蔥平均值",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "烏醋",
+        "matched": "烏醋",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "醬油",
+        "matched": "醬油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "蠔油膏",
+        "matched": "蠔油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "醬油膏",
+        "matched": "醬油膏",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "韓式辣椒粉",
+        "matched": "[辣椒粉]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "油",
+        "matched": "[純植物油]",
+        "整合編號": "[Unknown]",
+        "method": "Cache"
+      },
+      {
+        "original": "關廟麵",
+        "matched": "無對應",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "豬油",
+        "matched": "豬油",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      },
+      {
+        "original": "白芝麻粒",
+        "matched": "白芝麻(熟): Unknown",
+        "整合編號": "Unknown",
+        "method": "Cache"
+      }
+    ]
+  }
+]

@@ -1,3 +1,20 @@
+__pycache__/
+*.py[cod]
+
+.env
+*.env
+!.env.example
+
+.cache/
+*.log
+.vscode/
+
+graphRag/workspace/.env
+graphRag/workspace/cache/
+graphRag/workspace/data/neo4J/
+graphRag/workspace/src/nutrition_agent_v2/test_area/output/
+*.dump
+
 # Dependency directories
 node_modules/
 jspm_packages/

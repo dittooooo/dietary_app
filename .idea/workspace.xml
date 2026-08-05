@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="04bbaaf2-7f78-4f00-b0ee-d3dc1454fed7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/docs/CODEBASE_GUIDE_ZH.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/docs/CODEBASE_GUIDE_ZH.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/docs/POSTMAN_TEST_FLOW.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/docs/POSTMAN_TEST_FLOW.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/postman/DietaryApp.postman_collection.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/postman/DietaryApp.postman_collection.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/AdminController.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/controller/AdminController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/DietRecordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/dto/DietRecordRequest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/DietRecord.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/entity/DietRecord.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/repository/DietRecordRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/repository/DietRecordRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/DietRecordService.java" beforeDir="false" afterPath="$PROJECT_DIR$/backend/src/main/java/com/tku/dietary_app/service/DietRecordService.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/Cyborg 15/Desktop/dietary_app" value="3BNKO3WpwXtGElwX4cjfvVEPqVr" />
+      <entry key="_C:/Users/terry/IdeaProjects/dietary_app" value="3AiBrQChp2Wu9PThEkPALShWWx2" />
+    </persistenceIdMap>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="3AiBrQChp2Wu9PThEkPALShWWx2" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.DietaryAppApplication.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;backend-login&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Cyborg 15/Desktop/dietary_app&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Cyborg 15\Desktop\dietary_app\backend\src\main\java\com\tku\dietary_app\service" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.tku.dietary_app.repository" />
+      <recent name="com.tku.dietary_app.entity" />
+      <recent name="com.tku.dietary_app.dto" />
+      <recent name="com.tku.dietary_app.controller" />
+    </key>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="04bbaaf2-7f78-4f00-b0ee-d3dc1454fed7" name="Changes" comment="" />
+      <created>1773065713424</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1773065713424</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
