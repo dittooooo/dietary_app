@@ -24,10 +24,10 @@ public class DietaryAgentPayload {
     private String questionType;
 
     @JsonProperty("user_profile")
-    private UserProfileDto user_profile;
+    private UserProfileDto userProfile;
 
     @JsonProperty("health_condition")
-    private HealthConditionDto health_condition;
+    private HealthConditionDto healthCondition;
 
     @JsonProperty("weekly_diet_records")
     private List<WeeklyDietRecordDto> weeklyDietRecords;
@@ -38,10 +38,10 @@ public class DietaryAgentPayload {
     @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age"})
     public static class UserProfileDto {
         @JsonProperty("height_cm")
-        private Double height_cm;
+        private Double heightCm;
 
         @JsonProperty("weight_kg")
-        private Double weight_kg;
+        private Double weightKg;
 
         private String gender;
         private Integer age;
@@ -56,7 +56,7 @@ public class DietaryAgentPayload {
         private Boolean hasChronicDisease;
 
         @JsonProperty("chronic_diseases")
-        private List<String> chronic_diseases;
+        private List<String> chronicDiseases;
     }
 
     @Data
@@ -68,7 +68,7 @@ public class DietaryAgentPayload {
         private String meal;
 
         @JsonProperty("dish_name")
-        private String dish_name;
+        private String dishName;
 
         private String note;
     }
