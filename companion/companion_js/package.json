@@ -1,0 +1,14 @@
+{
+  "name": "companion-agent",
+  "version": "1.0.0",
+  "private": true,
+  "main": "companion-agent.js",
+  "scripts": {
+    "start": "node companion-agent.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}

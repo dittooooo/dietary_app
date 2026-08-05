@@ -14,3 +14,37 @@ graphRag/workspace/cache/
 graphRag/workspace/data/neo4J/
 graphRag/workspace/src/nutrition_agent_v2/test_area/output/
 *.dump
+
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables / Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS metadata
+.DS_Store
+Thumbs.db
