@@ -4,6 +4,7 @@ import com.tku.dietary_app.dto.BodyStatusResponse;
 import com.tku.dietary_app.dto.DailySettlementResult;
 import com.tku.dietary_app.dto.SettlementResponse;
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class BodyStatusService {
     @Transactional
     public SettlementResponse settleDailyScores(Long userId) {
         UserProfile profile = userProfileRepository.findByUserIdForUpdate(userId)
-                .orElseThrow(() -> new RuntimeException("找不到使用者個人資料，無法執行每日結算"));
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料，無法進行每日結算"));
         ensureMetrics(profile);
 
         LocalDate yesterday = LocalDate.now(taipeiClock).minusDays(1);
@@ -59,7 +60,7 @@ public class BodyStatusService {
     @Transactional
     public BodyStatusResponse recalculateBodyMetrics(Long userId) {
         UserProfile profile = userProfileRepository.findByUserIdForUpdate(userId)
-                .orElseThrow(() -> new RuntimeException("找不到使用者個人資料，無法重新計算身體數據"));
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料，無法重算身體指標"));
         bodyMetricsService.recalculateAndApply(profile);
         userProfileRepository.save(profile);
         return BodyStatusResponse.fromProfile(profile, bodyMetricsService.calculateRecommendedProtein(profile));
@@ -124,7 +125,7 @@ public class BodyStatusService {
 
     private UserProfile getProfile(Long userId) {
         return userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("找不到使用者個人資料"));
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料"));
     }
 
     private void ensureMetrics(UserProfile profile) {

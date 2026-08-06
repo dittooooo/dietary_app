@@ -15,12 +15,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * users 資料表。
- *
- * 這張表放登入需要的資料：
- * email、加密後密碼、角色、是否完成 onboarding。
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -37,18 +31,21 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
-    // 這裡存的是 BCrypt 加密後的密碼，不是明文密碼。
     @Column(nullable = false)
     private String password;
 
-    // Spring Security 使用 ROLE_USER / ROLE_ADMIN 判斷 API 權限。
     @Builder.Default
     private String role = "ROLE_USER";
 
-    // 註冊後尚未填完個人資料時是 false。
     @Builder.Default
     @Column(nullable = false)
     private Boolean hasCompletedOnboarding = false;
+
+    @Column(name = "refresh_token_hash")
+    private String refreshTokenHash;
+
+    @Column(name = "refresh_token_expires_at")
+    private LocalDateTime refreshTokenExpiresAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

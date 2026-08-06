@@ -1,43 +1,81 @@
 package com.tku.dietary_app.service;
 
-import io.jsonwebtoken.*;//匯入 JWT 套件的核心類別，建立 token、解析 token、驗證 token
-import io.jsonwebtoken.security.Keys;//用來建立加密用的 key
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;//代表加密用的金鑰
-import java.util.Date;//匯入 Date 類別。用來設定：token 建立時間，token 過期時間
+import java.security.Key;
+import java.util.Date;
 
-// JWT 工具類別，提供生成和驗證 JWT Token 的功能
 @Component
 public class JwtUtil {
+    private static final String TOKEN_TYPE_CLAIM = "token_type";
+    private static final String ACCESS_TOKEN_TYPE = "access";
+    private static final String REFRESH_TOKEN_TYPE = "refresh";
+
     private final Key key;
+    private final long accessTokenExpirationSeconds;
+    private final long refreshTokenExpirationSeconds;
 
-    //設定 token 的有效時間
-    private final long EXPIRATION = 1000 * 60 * 60; // 1 hour
-
-    public JwtUtil(@Value("${jwt.secret}") String secret) {
+    public JwtUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.access-token-expiration-seconds:1800}") long accessTokenExpirationSeconds,
+                   @Value("${jwt.refresh-token-expiration-seconds:2592000}") long refreshTokenExpirationSeconds) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
+        this.refreshTokenExpirationSeconds = refreshTokenExpirationSeconds;
     }
 
-    // 生成 JWT Token
-    public String generateToken(String email) {
+    public String generateAccessToken(String email) {
+        return generateToken(email, ACCESS_TOKEN_TYPE, accessTokenExpirationSeconds);
+    }
+
+    public String generateRefreshToken(String email) {
+        return generateToken(email, REFRESH_TOKEN_TYPE, refreshTokenExpirationSeconds);
+    }
+
+    public String validateAccessToken(String token) {
+        return validateTokenByType(token, ACCESS_TOKEN_TYPE);
+    }
+
+    public String validateRefreshToken(String token) {
+        return validateTokenByType(token, REFRESH_TOKEN_TYPE);
+    }
+
+    public long getAccessTokenExpirationSeconds() {
+        return accessTokenExpirationSeconds;
+    }
+
+    public long getRefreshTokenExpirationSeconds() {
+        return refreshTokenExpirationSeconds;
+    }
+
+    private String generateToken(String email, String tokenType, long expirationSeconds) {
+        long now = System.currentTimeMillis();
         return Jwts.builder()
-                .setSubject(email)//之後解析 token 時，就可以取得 email
-                .setIssuedAt(new Date())//設定 token 的建立時間
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))//設定 token 的過期時間
-                .signWith(key, SignatureAlgorithm.HS256)//用 key 進行簽名，產生Signature
-                .compact();//把前面設定的資料組合成一個 JWT 字串
+                .setSubject(email)
+                .claim(TOKEN_TYPE_CLAIM, tokenType)
+                .setIssuedAt(new Date(now))
+                .setExpiration(new Date(now + expirationSeconds * 1000))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    // 驗證 JWT Token 並返回主題
-    public String validateToken(String token) {
-        return Jwts.parserBuilder()//用來解析 token
+    private String validateTokenByType(String token, String expectedTokenType) {
+        Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
-                .build()//建立 parser 物件，= 解析器 ，就是一個「負責把 token 拆開、檢查、讀取內容」的工具
-                .parseClaimsJws(token)//解析 token
-                .getBody()//取得 token 裡面的資料
-                .getSubject();//取得 subject(email)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        String tokenType = claims.get(TOKEN_TYPE_CLAIM, String.class);
+        if (!expectedTokenType.equals(tokenType)) {
+            throw new IllegalArgumentException("token type 不符");
+        }
+
+        return claims.getSubject();
     }
 }

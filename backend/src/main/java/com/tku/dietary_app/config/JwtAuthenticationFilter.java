@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            String email = jwtUtil.validateToken(token);
+            String email = jwtUtil.validateAccessToken(token);
             User user = userRepository.findByEmail(email).orElseThrow();
             String role = normalizeRole(user.getRole());
 

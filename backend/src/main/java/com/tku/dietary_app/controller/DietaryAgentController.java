@@ -1,8 +1,10 @@
 package com.tku.dietary_app.controller;
 
+import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietaryAskRequest;
 import com.tku.dietary_app.dto.DietaryDishNutritionRequest;
 import com.tku.dietary_app.entity.User;
+import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.DietaryAgentService;
 import jakarta.validation.Valid;
@@ -23,30 +25,17 @@ public class DietaryAgentController {
     private final UserRepository userRepository;
 
     @PostMapping("/ask")
-    public ResponseEntity<Object> ask(
-            @Valid @RequestBody DietaryAskRequest request
-    ) {
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal()
-                .toString();
+    public ResponseEntity<ApiResponse<?>> ask(@Valid @RequestBody DietaryAskRequest request) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
 
-        User user = userRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到登入使用者"));
 
-        return ResponseEntity.ok(
-                dietaryAgentService.ask(user.getId(), request)
-        );
+        return ResponseEntity.ok(ApiResponse.success(dietaryAgentService.ask(user.getId(), request)));
     }
 
     @PostMapping("/dish-nutrition")
-    public ResponseEntity<Object> dishNutrition(
-            @Valid @RequestBody DietaryDishNutritionRequest request
-    ) {
-        return ResponseEntity.ok(
-                dietaryAgentService.dishNutrition(request)
-        );
+    public ResponseEntity<ApiResponse<?>> dishNutrition(@Valid @RequestBody DietaryDishNutritionRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(dietaryAgentService.dishNutrition(request)));
     }
 }
