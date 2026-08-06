@@ -635,6 +635,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                   mealType: record['mealType'],
                   description: record['description'] ?? '',
                   nutrition: newNutrition,
+                  mealDate: _getRecordDate(record),
                 );
                 if (res['success'] == true) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('更新成功！')));

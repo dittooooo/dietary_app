@@ -1,8 +1,8 @@
 package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.dto.DietRecordRequest;
+import com.tku.dietary_app.dto.DietRecordResponse;
 import com.tku.dietary_app.dto.OnboardingRequest;
-import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.service.DietRecordService;
@@ -44,7 +44,12 @@ public class UserProfileController {
     public ResponseEntity<?> getMyDietRecords() {
         User user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body(createErrorResponse("使用者未認證"));
-        return ResponseEntity.ok(dietRecordService.getRecordsByUser(user.getId()));
+        return ResponseEntity.ok(
+                dietRecordService.getRecordsByUser(user.getId())
+                        .stream()
+                        .map(DietRecordResponse::fromEntity)
+                        .toList()
+        );
     }
 
     // 新增自己的飲食紀錄
@@ -52,7 +57,7 @@ public class UserProfileController {
     public ResponseEntity<?> addMyDietRecord(@RequestBody DietRecordRequest request) {
         User user = getAuthenticatedUser();
         if (user == null) return ResponseEntity.status(401).body(createErrorResponse("使用者未認證"));
-        return ResponseEntity.ok(dietRecordService.create(user.getId(), request));
+        return ResponseEntity.ok(DietRecordResponse.fromEntity(dietRecordService.create(user.getId(), request)));
     }
 
     // 完成用戶 onboarding 流程

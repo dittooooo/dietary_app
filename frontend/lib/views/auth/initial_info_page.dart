@@ -424,11 +424,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
               },
             ),
           // 1. 全局唯一的小精靈進度條，在轉場最後 20% 的階段平滑淡入，消除時間差與重影
-          Positioned(
-            top: topPadding + 75,
-            left: 20,
-            right: 20,
-            height: 30,
+          Center(
             child: AnimatedBuilder(
               animation: Listenable.merge([
                 _peelController,
@@ -438,10 +434,16 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                 final opacityVal = _isAnimatingPage ? 0.0 : 1.0;
                 return Opacity(
                   opacity: opacityVal,
-                  child: CustomPaint(
-                    painter: SinglePagePacmanProgressPainter(
-                      pageIndex: _currentPage,
-                      mouthProgress: _pacmanController.value,
+                  child: IgnorePointer(
+                    child: SizedBox(
+                      width: 76,
+                      height: 76,
+                      child: CustomPaint(
+                        painter: SinglePagePacmanProgressPainter(
+                          pageIndex: _currentPage,
+                          mouthProgress: _pacmanController.value,
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -1755,22 +1757,29 @@ class SinglePagePacmanProgressPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    double w = size.width;
-    double yPos = size.height / 2;
-    int dotCount = 7;
-    double dotSpacing = w / (dotCount + 1);
+    final Offset center = Offset(size.width / 2, size.height / 2);
+    final double ringRadius = min(size.width, size.height) / 2 - 4;
+    final double progress = ((pageIndex + 1) / 7).clamp(0.0, 1.0);
+    final Paint trackPaint = Paint()
+      ..color = AppColors.surface.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, ringRadius, trackPaint);
 
-    // 1. 繪製尚未吃掉的豆子
-    for (int i = 1; i <= dotCount; i++) {
-      double dotX = dotSpacing * i;
-      if (i > pageIndex + 1) {
-        Paint dotPaint = Paint()..color = Colors.black;
-        canvas.drawCircle(Offset(dotX, yPos), 7, dotPaint); // 豆子半徑為 7
-      }
-    }
+    final Paint progressPaint = Paint()
+      ..color = AppColors.primary
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: ringRadius),
+      -pi / 2,
+      2 * pi * progress,
+      false,
+      progressPaint,
+    );
 
-    // 2. 繪製當前頁面位置的小精靈
-    double pacX = dotSpacing * (pageIndex + 1);
     Paint pacPaint = Paint()
       ..color = const Color(0xFFFFA500)
       ..style = PaintingStyle.fill;
@@ -1781,10 +1790,10 @@ class SinglePagePacmanProgressPainter extends CustomPainter {
     double sweepAngle = 2 * pi - (2 * openingAngle);
 
     Path pacPath = Path();
-    pacPath.moveTo(pacX, yPos);
+    pacPath.moveTo(center.dx, center.dy);
     pacPath.arcTo(
       Rect.fromCircle(
-        center: Offset(pacX, yPos),
+        center: center,
         radius: 14,
       ),
       startAngle,

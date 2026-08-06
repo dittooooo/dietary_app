@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -17,6 +18,7 @@ public class DietRecordResponse {
     private String dishName;
     private String description;
     private String mealType;
+    private LocalDate mealDate;
     private String photoUrl;
     private LocalDateTime createdAt;
     private NutritionResponse nutrition;
@@ -27,6 +29,7 @@ public class DietRecordResponse {
                 .dishName(dietRecord.getDishName())
                 .description(dietRecord.getDescription())
                 .mealType(dietRecord.getMealType())
+                .mealDate(dietRecord.getMealDate())
                 .photoUrl(dietRecord.getPhotoUrl())
                 .createdAt(dietRecord.getCreatedAt())
                 .nutrition(NutritionResponse.fromDietRecord(
