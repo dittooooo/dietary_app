@@ -12,7 +12,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +70,7 @@ public class AuthService {
         if (user.getRefreshTokenHash() == null
                 || user.getRefreshTokenExpiresAt() == null
                 || user.getRefreshTokenExpiresAt().isBefore(LocalDateTime.now())
-                || !passwordEncoder.matches(normalizedRefreshToken, user.getRefreshTokenHash())) {
+                || !hashRefreshToken(normalizedRefreshToken).equals(user.getRefreshTokenHash())) {
             throw new UnauthorizedException("refresh token 無效或已過期");
         }
 
@@ -86,13 +90,14 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
-        user.setRefreshTokenHash(passwordEncoder.encode(refreshToken));
+        user.setRefreshTokenHash(hashRefreshToken(refreshToken));
         user.setRefreshTokenExpiresAt(LocalDateTime.now().plusSeconds(jwtUtil.getRefreshTokenExpirationSeconds()));
         userRepository.save(user);
 
         return AuthResponse.builder()
                 .success(true)
                 .message(message)
+                .role(user.getRole())
                 .tokenType("Bearer")
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
@@ -100,5 +105,15 @@ public class AuthService {
                 .refreshTokenExpiresInSeconds(jwtUtil.getRefreshTokenExpirationSeconds())
                 .needsOnboarding(needsOnboarding)
                 .build();
+    }
+
+    private String hashRefreshToken(String refreshToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = digest.digest(refreshToken.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashedBytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
     }
 }
