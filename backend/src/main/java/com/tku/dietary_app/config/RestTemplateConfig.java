@@ -10,8 +10,8 @@ import org.springframework.web.client.RestTemplate;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate(@Value("${app.partner.dietary.connect-timeout-ms:5000}") int connectTimeoutMs,
-                                     @Value("${app.partner.dietary.read-timeout-ms:30000}") int readTimeoutMs) {
+    public RestTemplate restTemplate(@Value("${app.partner.dietary.connect-timeout-ms:10000}") int connectTimeoutMs,
+                                     @Value("${app.partner.dietary.read-timeout-ms:60000}") int readTimeoutMs) {
         SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(connectTimeoutMs);
         requestFactory.setReadTimeout(readTimeoutMs);
