@@ -8,6 +8,7 @@ import '../../color/app_colors.dart';
 import '../../config/api_config.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../models/body_status_models.dart';
+import '../../services/auth_service.dart';
 import '../../services/body_status_api_service.dart';
 import '../../widgets/dog_avatar.dart';
 import '../home/home_page.dart';
@@ -19,7 +20,7 @@ class SuccessTransitionPage extends StatefulWidget {
 
   const SuccessTransitionPage({
     super.key,
-    this.title = '成功！',
+    this.title = '成功',
     this.shouldNavigate = true,
   });
 
@@ -32,7 +33,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
 
   double _progress = 0.0;
-  String _statusText = '正在確認資料...';
+  String _statusText = '正在準備資料...';
 
   @override
   void initState() {
@@ -67,8 +68,12 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   Future<bool> _checkOnboarding() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-      if (token == null) return false;
+      final token = prefs.getString(AuthService.accessTokenKey);
+      final needsOnboarding =
+          prefs.getBool(AuthService.needsOnboardingKey) ?? false;
+
+      if (token == null || token.isEmpty) return false;
+      if (needsOnboarding) return false;
 
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/user/profile'),
@@ -85,26 +90,27 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
       if (role != null) {
         await prefs.setString('user_role', role.toString());
       }
+      await prefs.setBool(AuthService.needsOnboardingKey, false);
       return true;
     } catch (e) {
-      debugPrint('檢查 onboarding 失敗: $e');
+      debugPrint('Check onboarding failed: $e');
       return false;
     }
   }
 
   Future<SettlementResponse?> _settleDailyScores() async {
     if (mounted) {
-      setState(() => _statusText = '正在更新每日狀態...');
+      setState(() => _statusText = '正在更新每日結算...');
     }
 
     try {
       return await _bodyStatusApi.settleDailyScores()
           .timeout(const Duration(seconds: 8));
     } catch (e) {
-      debugPrint('每日 BodyStatus 結算失敗: $e');
+      debugPrint('Settle daily scores failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('每日狀態更新失敗，稍後會再同步。')),
+          const SnackBar(content: Text('每日結算暫時失敗，但仍會繼續進入首頁。')),
         );
       }
       return null;
@@ -122,7 +128,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
 
     if (mounted) {
-      setState(() => _statusText = '體型正在變化...');
+      setState(() => _statusText = '正在同步寵物狀態...');
     }
 
     _dogController.setBodyType(oldType);
@@ -142,7 +148,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
   Future<void> _animateProgress() async {
     if (mounted) {
-      setState(() => _statusText = '準備進入 App...');
+      setState(() => _statusText = '正在載入 App...');
     }
 
     for (int i = 0; i <= 100; i++) {

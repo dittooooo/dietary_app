@@ -10,6 +10,36 @@ import 'login_page.dart'; // 匯入 login_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 api_config.dart 元件庫或套件
 import 'model_viewer_web_stub.dart'
     if (dart.library.html) 'model_viewer_web_impl.dart';
+import 'dart:convert' as convert;
+import '../../services/auth_service.dart';
+import '../../utils/profile_value_mapper.dart';
+
+String jsonEncode(Object? object) {
+  if (object is Map<String, dynamic> &&
+      object.containsKey('nickname') &&
+      object.containsKey('healthConditions') &&
+      object.containsKey('dietGoal') &&
+      object.containsKey('petType')) {
+    final normalized = Map<String, dynamic>.from(object);
+    normalized['healthConditions'] =
+        ProfileValueMapper.healthConditionsToApi(
+          (normalized['healthConditions'] as Iterable?) ?? const [],
+        );
+    normalized['dietGoal'] = ProfileValueMapper.firstDietGoalToApi(
+      ((normalized['dietGoal'] ?? '')
+              .toString()
+              .split(RegExp(r'[,，]'))
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty))
+          .toSet(),
+    );
+    normalized['petType'] =
+        ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
+    return convert.jsonEncode(normalized);
+  }
+
+  return convert.jsonEncode(object);
+}
 
 class InitialInfoPage extends StatefulWidget { // 定義 InitialInfoPage 類別，繼承自 StatefulWidget
   // 定義初始資訊填寫頁面 StatefulWidget
@@ -74,6 +104,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   final List<String> _petOptions = ['狗兒', '狗兒', '狗兒']; // 宣告類別成員或方法內部的區域變數
   int _selectedPetIndex = 0; // 宣告類別成員或方法內部的區域變數
   bool _isSubmitting = false; // 宣告類別成員或方法內部的區域變數
+  final AuthService _authService = AuthService();
 
   final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病'];  // 宣告類別成員或方法內部的區域變數
   final List<String> _goalOptions = ['減脂', '增肌', '養生'];  // 宣告類別成員或方法內部的區域變數

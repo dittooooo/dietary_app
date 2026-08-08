@@ -474,6 +474,22 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _chatPanelX = 0.0; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
     _dogController.setState(DogAnimationState.thinking);
+    if (text.contains('餐廳') ||
+        text.contains('菜單') ||
+        text.toLowerCase().contains('restaurant') ||
+        text.toLowerCase().contains('menu')) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _showDogResponseThenIdle();
+        setState(() {
+          _messages.add({
+            'isElf': true,
+            'text': '餐廳與菜單推薦功能已從目前 frontend 移除，現在可以直接輸入餐點名稱、份量或一天的飲食內容，我會改用飲食分析功能幫你整理建議。',
+          });
+        });
+        _scrollToBottom();
+      });
+      return;
+    }
     _scrollToBottom(); // 新增：傳送訊息後自動滑到底部
 
     // 模擬回覆

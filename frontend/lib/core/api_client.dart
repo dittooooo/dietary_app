@@ -1,201 +1,294 @@
-//負責所有網路請求的共通邏輯
 import 'dart:convert';
-import 'package:flutter/material.dart'; // 匯入 material.dart 以便使用 Dialog/Snackbar
+
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import '../config/api_config.dart'; // 匯入 api_config.dart 套件或模組
-import '../views/auth/login_page.dart'; // 匯入登入頁面以便權限降級/未授權跳轉
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/api_config.dart';
+import '../services/auth_service.dart';
+import '../views/auth/login_page.dart';
 
 class ApiClient {
-  // 定義 ApiClient 類別，封裝相關功能或資料
-  // 全域 NavigatorKey 用於無 Context 導航與攔截處理
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
-  // 統一處理 POST 請求
+  Uri _resolveUrl(String path) {
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    final base = normalizedPath.startsWith('/dietary-agent/')
+        ? ApiConfig.serverBaseUrl
+        : ApiConfig.baseUrl;
+    return Uri.parse('$base$normalizedPath');
+  }
+
   Future<http.Response> post(
     String path,
     Map<String, dynamic> body, {
     Map<String, String>? headers,
   }) async {
-    // 發送 HTTP POST 請求方法，封裝相關 API 呼叫
-    final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
+    final url = _resolveUrl(path);
+    return _sendWithRefresh(
+      path: path,
+      send: (resolvedHeaders) => http.post(
+        url,
+        headers: resolvedHeaders,
+        body: jsonEncode(body),
+      ),
+      headers: headers,
+      contentType: 'application/json',
+    );
+  }
 
-    print('發送 POST 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
-    print('請求內容: $body'); // 執行相對應的程式邏輯運算或欄位宣告設定
+  Future<http.Response> get(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
+    final url = _resolveUrl(path);
+    return _sendWithRefresh(
+      path: path,
+      send: (resolvedHeaders) => http.get(url, headers: resolvedHeaders),
+      headers: headers,
+      contentType: 'application/json',
+    );
+  }
 
-    try {
-      // 執行相對應的程式邏輯運算或欄位宣告設定
-      final response = await http.post(
-        // 宣告類別屬性或方法內部的區域變數
-        url, // 執行相對應的程式邏輯運算或欄位宣告設定
-        headers: {
-          // 執行相對應的程式邏輯運算或欄位宣告設定
-          'Content-Type': 'application/json', // 執行相對應的程式邏輯運算或欄位宣告設定
-          ...?headers, // 執行相對應的程式邏輯運算或欄位宣告設定
-        }, // 程式碼區塊或結構結束
-        body: jsonEncode(body), // 將 Map 結構資料編碼序列化為 JSON 字串形式
-      ); // 程式碼區塊或結構結束
-      _logResponse('POST', response);
-      _checkResponse(response);
-      return response; // 回傳方法執行結果或計算完成的數據
-    } catch (e) {
-      // 執行相對應的程式邏輯運算或欄位宣告設定
-      print('POST 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
-      rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
-    } // 程式碼區塊或結構結束
-  } // 程式碼區塊或結構結束
-
-  // 統一處理 GET 請求
-  Future<http.Response> get(String path, {Map<String, String>? headers}) async {
-    // 發送 HTTP GET 請求方法，封裝相關 API 呼叫
-    final url = Uri.parse('${ApiConfig.baseUrl}$path'); // 宣告類別屬性或方法內部的區域變數
-    print('GET 請求至: $url'); // 執行相對應的程式邏輯運算或欄位宣告設定
-
-    try {
-      // 執行相對應的程式邏輯運算或欄位宣告設定
-      final response = await http.get(
-        // 宣告類別屬性或方法內部的區域變數
-        url, // 執行相對應的程式邏輯運算或欄位宣告設定
-        headers: {
-          // 執行相對應的程式邏輯運算或欄位宣告設定
-          'Content-Type': 'application/json', // 執行相對應的程式邏輯運算或欄位宣告設定
-          ...?headers, // 執行相對應的程式邏輯運算或欄位宣告設定
-        }, // 程式碼區塊或結構結束
-      ); // 程式碼區塊或結構結束
-      _logResponse('GET', response);
-      _checkResponse(response);
-      return response; // 回傳方法執行結果或計算完成的數據
-    } catch (e) {
-      // 執行相對應的程式邏輯運算或欄位宣告設定
-      print('GET 網路連線異常: $e'); // 執行相對應的程式邏輯運算或欄位宣告設定
-      rethrow; // 執行相對應的程式邏輯運算或欄位宣告設定
-    } // 程式碼區塊或結構結束
-  } // 程式碼區塊或結構結束
-
-  // 統一處理 PUT 請求
   Future<http.Response> put(
     String path,
     Map<String, dynamic> body, {
     Map<String, String>? headers,
   }) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('PUT 請求至: $url');
-    print('請求內容: $body');
-
-    try {
-      final response = await http.put(
+    final url = _resolveUrl(path);
+    return _sendWithRefresh(
+      path: path,
+      send: (resolvedHeaders) => http.put(
         url,
-        headers: {'Content-Type': 'application/json', ...?headers},
+        headers: resolvedHeaders,
         body: jsonEncode(body),
-      );
-      _logResponse('PUT', response);
-      _checkResponse(response);
-      return response;
-    } catch (e) {
-      print('PUT 網路連線異常: $e');
-      rethrow;
-    }
+      ),
+      headers: headers,
+      contentType: 'application/json',
+    );
   }
 
-  // 統一處理 Multipart/Form-data 檔案上傳請求
   Future<http.Response> multipart(
     String path,
     List<int> fileBytes,
     String filename, {
     Map<String, String>? headers,
   }) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('發送 Multipart 請求至: $url');
-
-    try {
-      final request = http.MultipartRequest('POST', url);
-      if (headers != null) {
-        request.headers.addAll(headers);
-      }
-      request.files.add(
-        http.MultipartFile.fromBytes('file', fileBytes, filename: filename),
-      );
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      _logResponse('Multipart', response);
-      _checkResponse(response);
-      return response;
-    } catch (e) {
-      print('Multipart 網路連線異常: $e');
-      rethrow;
-    }
+    final url = _resolveUrl(path);
+    return _sendWithRefresh(
+      path: path,
+      send: (resolvedHeaders) async {
+        final request = http.MultipartRequest('POST', url);
+        request.headers.addAll(resolvedHeaders);
+        request.files.add(
+          http.MultipartFile.fromBytes('file', fileBytes, filename: filename),
+        );
+        final streamedResponse = await request.send();
+        return http.Response.fromStream(streamedResponse);
+      },
+      headers: headers,
+    );
   }
 
-  // 統一處理 DELETE 請求
   Future<http.Response> delete(
     String path, {
     Map<String, String>? headers,
   }) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}$path');
-    print('DELETE 請求至: $url');
+    final url = _resolveUrl(path);
+    return _sendWithRefresh(
+      path: path,
+      send: (resolvedHeaders) => http.delete(url, headers: resolvedHeaders),
+      headers: headers,
+      contentType: 'application/json',
+    );
+  }
+
+  Future<http.Response> _sendWithRefresh({
+    required String path,
+    required Future<http.Response> Function(Map<String, String>) send,
+    Map<String, String>? headers,
+    String? contentType,
+  }) async {
+    var resolvedHeaders = <String, String>{
+      if (contentType != null) 'Content-Type': contentType,
+      ...?headers,
+    };
+
+    _attachLatestAccessToken(resolvedHeaders);
+
+    var response = await send(resolvedHeaders);
+    _logResponse(path, response);
+
+    if (_shouldAttemptRefresh(path, response.statusCode)) {
+      final refreshed = await _refreshAccessToken();
+      if (refreshed) {
+        resolvedHeaders = <String, String>{
+          if (contentType != null) 'Content-Type': contentType,
+          ...?headers,
+        };
+        _attachLatestAccessToken(resolvedHeaders);
+        response = await send(resolvedHeaders);
+        _logResponse('$path (retried)', response);
+      }
+    }
+
+    _checkResponse(response);
+    return response;
+  }
+
+  void _attachLatestAccessToken(Map<String, String> headers) {
+    final currentAuthorization = headers['Authorization'];
+    if (currentAuthorization == null || !currentAuthorization.startsWith('Bearer ')) {
+      return;
+    }
+
+    final latestToken = _latestAccessToken;
+    if (latestToken == null || latestToken.isEmpty) {
+      return;
+    }
+
+    headers['Authorization'] = 'Bearer $latestToken';
+  }
+
+  bool _shouldAttemptRefresh(String path, int statusCode) {
+    if (statusCode != 401) {
+      return false;
+    }
+
+    const excludedPaths = <String>{
+      '/login',
+      '/register',
+      '/refresh',
+    };
+    return !excludedPaths.contains(path);
+  }
+
+  Future<bool> _refreshAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(AuthService.refreshTokenKey);
+
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return false;
+    }
+
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/refresh'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'refreshToken': refreshToken}),
+    );
+
+    if (response.statusCode != 200) {
+      return false;
+    }
 
     try {
-      final response = await http.delete(
-        url,
-        headers: {'Content-Type': 'application/json', ...?headers},
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        return false;
+      }
+
+      final accessToken = decoded['accessToken']?.toString() ?? '';
+      final newRefreshToken =
+          decoded['refreshToken']?.toString() ?? refreshToken;
+
+      if (accessToken.isEmpty) {
+        return false;
+      }
+
+      await prefs.setString(AuthService.accessTokenKey, accessToken);
+      await prefs.setString(AuthService.refreshTokenKey, newRefreshToken);
+      await prefs.setString(
+        AuthService.tokenTypeKey,
+        decoded['tokenType']?.toString() ?? 'Bearer',
       );
-      _logResponse('DELETE', response);
-      _checkResponse(response);
-      return response;
-    } catch (e) {
-      print('DELETE 網路連線異常: $e');
-      rethrow;
+      if (decoded.containsKey('accessTokenExpiresInSeconds')) {
+        await prefs.setInt(
+          AuthService.accessTokenExpiresKey,
+          _asInt(decoded['accessTokenExpiresInSeconds']),
+        );
+      }
+      if (decoded.containsKey('refreshTokenExpiresInSeconds')) {
+        await prefs.setInt(
+          AuthService.refreshTokenExpiresKey,
+          _asInt(decoded['refreshTokenExpiresInSeconds']),
+        );
+      }
+
+      _latestAccessToken = accessToken;
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
-  // 私有工具：檢查 API 回傳狀態，處理 403 權限降級或未授權攔截
-  void _logResponse(String method, http.Response response) {
-    print('$method 回應狀態碼: ${response.statusCode}');
-    print('$method 回應內容: ${response.body}');
+  void _logResponse(String path, http.Response response) {
+    debugPrint('API $path -> ${response.statusCode}');
+    debugPrint('API $path body -> ${response.body}');
   }
 
   void _checkResponse(http.Response response) {
-    if (response.statusCode == 403 || response.statusCode == 401) {
+    if (response.statusCode == 401 || response.statusCode == 403) {
       final context = navigatorKey.currentContext;
-      if (context != null) {
-        final requestUrl = response.request?.url.path ?? '';
-        final isLogin = requestUrl.contains('/login');
-
-        // 延遲執行，避免與當前 Build 衝突
-        Future.delayed(Duration.zero, () {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (ctx) => AlertDialog(
-              title: Text(isLogin
-                  ? '登入失敗'
-                  : (response.statusCode == 403 ? '權限不足' : '登入狀態已失效')),
-              content: Text(isLogin
-                  ? '帳號或密碼錯誤，請確認後再試。'
-                  : (response.statusCode == 403
-                      ? '您目前沒有權限使用這個功能，請確認帳號權限或重新登入。'
-                      : '您的登入狀態已過期或無效，請重新登入。')),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    if (!isLogin) {
-                      // 強制重導向至登入頁面
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                        (route) => false,
-                      );
-                    }
-                  },
-                  child: const Text('確定'),
-                ),
-              ],
-            ),
-          );
-        });
+      if (context == null) {
+        return;
       }
+
+      final requestUrl = response.request?.url.path ?? '';
+      final isLogin = requestUrl.contains('/login');
+
+      Future.delayed(Duration.zero, () async {
+        if (response.statusCode == 401 && !isLogin) {
+          await AuthService().clearSession();
+        }
+
+        if (!context.mounted) {
+          return;
+        }
+
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => AlertDialog(
+            title: Text(
+              isLogin
+                  ? '登入失敗'
+                  : (response.statusCode == 403 ? '權限不足' : '登入已失效'),
+            ),
+            content: Text(
+              isLogin
+                  ? '帳號或密碼錯誤，請重新確認。'
+                  : (response.statusCode == 403
+                      ? '你目前沒有權限執行這個操作。'
+                      : '登入狀態已過期，請重新登入。'),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  if (!isLogin) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginPage(),
+                      ),
+                      (route) => false,
+                    );
+                  }
+                },
+                child: const Text('確定'),
+              ),
+            ],
+          ),
+        );
+      });
     }
   }
-} // 程式碼區塊或結構結束
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('${value ?? ''}') ?? 0;
+  }
+}
+
+String? _latestAccessToken;
