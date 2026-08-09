@@ -13,7 +13,7 @@
    * **食物明細與數量 (Meal Items)**：每個餐期群組內包含具體的食物名稱、數量與常用單位（例如：`[{"meal_period": "早餐", "meal_items": [{"name": "茶葉蛋", "quantity": 1, "unit": "顆"}]}, {"meal_period": "其他", "meal_items": [{"name": "豆漿", "quantity": 1, "unit": "杯"}]}]`）。
 
 3. **草稿回傳與前端確認 (Draft Preview & Confirmation UI)**：
-   * Companion Agent 在 `/companion/ask` 端點完成分析後，**不直接呼叫寫入資料庫的 API**，而是將上述結構化資訊作為「紀錄草稿」連同陪伴口吻的對話文字 (`companion_reply`) 回傳給前端。
+   * Companion Agent 在 `/companion/ask` 端點完成分析後，**不直接呼叫寫入資料庫的 API**，而是將上述結構化資訊作為「紀錄草稿」 (`companion_reply`) 回傳給前端。
    * 前端收到 `meal_records` 陣列後，可直接以「一餐期一張卡片」的方式彈出確認 UI，讓使用者直觀確認 AI 辨識出的各餐期與食物明細。
 
 4. **前端持久化寫入 (Final Persistence)**：

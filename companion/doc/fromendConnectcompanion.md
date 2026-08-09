@@ -196,4 +196,173 @@ Future<void> sendUserPromptToCompanion(String userPrompt, String? authToken) asy
 ```
 
 ---
-*文件更新時間：2026-08-09 (已更新為最終確定之 5 大核心欄位規格)*
+
+## 🛠️ 七、 前端連線實際修改檔完整說明 (Frontend Modifications Log)
+
+為實現 Flutter 前端與陪伴精靈 (Port 3000, `http://localhost:3000/companion/ask`) 的連線與 UI 渲染對接，**前端共針對以下 4 個檔案進行了更動**：
+
+---
+
+### 1. `lib/config/api_config.dart` (環境配置檔)
+**修改目的**：新增 Companion Agent (Port 3000) 的 Base URL 動態配置。
+
+**修改內容**：
+在 `ApiConfig` 類別中新增 `companionBaseUrl` 靜態 Getter：
+
+```dart
+class ApiConfig {
+  // 原有之主後端 API (Port 8080) 配置...
+  static String get baseUrl { ... }
+
+  /// 陪伴精靈 Companion Agent 的 Base URL (Port 3000)
+  static String get companionBaseUrl {
+    if (kIsWeb) {
+      // 網頁瀏覽器 (Chrome / Edge)
+      return 'http://localhost:3000';
+    } else if (Platform.isAndroid) {
+      // Android 模擬器 (使用 10.0.2.2 存取宿主電腦 localhost)
+      return 'http://10.0.2.2:3000';
+    } else {
+      // 其他平台 (Windows 桌面版、iOS 模擬器)
+      return 'http://localhost:3000';
+    }
+  }
+}
+```
+
+---
+
+### 2. `lib/core/api_client.dart` (網路請求封裝層)
+**修改目的**：
+1. 允許 `ApiClient` 傳入完整的 HTTP/HTTPS 網址，而不強制加上 `ApiConfig.baseUrl` (Port 8080) 前綴。
+2. 避免當 Companion API 回傳 401/403 時誤觸發主後端的全域「登入過期/權限不足」彈跳視窗。
+
+**修改內容**：
+1. **跨網址相容**（`post`, `get`, `put`, `multipart`, `delete` 方法）：
+   ```dart
+   // 將原有的 Uri.parse('${ApiConfig.baseUrl}$path') 改為支援傳入完整網址：
+   final url = path.startsWith('http') ? Uri.parse(path) : Uri.parse('${ApiConfig.baseUrl}$path');
+   ```
+
+2. **避開全域 401/403 攔截彈窗**（`_checkResponse` 方法）：
+   ```dart
+   void _checkResponse(http.Response response) {
+     if (response.statusCode == 403 || response.statusCode == 401) {
+       final requestUrl = response.request?.url.toString() ?? '';
+       // 如果是陪伴精靈端點 (Port 3000 或 /companion/)，不跳出全域登入失敗彈窗，交由業務層處理
+       if (requestUrl.contains(':3000') || requestUrl.contains('/companion/')) {
+         return;
+       }
+       
+       // 原有之 401/403 彈跳視窗邏輯...
+     }
+   }
+   ```
+
+---
+
+### 3. `lib/services/diet_service.dart` (業務邏輯服務層)
+**修改目的**：新增與 Companion Agent 後端 Port 3000 發送對話的端點方法。
+
+**修改內容**：
+1. 匯入 `api_config.dart`：
+   ```dart
+   import '../config/api_config.dart';
+   ```
+2. 在 `sendCompanionUserPrompt` 方法中將對話 API 連線位址切換為 Port 3000：
+   ```dart
+   Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
+     final normalizedPrompt = userPrompt.trim();
+     if (normalizedPrompt.isEmpty) {
+       return {'success': false, 'message': 'User prompt cannot be empty.'};
+     }
+
+     final token = await _token();
+     try {
+       // 使用 ApiConfig.companionBaseUrl 組裝 Port 3000 的完整 URL
+       final response = await _client.post(
+         '${ApiConfig.companionBaseUrl}/companion/ask',
+         {'user_prompt': normalizedPrompt},
+         headers: {
+           if (token != null) 'Authorization': 'Bearer $token',
+         },
+       );
+
+       if (response.statusCode == 200) {
+         final data = jsonDecode(response.body);
+         return {
+           'success': data['success'] ?? true,
+           'companion_reply': data['companion_reply'] ?? data['reply'] ?? '',
+           'intent_category': data['intent_category'] ?? 'general',
+           'meal_records': data['meal_records'] ?? [],
+           'dietary_agent_error': data['dietary_agent_error'],
+           'data': data,
+         };
+       }
+
+       return {
+         'success': false,
+         'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
+       };
+     } catch (e) {
+       return {'success': false, 'message': 'Send companion prompt failed: $e'};
+     }
+   }
+   ```
+
+---
+
+### 4. `lib/views/home/home_view.dart` (首頁對話 UI 畫面)
+**修改目的**：將首頁對話輸入框點擊傳送後的處理邏輯，由舊有的單純週分析切換為呼叫 `DietService().sendCompanionUserPrompt(text)`，並即時渲染精靈回覆。
+
+**修改內容**：
+在對話傳送處更新連線與 UI 狀態處理邏輯：
+
+```dart
+// 新增載入中狀態文字
+_messages.add({
+  'isElf': true,
+  'text': '正在思考中...',
+});
+_scrollToBottom();
+
+// 呼叫陪伴精靈 API
+DietService().sendCompanionUserPrompt(text).then((res) {
+  _showDogResponseThenIdle();
+  setState(() {
+    // 移除「正在思考中...」預載提示
+    if (_messages.isNotEmpty && (_messages.last['text'] == '正在思考中...' || _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
+      _messages.removeLast();
+    }
+    
+    // 提取陪伴精靈回應文字 companion_reply 並渲染至聊天氣泡
+    final reply = res['companion_reply'] ?? (res['data'] is Map ? res['data']['companion_reply'] : null);
+    if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
+      _messages.add({
+        'isElf': true,
+        'text': reply.toString(),
+      });
+    } else {
+      _messages.add({
+        'isElf': true,
+        'text': res['message'] ?? '讀取精靈回覆失敗，請稍後再試。',
+      });
+    }
+  });
+  _scrollToBottom();
+}).catchError((e) {
+  _showDogResponseThenIdle();
+  setState(() {
+    if (_messages.isNotEmpty && (_messages.last['text'] == '正在思考中...' || _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
+      _messages.removeLast();
+    }
+    _messages.add({'isElf': true, 'text': '連線發生錯誤: $e'});
+  });
+  _scrollToBottom();
+});
+```
+
+---
+*文件更新時間：2026-08-09 (已包含詳細前端全套 4 大修改檔案紀錄：Config、Client、Service、View UI)*
+
+
