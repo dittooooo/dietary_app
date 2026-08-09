@@ -84,7 +84,32 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
     
-    // 1. Try mealDate first
+    // 0. Try date first (from backend record_date field)
+    final dateVal = record['date'];
+    if (dateVal != null) {
+      if (dateVal is String) {
+        try {
+          return DateTime.parse(dateVal);
+        } catch (_) {}
+      } else if (dateVal is List && dateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(dateVal[0].toString()),
+            int.parse(dateVal[1].toString()),
+            int.parse(dateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (dateVal is Map) {
+        try {
+          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
+          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
+          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -151,6 +176,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     final breakfastRecords = todayRecords.where((r) => r['mealType'] == 'BREAKFAST').toList();
     final lunchRecords = todayRecords.where((r) => r['mealType'] == 'LUNCH').toList();
     final dinnerRecords = todayRecords.where((r) => r['mealType'] == 'DINNER').toList();
+    final otherRecords = todayRecords.where((r) => r['mealType'] == 'OTHER' || r['mealType'] == '其他').toList();
 
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
       backgroundColor: AppColors.surface, // 設定顏色數值（Color）
@@ -175,6 +201,8 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                             _buildMealSection("中餐", Icons.wb_sunny, lunchRecords),
                             const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                             _buildMealSection("晚餐", Icons.nights_stay_outlined, dinnerRecords),
+                            const SizedBox(height: 15),
+                            _buildMealSection("其他", Icons.more_horiz, otherRecords),
                           ], // 執行相對應的邏輯計算或設定屬性參數
                         ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數

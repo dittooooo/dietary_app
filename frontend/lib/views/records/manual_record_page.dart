@@ -26,7 +26,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
   Uint8List? _imageBytes; // 執行相對應的邏輯計算或設定屬性參數
   final ImagePicker _picker = ImagePicker(); // 宣告類別成員或方法內部的區域變數
   
-  final List<String> _mealOptions = ['早餐', '午餐', '晚餐']; // 宣告類別成員或方法內部的區域變數
+  final List<String> _mealOptions = ['早餐', '午餐', '晚餐', '其他']; // 宣告類別成員或方法內部的區域變數
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
@@ -164,7 +164,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
         description: '手動輸入飲食紀錄',
         nutrition: nutritionString,
         mealDate: _selectedDate,
-      ).timeout(const Duration(seconds: 2));
+      );
 
       if (result['success'] == true) {
         final recordData = result['data'];

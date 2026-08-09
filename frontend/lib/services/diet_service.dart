@@ -36,8 +36,9 @@ class DietService {
       'calories': parseVal(r'(?:熱量|calories|kcal)\D*(\d+(?:\.\d+)?)'),
       'protein': parseVal(r'(?:蛋白質|protein)\D*(\d+(?:\.\d+)?)'),
       'fat': parseVal(r'(?:脂肪|fat)\D*(\d+(?:\.\d+)?)'),
-      'carbohydrates':
-          parseVal(r'(?:碳水化合物|碳水|carbs|carbohydrates)\D*(\d+(?:\.\d+)?)'),
+      'carbohydrates': parseVal(
+        r'(?:碳水化合物|碳水|carbs|carbohydrates)\D*(\d+(?:\.\d+)?)',
+      ),
     };
   }
 
@@ -58,8 +59,8 @@ class DietService {
   }
 
   String _errorMessage(String action, int statusCode, String body) {
-    final detail = body.trim().isEmpty ? 'no response body' : body;
-    return '$action failed ($statusCode): $detail';
+    final detail = body.trim().isEmpty ? '無伺服器回應內容' : body;
+    return '$action失敗 ($statusCode): $detail';
   }
 
   Map<String, dynamic> _decodeObject(String body) {
@@ -91,7 +92,22 @@ class DietService {
       );
 
       if (response.statusCode == 200) {
-        return _unwrapListResponse(response.body);
+        final rawList = _unwrapListResponse(response.body);
+        return rawList.map((record) {
+          if (record is Map) {
+            final desc = (record['description'] ?? '').toString();
+            if (desc.startsWith('[MealType:OTHER]')) {
+              final newRecord = Map<String, dynamic>.from(record);
+              newRecord['mealType'] = 'OTHER';
+              newRecord['description'] = desc.replaceFirst(
+                '[MealType:OTHER]',
+                '',
+              );
+              return newRecord;
+            }
+          }
+          return record;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -114,13 +130,20 @@ class DietService {
 
     final parsedNutrition = _parseNutrition(nutrition);
 
+    String apiMealType = _mealTypeForApi(mealType);
+    String apiDescription = description;
+    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
+      apiMealType = 'DINNER';
+      apiDescription = '[MealType:OTHER]$description';
+    }
+
     try {
       final response = await _client.post(
         '/diet-records',
         {
           'dishName': dishName,
-          'mealType': _mealTypeForApi(mealType),
-          'description': description,
+          'mealType': apiMealType,
+          'description': apiDescription,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],
@@ -133,7 +156,20 @@ class DietService {
 
       final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'data': data['data'] ?? data};
+        final recordData = data['data'] ?? data;
+        if (recordData is Map) {
+          final desc = (recordData['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            final newRecord = Map<String, dynamic>.from(recordData);
+            newRecord['mealType'] = 'OTHER';
+            newRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
+            return {'success': true, 'data': newRecord};
+          }
+        }
+        return {'success': true, 'data': recordData};
       }
 
       return {
@@ -216,13 +252,20 @@ class DietService {
 
     final parsedNutrition = _parseNutrition(nutrition);
 
+    String apiMealType = _mealTypeForApi(mealType);
+    String apiDescription = description;
+    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
+      apiMealType = 'DINNER';
+      apiDescription = '[MealType:OTHER]$description';
+    }
+
     try {
       final response = await _client.put(
         '/diet-records/$id',
         {
           'dishName': dishName,
-          'mealType': _mealTypeForApi(mealType),
-          'description': description,
+          'mealType': apiMealType,
+          'description': apiDescription,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],
@@ -235,7 +278,20 @@ class DietService {
 
       final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'data': data['data'] ?? data};
+        final recordData = data['data'] ?? data;
+        if (recordData is Map) {
+          final desc = (recordData['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            final newRecord = Map<String, dynamic>.from(recordData);
+            newRecord['mealType'] = 'OTHER';
+            newRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
+            return {'success': true, 'data': newRecord};
+          }
+        }
+        return {'success': true, 'data': recordData};
       }
 
       return {
@@ -254,7 +310,7 @@ class DietService {
   Future<Map<String, dynamic>> askWeeklyAnalysis(String question) async {
     final token = await _token();
     if (token == null) {
-      return {'success': false, 'message': 'Please sign in again.'};
+      return {'success': false, 'message': '請重新登入。'};
     }
 
     try {
@@ -270,11 +326,7 @@ class DietService {
       if (response.statusCode != 200) {
         return {
           'success': false,
-          'message': _errorMessage(
-            'Ask dietary analysis',
-            response.statusCode,
-            response.body,
-          ),
+          'message': _errorMessage('飲食分析', response.statusCode, response.body),
         };
       }
 
@@ -283,12 +335,13 @@ class DietService {
         'data': _normalizeAskResponse(
           payload: payload,
           partnerData: decoded['data'],
-          goalDisplay: prefs.getString('user_diet_goal') ??
+          goalDisplay:
+              prefs.getString('user_diet_goal') ??
               ProfileValueMapper.defaultDietGoalDisplay,
         ),
       };
     } catch (e) {
-      return {'success': false, 'message': 'Ask dietary analysis failed: $e'};
+      return {'success': false, 'message': '飲食分析失敗: $e'};
     }
   }
 
@@ -297,9 +350,18 @@ class DietService {
     final normalizedQuestion = question.trim();
     final dishNames = _extractDishNames(normalizedQuestion);
 
+    String questionType = 'unknown';
+    if (normalizedQuestion.contains('比較') ||
+        normalizedQuestion.contains('和') ||
+        dishNames.length > 1) {
+      questionType = 'dish_comparison';
+    } else if (dishNames.isNotEmpty && dishNames.first != 'general') {
+      questionType = 'single_dish';
+    }
+
     final Map<String, dynamic> payload = {
       'question': normalizedQuestion,
-      'question_type': 'diet_advice',
+      'question_type': questionType,
       'dish_names': dishNames,
       'user_profile': {
         'height_cm': prefs.getDouble('user_height'),
@@ -314,7 +376,9 @@ class DietService {
     payload['health_condition'] = {
       'has_chronic_disease':
           healthConditions.isNotEmpty && !healthConditions.contains('NONE'),
-      'chronic_diseases': healthConditions.isEmpty ? ['NONE'] : healthConditions,
+      'chronic_diseases': healthConditions.isEmpty
+          ? ['NONE']
+          : healthConditions,
     };
 
     final records = await _buildWeeklyDietRecords();
@@ -328,10 +392,13 @@ class DietService {
   Future<List<Map<String, dynamic>>> _buildWeeklyDietRecords() async {
     final records = await getMyDietRecords();
     return records.take(7).map((record) {
-      final rawDate = record['date'] ?? record['mealDate'] ?? record['createdAt'];
+      final rawDate =
+          record['date'] ?? record['mealDate'] ?? record['createdAt'];
       return {
         'date': _normalizeRecordDate(rawDate),
-        'meal': _mealTypeForApi('${record['mealType'] ?? record['meal'] ?? ''}'),
+        'meal': _mealTypeForApi(
+          '${record['mealType'] ?? record['meal'] ?? ''}',
+        ),
         'dish_name': record['dishName'] ?? record['dish_name'] ?? '',
         'note': record['description'] ?? record['note'] ?? '',
       }..removeWhere((key, value) => value == null || value == '');
@@ -373,8 +440,9 @@ class DietService {
     required dynamic partnerData,
     required String goalDisplay,
   }) {
-    final responseMap =
-        partnerData is Map<String, dynamic> ? Map<String, dynamic>.from(partnerData) : {};
+    final responseMap = partnerData is Map<String, dynamic>
+        ? Map<String, dynamic>.from(partnerData)
+        : {};
     final profile = Map<String, dynamic>.from(
       payload['user_profile'] is Map<String, dynamic>
           ? payload['user_profile'] as Map<String, dynamic>

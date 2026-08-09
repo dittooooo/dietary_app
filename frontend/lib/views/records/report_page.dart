@@ -447,7 +447,32 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
     
-    // 1. Try mealDate first
+    // 0. Try date first (from backend record_date field)
+    final dateVal = record['date'];
+    if (dateVal != null) {
+      if (dateVal is String) {
+        try {
+          return DateTime.parse(dateVal);
+        } catch (_) {}
+      } else if (dateVal is List && dateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(dateVal[0].toString()),
+            int.parse(dateVal[1].toString()),
+            int.parse(dateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (dateVal is Map) {
+        try {
+          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
+          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
+          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {

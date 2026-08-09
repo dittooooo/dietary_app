@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
@@ -32,9 +33,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
   List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
+
+  String _stripEmojis(String text) {
+    final regex = RegExp(
+      r'[\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F900}-\u{1F9FF}\u{1F1E0}-\u{1F1FF}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F19A}\u{1F201}-\u{1F251}\u{1fa00}-\u{1faff}]',
+      unicode: true,
+    );
+    String result = text.replaceAll(regex, '');
+    result = result.replaceAll(RegExp(r'[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF]'), '');
+    return result.trim();
+  }
+
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _hasShownSummaryDialogThisRun = false;
     _isChatOpen = widget.initialOpenChat; // 執行相對應的邏輯計算或設定屬性參數
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
@@ -94,7 +107,32 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
     
-    // 1. Try mealDate first
+    // 0. Try date first (from backend record_date field)
+    final dateVal = record['date'];
+    if (dateVal != null) {
+      if (dateVal is String) {
+        try {
+          return DateTime.parse(dateVal);
+        } catch (_) {}
+      } else if (dateVal is List && dateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(dateVal[0].toString()),
+            int.parse(dateVal[1].toString()),
+            int.parse(dateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (dateVal is Map) {
+        try {
+          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
+          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
+          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -141,17 +179,95 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     return null;
   }
 
+  double _getCaloriesFromRecord(dynamic record) {
+    if (record == null) return 0.0;
+    
+    final nutrition = record['nutrition'];
+    if (nutrition != null) {
+      if (nutrition is Map) {
+        final calVal = nutrition['calories'];
+        if (calVal != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(calVal.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+          }
+        }
+      } else {
+        final nutritionStr = nutrition.toString().trim();
+        if (nutritionStr.isNotEmpty) {
+          try {
+            if (nutritionStr.startsWith('{') && nutritionStr.endsWith('}')) {
+              final parsed = jsonDecode(nutritionStr);
+              if (parsed is Map && parsed.containsKey('calories')) {
+                final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(parsed['calories'].toString());
+                if (numMatch != null) {
+                  return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+                }
+              }
+            }
+          } catch (_) {}
+
+          final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
+          final match = numRegExp.firstMatch(nutritionStr);
+          if (match != null) {
+            final val = double.tryParse(match.group(1) ?? '');
+            if (val != null) return val;
+          }
+        }
+      }
+    }
+
+    final dishName = record['dishName'] ?? '';
+    final desc = record['description'] ?? '';
+    final combined = '$dishName $desc';
+    final kcalMatch = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)', caseSensitive: false).firstMatch(combined);
+    if (kcalMatch != null) {
+      final val = double.tryParse(kcalMatch.group(1) ?? '');
+      if (val != null) return val;
+    }
+
+    return dishName.toString().trim().isNotEmpty ? 400.0 : 0.0;
+  }
+
+  double _getNutrientFromRecord(dynamic record, String pattern) {
+    if (record == null) return 0.0;
+    final nutrition = record['nutrition'];
+    if (nutrition == null) return 0.0;
+
+    String englishKey = '';
+    if (pattern.contains('蛋白質') || pattern.contains('protein')) {
+      englishKey = 'protein';
+    } else if (pattern.contains('脂肪') || pattern.contains('fat')) {
+      englishKey = 'fat';
+    } else if (pattern.contains('碳水') || pattern.contains('carbohydrate') || pattern.contains('carb')) {
+      englishKey = 'carbohydrates';
+    }
+
+    if (nutrition is Map) {
+      if (englishKey.isNotEmpty) {
+        final val = nutrition[englishKey];
+        if (val != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(val.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+          }
+        }
+      }
+    } else {
+      final nutritionStr = nutrition.toString().trim();
+      if (nutritionStr.isNotEmpty) {
+        final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+        final match = regExp.firstMatch(nutritionStr);
+        if (match != null) {
+          return double.tryParse(match.group(1) ?? '') ?? 0.0;
+        }
+      }
+    }
+    return 0.0;
+  }
+
   void _checkAndShowDietSummaryDialog() async {
     if (_hasShownSummaryDialogThisRun) return;
-    
-    // 管理者不需要顯示昨日飲食總結報告
-    final prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('user_role') ?? '';
-    if (role == 'ROLE_ADMIN' || role == 'ADMIN') {
-      _hasShownSummaryDialogThisRun = true;
-      return;
-    }
-    
     _hasShownSummaryDialogThisRun = true;
 
     try {
@@ -170,38 +286,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         if (rDate.year == yesterday.year &&
             rDate.month == yesterday.month &&
             rDate.day == yesterday.day) {
-          final nut = record['nutrition'];
-          double cal = 0;
-          double prot = 0;
-          double fatVal = 0;
-          double carb = 0;
           
-          if (nut is Map) {
-            cal = (nut['calories'] as num?)?.toDouble() ?? 0;
-            prot = (nut['protein'] as num?)?.toDouble() ?? 0;
-            fatVal = (nut['fat'] as num?)?.toDouble() ?? 0;
-            carb = (nut['carbohydrates'] as num?)?.toDouble() ?? 0;
-          } else if (record['calories'] != null || record['protein'] != null || record['fat'] != null || record['carbohydrates'] != null) {
-            cal = (record['calories'] as num?)?.toDouble() ?? 0;
-            prot = (record['protein'] as num?)?.toDouble() ?? 0;
-            fatVal = (record['fat'] as num?)?.toDouble() ?? 0;
-            carb = (record['carbohydrates'] as num?)?.toDouble() ?? 0;
-          } else if (nut is String) {
-            final regCal = RegExp(r'(?:熱量|calories|kcal)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
-            final regProt = RegExp(r'(?:蛋白質|protein)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
-            final regFat = RegExp(r'(?:脂肪|fat)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
-            final regCarb = RegExp(r'(?:碳水化合物|碳水|carbs)\D*(\d+(?:\.\d+)?)', caseSensitive: false);
-            
-            cal = double.tryParse(regCal.firstMatch(nut)?.group(1) ?? '') ?? 0;
-            prot = double.tryParse(regProt.firstMatch(nut)?.group(1) ?? '') ?? 0;
-            fatVal = double.tryParse(regFat.firstMatch(nut)?.group(1) ?? '') ?? 0;
-            carb = double.tryParse(regCarb.firstMatch(nut)?.group(1) ?? '') ?? 0;
-          }
-
-          totalCalories += cal;
-          totalProtein += prot;
-          totalFat += fatVal;
-          totalCarbs += carb;
+          totalCalories += _getCaloriesFromRecord(record);
+          totalProtein += _getNutrientFromRecord(record, r'(?:蛋白質|protein)');
+          totalFat += _getNutrientFromRecord(record, r'(?:脂肪|fat)');
+          totalCarbs += _getNutrientFromRecord(record, r'(?:碳水化合物|碳水|carbohydrate|carbs)');
           
           if (record['dishName'] != null) {
             yesterdayDishes.add(record['dishName'].toString());
@@ -210,14 +299,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }
 
       if (!mounted) return;
-      _showDietSummaryDialog(
-        date: yesterday,
-        calories: totalCalories,
-        protein: totalProtein,
-        fat: totalFat,
-        carbs: totalCarbs,
-        dishes: yesterdayDishes,
-      );
+      debugPrint('=============================================');
+      debugPrint('準備跳出昨日飲食總結彈窗！ Dishes: $yesterdayDishes');
+      debugPrint('=============================================');
+      
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
+        _showDietSummaryDialog(
+          date: yesterday,
+          calories: totalCalories,
+          protein: totalProtein,
+          fat: totalFat,
+          carbs: totalCarbs,
+          dishes: yesterdayDishes,
+        );
+      });
     } catch (e) {
       debugPrint('取得昨日飲食總結失敗: $e');
     }
@@ -474,196 +570,73 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _chatPanelX = 0.0; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
     _dogController.setState(DogAnimationState.thinking);
-    if (text.contains('餐廳') ||
-        text.contains('菜單') ||
-        text.toLowerCase().contains('restaurant') ||
-        text.toLowerCase().contains('menu')) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _showDogResponseThenIdle();
-        setState(() {
-          _messages.add({
-            'isElf': true,
-            'text': '餐廳與菜單推薦功能已從目前 frontend 移除，現在可以直接輸入餐點名稱、份量或一天的飲食內容，我會改用飲食分析功能幫你整理建議。',
-          });
-        });
-        _scrollToBottom();
-      });
-      return;
-    }
     _scrollToBottom(); // 新增：傳送訊息後自動滑到底部
 
     // 模擬回覆
     Future.delayed(const Duration(milliseconds: 500), () { // 建立編譯期常數，優化 Flutter 渲染效能
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        if (text.contains("推薦")) {
-          _messages.add({
-            'isElf': true,
-            'text': '正在搜尋附近的店家與健康推薦項目...',
-            'type': 'restaurant'
-          });
-          _scrollToBottom(); // 新增：載入中提示滑到底部
+        _messages.add({
+          'isElf': true,
+          'text': '正在為您載入個人與週飲食紀錄，進行智能評估中...',
+        });
+      });
+      _scrollToBottom(); // 新增：載入中提示滑到底部
+      
+      DietService().askWeeklyAnalysis(text).then((res) {
+        _showDogResponseThenIdle();
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+            _messages.removeLast();
+          }
           
-          AdminService().listRestaurants().then((restaurants) {
-            AdminService().listMenuItems().then((menus) {
-              _showDogResponseThenIdle();
-              setState(() {
-                if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
-                  _messages.removeLast();
-                }
-                
-                if (restaurants.isEmpty) {
-                  _messages.add({
-                    'isElf': true,
-                    'text': '已為您搜尋附近的推薦項目：\n目前系統暫無推薦餐廳，您可以使用管理員面板的「餐廳管理」新增更多選擇！',
-                    'type': 'restaurant'
-                  });
-                } else {
-                  final String restText = restaurants.asMap().entries.map((entry) {
-                    final idx = entry.key + 1;
-                    final rest = entry.value;
-                    final restName = rest['name'] ?? '店家';
-                    final restAddr = rest['address'] ?? '';
-                    final restStars = '★' * (rest['stars'] ?? 5);
-                    
-                    final matchedMenus = menus.where((m) => m['restaurantName'] == restName).toList();
-                    final menuText = matchedMenus.isNotEmpty
-                        ? '\n   精選推薦：' + matchedMenus.map((m) => '${m['dishName']} (${m['recommendLevel'] ?? '高'}推薦, ${m['nutrition'] ?? ''})').join(', ')
-                        : '';
-                        
-                    return '$idx. $restName $restStars\n   地址: $restAddr$menuText';
-                  }).join('\n\n');
-                  
-                  _messages.add({
-                    'isElf': true,
-                    'text': '已為您搜尋附近的店家與菜單推薦項目：\n\n$restText',
-                    'type': 'restaurant'
-                  });
-                }
-              });
-              _scrollToBottom(); // 新增：餐廳推薦完成滑到底部
-            }).catchError((e) {
-              _showDogResponseThenIdle();
-              setState(() {
-                if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
-                  _messages.removeLast();
-                }
-                _messages.add({'isElf': true, 'text': '推薦菜單載入錯誤: $e'});
-              });
-              _scrollToBottom(); // 新增：選單載入錯誤滑到底部
-            });
-          }).catchError((e) {
-            _showDogResponseThenIdle();
-            setState(() {
-              if (_messages.isNotEmpty && _messages.last['text'] == '正在搜尋附近的店家與健康推薦項目...') {
-                _messages.removeLast();
-              }
-              _messages.add({'isElf': true, 'text': '推薦餐廳載入錯誤: $e'});
-            });
-            _scrollToBottom();
-          });
-        } else { // 程式碼區塊或元件結構結束
-          _messages.add({
-            'isElf': true,
-            'text': '正在為您載入個人與週飲食紀錄，進行智能評估中...',
-          });
-          _scrollToBottom(); // 新增：載入中提示滑到底部
-          
-          DietService().askWeeklyAnalysis(text).then((res) {
-            _showDogResponseThenIdle();
-            setState(() {
-              if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
-                _messages.removeLast();
-              }
-              
-              if (res['success'] == true) {
-                final payload = res['data'];
-                final profile = payload['user_profile'] ?? {};
-                final health = payload['health_condition'] ?? {};
-                final List<dynamic> records = payload['weekly_diet_records'] ?? [];
-                
-                final String gender = profile['gender'] ?? '未設定';
-                final double height = (profile['height_cm'] as num?)?.toDouble() ?? 0.0;
-                final double weight = (profile['weight_kg'] as num?)?.toDouble() ?? 0.0;
-                final int age = (profile['age'] as num?)?.toInt() ?? 0;
-                final String goal = profile['goal'] ?? '健康維持';
-                
-                final bool hasChronic = health['has_chronic_disease'] ?? false;
-                final List<dynamic> diseases = health['chronic_diseases'] ?? [];
-                
-                double bmi = 0.0;
-                if (height > 0) {
-                  bmi = weight / ((height / 100.0) * (height / 100.0));
-                }
-                
-                String bmiText = bmi > 0 ? bmi.toStringAsFixed(1) : '未知';
-                
-                String recordDetail = '';
-                if (records.isEmpty) {
-                  recordDetail = '• 過去 7 天內尚無飲食紀錄。建議您在「飲食日記」新增近日餐點，讓我能提供更精準的分析喔！';
-                } else {
-                  recordDetail = records.map((r) {
-                    final date = r['date'] ?? '';
-                    final meal = r['meal'] ?? '';
-                    final dish = r['dish_name'] ?? '';
-                    final note = r['description'] ?? r['note'] ?? '';
-                    final noteText = note.isNotEmpty ? ' ($note)' : '';
-                    return '• $date $meal: $dish$noteText';
-                  }).join('\n');
-                }
-                
-                String chronicText = hasChronic
-                    ? '有 (${diseases.join(', ')})'
-                    : '無';
-                    
-                String advice = '';
-                if (goal.contains('減脂')) {
-                  advice = '精靈建議：您的目標是減脂，目前 BMI 為 $bmiText。近一週飲食中請注意控制油鹽，適量攝取優質蛋白質，以維持肌肉量。';
-                } else if (goal.contains('增肌')) {
-                  advice = '精靈建議：您的目標是增肌，目前 BMI 為 $bmiText。請務必補充足量碳水化合物與高蛋白質食物，配合阻力訓練效果更佳！';
-                } else {
-                  advice = '精靈建議：您的目標是養生，目前 BMI 為 $bmiText。請保持均衡飲食，多攝取膳食纖維，維持規律作息。';
-                }
-                
-                String finalMessage = '【飲食智能小精靈 - 週飲食分析】\n\n'
-                    '個人狀態簡介：\n'
-                    ' • 身高/體重：${height.toStringAsFixed(0)} cm / ${weight.toStringAsFixed(0)} kg\n'
-                    ' • 年齡/性別：$age 歲 / $gender\n'
-                    ' • BMI：$bmiText\n'
-                    ' • 飲食目標：$goal\n'
-                    ' • 慢性病歷史：$chronicText\n\n'
-                    '過去 7 天飲食明細：\n'
-                    '$recordDetail\n\n'
-                    '$advice\n\n'
-                    '如果您有任何具體問題（如想吃特定食物或外送推薦），隨時可以問我！';
-                
-                _messages.add({
-                  'isElf': true,
-                  'text': finalMessage,
-                });
+          if (res['success'] == true) {
+            final payload = res['data'] ?? {};
+            String answer = '';
+            if (payload['answer'] != null) {
+              answer = payload['answer'].toString();
+            } else if (payload['message'] != null) {
+              answer = payload['message'].toString();
+            } else if (payload['partner_response'] != null) {
+              final pr = payload['partner_response'];
+              if (pr is Map && pr['answer'] != null) {
+                answer = pr['answer'].toString();
+              } else if (pr is Map && pr['message'] != null) {
+                answer = pr['message'].toString();
+              } else if (pr is Map && pr['response'] != null) {
+                answer = pr['response'].toString();
               } else {
-                _messages.add({
-                  'isElf': true,
-                  'text': '分析讀取失敗：${res['message']}',
-                });
+                answer = pr.toString();
               }
+            } else {
+              answer = '分析成功，但未取得回覆內容。';
+            }
+
+            _messages.add({
+              'isElf': true,
+              'text': answer,
             });
-            _scrollToBottom(); // 新增：智能評估分析完成後滑到底部
-          }).catchError((e) {
-            _showDogResponseThenIdle();
-            setState(() {
-              if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
-                _messages.removeLast();
-              }
-              _messages.add({
-                'isElf': true,
-                'text': '智能分析發生異常: $e',
-              });
+          } else {
+            _messages.add({
+              'isElf': true,
+              'text': '飲食分析服務暫時無法使用，請稍後再試。',
             });
-            _scrollToBottom(); // 新增：發生異常後滑到底部
+          }
+        });
+        _scrollToBottom(); // 新增：智能評估分析完成後滑到底部
+      }).catchError((e) {
+        _showDogResponseThenIdle();
+        setState(() {
+          if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+            _messages.removeLast();
+          }
+          _messages.add({
+            'isElf': true,
+            'text': '飲食分析服務發生異常，請稍後再試。',
           });
-        } // 程式碼區塊或元件結構結束
-      }); // 程式碼區塊或元件結構結束
-    }); // 程式碼區塊或元件結構結束
+        });
+        _scrollToBottom(); // 新增：發生異常後滑到底部
+      });
+    });
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -699,15 +672,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
 
             // 2. 中央大精靈
             Center( // 建立置中對齊元件（Center），將子元件居中顯示
-              child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
+              child: SingleChildScrollView(
+                child: Builder(
+                  builder: (context) {
+                    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+                    final elfSize = isKeyboardVisible ? 160.0 : 280.0;
+                    return Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+                      mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
                 children: [ // 執行相對應的邏輯計算或設定屬性參數
                   GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
                     onTap: () => _toggleChat(true), // 執行相對應的邏輯計算或設定屬性參數
                     child: Hero( // 建立跨頁面過渡動畫元件（Hero），點擊時呈現放大或縮小移動特效
                       tag: 'elf', // 執行相對應的邏輯計算或設定屬性參數
                               child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                                width: 280, height: 280, // 執行相對應的邏輯計算或設定屬性參數
+                                width: elfSize, height: elfSize, // 執行相對應的邏輯計算或設定屬性參數
                                 decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                                   shape: BoxShape.circle, // 執行相對應的邏輯計算或設定屬性參數
                                   color: AppColors.background, // 設定顏色數值（Color）
@@ -720,12 +698,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                                   ], // 執行相對應的邏輯計算或設定屬性參數
                                 ), // 執行相對應的邏輯計算或設定屬性參數
                                 child: ClipRRect( // 建立圓角裁剪元件（ClipRRect），可將子元件裁切為圓角矩形
-                                  borderRadius: BorderRadius.circular(140), // 設定容器的圓角弧度半徑大小
+                                  borderRadius: BorderRadius.circular(elfSize / 2), // 設定容器的圓角弧度半徑大小
                                   child: Padding( // 建立間距容器（Padding），用於設定內部邊距
-                                    padding: const EdgeInsets.all(25.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                                    padding: EdgeInsets.all(isKeyboardVisible ? 15.0 : 25.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                                     child: DogAvatar(
                                       controller: _dogController,
-                                      scale: 1.5,
+                                      scale: isKeyboardVisible ? 1.0 : 1.5,
                                       instanceId: 'home-main-dog',
                                     ),
                                   ), // 執行相對應的邏輯計算或設定屬性參數
@@ -733,9 +711,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                               ), // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
-                  const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  if (!isKeyboardVisible) const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   // 精靈說話框 (初始狀態)
-                  if (!_isChatOpen) ...[ // 執行相對應的邏輯計算或設定屬性參數
+                  if (!_isChatOpen && !isKeyboardVisible) ...[ // 執行相對應的邏輯計算或設定屬性參數
                     Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                       margin: const EdgeInsets.symmetric(horizontal: 20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
@@ -745,11 +723,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                         boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
                       ), // 執行相對應的邏輯計算或設定屬性參數
                       child: Text( // 建立文字顯示元件（Text）
-                        _messages.isNotEmpty ? _messages[0]['text'] : "載入中...", // 執行相對應的邏輯計算或設定屬性參數
+                        _stripEmojis(_messages.isNotEmpty ? _messages[0]['text'] : "載入中..."), // 執行相對應的邏輯計算或設定屬性參數
                         textAlign: TextAlign.left, // 執行相對應的邏輯計算或設定屬性參數
                         style: const TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                          fontSize: 16,  // 執行相對應的邏輯計算或設定屬性參數
-                          fontWeight: FontWeight.w500, // 執行相對應的邏輯計算或設定屬性參數
+                          fontSize: 15,  // 執行相對應的邏輯計算或設定屬性參數
+                          fontWeight: FontWeight.normal, // 執行相對應的邏輯計算或設定屬性參數
+                          height: 1.4,
                           color: AppColors.textPrimary // 設定顏色數值（Color）
                         ), // 執行相對應的邏輯計算或設定屬性參數
                       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -757,8 +736,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                     const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   ], // 執行相對應的邏輯計算或設定屬性參數
                 ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
+              );
+            }
+          ),
+        ),
+      ), // 執行相對應的邏輯計算或設定屬性參數
 
             // 3. 底部輸入框
             Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
@@ -929,8 +911,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
               children: [ // 執行相對應的邏輯計算或設定屬性參數
                 Text( // 建立文字顯示元件（Text）
-                  text, // 執行相對應的邏輯計算或設定屬性參數
-                  style: TextStyle(color: isElf ? AppColors.textPrimary : AppColors.background, fontSize: 15), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                  isElf ? _stripEmojis(text) : text, // 執行相對應的邏輯計算或設定屬性參數
+                  style: TextStyle(
+                    color: isElf ? AppColors.textPrimary : AppColors.background,
+                    fontSize: 15,
+                    fontWeight: FontWeight.normal,
+                    height: 1.4,
+                  ), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 if (isElf && options != null) ...[ // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
@@ -1157,11 +1144,11 @@ class MacronutrientPieChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildLegendItem('蛋白質', protein, total, AppColors.primary),
+            _buildLegendItem('脂肪', fat, total, const Color(0xFFEF5350)),
             const SizedBox(height: 6),
-            _buildLegendItem('脂肪', fat, total, AppColors.secondary),
+            _buildLegendItem('碳水化合物', carbs, total, const Color(0xFF29B6F6)),
             const SizedBox(height: 6),
-            _buildLegendItem('碳水化合物', carbs, total, Colors.orange),
+            _buildLegendItem('蛋白質', protein, total, const Color(0xFFFFA726)),
           ],
         ),
       ],
@@ -1211,22 +1198,22 @@ class PieChartPainter extends CustomPainter {
     
     double startAngle = -3.1415926 / 2; // Start from top
     
-    // Draw Protein
-    final proteinSweep = (protein / total) * 2 * 3.1415926;
-    paint.color = AppColors.primary;
-    canvas.drawArc(rect, startAngle, proteinSweep, true, paint);
-    startAngle += proteinSweep;
-
     // Draw Fat
     final fatSweep = (fat / total) * 2 * 3.1415926;
-    paint.color = AppColors.secondary;
+    paint.color = const Color(0xFFEF5350);
     canvas.drawArc(rect, startAngle, fatSweep, true, paint);
     startAngle += fatSweep;
 
     // Draw Carbs
     final carbsSweep = (carbs / total) * 2 * 3.1415926;
-    paint.color = Colors.orange;
+    paint.color = const Color(0xFF29B6F6);
     canvas.drawArc(rect, startAngle, carbsSweep, true, paint);
+    startAngle += carbsSweep;
+
+    // Draw Protein
+    final proteinSweep = (protein / total) * 2 * 3.1415926;
+    paint.color = const Color(0xFFFFA726);
+    canvas.drawArc(rect, startAngle, proteinSweep, true, paint);
   }
 
   @override

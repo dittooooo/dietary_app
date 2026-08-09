@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
-import 'admin_add_item_page.dart'; // 匯入 admin_add_item_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
 
@@ -34,16 +33,9 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
     setState(() => _isLoading = true); // 更新狀態數據並通知 UI 重新渲染畫面
     try {
       final query = _searchController.text.trim();
-      List<dynamic> results = [];
       
-      if (widget.title.contains('餐廳')) {
-        results = await AdminService().listRestaurants(name: query);
-      } else if (widget.title.contains('菜單')) {
-        results = await AdminService().listMenuItems(dishName: query);
-      } else if (widget.title.contains('飲食紀錄')) {
-        // 飲食紀錄監控：使用 nickname 或 dishName 搜尋
-        results = await AdminService().listDietRecords(dishName: query, nickname: query);
-      }
+      // 飲食紀錄監控：使用 nickname 或 dishName 搜尋
+      final results = await AdminService().listDietRecords(dishName: query, nickname: query);
       
       setState(() {
         _dataList = results;
@@ -102,24 +94,16 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                           String name = '未命名';
                           String desc = '';
                           
-                          if (widget.title.contains('餐廳')) {
-                            name = item['name'] ?? '';
-                            desc = '地址: ${item['address'] ?? ''} • 評分: ${item['stars'] ?? 0} 星';
-                          } else if (widget.title.contains('菜單')) {
-                            name = '${item['dishName'] ?? ''} (${item['restaurantName'] ?? ''})';
-                            desc = '食材: ${item['ingredients'] ?? ''} • 推薦: ${item['recommendLevel'] ?? ''}';
-                          } else if (widget.title.contains('飲食紀錄')) {
-                            final userObj = item['user'] ?? {};
-                            final nickname = userObj['userProfile']?.containsKey('nickname') == true
-                                ? userObj['userProfile']['nickname']
-                                : userObj['email']?.split('@')[0];
-                            name = '${item['dishName'] ?? ''} (${nickname ?? ''})';
-                            
-                            final dateStr = item['createdAt'] != null
-                                ? DateTime.parse(item['createdAt']).toLocal().toString().substring(0, 16)
-                                : '無日期';
-                            desc = '時段: ${item['mealType'] ?? ''} • 時間: $dateStr\n備註: ${item['description'] ?? ''}';
-                          }
+                          final userObj = item['user'] ?? {};
+                          final nickname = userObj['userProfile']?.containsKey('nickname') == true
+                              ? userObj['userProfile']['nickname']
+                              : userObj['email']?.split('@')[0];
+                          name = '${item['dishName'] ?? ''} (${nickname ?? ''})';
+                          
+                          final dateStr = item['createdAt'] != null
+                              ? DateTime.parse(item['createdAt']).toLocal().toString().substring(0, 16)
+                              : '無日期';
+                          desc = '時段: ${item['mealType'] ?? ''} • 時間: $dateStr\n備註: ${item['description'] ?? ''}';
 
                           return Card( // 回傳建構完成的元件或方法計算結果
                             color: AppColors.background, // 設定顏色數值（Color）
@@ -138,46 +122,23 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                                 if (_isDeleteMode) { // 執行相對應的邏輯計算或設定屬性參數
                                   _showDeleteDialog(item); // 執行相對應的邏輯計算或設定屬性參數
                                 } else { // 程式碼區塊或元件結構結束
-                                  // 進入編輯畫面
-                                  if (isDietRecord) {
-                                    _showEditDietRecordDialog(item);
-                                  } else {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => AdminAddItemPage(title: widget.title, editItem: item),
-                                      ),
-                                    ).then((value) {
-                                      if (value == true) _fetchData();
-                                    });
-                                  }
+                                  _showEditDietRecordDialog(item);
                                 } // 程式碼區塊或元件結構結束
                               }, // 程式碼區塊或元件結構結束
                             ), // 執行相對應的邏輯計算或設定屬性參數
                           ); // 程式碼區塊或元件結構結束
                         }, // 程式碼區塊或元件結構結束
-                      ), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      floatingActionButton: FloatingActionButton( // 執行相對應的邏輯計算或設定屬性參數
-              backgroundColor: AppColors.primary, // 設定顏色數值（Color）
-              onPressed: () { // 執行相對應的邏輯計算或設定屬性參數
-                if (isDietRecord) {
-                  _showCreateDietRecordDialog();
-                } else {
-                  Navigator.push( // 導航路由跳轉：開啟並推入新頁面
-                    context, // 執行相對應的邏輯計算或設定屬性參數
-                    MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                      builder: (context) => AdminAddItemPage(title: widget.title), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ).then((value) { // 執行相對應的邏輯計算或設定屬性參數
-                    if (value == true) _fetchData(); // 若新增成功則刷新
-                  }); // 程式碼區塊或元件結構結束
-                }
-              }, // 程式碼區塊或元件結構結束
-              child: const Icon(Icons.add, color: AppColors.background), // 設定顏色數值（Color）
-            ), // 執行相對應的邏輯計算或設定屬性參數
+        ),
+      ],
+    ), // 執行相對應的邏輯計算或設定屬性參數
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
+        onPressed: () {
+          _showCreateDietRecordDialog();
+        },
+        child: const Icon(Icons.add, color: AppColors.background),
+      ),
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -196,14 +157,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
               
-              bool success = false;
-              if (widget.title.contains('餐廳')) {
-                success = await AdminService().deleteRestaurant(id);
-              } else if (widget.title.contains('菜單')) {
-                success = await AdminService().deleteMenuItem(id);
-              } else if (widget.title.contains('飲食紀錄')) {
-                success = await AdminService().deleteDietRecord(id);
-              }
+              final success = await AdminService().deleteDietRecord(id);
 
               if (mounted) {
                 if (success) {

@@ -16,9 +16,8 @@ class ApiConfig {
 
     if (Platform.isAndroid) {
       // Android emulator reaches the host machine via 10.0.2.2.
-      // For a real device, override with:
-      // --dart-define=API_BASE_URL=http://<your-lan-ip>:8080/api
-      return 'http://10.0.2.2:8080/api';
+      // Since adb reverse tcp:8080 tcp:8080 is configured, we use localhost.
+      return 'http://localhost:8080/api';
     }
 
     return 'http://localhost:8080/api';

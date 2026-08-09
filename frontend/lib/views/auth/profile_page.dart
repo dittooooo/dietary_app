@@ -341,14 +341,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     }),
-                    _buildAdminButton('菜單管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '菜單管理'),
-                        ),
-                      );
-                    }),
                     _buildAdminButton('飲食紀錄管理', () {
                       Navigator.push(
                         context,
