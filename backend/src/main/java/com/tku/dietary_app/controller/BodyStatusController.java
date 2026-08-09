@@ -1,6 +1,8 @@
 package com.tku.dietary_app.controller;
 
+import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.entity.User;
+import com.tku.dietary_app.exception.UnauthorizedException;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.BodyStatusService;
 import lombok.RequiredArgsConstructor;
@@ -19,25 +21,26 @@ public class BodyStatusController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public ResponseEntity<?> getBodyStatus() {
+    public ResponseEntity<ApiResponse<?>> getBodyStatus() {
         User user = getLoginUser();
-        return ResponseEntity.ok(bodyStatusService.getCurrentStatus(user.getId()));
+        return ResponseEntity.ok(ApiResponse.success(bodyStatusService.getCurrentStatus(user.getId())));
     }
 
     @PostMapping("/settle")
-    public ResponseEntity<?> settleDailyScores() {
+    public ResponseEntity<ApiResponse<?>> settleDailyScores() {
         User user = getLoginUser();
-        return ResponseEntity.ok(bodyStatusService.settleDailyScores(user.getId()));
+        return ResponseEntity.ok(ApiResponse.success("每日結算完成", bodyStatusService.settleDailyScores(user.getId())));
     }
 
     @PostMapping("/recalculate")
-    public ResponseEntity<?> recalculateBodyMetrics() {
+    public ResponseEntity<ApiResponse<?>> recalculateBodyMetrics() {
         User user = getLoginUser();
-        return ResponseEntity.ok(bodyStatusService.recalculateBodyMetrics(user.getId()));
+        return ResponseEntity.ok(ApiResponse.success("身體指標重算完成", bodyStatusService.recalculateBodyMetrics(user.getId())));
     }
 
     private User getLoginUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("找不到登入使用者"));
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("登入狀態無效"));
     }
 }

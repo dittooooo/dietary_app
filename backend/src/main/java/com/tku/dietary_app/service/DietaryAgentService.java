@@ -2,12 +2,13 @@ package com.tku.dietary_app.service;
 
 import com.tku.dietary_app.dto.DietaryAgentPayload;
 import com.tku.dietary_app.dto.DietaryAgentPayload.HealthConditionDto;
-import com.tku.dietary_app.dto.DietaryAgentPayload.UserProfileDto;
 import com.tku.dietary_app.dto.DietaryAgentPayload.WeeklyDietRecordDto;
 import com.tku.dietary_app.dto.DietaryAskRequest;
 import com.tku.dietary_app.dto.DietaryDishNutritionRequest;
 import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.exception.ResourceNotFoundException;
+import com.tku.dietary_app.exception.UpstreamServiceException;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -33,10 +36,10 @@ import java.util.stream.Collectors;
 public class DietaryAgentService {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
 
-    private static final String[] CALORIES_KEYS = {"calories", "calorie", "kcal", "熱量"};
-    private static final String[] PROTEIN_KEYS = {"protein", "proteins", "蛋白質"};
-    private static final String[] FAT_KEYS = {"fat", "脂肪"};
-    private static final String[] CARBOHYDRATES_KEYS = {"carbohydrates", "carbohydrate", "carbs", "carb", "碳水化合物", "碳水"};
+    private static final String[] CALORIES_KEYS = {"calories", "calorie", "kcal"};
+    private static final String[] PROTEIN_KEYS = {"protein", "proteins"};
+    private static final String[] FAT_KEYS = {"fat"};
+    private static final String[] CARBOHYDRATES_KEYS = {"carbohydrates", "carbohydrate", "carbs", "carb"};
 
     private final DietRecordRepository dietRecordRepository;
     private final UserProfileRepository userProfileRepository;
@@ -52,10 +55,10 @@ public class DietaryAgentService {
     private String partnerApiDishNutritionPath;
 
     public Object ask(Long userId, DietaryAskRequest request) {
-        UserProfile user_profile = userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("找不到使用者資料"));
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料"));
 
-        DietaryAgentPayload payload = buildPayload(userId, request, user_profile);
+        DietaryAgentPayload payload = buildPayload(userId, request, userProfile);
         return callPartnerApi(partnerApiAskPath, payload);
     }
 
@@ -65,7 +68,7 @@ public class DietaryAgentService {
 
     public NutritionValues fetchDishNutrition(String dishName) {
         if (dishName == null || dishName.isBlank()) {
-            throw new IllegalArgumentException("dishName 為必填");
+            throw new IllegalArgumentException("dishName 為必填欄位");
         }
 
         DietaryDishNutritionRequest request = new DietaryDishNutritionRequest();
@@ -75,7 +78,7 @@ public class DietaryAgentService {
         return parseNutritionValues(response);
     }
 
-    private DietaryAgentPayload buildPayload(Long userId, DietaryAskRequest request, UserProfile user_profile) {
+    private DietaryAgentPayload buildPayload(Long userId, DietaryAskRequest request, UserProfile userProfile) {
         DietaryAgentPayload.UserProfileDto userProfileDto = request.getUserProfile() != null
                 ? DietaryAgentPayload.UserProfileDto.builder()
                 .heightCm(request.getUserProfile().getHeightCm())
@@ -84,10 +87,10 @@ public class DietaryAgentService {
                 .age(request.getUserProfile().getAge())
                 .build()
                 : DietaryAgentPayload.UserProfileDto.builder()
-                .heightCm(user_profile.getHeight())
-                .weightKg(user_profile.getWeight())
-                .gender(user_profile.getGender())
-                .age(user_profile.getAge())
+                .heightCm(userProfile.getHeight())
+                .weightKg(userProfile.getWeight())
+                .gender(userProfile.getGender())
+                .age(userProfile.getAge())
                 .build();
 
         HealthConditionDto healthConditionDto = request.getHealthCondition() != null
@@ -95,11 +98,11 @@ public class DietaryAgentService {
                 .hasChronicDisease(request.getHealthCondition().getHasChronicDisease())
                 .chronicDiseases(request.getHealthCondition().getChronicDiseases())
                 .build()
-                : buildHealthConditionDto(user_profile);
+                : buildHealthConditionDto(userProfile);
 
         List<WeeklyDietRecordDto> weeklyDietRecords = request.getWeeklyDietRecords() != null
                 ? request.getWeeklyDietRecords().stream()
-                .map(record -> DietaryAgentPayload.WeeklyDietRecordDto.builder()
+                .map(record -> WeeklyDietRecordDto.builder()
                         .date(record.getDate())
                         .meal(record.getMeal())
                         .dishName(record.getDishName())
@@ -118,8 +121,8 @@ public class DietaryAgentService {
                 .build();
     }
 
-    private HealthConditionDto buildHealthConditionDto(UserProfile user_profile) {
-        List<String> chronicDiseases = parseHealthConditions(user_profile.getHealthConditions());
+    private HealthConditionDto buildHealthConditionDto(UserProfile userProfile) {
+        List<String> chronicDiseases = parseHealthConditions(userProfile.getHealthConditions());
         return HealthConditionDto.builder()
                 .hasChronicDisease(!chronicDiseases.isEmpty())
                 .chronicDiseases(chronicDiseases)
@@ -132,7 +135,7 @@ public class DietaryAgentService {
                 .findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDescIdDesc(userId, startAt);
 
         return records.stream()
-                .map(record -> DietaryAgentPayload.WeeklyDietRecordDto.builder()
+                .map(record -> WeeklyDietRecordDto.builder()
                         .date(record.getDate() != null
                                 ? record.getDate()
                                 : (record.getCreatedAt() == null ? null : record.getCreatedAt().toLocalDate()))
@@ -154,44 +157,12 @@ public class DietaryAgentService {
                 .collect(Collectors.toList());
     }
 
-    private Integer calculateRecommendedCalorie(UserProfile user_profile) {
-        // 如果資料庫已經有計算好的建議熱量，就直接使用
-        if (user_profile.getRecommendedCalories() != null) {
-            return (int) Math.round(user_profile.getRecommendedCalories());
-        }
-
-        double bmr;
-        if ("女".equals(user_profile.getGender())) {
-            bmr = 10 * user_profile.getWeight()
-                    + 6.25 * user_profile.getHeight()
-                    - 5 * user_profile.getAge()
-                    - 161;
-        } else {
-            bmr = 10 * user_profile.getWeight()
-                    + 6.25 * user_profile.getHeight()
-                    - 5 * user_profile.getAge()
-                    + 5;
-        }
-
-        String diet_goal = user_profile.getDietGoal() == null
-                ? ""
-                : user_profile.getDietGoal();
-
-        if (diet_goal.contains("增肌") || diet_goal.contains("增重")) {
-            bmr += 200;
-        } else if (diet_goal.contains("減脂") || diet_goal.contains("減重")) {
-            bmr -= 300;
-        }
-
-        return (int) Math.round(bmr);
-    }
-
     private Object callPartnerApi(String apiPath, Object payload) {
         if (partnerApiBaseUrl == null || partnerApiBaseUrl.isBlank()) {
-            throw new IllegalStateException("尚未設定組員 API 網址");
+            throw new IllegalStateException("未設定 dietary partner API base URL");
         }
         if (apiPath == null || apiPath.isBlank()) {
-            throw new IllegalStateException("尚未設定組員 API 路徑");
+            throw new IllegalStateException("未設定 dietary partner API path");
         }
 
         String url = partnerApiBaseUrl.endsWith("/")
@@ -202,12 +173,18 @@ public class DietaryAgentService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(payload, headers);
-        return restTemplate.postForObject(url, requestEntity, Object.class);
+        try {
+            return restTemplate.postForObject(url, requestEntity, Object.class);
+        } catch (ResourceAccessException ex) {
+            throw new UpstreamServiceException("dietary partner API 連線逾時或無法連線");
+        } catch (RestClientException ex) {
+            throw new UpstreamServiceException("dietary partner API 呼叫失敗");
+        }
     }
 
     private NutritionValues parseNutritionValues(Object response) {
         if (!(response instanceof Map<?, ?> rootMap)) {
-            throw new RuntimeException("組員 dish-nutrition 回傳格式錯誤，無法解析營養成分");
+            throw new UpstreamServiceException("dish-nutrition 回應格式不正確");
         }
 
         List<Map<?, ?>> candidateMaps = collectCandidateMaps(rootMap);
