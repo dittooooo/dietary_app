@@ -136,35 +136,10 @@ async function handleCompanionAsk(req, res) {
     // 回傳精簡且平鋪的對話結果給客戶端
     return res.json({
       success: true,
-<<<<<<< HEAD
       companion_reply: companionReply,
       intent_category: openAiResult.screening.intent_category || "general_chat",
       meal_records: openAiResult.screening.meal_records || [],
       dietary_agent_error: dietaryAgentError
-=======
-      llm_fallback_used: false,
-      screening: {
-        should_handle: openAiResult.screening.should_handle,
-        intent_category: openAiResult.screening.intent_category,
-        question_type: openAiResult.screening.question_type,
-        confidence: openAiResult.screening.confidence,
-        dishes: openAiResult.screening.dishes,
-        meal_records: openAiResult.screening.meal_records
-      },
-      emotion: openAiResult.emotion,
-      dietary_agent_request: openAiResult.dietary_agent_request,
-      dietary_agent_response: dietaryAgentResponse,
-      dietary_agent_error: dietaryAgentError,
-      // 呼叫重組邏輯，生成最終親切的對話文字
-      companion_reply: await getCompanionReply({
-        userPrompt: user_prompt,
-        screening: openAiResult.screening,
-        emotion: openAiResult.emotion,
-        dietaryAgentResponse,
-        dietaryAgentRequest: openAiResult.dietary_agent_request,
-        dietaryAgentError
-      })
->>>>>>> fff0b76 (add meal_record)
     });
   } catch (error) {
     // 捕獲伺服器端非預期的未處理錯誤，回傳 500 狀態碼
