@@ -168,58 +168,83 @@ class ApiClient {
     final prefs = await SharedPreferences.getInstance();
     final refreshToken = prefs.getString(AuthService.refreshTokenKey);
 
-    if (refreshToken == null || refreshToken.isEmpty) {
-      return false;
-    }
-
-    final response = await http.post(
-      Uri.parse('${ApiConfig.baseUrl}/refresh'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'refreshToken': refreshToken}),
-    );
-
-    if (response.statusCode != 200) {
-      return false;
-    }
-
-    try {
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) {
-        return false;
-      }
-
-      final accessToken = decoded['accessToken']?.toString() ?? '';
-      final newRefreshToken =
-          decoded['refreshToken']?.toString() ?? refreshToken;
-
-      if (accessToken.isEmpty) {
-        return false;
-      }
-
-      await prefs.setString(AuthService.accessTokenKey, accessToken);
-      await prefs.setString(AuthService.refreshTokenKey, newRefreshToken);
-      await prefs.setString(
-        AuthService.tokenTypeKey,
-        decoded['tokenType']?.toString() ?? 'Bearer',
-      );
-      if (decoded.containsKey('accessTokenExpiresInSeconds')) {
-        await prefs.setInt(
-          AuthService.accessTokenExpiresKey,
-          _asInt(decoded['accessTokenExpiresInSeconds']),
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      try {
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/refresh'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refreshToken': refreshToken}),
         );
-      }
-      if (decoded.containsKey('refreshTokenExpiresInSeconds')) {
-        await prefs.setInt(
-          AuthService.refreshTokenExpiresKey,
-          _asInt(decoded['refreshTokenExpiresInSeconds']),
-        );
-      }
 
-      _latestAccessToken = accessToken;
-      return true;
-    } catch (_) {
-      return false;
+        if (response.statusCode == 200) {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            final accessToken = decoded['accessToken']?.toString() ?? '';
+            final newRefreshToken =
+                decoded['refreshToken']?.toString() ?? refreshToken;
+
+            if (accessToken.isNotEmpty) {
+              await prefs.setString(AuthService.accessTokenKey, accessToken);
+              await prefs.setString(AuthService.refreshTokenKey, newRefreshToken);
+              await prefs.setString(
+                AuthService.tokenTypeKey,
+                decoded['tokenType']?.toString() ?? 'Bearer',
+              );
+              if (decoded.containsKey('accessTokenExpiresInSeconds')) {
+                await prefs.setInt(
+                  AuthService.accessTokenExpiresKey,
+                  _asInt(decoded['accessTokenExpiresInSeconds']),
+                );
+              }
+              if (decoded.containsKey('refreshTokenExpiresInSeconds')) {
+                await prefs.setInt(
+                  AuthService.refreshTokenExpiresKey,
+                  _asInt(decoded['refreshTokenExpiresInSeconds']),
+                );
+              }
+
+              _latestAccessToken = accessToken;
+              return true;
+            }
+          }
+        }
+      } catch (_) {}
     }
+
+    // 續命機制：如果 Refresh Token 失敗或過期（例如後端重啟導致 JWT Key 變更），嘗試以本地記住的帳密無感自動登入
+    final email = prefs.getString('user_email');
+    final password = prefs.getString('user_password');
+    if (email != null && email.isNotEmpty && password != null && password.isNotEmpty) {
+      debugPrint('ApiClient: Refresh token 失敗，嘗試進行靜默自動登入刷新會話...');
+      try {
+        final response = await http.post(
+          Uri.parse('${ApiConfig.baseUrl}/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email, 'password': password}),
+        );
+        if (response.statusCode == 200) {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            final data = decoded['data'] is Map<String, dynamic> ? decoded['data'] : decoded;
+            final accessToken = data['accessToken']?.toString() ?? '';
+            final newRefreshToken = data['refreshToken']?.toString() ?? '';
+            if (accessToken.isNotEmpty) {
+              await prefs.setString(AuthService.accessTokenKey, accessToken);
+              if (newRefreshToken.isNotEmpty) {
+                await prefs.setString(AuthService.refreshTokenKey, newRefreshToken);
+              }
+              _latestAccessToken = accessToken;
+              debugPrint('ApiClient: 靜默自動登入成功，會話已重新建立。');
+              return true;
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('ApiClient: 靜默自動登入過程異常: $e');
+      }
+    }
+
+    return false;
   }
 
   void _logResponse(String path, http.Response response) {

@@ -643,13 +643,13 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 5),
-          _buildDetailRow("早餐", "($bPercent%)", breakfastCal.toInt().toString(), Colors.orange),
+          _buildDetailRow("早餐", "($bPercent%)", breakfastCal.round().toString(), Colors.orange),
           const SizedBox(height: 12),
-          _buildDetailRow("午餐", "($lPercent%)", lunchCal.toInt().toString(), Colors.green),
+          _buildDetailRow("午餐", "($lPercent%)", lunchCal.round().toString(), Colors.green),
           const SizedBox(height: 12),
-          _buildDetailRow("晚餐", "($dPercent%)", dinnerCal.toInt().toString(), Colors.blue),
+          _buildDetailRow("晚餐", "($dPercent%)", dinnerCal.round().toString(), Colors.blue),
           const SizedBox(height: 12),
-          _buildDetailRow("其他", "($oPercent%)", otherCal.toInt().toString(), Colors.grey),
+          _buildDetailRow("其他", "($oPercent%)", otherCal.round().toString(), Colors.grey),
         ],
       ),
     );
@@ -690,7 +690,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         }
       } catch (_) {}
     }
-    int current = todayCal.toInt();
+    int current = todayCal.round();
     int target = 2000; // 宣告類別成員或方法內部的區域變數
     double progress = (current / target).clamp(0.0, 1.0); // 宣告類別成員或方法內部的區域變數
     Color progressColor = progress >= 1.0 ? AppColors.danger : (progress >= 0.8 ? Colors.orange : Colors.green); // 設定顏色數值（Color）
@@ -771,6 +771,15 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
         LayoutBuilder( // 執行相對應的邏輯計算或設定屬性參數
           builder: (context, constraints) { // 執行相對應的邏輯計算或設定屬性參數
+            final sundayOffset = widget.date.weekday % 7;
+            final sunday = widget.date.subtract(Duration(days: sundayOffset));
+            final weekdaysZh = ["日", "一", "二", "三", "四", "五", "六"];
+            List<String> labels = [];
+            for (int i = 0; i < 7; i++) {
+              final d = sunday.add(Duration(days: i));
+              labels.add("${d.month}/${d.day}\n(${weekdaysZh[i]})");
+            }
+
             return MouseRegion( // 回傳建構完成的元件或方法計算結果
               onHover: (event) => _handleTouch(event.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
               onExit: (_) => setState(() => _hoveredIdx = null), // 更新狀態數據並通知 UI 重新渲染畫面
@@ -778,10 +787,16 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                 onPanUpdate: (details) => _handleTouch(details.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
                 onTapDown: (details) => _handleTouch(details.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
                 child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  height: 200, // 執行相對應的邏輯計算或設定屬性參數
+                  height: 220, // 執行相對應的邏輯計算或設定屬性參數
                   width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
                   child: CustomPaint( // 執行相對應的邏輯計算或設定屬性參數
-                    painter: MockLineChartPainter(data: data, hoveredIdx: _hoveredIdx), // 執行相對應的邏輯計算或設定屬性參數
+                    painter: MockLineChartPainter(
+                      data: data,
+                      hoveredIdx: _hoveredIdx,
+                      labels: labels,
+                      avg: avg,
+                      target: 2000.0,
+                    ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -807,6 +822,12 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                rDate.month == widget.date.month &&
                rDate.day == widget.date.day;
       }).toList();
+
+      todayRecords.sort((a, b) {
+        final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
+        final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+        return orderA.compareTo(orderB);
+      });
 
       if (todayRecords.isEmpty) {
         return Container(
@@ -841,7 +862,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                 final record = todayRecords[index];
                 final dish = record['dishName'] ?? record['dish_name'] ?? '未命名餐點';
                 final meal = _mealTypeDisplay(record['mealType'] ?? record['meal'] ?? 'OTHER');
-                final cal = _getCaloriesFromRecord(record).toInt();
+                final cal = _getCaloriesFromRecord(record).round();
                 final protein = _getProteinFromRecord(record);
                 final fat = _getFatFromRecord(record);
                 final carbs = _getCarbsFromRecord(record);
@@ -877,6 +898,12 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                  rDate.month == targetDate.month &&
                  rDate.day == targetDate.day;
         }).toList();
+
+        dayRecords.sort((a, b) {
+          final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
+          final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+          return orderA.compareTo(orderB);
+        });
 
         daysData.add({
           'dayName': weekdaysZh[i],
@@ -979,6 +1006,14 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     return '其他';
   }
 
+  int _getMealOrder(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return 1;
+    if (m.contains('LUNCH') || m.contains('午')) return 2;
+    if (m.contains('DINNER') || m.contains('晚')) return 3;
+    return 4; // 其他
+  }
+
   Color _getMealColor(dynamic mealType) {
     final m = mealType.toString().toUpperCase();
     if (m.contains('BREAKFAST') || m.contains('早')) return Colors.orange;
@@ -1066,7 +1101,17 @@ class NutrientPiePainter extends CustomPainter {
 class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainter 類別，繼承自 CustomPainter
   final List<double> data; // 宣告類別成員或方法內部的區域變數
   final int? hoveredIdx; // 宣告類別成員或方法內部的區域變數
-  MockLineChartPainter({required this.data, this.hoveredIdx}); // 執行相對應的邏輯計算或設定屬性參數
+  final List<String> labels;
+  final double avg;
+  final double target;
+
+  MockLineChartPainter({
+    required this.data,
+    this.hoveredIdx,
+    required this.labels,
+    required this.avg,
+    required this.target,
+  }); // 執行相對應的邏輯計算或設定屬性參數
 
   @override // 標記此方法為覆寫父類別之方法
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
@@ -1081,8 +1126,56 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
       if (v < minVal) minVal = v; // 執行相對應的邏輯計算或設定屬性參數
     } // 程式碼區塊或元件結構結束
     
+    // 將建議攝取與平均值納入邊界計算，確保虛線總是能正常顯示在圖表中
+    if (target > maxVal) maxVal = target;
+    if (avg > maxVal) maxVal = avg;
+    if (target < minVal) minVal = target;
+    if (avg < minVal) minVal = avg;
+    
     minVal = minVal * 0.8; // 執行相對應的邏輯計算或設定屬性參數
     final double range = (maxVal - minVal) == 0 ? 1.0 : (maxVal - minVal); // 宣告類別成員或方法內部的區域變數
+
+    final double chartHeight = size.height - 45; // 預留底部空間給兩行 X 軸標籤
+
+    // 輔助計算 Y 軸座標的函數
+    double yForValue(double val) {
+      return chartHeight - ((val - minVal) / range * chartHeight) + 10;
+    }
+
+    // 繪製虛線輔助線
+    final targetY = yForValue(target);
+    final avgY = yForValue(avg);
+
+    final targetPaint = Paint()
+      ..color = Colors.green.withOpacity(0.6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    _drawDashedLine(canvas, Offset(0, targetY), Offset(size.width, targetY), targetPaint, 5.0, 3.0);
+
+    final avgPaint = Paint()
+      ..color = Colors.orange.withOpacity(0.6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    _drawDashedLine(canvas, Offset(0, avgY), Offset(size.width, avgY), avgPaint, 5.0, 3.0);
+
+    // 標示輔助線文字
+    final targetTextPainter = TextPainter(
+      text: TextSpan(
+        text: ' 建議攝取: ${target.round()} kcal',
+        style: TextStyle(color: Colors.green.shade700, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    targetTextPainter.paint(canvas, Offset(5, targetY - 16));
+
+    final avgTextPainter = TextPainter(
+      text: TextSpan(
+        text: ' 本週平均: ${avg.round()} kcal',
+        style: TextStyle(color: Colors.orange.shade700, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    avgTextPainter.paint(canvas, Offset(5, avgY - 16));
 
     final paint = Paint()..color = Colors.blue.withOpacity(0.5)..style = PaintingStyle.stroke..strokeWidth = 3.0; // 設定顏色數值（Color）
     final path = Path(); // 宣告類別成員或方法內部的區域變數
@@ -1090,7 +1183,7 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
     List<Offset> points = []; // 執行相對應的邏輯計算或設定屬性參數
     for (int i = 0; i < data.length; i++) { // 執行相對應的邏輯計算或設定屬性參數
       double x = i * stepX; // 宣告類別成員或方法內部的區域變數
-      double y = size.height - ((data[i] - minVal) / range * size.height); // 宣告類別成員或方法內部的區域變數
+      double y = yForValue(data[i]);
       points.add(Offset(x, y)); // 執行相對應的邏輯計算或設定屬性參數
       if (i == 0) path.moveTo(x, y); else path.lineTo(x, y); // 執行相對應的邏輯計算或設定屬性參數
     } // 程式碼區塊或元件結構結束
@@ -1103,14 +1196,50 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
       
       if (isHovered) { // 執行相對應的邏輯計算或設定屬性參數
         final textPainter = TextPainter( // 宣告類別成員或方法內部的區域變數
-          text: TextSpan(text: data[i].toInt().toString(), style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold, backgroundColor: Colors.white70)), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+          text: TextSpan(text: data[i].round().toString(), style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold, backgroundColor: Colors.white70)), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
           textDirection: TextDirection.ltr, // 執行相對應的邏輯計算或設定屬性參數
         )..layout(); // 執行相對應的邏輯計算或設定屬性參數
         textPainter.paint(canvas, Offset(points[i].dx - textPainter.width / 2, points[i].dy - 25)); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
+
+      // 繪製 X 軸日期與星期標籤
+      if (i < labels.length) {
+        final labelPainter = TextPainter(
+          text: TextSpan(
+            text: labels[i],
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 10,
+              height: 1.2,
+              fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        labelPainter.paint(canvas, Offset(points[i].dx - labelPainter.width / 2, size.height - 30));
+      }
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
-  @override bool shouldRepaint(covariant MockLineChartPainter oldDelegate) => oldDelegate.hoveredIdx != hoveredIdx || oldDelegate.data != data; // 標記此方法為覆寫父類別之方法
+  @override bool shouldRepaint(covariant MockLineChartPainter oldDelegate) => 
+      oldDelegate.hoveredIdx != hoveredIdx || 
+      oldDelegate.data != data || 
+      oldDelegate.labels != labels ||
+      oldDelegate.avg != avg ||
+      oldDelegate.target != target; // 標記此方法為覆寫父類別之方法
+
+  void _drawDashedLine(Canvas canvas, Offset p1, Offset p2, Paint paint, double dashWidth, double dashSpace) {
+    double distance = (p2.dx - p1.dx).abs();
+    double currentX = p1.dx;
+    while (currentX < p2.dx) {
+      canvas.drawLine(
+        Offset(currentX, p1.dy),
+        Offset((currentX + dashWidth).clamp(p1.dx, p2.dx), p1.dy),
+        paint,
+      );
+      currentX += dashWidth + dashSpace;
+    }
+  }
 } // 程式碼區塊或元件結構結束
 
 class DietRecordTile extends StatefulWidget {

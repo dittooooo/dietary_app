@@ -8,6 +8,9 @@ import 'manual_record_page.dart'; // 匯入 manual_record_page.dart 元件庫或
 import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../widgets/dog_avatar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/auth_service.dart';
+import '../../config/api_config.dart';
 
 class DietaryRecordPage extends StatefulWidget { // 定義 DietaryRecordPage 類別，繼承自 StatefulWidget
   const DietaryRecordPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -24,10 +27,36 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> { // 定義 _Diet
   DateTime? _rippleDate;  // 執行相對應的邏輯計算或設定屬性參數
 
   final List<DateTime> _pathDates = List.generate(100, (i) => DateTime.now().subtract(Duration(days: i))); // 宣告類別成員或方法內部的區域變數
+  String? _avatarUrl;
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _avatarUrl = prefs.getString('user_avatar_url');
+      });
+    }
+    final result = await AuthService().getUserProfile();
+    if (result['success'] == true) {
+      final userData = result['data'];
+      final avatarPath = userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+        final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+        if (mounted) {
+          setState(() {
+            _avatarUrl = fullUrl;
+          });
+        }
+        await prefs.setString('user_avatar_url', fullUrl);
+      }
+    }
+  }
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _loadAvatar();
     _scrollController.addListener(() { // 執行相對應的邏輯計算或設定屬性參數
       if (_scrollController.offset > 200 && !_showBackToToday) { // 執行相對應的邏輯計算或設定屬性參數
         setState(() => _showBackToToday = true); // 更新狀態數據並通知 UI 重新渲染畫面
@@ -165,13 +194,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> { // 定義 _Diet
             child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
               mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
               children: [ // 執行相對應的邏輯計算或設定屬性參數
-                IconButton( // 建立點擊圖示按鈕（IconButton）
-                  onPressed: () => Navigator.of(context).pushAndRemoveUntil( // 執行相對應的邏輯計算或設定屬性參數
-                    MaterialPageRoute(builder: (context) => const HomePage(initialIndex: 0)),  // 建立編譯期常數，優化 Flutter 渲染效能
-                    (route) => false // 執行相對應的邏輯計算或設定屬性參數
-                  ),  // 執行相對應的邏輯計算或設定屬性參數
-                  icon: const Icon(Icons.arrow_back_ios, size: 28) // 顯示預設的圖示元件（Icon）
-                ), // 執行相對應的邏輯計算或設定屬性參數
+                const SizedBox(width: 50), // 移除返回鍵，保留空白以維持標題置中
                 const Text( // 建立文字顯示元件（Text）
                   '飲食紀錄',  // 執行相對應的邏輯計算或設定屬性參數
                   style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
@@ -194,14 +217,19 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> { // 定義 _Diet
                         ) // 執行相對應的邏輯計算或設定屬性參數
                       ] // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
-                    child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+                    child: CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
                       radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
                       backgroundColor: AppColors.background,  // 設定顏色數值（Color）
-                      child: Icon( // 顯示預設的圖示元件（Icon）
-                        Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
-                        color: AppColors.textPrimary,  // 設定顏色數值（Color）
-                        size: 35, // 執行相對應的邏輯計算或設定屬性參數
-                      ), // 執行相對應的邏輯計算或設定屬性參數
+                      backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                          ? NetworkImage(_avatarUrl!)
+                          : null,
+                      child: _avatarUrl == null || _avatarUrl!.isEmpty
+                          ? const Icon( // 顯示預設的圖示元件（Icon）
+                              Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                              color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                              size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                            )
+                          : null, // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數

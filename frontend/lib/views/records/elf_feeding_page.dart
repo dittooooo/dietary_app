@@ -184,7 +184,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
                     bottom: 310,
                   ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                   child: Transform.translate(
-                    offset: const Offset(-50, 0),
+                    offset: const Offset(-10, 0),
                     child: Column(
                       // 建立垂直排列元件（Column），縱向排列多個子元件
                       mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數

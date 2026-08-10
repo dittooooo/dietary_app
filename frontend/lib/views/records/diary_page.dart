@@ -9,6 +9,8 @@ import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套�
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 import '../../config/api_config.dart'; // 匯入 api_config.dart
 import 'dart:convert'; // 處理 JSON 轉換
+import 'manual_record_page.dart'; // 匯入手動紀錄頁面
+import '../../services/auth_service.dart';
 
 class DiaryPage extends StatefulWidget { // 定義 DiaryPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
@@ -28,6 +30,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
 
   List<dynamic> _allRecords = []; // 從後端獲取的所有紀錄
   bool _isLoading = false;
+  String? _avatarUrl;
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
@@ -43,8 +46,24 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
         _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
         _jwtToken = prefs.getString('jwt_token'); // 讀取 JWT Token
+        _avatarUrl = prefs.getString('user_avatar_url');
       }); // 程式碼區塊或結構結束
     } // 程式碼區塊或結構結束
+    final result = await AuthService().getUserProfile();
+    if (result['success'] == true) {
+      final userData = result['data'];
+      final avatarPath = userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+        final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+        if (mounted) {
+          setState(() {
+            _avatarUrl = fullUrl;
+          });
+        }
+        await prefs.setString('user_avatar_url', fullUrl);
+      }
+    }
   } // 程式碼區塊或結構結束
 
   Future<void> _fetchRecords() async {
@@ -259,6 +278,20 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ManualRecordPage(initialDate: widget.date),
+            ),
+          );
+          _fetchRecords(); // 新增完成後重新整理頁面數據
+        },
+        backgroundColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      ),
       bottomNavigationBar: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
         currentIndex: 1,  // 執行相對應的邏輯計算或設定屬性參數
         selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
@@ -303,14 +336,19 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                 onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
                 child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                   decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                  child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+                  child: CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
                     radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
                     backgroundColor: AppColors.background,  // 設定顏色數值（Color）
-                    child: Icon( // 顯示預設的圖示元件（Icon）
-                      Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
-                      color: AppColors.textPrimary,  // 設定顏色數值（Color）
-                      size: 35, // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                        ? NetworkImage(_avatarUrl!)
+                        : null,
+                    child: _avatarUrl == null || _avatarUrl!.isEmpty
+                        ? const Icon( // 顯示預設的圖示元件（Icon）
+                            Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                            color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                            size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                          )
+                        : null, // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數

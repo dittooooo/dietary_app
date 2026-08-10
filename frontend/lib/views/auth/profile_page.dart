@@ -170,17 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
-        leading: !_isAdmin
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => HomePage(initialIndex: widget.returnIndex)),
-                    (route) => false,
-                  );
-                },
-              )
-            : null,
+        leading: null,
         title: const Text(
           '個人首頁',
           style: TextStyle(
@@ -435,6 +425,27 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     ),
+      bottomNavigationBar: (ModalRoute.of(context)?.canPop ?? false)
+          ? BottomNavigationBar(
+              currentIndex: 2,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textPrimary.withOpacity(0.4),
+              backgroundColor: AppColors.background,
+              type: BottomNavigationBarType.fixed,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontSize: 12),
+              onTap: (index) => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)),
+                (route) => false,
+              ),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),
+                BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),
+                BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
+              ],
+            )
+          : null,
     );
   }
 

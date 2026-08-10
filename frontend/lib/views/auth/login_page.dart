@@ -41,6 +41,7 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
           // 儲存 Email 到本地，供 ProfilePage 使用
           final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
           await prefs.setString('user_email', _emailController.text.trim()); // 執行相對應的邏輯計算或設定屬性參數
+          await prefs.setString('user_password', _passwordController.text);
           
           Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
             context, // 執行相對應的邏輯計算或設定屬性參數
