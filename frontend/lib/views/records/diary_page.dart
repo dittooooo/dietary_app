@@ -156,6 +156,48 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     return null;
   }
 
+  String _parsePortionAtIndex(dynamic record, int index) {
+    if (record == null) return "1份";
+    final portionsVal = record['portions'];
+    final descriptionVal = record['description'];
+    final sourceStr = (portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+        ? portionsVal.toString().trim()
+        : (descriptionVal != null ? descriptionVal.toString().trim() : '');
+
+    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
+      return "1份";
+    }
+    final parts = sourceStr.split(RegExp(r',\s*'));
+    if (index >= parts.length) return "1份";
+    final part = parts[index].trim();
+    
+    final match = RegExp(r'^(\d+(?:\.\d+)?)\s*(?:份)?$').firstMatch(part);
+    if (match != null) {
+      final numStr = match.group(1)!;
+      final val = double.tryParse(numStr);
+      if (val != null) {
+        if (val == val.toInt()) {
+          return "${val.toInt()}份";
+        }
+        return "${val}份";
+      }
+    }
+    if (part.contains("份")) {
+      final m = RegExp(r'(\d+(?:\.\d+)?)\s*份').firstMatch(part);
+      if (m != null) {
+        final val = double.tryParse(m.group(1)!);
+        if (val != null) {
+          if (val == val.toInt()) {
+            return "${val.toInt()}份";
+          }
+          return "${val}份";
+        }
+      }
+      return part;
+    }
+    return "1份";
+  }
+
   // 根據日期過濾今日的飲食紀錄
   List<dynamic> _getRecordsForSelectedDate() {
     return _allRecords.where((record) {
@@ -396,7 +438,30 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                           width: 80, decoration: BoxDecoration(border: Border(right: BorderSide(color: AppColors.border, width: 1.5))), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 30, color: AppColors.secondary), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]), // 建立垂直排列元件（Column），縱向排列多個子元件
                         ), // 執行相對應的邏輯計算或設定屬性參數
-                        Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(isExpanded ? items.join("\n") : items.take(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.4, color: AppColors.textPrimary)))), // 建立間距容器（Padding），用於設定內部邊距
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  for (int i = 0; i < (isExpanded ? items.length : items.take(2).length); i++) ...[
+                                    if (i > 0) const TextSpan(text: "\n"),
+                                    TextSpan(
+                                      text: items[i],
+                                      style: const TextStyle(fontSize: 18, height: 1.4, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    ),
+                                    TextSpan(
+                                      text: " (${_parsePortionAtIndex(record, i)})",
+                                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                    ),
+                                  ]
+                                ],
+                              ),
+                              maxLines: isExpanded ? 10 : 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ), // 建立間距容器（Padding），用於設定內部邊距
                         Row( // 建立水平排列元件（Row），橫向排列多個子元件
                           children: [ // 執行相對應的邏輯計算或設定屬性參數
                              if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textPrimary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(record['id'].toString()); else _expandedMeals.add(record['id'].toString()); }); }), // 更新狀態數據並通知 UI 重新渲染畫面

@@ -18,6 +18,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
   late DateTime _selectedDate; // 宣告類別成員或方法內部的區域變數
   late String _mealType; // 宣告類別成員或方法內部的區域變數
   final List<TextEditingController> _itemControllers = [TextEditingController()]; // 宣告類別成員或方法內部的區域變數
+  final List<TextEditingController> _portionControllers = [TextEditingController(text: '1')];
   final TextEditingController _caloriesController = TextEditingController();
   final TextEditingController _proteinController = TextEditingController();
   final TextEditingController _fatController = TextEditingController();
@@ -59,12 +60,18 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
   } // 程式碼區塊或元件結構結束
 
   void _addItem() { // 執行相對應的邏輯計算或設定屬性參數
-    setState(() => _itemControllers.add(TextEditingController())); // 更新狀態數據並通知 UI 重新渲染畫面
+    setState(() {
+      _itemControllers.add(TextEditingController());
+      _portionControllers.add(TextEditingController(text: '1'));
+    }); // 更新狀態數據並通知 UI 重新渲染畫面
   } // 程式碼區塊或元件結構結束
 
   void _removeItem(int index) { // 執行相對應的邏輯計算或設定屬性參數
     if (_itemControllers.length > 1) { // 執行相對應的邏輯計算或設定屬性參數
-      setState(() => _itemControllers.removeAt(index)); // 更新狀態數據並通知 UI 重新渲染畫面
+      setState(() {
+        _itemControllers.removeAt(index);
+        _portionControllers.removeAt(index);
+      }); // 更新狀態數據並通知 UI 重新渲染畫面
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -149,6 +156,24 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
       final fatText = _fatController.text.trim();
       final carbsText = _carbsController.text.trim();
 
+      List<String> portions = [];
+      for (int i = 0; i < _itemControllers.length; i++) {
+        if (_itemControllers[i].text.trim().isNotEmpty) {
+          final pText = _portionControllers[i].text.trim();
+          final pVal = double.tryParse(pText);
+          String cleanP = '1';
+          if (pVal != null) {
+            if (pVal == pVal.toInt()) {
+              cleanP = pVal.toInt().toString();
+            } else {
+              cleanP = pVal.toString();
+            }
+          }
+          portions.add('$cleanP 份');
+        }
+      }
+      final portionText = portions.join(', ');
+
       final List<String> nutritionParts = [];
       if (caloriesText.isNotEmpty) nutritionParts.add('熱量: $caloriesText kcal');
       if (proteinText.isNotEmpty) nutritionParts.add('蛋白質: $proteinText g');
@@ -162,6 +187,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
         dishName: dishName,
         mealType: _mealType,
         description: '手動輸入飲食紀錄',
+        portions: portionText.isNotEmpty ? portionText : '1 份',
         nutrition: nutritionString,
         mealDate: _selectedDate,
       );
@@ -180,16 +206,36 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('儲存成功！')));
+          
+          List<Map<String, String>> elfItems = [];
+          int validIdx = 0;
+          for (int i = 0; i < _itemControllers.length; i++) {
+            if (_itemControllers[i].text.trim().isNotEmpty) {
+              final pText = _portionControllers[i].text.trim();
+              final pVal = double.tryParse(pText);
+              String cleanP = '1';
+              if (pVal != null) {
+                if (pVal == pVal.toInt()) {
+                  cleanP = pVal.toInt().toString();
+                } else {
+                  cleanP = pVal.toString();
+                }
+              }
+              elfItems.add({
+                'name': _itemControllers[i].text.trim(),
+                'portion': '${cleanP}份',
+                'calories': caloriesText.isNotEmpty && validIdx == 0 ? '$caloriesText kcal' : '-- kcal',
+              });
+              validIdx++;
+            }
+          }
+
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => ElfFeedingPage(
                 imagePath: _selectedImage?.path ?? "",
-                items: items.map((name) => {
-                  'name': name,
-                  'portion': '1份',
-                  'calories': caloriesText.isNotEmpty ? '$caloriesText kcal' : '-- kcal',
-                }).toList(),
+                items: elfItems,
               ),
             ),
           );
@@ -342,6 +388,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
   } // 程式碼區塊或元件結構結束
 
   Widget _buildItemField(int index, TextEditingController controller) { // 定義用於重複使用的 UI 封裝建構方法
+    final portionController = _portionControllers[index];
     return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
       margin: const EdgeInsets.only(bottom: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
       decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
@@ -351,8 +398,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
       ), // 執行相對應的邏輯計算或設定屬性參數
       child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
         children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const Padding(padding: EdgeInsets.symmetric(horizontal: 15), child: Icon(Icons.edit_note, color: Colors.grey)), // 建立間距容器（Padding），用於設定內部邊距
+          const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Icon(Icons.edit_note, color: Colors.grey)), // 建立間距容器（Padding），用於設定內部邊距
           Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+            flex: 3,
             child: TextField( // 建立文字輸入框元件（TextField）
               controller: controller, // 執行相對應的邏輯計算或設定屬性參數
               decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
@@ -363,6 +411,27 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
               style: const TextStyle(fontWeight: FontWeight.w500), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
             ), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
+          Container(
+            width: 1,
+            height: 30,
+            color: AppColors.border.withOpacity(0.5),
+          ),
+          const SizedBox(width: 8),
+          const Text('份數:', style: TextStyle(fontSize: 14, color: Colors.black54)),
+          const SizedBox(width: 4),
+          SizedBox(
+            width: 40,
+            child: TextField(
+              controller: portionController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                hintText: '1',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            ),
+          ),
           if (_itemControllers.length > 1) // 執行相對應的邏輯計算或設定屬性參數
             IconButton( // 建立點擊圖示按鈕（IconButton）
               icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger, size: 20), // 設定顏色數值（Color）
@@ -451,3 +520,4 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 } // 程式碼區塊或元件結構結束
+

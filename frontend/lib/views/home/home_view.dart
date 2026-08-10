@@ -47,7 +47,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
-    _hasShownSummaryDialogThisRun = false;
     _isChatOpen = widget.initialOpenChat; // 執行相對應的邏輯計算或設定屬性參數
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);

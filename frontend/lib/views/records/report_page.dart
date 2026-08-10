@@ -360,6 +360,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       ], // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 25), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+
+                  // 新增：飲食明細 Grid 呈現
+                  _buildEatenFoodGrid(),
                   const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                 ], // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -793,6 +797,195 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     int idx = (localPosition.dx / step).round().clamp(0, count - 1); // 宣告類別成員或方法內部的區域變數
     setState(() { _hoveredIdx = idx; }); // 更新狀態數據並通知 UI 重新渲染畫面
   } // 程式碼區塊或元件結構結束
+
+  Widget _buildEatenFoodGrid() {
+    if (_viewType == 0) {
+      final todayRecords = _allRecords.where((record) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) return false;
+        return rDate.year == widget.date.year &&
+               rDate.month == widget.date.month &&
+               rDate.day == widget.date.day;
+      }).toList();
+
+      if (todayRecords.isEmpty) {
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Center(
+            child: Text("今日尚無飲食紀錄", style: TextStyle(color: Colors.black54, fontSize: 14)),
+          ),
+        );
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 12),
+              child: Text("今日吃了什麼", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: todayRecords.length,
+              itemBuilder: (context, index) {
+                final record = todayRecords[index];
+                final dish = record['dishName'] ?? record['dish_name'] ?? '未命名餐點';
+                final meal = _mealTypeDisplay(record['mealType'] ?? record['meal'] ?? 'OTHER');
+                final cal = _getCaloriesFromRecord(record).toInt();
+                final protein = _getProteinFromRecord(record);
+                final fat = _getFatFromRecord(record);
+                final carbs = _getCarbsFromRecord(record);
+
+                return DietRecordTile(
+                  record: record,
+                  meal: meal,
+                  cal: cal,
+                  protein: protein,
+                  fat: fat,
+                  carbs: carbs,
+                  mealColor: _getMealColor(record['mealType'] ?? record['meal'] ?? 'OTHER'),
+                  dish: dish,
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      final sundayOffset = widget.date.weekday % 7;
+      final sunday = widget.date.subtract(Duration(days: sundayOffset));
+
+      final List<Map<String, dynamic>> daysData = [];
+      final weekdaysZh = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+
+      for (int i = 0; i < 7; i++) {
+        final targetDate = sunday.add(Duration(days: i));
+        final dayRecords = _allRecords.where((record) {
+          final rDate = _getRecordDate(record);
+          if (rDate == null) return false;
+          return rDate.year == targetDate.year &&
+                 rDate.month == targetDate.month &&
+                 rDate.day == targetDate.day;
+        }).toList();
+
+        daysData.add({
+          'dayName': weekdaysZh[i],
+          'dateStr': "${targetDate.month}/${targetDate.day}",
+          'records': dayRecords,
+        });
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 12),
+              child: Text("本週飲食清單", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 7,
+              itemBuilder: (context, index) {
+                final day = daysData[index];
+                final List<dynamic> recs = day['records'];
+                final String dayName = day['dayName'];
+                final String dateStr = day['dateStr'];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(dayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                          Text(dateStr, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                        ],
+                      ),
+                      const Divider(height: 16, thickness: 0.5),
+                      if (recs.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Text("無紀錄", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: recs.length,
+                          itemBuilder: (context, rIdx) {
+                            final rec = recs[rIdx];
+                            final dish = rec['dishName'] ?? rec['dish_name'] ?? '未命名';
+                            final meal = _mealTypeDisplay(rec['mealType'] ?? rec['meal'] ?? 'OTHER');
+                            final cal = _getCaloriesFromRecord(rec).toInt();
+                            final protein = _getProteinFromRecord(rec);
+                            final fat = _getFatFromRecord(rec);
+                            final carbs = _getCarbsFromRecord(rec);
+
+                            return DietRecordTile(
+                              record: rec,
+                              meal: meal,
+                              cal: cal,
+                              protein: protein,
+                              fat: fat,
+                              carbs: carbs,
+                              mealColor: _getMealColor(rec['mealType'] ?? rec['meal'] ?? 'OTHER'),
+                              dish: dish,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  // DietRecordTile handles the nutrition display now.
+  // Removed old helper.
+
+  String _mealTypeDisplay(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return '早餐';
+    if (m.contains('LUNCH') || m.contains('午')) return '午餐';
+    if (m.contains('DINNER') || m.contains('晚')) return '晚餐';
+    return '其他';
+  }
+
+  Color _getMealColor(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return Colors.orange;
+    if (m.contains('LUNCH') || m.contains('午')) return Colors.green;
+    if (m.contains('DINNER') || m.contains('晚')) return Colors.blue;
+    return Colors.grey;
+  }
 } // 程式碼區塊或元件結構結束
 
 class DiagonalLinesPainter extends CustomPainter { // 定義 DiagonalLinesPainter 類別，繼承自 CustomPainter
@@ -919,3 +1112,195 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
   } // 程式碼區塊或元件結構結束
   @override bool shouldRepaint(covariant MockLineChartPainter oldDelegate) => oldDelegate.hoveredIdx != hoveredIdx || oldDelegate.data != data; // 標記此方法為覆寫父類別之方法
 } // 程式碼區塊或元件結構結束
+
+class DietRecordTile extends StatefulWidget {
+  final dynamic record;
+  final String meal;
+  final int cal;
+  final double protein;
+  final double fat;
+  final double carbs;
+  final Color mealColor;
+  final String dish;
+
+  const DietRecordTile({
+    super.key,
+    required this.record,
+    required this.meal,
+    required this.cal,
+    required this.protein,
+    required this.fat,
+    required this.carbs,
+    required this.mealColor,
+    required this.dish,
+  });
+
+  @override
+  State<DietRecordTile> createState() => _DietRecordTileState();
+}
+
+class _DietRecordTileState extends State<DietRecordTile> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
+        ],
+        border: Border.all(color: AppColors.border.withOpacity(0.4)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: _isExpanded,
+          onExpansionChanged: (val) {
+            setState(() {
+              _isExpanded = val;
+            });
+          },
+          trailing: Icon(
+            _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            color: AppColors.textPrimary,
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: widget.mealColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.meal,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: widget.mealColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      for (int i = 0; i < widget.dish.split(', ').length; i++) ...[
+                        if (i > 0) const TextSpan(text: ", ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                        TextSpan(
+                          text: widget.dish.split(', ')[i],
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                        TextSpan(
+                          text: " (${_parsePortionAtIndex(widget.record, i)})",
+                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      ]
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                "${widget.cal} kcal",
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 16, thickness: 0.5),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("蛋白質", "${widget.protein.toStringAsFixed(1)}克", Colors.orange),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("脂肪", "${widget.fat.toStringAsFixed(1)}g", Colors.redAccent),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("碳水化合物", "${widget.carbs.toStringAsFixed(1)}g", Colors.lightBlue),
+                  if (widget.record['description'] != null &&
+                      widget.record['description'].toString().trim().isNotEmpty &&
+                      widget.record['description'].toString().trim() != '手動輸入飲食紀錄' &&
+                      !widget.record['description'].toString().contains('份')) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      "備註: ${widget.record['description']}",
+                      style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+                    ),
+                  ]
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutritionRow(String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(
+          "$label:",
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        ),
+      ],
+    );
+  }
+
+  String _parsePortionAtIndex(dynamic record, int index) {
+    if (record == null) return "1份";
+    final portionsVal = record['portions'];
+    final descriptionVal = record['description'];
+    final sourceStr = (portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+        ? portionsVal.toString().trim()
+        : (descriptionVal != null ? descriptionVal.toString().trim() : '');
+
+    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
+      return "1份";
+    }
+    final parts = sourceStr.split(RegExp(r',\s*'));
+    if (index >= parts.length) return "1份";
+    final part = parts[index].trim();
+    
+    final match = RegExp(r'^(\d+(?:\.\d+)?)\s*(?:份)?$').firstMatch(part);
+    if (match != null) {
+      final numStr = match.group(1)!;
+      final val = double.tryParse(numStr);
+      if (val != null) {
+        if (val == val.toInt()) {
+          return "${val.toInt()}份";
+        }
+        return "${val}份";
+      }
+    }
+    if (part.contains("份")) {
+      final m = RegExp(r'(\d+(?:\.\d+)?)\s*份').firstMatch(part);
+      if (m != null) {
+        final val = double.tryParse(m.group(1)!);
+        if (val != null) {
+          if (val == val.toInt()) {
+            return "${val.toInt()}份";
+          }
+          return "${val}份";
+        }
+      }
+      return part;
+    }
+    return "1份";
+  }
+}
