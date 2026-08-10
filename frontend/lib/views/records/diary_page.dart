@@ -274,7 +274,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           // 頂部固定標題列
           Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
             top: 0, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
-            child: SafeArea(child: _buildHeader(context)), // 執行相對應的邏輯計算或設定屬性參數
+            child: _buildHeader(context), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -309,16 +309,17 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   } // 程式碼區塊或元件結構結束
 
   Widget _buildHeader(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
     return ClipRect( // 回傳建構完成的元件或方法計算結果
         child: BackdropFilter( // 執行相對應的邏輯計算或設定屬性參數
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), // 執行相對應的邏輯計算或設定屬性參數
           child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-            height: 80,  // 執行相對應的邏輯計算或設定屬性參數
+            height: 80 + statusBarHeight,  // 執行相對應的邏輯計算或設定屬性參數
             decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
               color: AppColors.background.withOpacity(0.5), // 設定顏色數值（Color）
               border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)), // 設定顏色數值（Color）
             ), // 執行相對應的邏輯計算或設定屬性參數
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+          padding: EdgeInsets.fromLTRB(16, statusBarHeight + 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
           child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
             mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
             children: [ // 執行相對應的邏輯計算或設定屬性參數

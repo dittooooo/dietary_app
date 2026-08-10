@@ -1048,7 +1048,7 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
     // 執行繪製邏輯
     final Rect rect = Offset.zero & size; // 定義全屏矩形
-    final Paint paint = Paint()..color = const Color(0xFFF5F0EB); // 設定底色 (米白色)
+    final Paint paint = Paint()..color = AppColors.surface; // 設定底色 (沙金色)
     canvas.drawRect(rect, paint); // 填滿畫布底色
 
     // 計算「紙張」的範圍 (留出邊緣)
@@ -1060,7 +1060,7 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     Offset paperOrigin = Offset(margin, topMargin); // 紙張起點
 
     // 1. 繪製紙張底色 (白色，帶一點手繪不規則感)
-    Paint paperPaint = Paint()..color = Colors.white; // 白色畫筆
+    Paint paperPaint = Paint()..color = const Color(0xFFFCF8EC); // 紙張改為 0xFFFCF8EC 奶油白
     Path paperPath = _getHandDrawnRectPath( // 執行相對應的邏輯計算或設定屬性參數
       paperOrigin, // 執行相對應的邏輯計算或設定屬性參數
       paperW, // 執行相對應的邏輯計算或設定屬性參數
@@ -1391,7 +1391,7 @@ class HandDrawnBoxPainter extends CustomPainter { // 定義 HandDrawnBoxPainter 
     boxPath.close(); // 封閉
 
     Paint fillPaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = isSelected ? AppColors.surface : AppColors.background // 設定顏色數值（Color）
+      ..color = isSelected ? AppColors.primary : AppColors.surface // 點選為墨黑，未點選為沙金
       ..style = PaintingStyle.fill; // 背景筆
 
     canvas.drawPath( // 執行相對應的邏輯計算或設定屬性參數
@@ -1504,7 +1504,7 @@ class HandDrawnRoundedBoxPainter extends CustomPainter { // 定義 HandDrawnRoun
     path.close(); // 執行相對應的邏輯計算或設定屬性參數
 
     Paint fillPaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = isSelected ? AppColors.surface : AppColors.background; // 設定顏色數值（Color）
+      ..color = isSelected ? AppColors.primary : AppColors.surface; // 點選為墨黑，未點選為沙金
 
     canvas.drawPath( // 執行相對應的邏輯計算或設定屬性參數
       path.shift(const Offset(8, 10)),  // 建立編譯期常數，優化 Flutter 渲染效能

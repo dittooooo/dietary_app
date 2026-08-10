@@ -153,10 +153,10 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: false,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         toolbarHeight: 80,
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false, 
         flexibleSpace: ClipRect(
@@ -164,7 +164,7 @@ class _ProfilePageState extends State<ProfilePage> {
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.background.withOpacity(0.5), 
+                color: AppColors.background.withOpacity(0.7), 
                 border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
               ),
             ),
@@ -196,7 +196,7 @@ class _ProfilePageState extends State<ProfilePage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 20), // 預留標題列高度
+              SizedBox(height: 80 + MediaQuery.of(context).padding.top + 20), // 預留標題列高度
               // 1. 頭像區域 (包含相機按鈕)
             Center(
               child: Stack(

@@ -794,12 +794,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   Widget _buildChatPanel() { // 定義用於重複使用的 UI 封裝建構方法
     return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
       width: MediaQuery.of(context).size.width, // 執行相對應的邏輯計算或設定屬性參數
-      color: AppColors.background.withOpacity(0.98), // 設定顏色數值（Color）
-      child: SafeArea( // 執行相對應的邏輯計算或設定屬性參數
-        child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-          children: [ // 執行相對應的邏輯計算或設定屬性參數
-            // 對話面板頭部
-            Padding( // 建立間距容器（Padding），用於設定內部邊距
+      color: const Color(0xFFE7D9B1), // 設定顏色數值（Color）
+      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
+        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          // 對話面板頭部
+          Container(
+            color: const Color(0xFFFCF8EC), // 頂部標題以上/狀態列使用奶油白
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            child: Padding( // 建立間距容器（Padding），用於設定內部邊距
               padding: const EdgeInsets.all(16.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
               child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
                 children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -811,7 +813,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 ], // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
-            Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+          ),
+          Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
               child: ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
                 controller: _chatScrollController, // 新增：連結滾動控制器
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 127), // 新增：底部預留 127 像素，防止文字被小精靈 3D 模型遮擋
@@ -827,12 +830,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 }, // 程式碼區塊或元件結構結束
               ), // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
-            // 面板內也提供輸入框 (包含小精靈站位符)
-            Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
-              clipBehavior: Clip.none, // 執行相對應的邏輯計算或設定屬性參數
-              children: [ // 執行相對應的邏輯計算或設定屬性參數
-                Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
-                  top: -130, // 執行相對應的邏輯計算或設定屬性參數
+            SafeArea(
+              top: false,
+              child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
+                clipBehavior: Clip.none, // 執行相對應的邏輯計算或設定屬性參數
+                children: [ // 執行相對應的邏輯計算或設定屬性參數
+                  Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
+                    top: -130, // 執行相對應的邏輯計算或設定屬性參數
                   left: 0, // 執行相對應的邏輯計算或設定屬性參數
                   right: 0, // 執行相對應的邏輯計算或設定屬性參數
                   child: Center( // 建立置中對齊元件（Center），將子元件居中顯示
@@ -851,7 +855,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                   padding: const EdgeInsets.all(16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                   decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                    color: AppColors.background, // 設定顏色數值（Color）
+                    color: Color(0xFFE7D9B1), // 設定顏色數值（Color）
                     border: Border(top: BorderSide(color: AppColors.border)), // 設定顏色數值（Color）
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
@@ -859,7 +863,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
                         child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                           padding: const EdgeInsets.symmetric(horizontal: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                          decoration: BoxDecoration(color: const Color(0xFFFCF8EC), borderRadius: BorderRadius.circular(20)), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                           child: TextField( // 建立文字輸入框元件（TextField）
                             controller: _inputController, // 執行相對應的邏輯計算或設定屬性參數
                             decoration: const InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
@@ -884,8 +888,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ], // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
-          ], // 執行相對應的邏輯計算或設定屬性參數
-        ), // 執行相對應的邏輯計算或設定屬性參數
+          ), // 執行相對應的邏輯計算或設定屬性參數
+        ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束

@@ -9,6 +9,10 @@ import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/auth_service.dart';
+import '../../config/api_config.dart';
+
 class ReportPage extends StatefulWidget { // 定義 ReportPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
   const ReportPage({super.key, required this.date}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -30,11 +34,37 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   bool _isLoading = false;
   List<double> _weeklyData = [];
   List<double> _monthlyData = [];
+  String? _avatarUrl;
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _avatarUrl = prefs.getString('user_avatar_url');
+      });
+    }
+    final result = await AuthService().getUserProfile();
+    if (result['success'] == true) {
+      final userData = result['data'];
+      final avatarPath = userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+        final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+        if (mounted) {
+          setState(() {
+            _avatarUrl = fullUrl;
+          });
+        }
+        await prefs.setString('user_avatar_url', fullUrl);
+      }
+    }
+  }
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
+    _loadAvatar();
     
     // 初始化呼吸與懸浮動畫
     _hoverController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
@@ -253,7 +283,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.background, // 設定顏色數值（Color）
+      backgroundColor: const Color(0xFFE7D9B1), // 設定顏色數值（Color）
       body: Stack( // 設定頁面的主要內容區域（body）
         children: [ // 執行相對應的邏輯計算或設定屬性參數
           Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
@@ -301,14 +331,13 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       }, // 程式碼區塊或元件結構結束
                     ), // 執行相對應的邏輯計算或設定屬性參數
                     const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                    const Text("小精靈目前狀態：休息中", style: TextStyle(color: AppColors.textSecondary, fontSize: 14)), // 建立文字顯示元件（Text）
                   ], // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                     margin: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                      color: const Color.fromARGB(255, 227, 224, 224), // 建立編譯期常數，優化 Flutter 渲染效能
+                      color: AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
                       borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
                       boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
                         BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
@@ -342,7 +371,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                     margin: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                      color: const Color.fromARGB(255, 208, 231, 192), // 建立編譯期常數，優化 Flutter 渲染效能
+                      color: AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
                       borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
                       boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
                         BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
@@ -435,14 +464,19 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
       child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
         decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+        child: CircleAvatar(
           radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
           backgroundColor: AppColors.background,  // 設定顏色數值（Color）
-          child: Icon( // 顯示預設的圖示元件（Icon）
-            Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
-            color: AppColors.textPrimary,  // 設定顏色數值（Color）
-            size: 35, // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+              ? NetworkImage(_avatarUrl!)
+              : null,
+          child: _avatarUrl == null || _avatarUrl!.isEmpty
+              ? const Icon( // 顯示預設的圖示元件（Icon）
+                  Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                  color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                  size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                )
+              : null, // 執行相對應的邏輯計算或設定屬性參數
         ), // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
@@ -607,7 +641,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 248, 242, 191), // 鵝黃色背景
+        color: AppColors.background, // 鵝黃色背景
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)),
@@ -856,6 +890,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             ),
             ListView.builder(
               shrinkWrap: true,
+              padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: todayRecords.length,
               itemBuilder: (context, index) {
@@ -923,6 +958,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             ),
             ListView.builder(
               shrinkWrap: true,
+              padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 7,
               itemBuilder: (context, index) {
@@ -961,6 +997,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       else
                         ListView.builder(
                           shrinkWrap: true,
+                          padding: EdgeInsets.zero,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: recs.length,
                           itemBuilder: (context, rIdx) {
