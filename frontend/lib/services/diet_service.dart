@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/api_config.dart';
 import '../core/api_client.dart';
 import '../utils/profile_value_mapper.dart';
 
@@ -462,5 +463,43 @@ class DietService {
       if (responseMap['answer'] != null) 'answer': responseMap['answer'],
       if (responseMap['message'] != null) 'message': responseMap['message'],
     };
+  }
+
+  /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
+  Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
+    final normalizedPrompt = userPrompt.trim();
+    if (normalizedPrompt.isEmpty) {
+      return {'success': false, 'message': 'User prompt cannot be empty.'};
+    }
+
+    final token = await _token();
+    try {
+      final response = await _client.post(
+        '${ApiConfig.companionBaseUrl}/companion/ask',
+        {'user_prompt': normalizedPrompt},
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': data['success'] ?? true,
+          'companion_reply': data['companion_reply'] ?? '',
+          'intent_category': data['intent_category'] ?? 'general',
+          'meal_records': data['meal_records'] ?? [],
+          'dietary_agent_error': data['dietary_agent_error'],
+          'data': data,
+        };
+      }
+
+      return {
+        'success': false,
+        'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Send companion prompt failed: $e'};
+    }
   }
 }

@@ -29,4 +29,16 @@ class ApiConfig {
         ? apiBase.substring(0, apiBase.length - 4)
         : apiBase;
   }
+
+  /// 陪伴精靈 Companion Agent 的 Base URL (Port 3000)
+  static String get companionBaseUrl {
+    if (kIsWeb) {
+      return 'http://localhost:3000';
+    } else if (Platform.isAndroid) {
+      return 'http://10.0.2.2:3000';
+    } else {
+      return 'http://localhost:3000';
+    }
+  }
 }
+
