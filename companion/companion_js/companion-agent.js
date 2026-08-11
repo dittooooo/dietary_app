@@ -64,10 +64,25 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
+  console.log("\n======================================================================");
+  console.log(`[Companion Agent] 📥 收到使用者提問: "${user_prompt}"`);
+  console.log("======================================================================\n");
+
   // 2. 執行第一階段 OpenAI 意圖及情緒分析流程
   let openAiResult;
   try {
     openAiResult = await runOpenAIFlow(user_prompt);
+
+    console.log("------------------ [LLM 階段 1：意圖與情緒分析] ------------------");
+    console.log("🎯 意圖預檢 (Screening):", JSON.stringify({
+      should_handle: openAiResult.screening.should_handle,
+      intent_category: openAiResult.screening.intent_category,
+      question_type: openAiResult.screening.question_type,
+      confidence: openAiResult.screening.confidence,
+      dish_info_list: openAiResult.screening.dish_info_list
+    }, null, 2));
+    console.log("💖 情緒分析 (Emotion):", JSON.stringify(openAiResult.emotion, null, 2));
+    console.log("");
   } catch (error) {
     console.error("OpenAI flow failed:", error.message);
     return res.status(502).json({
@@ -85,41 +100,46 @@ async function handleCompanionAsk(req, res) {
 
     // 若預檢判定需要呼叫後端飲食助理
     if (openAiResult.dietary_agent_request) {
+      console.log("------------------ [Dietary Agent 飲食後端服務] ------------------");
+      console.log("🚀 發送請求 Payload:", JSON.stringify(openAiResult.dietary_agent_request, null, 2));
       try {
         const authHeader = req.headers.authorization;
         // 呼叫飲食助理 API，並代入身分驗證標頭
         dietaryAgentResponse = await callDietaryAgent(openAiResult.dietary_agent_request, authHeader);
+        const adviceCount = Array.isArray(dietaryAgentResponse?.dish_advice) ? dietaryAgentResponse.dish_advice.length : 0;
+        const nutritionCount = Array.isArray(dietaryAgentResponse?.dish_nutrition) ? dietaryAgentResponse.dish_nutrition.length : 0;
+        console.log(`✅ 成功取得回應 (Dish Advice: ${adviceCount} 筆, Nutrition: ${nutritionCount} 筆)`);
       } catch (error) {
         // 捕獲飲食助理 API 錯誤，但不中斷流程，保留錯誤訊息以利降級回覆處理
-        console.error("Dietary Agent call failed:", error.message);
+        console.error("⚠️ Dietary Agent 呼叫失敗:", error.message);
         dietaryAgentError = error.message;
       }
+      console.log("");
     }
 
-    // 回傳完整的分析與對話結果給客戶端
+    console.log("------------------ [LLM 階段 2：陪伴式回覆重組] ------------------");
+    // 呼叫重組邏輯，生成最終親切的對話文字
+    const companionReply = await getCompanionReply({
+      userPrompt: user_prompt,
+      screening: openAiResult.screening,
+      emotion: openAiResult.emotion,
+      dietaryAgentResponse,
+      dietaryAgentRequest: openAiResult.dietary_agent_request,
+      dietaryAgentError
+    });
+    console.log(`💬 生成最終對話: "${companionReply.substring(0, 80)}${companionReply.length > 80 ? "..." : ""}"\n`);
+
+    console.log("======================================================================");
+    console.log(`[Companion Agent] 📤 已成功回應前端 (Intent: ${openAiResult.screening.intent_category || "general_chat"})`);
+    console.log("======================================================================\n");
+
+    // 回傳精簡且平鋪的對話結果給客戶端
     return res.json({
       success: true,
-      llm_fallback_used: false,
-      screening: {
-        should_handle: openAiResult.screening.should_handle,
-        intent_category: openAiResult.screening.intent_category,
-        question_type: openAiResult.screening.question_type,
-        confidence: openAiResult.screening.confidence,
-        dishes: openAiResult.screening.dishes
-      },
-      emotion: openAiResult.emotion,
-      dietary_agent_request: openAiResult.dietary_agent_request,
-      dietary_agent_response: dietaryAgentResponse,
-      dietary_agent_error: dietaryAgentError,
-      // 呼叫重組邏輯，生成最終親切的對話文字
-      companion_reply: await getCompanionReply({
-        userPrompt: user_prompt,
-        screening: openAiResult.screening,
-        emotion: openAiResult.emotion,
-        dietaryAgentResponse,
-        dietaryAgentRequest: openAiResult.dietary_agent_request,
-        dietaryAgentError
-      })
+      companion_reply: companionReply,
+      intent_category: openAiResult.screening.intent_category || "general_chat",
+      meal_records: openAiResult.screening.meal_records || [],
+      dietary_agent_error: dietaryAgentError
     });
   } catch (error) {
     // 捕獲伺服器端非預期的未處理錯誤，回傳 500 狀態碼

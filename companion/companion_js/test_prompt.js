@@ -25,8 +25,12 @@ async function runTests() {
       prompt: "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。"
     },
     {
-      name: "Meal Record (Should NOT have question_type)",
+      name: "Meal Record - Single Meal",
       prompt: "我今天中午吃了一碗牛肉拉麵"
+    },
+    {
+      name: "Meal Record - Multi Meals (Cross Meal Periods)",
+      prompt: "我上午吃了一顆茶葉蛋，下午喝了一杯豆漿"
     },
     {
       name: "General Chat (Should NOT have question_type)",
@@ -55,6 +59,7 @@ async function runTests() {
       const result = await runOpenAIFlow(tc.prompt);
       console.log("Result Screening:", JSON.stringify(result.screening, null, 2));
       console.log("Result Emotion:", JSON.stringify(result.emotion, null, 2));
+      console.log("Dietary Agent Request Payload:", JSON.stringify(result.dietary_agent_request, null, 2));
       console.log("-------------------------------------------\n");
     } catch (err) {
       console.error("Test Case Failed with error:", err.message);

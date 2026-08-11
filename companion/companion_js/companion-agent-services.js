@@ -25,7 +25,7 @@ function buildDietaryAgentRequest(screening, message) {
   // 整理與清理使用者提問文字
   const question = typeof message === "string" ? message.trim() : "";
   const question_type = screening.question_type;
-  const dish_names = screening.dishes || [];
+  const dish_info_list = screening.dish_info_list || {};
 
   // 若提問為空，則不處理
   if (!question) {
@@ -38,7 +38,7 @@ function buildDietaryAgentRequest(screening, message) {
   }
 
   // 必須包含至少一項具體的餐點名稱
-  if (!Array.isArray(dish_names) || dish_names.length === 0) {
+  if (Object.keys(dish_info_list).length === 0) {
     return null;
   }
 
@@ -46,7 +46,7 @@ function buildDietaryAgentRequest(screening, message) {
   return {
     question,
     question_type,
-    dish_names
+    dish_info_list
   };
 }
 
@@ -60,16 +60,21 @@ async function runOpenAIFlow(userPrompt) {
   // 呼叫 OpenAI 進行分析
   const result = await runLLMAnalysis(userPrompt);
 
-  if (result.screening.dishes && result.screening.dishes.length > 0) {
+  // 僅在飲食諮詢 (dish_advice) 意圖時才進行食物名稱翻譯，飲食紀錄 (meal_record) 保持原始輸入名稱
+  if (
+    result.screening.intent_category === "dish_advice" &&
+    result.screening.dish_info_list &&
+    Object.keys(result.screening.dish_info_list).length > 0
+  ) {
     try {
-      // 逐一翻譯每個原始餐點，並將翻譯出的多個原料組合回單一字串，確保最終元素個數與原始品項數目一致
-      const translatedList = [];
-      for (const dish of result.screening.dishes) {
-        const translatedIngredients = await translateDishes([dish]);
+      // 逐一翻譯每個原始餐點名稱，將翻譯出的多個原料組合回單一字串，並保留對應之份數 (amount)
+      const translatedDishInfoList = {};
+      for (const [dishName, amount] of Object.entries(result.screening.dish_info_list)) {
+        const translatedIngredients = await translateDishes([dishName]);
         const combined = translatedIngredients.join("");
-        translatedList.push(combined);
+        translatedDishInfoList[combined] = amount;
       }
-      result.screening.dishes = translatedList;
+      result.screening.dish_info_list = translatedDishInfoList;
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }
@@ -148,6 +153,20 @@ async function getCompanionReply({
   // 2. 這時後端直接將 early_reply 回傳給前端，完全省下第二次 Chat Completions API 的調用，極大降低延遲。
   if (screening.early_reply) {
     return screening.early_reply;
+  }
+
+  // 飲食紀錄意圖處理 (方案 A 跨餐期草稿預覽回覆)
+  if (screening.intent_category === "meal_record") {
+    if (Array.isArray(screening.meal_records) && screening.meal_records.length > 0) {
+      const summaryList = screening.meal_records.map(rec => {
+        const itemsStr = (rec.meal_items || []).map(i => `${i.quantity}${i.unit}${i.name}`).join('與');
+        return `${rec.meal_period}的「${itemsStr}」`;
+      }).join('，以及');
+
+      return `幫你整理好${summaryList}草稿囉！請在下方確認一下內容是否正確，按下確認就可以幫你存起來囉！✨`;
+    } else {
+      return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
+    }
   }
 
   // 情況 C：資訊完整且已完成 Dietary Agent 呼叫，進入第二階段 LLM 生成最終陪伴式回覆
