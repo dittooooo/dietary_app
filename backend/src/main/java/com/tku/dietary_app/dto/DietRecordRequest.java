@@ -1,6 +1,7 @@
 package com.tku.dietary_app.dto;
 
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -34,4 +35,7 @@ public class DietRecordRequest {
             message = "mealType 只允許 BREAKFAST、LUNCH、DINNER"
     )
     private String mealType;
+
+    @Positive(message = "amount 必須大於 0")
+    private Integer amount;
 }

@@ -27,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -171,6 +172,36 @@ class ApiSecurityAndExceptionTest {
                                 """))
                 .andExpect(status().isBadGateway())
                 .andExpect(jsonPath("$.error").value("dietary partner API 呼叫失敗"));
+    }
+
+    @Test
+    void dietaryAgentAskAcceptsDishInfoList() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietaryAgentService.ask(eq(1L), any())).thenReturn(Map.of("answer", "ok"));
+
+        mockMvc.perform(post("/dietary-agent/ask")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "question": "這餐可以嗎？",
+                                  "question_type": "diet_advice",
+                                  "dish_info_list": [
+                                    {
+                                      "dish_name": "雞胸肉",
+                                      "amount": 1
+                                    },
+                                    {
+                                      "dish_name": "白飯",
+                                      "amount": 2
+                                    }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.answer").value("ok"));
     }
 
     private UsernamePasswordAuthenticationToken authToken(String email, String authority) {

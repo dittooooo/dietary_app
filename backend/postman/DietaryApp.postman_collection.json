@@ -371,7 +371,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Chicken Salad\",\n  \"calories\": 350,\n  \"protein\": 30,\n  \"fat\": 8,\n  \"carbohydrates\": 25,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Lunch\",\n  \"mealType\": \"LUNCH\"\n}"
+              "raw": "{\n  \"dishName\": \"Chicken Salad\",\n  \"calories\": 350,\n  \"protein\": 30,\n  \"fat\": 8,\n  \"carbohydrates\": 25,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Lunch\",\n  \"mealType\": \"LUNCH\",\n  \"amount\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/user/diet-records",
@@ -445,7 +445,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Salmon Bento\",\n  \"calories\": 520,\n  \"protein\": 32,\n  \"fat\": 18,\n  \"carbohydrates\": 48,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Dinner\",\n  \"mealType\": \"DINNER\"\n}"
+              "raw": "{\n  \"dishName\": \"Salmon Bento\",\n  \"calories\": 520,\n  \"protein\": 32,\n  \"fat\": 18,\n  \"carbohydrates\": 48,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Dinner\",\n  \"mealType\": \"DINNER\",\n  \"amount\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/diet-records",
@@ -475,7 +475,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Salmon Bento With Greens\",\n  \"calories\": 540,\n  \"protein\": 34,\n  \"fat\": 18,\n  \"carbohydrates\": 50,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Updated\",\n  \"mealType\": \"DINNER\"\n}"
+              "raw": "{\n  \"dishName\": \"Salmon Bento With Greens\",\n  \"calories\": 540,\n  \"protein\": 34,\n  \"fat\": 18,\n  \"carbohydrates\": 50,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Updated\",\n  \"mealType\": \"DINNER\",\n  \"amount\": 1\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/diet-records/{{dietRecordId}}",
@@ -641,7 +641,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"question\": \"Is this dinner plan okay for me today?\",\n  \"question_type\": \"diet_advice\",\n  \"dish_names\": [\"chicken breast\", \"rice\"],\n  \"user_profile\": {\n    \"height_cm\": 170,\n    \"weight_kg\": 65,\n    \"gender\": \"MALE\",\n    \"age\": 25\n  },\n  \"health_condition\": {\n    \"has_chronic_disease\": true,\n    \"chronic_diseases\": [\"DIABETES\"]\n  },\n  \"weekly_diet_records\": [\n    {\n      \"date\": \"2026-08-06\",\n      \"meal\": \"DINNER\",\n      \"dish_name\": \"chicken breast\",\n      \"note\": \"low oil\"\n    }\n  ]\n}"
+              "raw": "{\n  \"question\": \"Is this dinner plan okay for me today?\",\n  \"question_type\": \"diet_advice\",\n  \"dish_info_list\": [\n    {\n      \"dish_name\": \"chicken breast\",\n      \"amount\": 1\n    },\n    {\n      \"dish_name\": \"rice\",\n      \"amount\": 2\n    }\n  ],\n  \"user_profile\": {\n    \"height_cm\": 170,\n    \"weight_kg\": 65,\n    \"gender\": \"MALE\",\n    \"age\": 25\n  },\n  \"health_condition\": {\n    \"has_chronic_disease\": true,\n    \"chronic_diseases\": [\"DIABETES\"]\n  },\n  \"weekly_diet_records\": [\n    {\n      \"date\": \"2026-08-06\",\n      \"meal\": \"DINNER\",\n      \"dish_name\": \"chicken breast\",\n      \"note\": \"low oil\"\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/dietary-agent/ask",

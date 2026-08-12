@@ -283,6 +283,7 @@ Response:
       "dishName": "雞胸肉沙拉",
       "description": "午餐",
       "mealType": "LUNCH",
+      "amount": 1,
       "photoUrl": "/avatars/example.jpg",
       "date": "2026-08-06",
       "createdAt": "2026-08-06T12:30:00",
@@ -314,7 +315,8 @@ Request:
   "carbohydrates": 25,
   "date": "2026-08-06",
   "description": "午餐",
-  "mealType": "LUNCH"
+  "mealType": "LUNCH",
+  "amount": 1
 }
 ```
 
@@ -323,6 +325,8 @@ Request:
 - `BREAKFAST`
 - `LUNCH`
 - `DINNER`
+
+`amount` 可省略；若未提供或為 `null`，後端會自動以 `1` 儲存。
 
 ## 7. 飲食紀錄 API
 
@@ -450,9 +454,15 @@ Request:
 {
   "question": "我今天晚餐這樣吃可以嗎？",
   "question_type": "diet_advice",
-  "dish_names": [
-    "雞胸肉",
-    "白飯"
+  "dish_info_list": [
+    {
+      "dish_name": "雞胸肉",
+      "amount": 1
+    },
+    {
+      "dish_name": "白飯",
+      "amount": 2
+    }
   ],
   "user_profile": {
     "height_cm": 170,

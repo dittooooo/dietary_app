@@ -18,6 +18,7 @@ public class DietRecordResponse {
     private String dishName;
     private String description;
     private String mealType;
+    private Integer amount;
     private String photoUrl;
     private LocalDate date;
     private LocalDate mealDate;
@@ -34,6 +35,7 @@ public class DietRecordResponse {
                 .dishName(dietRecord.getDishName())
                 .description(dietRecord.getDescription())
                 .mealType(dietRecord.getMealType())
+                .amount(dietRecord.getAmount())
                 .photoUrl(dietRecord.getPhotoUrl())
                 .date(recordDate)
                 .mealDate(recordDate)
