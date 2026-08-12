@@ -1,6 +1,7 @@
 package com.tku.dietary_app.service;
 
 import com.tku.dietary_app.dto.DietaryAgentPayload;
+import com.tku.dietary_app.dto.DietaryAgentPayload.DishInfoDto;
 import com.tku.dietary_app.dto.DietaryAgentPayload.HealthConditionDto;
 import com.tku.dietary_app.dto.DietaryAgentPayload.WeeklyDietRecordDto;
 import com.tku.dietary_app.dto.DietaryAskRequest;
@@ -111,10 +112,17 @@ public class DietaryAgentService {
                 .collect(Collectors.toList())
                 : fetchWeeklyDietRecords(userId);
 
+        List<DishInfoDto> dishInfoList = request.getDishInfoList().stream()
+                .map(dish -> DishInfoDto.builder()
+                        .dishName(dish.getDishName())
+                        .amount(dish.getAmount())
+                        .build())
+                .collect(Collectors.toList());
+
         return DietaryAgentPayload.builder()
                 .question(request.getQuestion())
                 .questionType(request.getQuestionType())
-                .dishNames(request.getDishNames())
+                .dishInfoList(dishInfoList)
                 .userProfile(userProfileDto)
                 .healthCondition(healthConditionDto)
                 .weeklyDietRecords(weeklyDietRecords)

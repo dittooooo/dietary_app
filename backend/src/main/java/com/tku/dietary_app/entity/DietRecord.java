@@ -51,6 +51,9 @@ public class DietRecord {
     @Column(name = "meal_type", nullable = false)
     private String mealType;
 
+    @Column(name = "amount", nullable = false)
+    private Integer amount;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
@@ -59,6 +62,9 @@ public class DietRecord {
     private void onCreate() {
         if (date == null) {
             date = LocalDate.now();
+        }
+        if (amount == null) {
+            amount = 1;
         }
     }
 }

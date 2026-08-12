@@ -89,6 +89,7 @@ public class DietRecordService {
                 .date(resolveRecordDate(request.getDate()))
                 .description(normalizeNullableText(request.getDescription()))
                 .mealType(normalizeMealTypeRequired(request.getMealType()))
+                .amount(resolveAmount(request.getAmount()))
                 .build());
     }
 
@@ -172,6 +173,7 @@ public class DietRecordService {
         if (hasText(request.getMealType())) {
             record.setMealType(normalizeMealTypeRequired(request.getMealType()));
         }
+        record.setAmount(resolveAmount(request.getAmount()));
     }
 
     private Double resolveUpdatedNutritionValue(Double requestValue,
@@ -208,6 +210,10 @@ public class DietRecordService {
 
     private LocalDate resolveRecordDate(LocalDate requestedDate) {
         return requestedDate != null ? requestedDate : LocalDate.now();
+    }
+
+    private int resolveAmount(Integer amount) {
+        return amount == null ? 1 : amount;
     }
 
     private void validateCreateRequest(DietRecordRequest request) {
