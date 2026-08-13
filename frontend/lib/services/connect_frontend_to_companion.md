@@ -175,6 +175,109 @@ import '../utils/profile_value_mapper.dart';
 
 ---
 
+### 📍 修改位置 3: 重構 `createDietRecord` 參數為 3 大核心必填欄位 (`dishName`, `mealType`, `amount`)
+
+* **修改目的**：
+  明確定義新增飲食紀錄的核心 3 大必填欄位：
+  1. **`dishName`** (`required String dishName`)：餐點名稱（如：`蛋餅`）
+  2. **`mealType`** (`required String mealType`)：餐期（如：`早餐`）
+  3. **`amount`** (`required String amount`)：數量/份量（將原本可選的 `portions` 改名為必填的 `amount`，如：`2 個`）
+  4. 將 `description` 調整為可選欄位（預設 `String description = ''`）。
+
+**原程式碼 (第 120~127 行)**：
+```dart
+120:   Future<Map<String, dynamic>> createDietRecord({
+121:     required String dishName,
+122:     required String mealType,
+123:     required String description,
+124:     String portions = '',
+125:     String nutrition = '',
+126:     DateTime? mealDate,
+127:   }) async {
+```
+
+**預計替換程式碼**：
+```dart
+  /// 新增飲食紀錄 (3大核心必填欄位: dishName, mealType, amount)
+  Future<Map<String, dynamic>> createDietRecord({
+    required String dishName,
+    required String mealType,
+    required String amount,
+    String description = '',
+    String nutrition = '',
+    DateTime? mealDate,
+  }) async {
+    final token = await _token();
+    if (token == null) {
+      return {'success': false, 'message': 'Please sign in again.'};
+    }
+
+    final parsedNutrition = _parseNutrition(nutrition);
+
+    String apiMealType = _mealTypeForApi(mealType);
+    String apiDescription = description;
+    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
+      apiMealType = 'DINNER';
+      apiDescription = '[MealType:OTHER]$description';
+    }
+
+    try {
+      final response = await _client.post(
+        '/diet-records',
+        {
+          'dishName': dishName,
+          'mealType': apiMealType,
+          'description': apiDescription,
+          'portions': amount,
+          'nutrition': nutrition,
+          'calories': parsedNutrition['calories'],
+          'protein': parsedNutrition['protein'],
+          'fat': parsedNutrition['fat'],
+          'carbohydrates': parsedNutrition['carbohydrates'],
+          if (mealDate != null) 'date': _formatDate(mealDate),
+        },
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      // 💡 _decodeObject: 安全地將 HTTP 回傳的 JSON 字串解析為 Map 字典 (具防錯保護，避免非標準 JSON 導致 App 閃退)
+      final data = _decodeObject(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final recordData = data['data'] ?? data;
+        if (recordData is Map) {
+          final desc = (recordData['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            final newRecord = Map<String, dynamic>.from(recordData);
+            newRecord['mealType'] = 'OTHER';
+            newRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
+            return {'success': true, 'data': newRecord};
+          }
+        }
+        return {'success': true, 'data': recordData};
+      }
+
+      return {
+        'success': false,
+        'message': _errorMessage(
+          'Create diet record',
+          response.statusCode,
+          response.body,
+        ),
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Create diet record failed: $e'};
+    }
+  }
+```
+
+* **關聯調用處隨之調整**：
+  1. **`home_view.dart`** (草稿彈窗)：將 `portions: '$qty $unit'.trim()` 替換為 `amount: '$qty $unit'.trim()`，且可省略 `description` 或視需要傳入。
+  2. **`manual_record_page.dart`** (第 190 行)：將傳參 `portions: ...` 替換為 `amount: ...`。
+
+---
+
 ## 📁 修改檔案 4: `frontend/lib/views/home/home_view.dart`
 
 * **檔案路徑**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
@@ -295,45 +398,72 @@ import '../utils/profile_value_mapper.dart';
 
 ---
 
-## 🔔 累積擴充: UI 與彈窗互動層 — `meal_record` 意圖之前端彈跳視窗 (Dialog) 互動與 confirmation 儲存完整流程
+## 🔔 累積擴充: UI 與彈窗互動層 — `meal_record` 意圖之前端可編輯草稿視窗 (Editable Draft Dialog) 完整設計
 
-依據 [connect.md](file:///c:/Users/User/Documents/Github_Repo/dietary_app/connect.md) 第六點規範，當 Companion Agent 回傳 `intent_category == "meal_record"` 且 `meal_records` 不為空時，前端之完整 UI 互動與持久化流程如下：
+依據最新需求，當 Companion Agent 回傳 `intent_category == "meal_record"` 時，跳出的草稿確認視窗將由「唯讀預覽模式」提升為**「可編輯草稿模式 (Editable Draft Mode)」**。使用者可即時修正在彈窗上顯示有誤的欄位，最終以使用者修正後的數據寫入資料庫。
 
-### 1. 互動與數據串接流程 (Sequence Flow)
+---
 
-```
-[Companion Agent] ──(200 OK: companion_reply + meal_records)──> [home_view.dart]
-                                                                        │
- ┌──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────┐
- │ 1. 氣泡渲染：先將 companion_reply 顯示於聊天氣泡                                                                         │
- │ 2. 彈窗觸發：調用 _showMealRecordDraftDialog(context, mealRecords) 彈出草稿確認視窗                                     │
- └──────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────┘
-                                                                        │
-                           ┌────────────────────────────────────────────┴────────────────────────────────────────────┐
-                           ▼                                                                                         ▼
-                 【點擊「取消」按鈕】                                                                       【點擊「確認儲存」按鈕】
-                           │                                                                                         │
-             關閉彈窗，不進行 DB 寫入                                                               關閉彈窗並發送持久化請求
-                                                                                                                     │
-                                                                                         遍歷草稿品項，對每一餐點呼叫：
-                                                                                         DietService().createDietRecord(...)
-                                                                                                                     │
-                                                                                                                     ▼
-                                                                                         [Spring Boot API] POST /api/diet-records
-                                                                                                                     │
-                                                                                                                     ▼
-                                                                                         跳出 Toast 提示「🎉 飲食紀錄已成功儲存！」
-```
+### 1. 欄位編輯實作方式說明 (Field Editing Specifications)
+
+| 欄位 | 預設來源 | UI 編輯元件實作方式 | 資料同步機制 |
+| :--- | :--- | :--- | :--- |
+| **餐期 (Meal Period)** | Companion 解析 (如 `早餐`) | **下拉選單 (`DropdownButtonFormField<String>`)**<br>選項包含：`早餐`、`午餐`、`晚餐`、`其他`。 | 選擇新選單項目時，更新本地狀態中該餐期的 `meal_period` 數值。 |
+| **餐點名稱 (Dish Name)** | Companion 解析 (如 `蛋餅`) | **可編輯單行輸入框 (`TextFormField`)**<br>以 `initialValue` 帶入初始名稱。 | 當 `onChanged` 觸發時，即時更新本地狀態中的 `item['name']`。 |
+| **數量 (Quantity)** | Companion 解析 (如 `2`) | **`[-]` 與 `[+]` 計數按鈕組 (`IconButton Counter`)**<br>中間顯示數字，按 `-` 遞減（最小為 1），按 `+` 遞增。 | 按按鈕時更新本地狀態中的 `item['quantity']` 並調用 `setDialogState()`。 |
+| **單位 (Unit)** | Companion 解析 (如 `個`) | **純文字展示 (`Text`)**<br>暫維持唯讀狀態（如需求所述）。 | 直接顯示原始單位字串。 |
+
+---
+
+### 2. 本地可變狀態維護與儲存流程 (State Management)
+
+1. **狀態深拷貝 (Deep Copy)**：
+   在 `_showMealRecordDraftDialog` 建立時，先將傳入的唯讀 `mealRecords` 深拷貝為一份可變動的本地 List：
+   ```dart
+   final List<Map<String, dynamic>> editableRecords = mealRecords.map((rec) {
+     final items = (rec['meal_items'] as List<dynamic>? ?? []).map((item) {
+       return {
+         'name': item['name']?.toString() ?? '',
+         'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+         'unit': item['unit']?.toString() ?? '',
+       };
+     }).toList();
+     return {
+       'meal_period': rec['meal_period']?.toString() ?? '早餐',
+       'meal_items': items,
+     };
+   }).toList();
+   ```
+
+2. **持久化寫入 (Save to DB)**：
+   點擊【確認儲存】時，遍歷這份**經使用者修改後的 `editableRecords`**，讀取最新修正之餐期、餐點名稱與數量，呼叫 `DietService().createDietRecord(...)` 寫入主後端資料庫。
 
 ---
 
 ### 2. 在 `_HomeViewState` 內預計新增之 `_showMealRecordDraftDialog` 方法程式碼
 
-此方法將放置於 [home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart) 的 `_HomeViewState` 類別內：
+此可編輯版彈窗方法將替換原本 [home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart) 的唯讀版本：
 
 ```dart
-  /// 彈出「飲食紀錄草稿預覽」確認視窗，供使用者核對並確認儲存至 DB
+  /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者自行修正餐期、餐點名稱與數量
   void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords) {
+    // 1. 深拷貝為本地可變狀態，確保使用者修改不影響全域原數據
+    final List<Map<String, dynamic>> editableRecords = mealRecords.map((rec) {
+      final items = (rec['meal_items'] as List<dynamic>? ?? []).map((item) {
+        return {
+          'name': item['name']?.toString() ?? '',
+          'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+          'unit': item['unit']?.toString() ?? '',
+        };
+      }).toList();
+      return {
+        'meal_period': rec['meal_period']?.toString() ?? '早餐',
+        'meal_items': items,
+      };
+    }).toList();
+
+    const List<String> mealPeriodOptions = ['早餐', '午餐', '晚餐', '其他'];
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -348,10 +478,10 @@ import '../utils/profile_value_mapper.dart';
               backgroundColor: AppColors.background,
               title: Row(
                 children: const [
-                  Icon(Icons.restaurant_menu, color: AppColors.primary),
+                  Icon(Icons.edit_note, color: AppColors.primary, size: 28),
                   SizedBox(width: 8),
                   Text(
-                    '確認飲食紀錄草稿',
+                    '核對與修改飲食紀錄草稿',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -366,15 +496,18 @@ import '../utils/profile_value_mapper.dart';
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      '陪伴精靈已為您整理出以下飲食草稿，請確認是否儲存至紀錄：',
-                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                      '陪伴精靈已為您整理出以下飲食草稿啦~\n請確認紀錄是否正確\n修正完畢後，請按下確認儲存',
+                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
                     ),
                     const SizedBox(height: 12),
-                    ...mealRecords.map((record) {
-                      final mealPeriod = record['meal_period']?.toString() ?? '早餐';
-                      final items = record['meal_items'] as List<dynamic>? ?? [];
+                    ...editableRecords.asMap().entries.map((recEntry) {
+                      final recIndex = recEntry.key;
+                      final record = recEntry.value;
+                      final currentPeriod = record['meal_period'].toString();
+                      final items = record['meal_items'] as List<Map<String, dynamic>>;
+
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 10),
+                        margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
@@ -384,26 +517,150 @@ import '../utils/profile_value_mapper.dart';
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '餐期：$mealPeriod',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: AppColors.secondary,
-                              ),
+                            // 1. 可編輯餐期：下拉選單 (Dropdown)
+                            Row(
+                              children: [
+                                const Text(
+                                  '餐期：',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.background,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppColors.border),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: mealPeriodOptions.contains(currentPeriod)
+                                            ? currentPeriod
+                                            : '早餐',
+                                        isExpanded: true,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        onChanged: isSaving
+                                            ? null
+                                            : (newPeriod) {
+                                                if (newPeriod != null) {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_period'] = newPeriod;
+                                                  });
+                                                }
+                                              },
+                                        items: mealPeriodOptions.map((period) {
+                                          return DropdownMenuItem<String>(
+                                            value: period,
+                                            child: Text(period),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const Divider(height: 12),
-                            ...items.map((item) {
-                              final name = item['name']?.toString() ?? '';
-                              final qty = item['quantity']?.toString() ?? '1';
-                              final unit = item['unit']?.toString() ?? '';
+                            const Divider(height: 16),
+
+                            // 2. 餐點品項列表 (可編輯名稱與數量)
+                            ...items.asMap().entries.map((itemEntry) {
+                              final itemIndex = itemEntry.key;
+                              final item = itemEntry.value;
+                              final currentQty = item['quantity'] as int;
+                              final unitStr = item['unit'].toString();
+
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2),
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text('• $name', style: const TextStyle(fontSize: 13)),
-                                    Text('$qty $unit', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                    // (A) 餐點名稱可編輯輸入框
+                                    Expanded(
+                                      flex: 5,
+                                      child: TextFormField(
+                                        initialValue: item['name'].toString(),
+                                        enabled: !isSaving,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          hintText: '餐點名稱',
+                                        ),
+                                        onChanged: (val) {
+                                          editableRecords[recIndex]['meal_items'][itemIndex]['name'] = val;
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // (B) 數量可加減計數按鈕 [-] 1 [+]
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: (isSaving || currentQty <= 1)
+                                              ? null
+                                              : () {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty - 1;
+                                                  });
+                                                },
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: (currentQty <= 1 || isSaving)
+                                                  ? Colors.grey.shade300
+                                                  : AppColors.primary.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                                          child: Text(
+                                            '$currentQty',
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: isSaving
+                                              ? null
+                                              : () {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty + 1;
+                                                  });
+                                                },
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 4),
+
+                                    // (C) 單位展示（唯讀）
+                                    Text(
+                                      unitStr,
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
                                   ],
                                 ),
                               );
@@ -432,19 +689,26 @@ import '../utils/profile_value_mapper.dart';
                       : () async {
                           setDialogState(() => isSaving = true);
                           try {
-                            for (var record in mealRecords) {
+                            // 核心儲存邏輯：讀取使用者修正後的最新 editableRecords
+                            for (var record in editableRecords) {
                               final mealPeriod = record['meal_period']?.toString() ?? '早餐';
-                              final items = record['meal_items'] as List<dynamic>? ?? [];
+                              final items = record['meal_items'] as List<Map<String, dynamic>>;
                               for (var item in items) {
-                                final name = item['name']?.toString() ?? '';
+                                final name = item['name']?.toString().trim() ?? '';
                                 final qty = item['quantity']?.toString() ?? '1';
                                 final unit = item['unit']?.toString() ?? '';
                                 if (name.isNotEmpty) {
+                                  // =========================================================================
+                                  // 【將飲食紀錄傳到後端資料庫的核心 API 呼叫】
+                                  // 呼叫 DietService().createDietRecord(...) 發送 POST /api/
+                                  // 將使用者最終確認修正後的餐點名稱 (dishName)、餐期 (mealType)、
+                                  // 數量份量 (portions) 與紀錄時間 (mealDate) 持久化存入資料庫中。
+                                  // =========================================================================
                                   await DietService().createDietRecord(
                                     dishName: name,
                                     mealType: mealPeriod,
-                                    description: '陪伴精靈自動解析紀錄',
-                                    portions: '$qty $unit'.trim(),
+                                    amount: '$qty $unit'.trim(),
+                                    description: '陪伴精靈解析並經使用者核對修正',
                                     mealDate: DateTime.now(),
                                   );
                                 }
@@ -483,9 +747,51 @@ import '../utils/profile_value_mapper.dart';
 
 ---
 
-## 🎯 總結
+## 🚀 階段性實作批次規劃總覽 (Batch Implementation Roadmap)
 
-本說明文件已累積**包含 UI 彈窗互動層 (`meal_record` 飲食草稿卡片與確認儲存)** 的完整設計。
-完全**沒有修改任何既有的 Dart 原始程式碼**，請您審閱確認。確認無誤後，即可分兩批次依照本說明書內容逐行實作：
-- **批次一**：基礎 API 連線與 Service 方法建置 (`api_config.dart`, `api_client.dart`, `diet_service.dart`)。
-- **批次二**：UI 與彈窗互動層對接 (`home_view.dart` 訊息接收與 `_showMealRecordDraftDialog` 彈窗流程)。
+- **✅ 批次一 (已完成實作)**：基礎 API 連線與 Service 方法建置
+  - **[api_config.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/config/api_config.dart)**：新增 `companionBaseUrl` 靜態 Getter。
+  - **[api_client.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/core/api_client.dart)**：支援完整 URL 解析，並過濾 Port 3000 全域登出彈窗。
+  - **[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)**：新增 `sendCompanionUserPrompt` 對接 `/companion/ask`。
+
+- **✅ 批次二 (已完成實作)**：基礎 UI 與彈窗互動層對接
+  - **[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)**：`_handleMessage` 訊息發送、氣泡渲染與 `_showMealRecordDraftDialog` 基礎彈窗流程。
+
+- **✅ 批次三 (待確認後執行)**：處理「可編輯草稿模式 (Editable Draft Mode)」
+  - **目標檔案**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
+  - **細節說明**：
+    1. 將 `_showMealRecordDraftDialog` 升級為動態可編輯草稿彈窗。
+    2. 加入親切語氣提示文字：`'陪伴精靈已為您整理出以下飲食草稿啦~\n請確認紀錄是否正確\n修正完畢後，請按下確認儲存'`。
+    3. **餐期**：改為下拉選單 (`DropdownButtonHideUnderline` + `DropdownButton<String>`)，支援早餐/午餐/晚餐/其他。
+    4. **餐點名稱**：改為單行輸入框 (`TextFormField`)，允許使用者輸入修正。
+    5. **數量**：改為 `[-]`/`[+]` 動態計數按鈕組（最低限制為 1）。
+    6. **單位**：保持純文字唯讀顯示。
+    7. **本地狀態同步**：建立 `editableRecords` 深拷貝本地狀態，使用者修正時即時覆蓋狀態，按下「確認儲存」時讀取最新修正數據寫入 DB。
+
+- **✅ 批次四 (已完成實作)**：處理 `DietService` 後續 `createDietRecord` 重構與呼叫端調整
+  - **目標檔案 1**：[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)
+    - 將 `createDietRecord` 參數重新定義為三大核心必填欄位：`dishName` (必填), `mealType` (必填), `amount` (必填)，並將 `description` 設為選填（預設 `''`）。
+  - **目標檔案 2**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
+    - 更新 `_showMealRecordDraftDialog` 中的 API 呼叫，將引數 `portions:` 改為 `amount: '$qty $unit'.trim()`。
+  - **目標檔案 3**：[manual_record_page.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/records/manual_record_page.dart)
+    - 更新第 190 行手動記錄頁面中的 `createDietRecord` 引數，將 `portions:` 改為 `amount:`。
+
+---
+
+## 🔗 延伸檔案與補充說明 (Extended File References & Explanation)
+
+### 1. 為何是 `DietService().createDietRecord(...)`？
+在 Flutter 前端專案中，所有的飲食紀錄資料庫操作（包含新增、查詢、修改、刪除紀錄）都被統一封裝在 [diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart) 的 `DietService` 類別中。
+當使用者在草稿彈窗點擊「確認儲存」時，前端直接調用 `DietService().createDietRecord(...)` 即可將使用者核對修正後的草稿資料傳送給主後端寫入資料庫。
+---
+### 2. 真的有 `POST /api/diet-records` 這個 Endpoint 嗎？在哪些檔案可以看到？
+**是的，`POST /api/diet-records` 是前端與 Spring Boot 主後端 (Port 8080) 之間正式定義並使用的持久化寫入 API 端點。**
+您可以在以下檔案中看到完整的定義與拼裝邏輯：
+1. **[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)（第 119~188 行）**
+   - 在 `createDietRecord` 方法中，呼叫 `_client.post('/diet-records', ...)` 發送新增飲食紀錄的請求。
+2. **[api_config.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/config/api_config.dart)（第 14、20、23 行）**
+   - 定義主後端 (Port 8080) 的 API Base URL 為 `'http://localhost:8080/api'`。
+3. **[api_client.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/core/api_client.dart)（第 15~21 行）**
+   - `_resolveUrl('/diet-records')` 會自動將 `ApiConfig.baseUrl` (`http://localhost:8080/api`) 與 `/diet-records` 組合，拼出完整的 Endpoint URL：**`http://localhost:8080/api/diet-records`**。
+4. **[connect.md](file:///c:/Users/User/Documents/Github_Repo/dietary_app/connect.md)（第 68、222、235、271 行）**
+   - 專案對接規格清單中，詳細記載了 Companion Agent 解析出草稿後，前端最終透過呼叫 `DietService.createDietRecord()` 將資料傳入 `POST /api/diet-records` 並持久化至 PostgreSQL 資料庫。

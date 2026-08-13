@@ -117,11 +117,12 @@ class DietService {
     }
   }
 
+  /// 新增飲食紀錄 (3 大核心必填欄位: dishName, mealType, amount)
   Future<Map<String, dynamic>> createDietRecord({
     required String dishName,
     required String mealType,
-    required String description,
-    String portions = '',
+    required String amount,
+    String description = '',
     String nutrition = '',
     DateTime? mealDate,
   }) async {
@@ -146,7 +147,7 @@ class DietService {
           'dishName': dishName,
           'mealType': apiMealType,
           'description': apiDescription,
-          'portions': portions,
+          'amount': amount,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],

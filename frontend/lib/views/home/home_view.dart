@@ -581,43 +581,34 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       });
       _scrollToBottom(); // 新增：載入中提示滑到底部
       
-      DietService().askWeeklyAnalysis(text).then((res) {
+      DietService().sendCompanionUserPrompt(text).then((res) {
         _showDogResponseThenIdle();
         setState(() {
-          if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+          if (_messages.isNotEmpty &&
+              (_messages.last['text'] == '正在思考中...' ||
+               _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
             _messages.removeLast();
           }
-          
-          if (res['success'] == true) {
-            final payload = res['data'] ?? {};
-            String answer = '';
-            if (payload['answer'] != null) {
-              answer = payload['answer'].toString();
-            } else if (payload['message'] != null) {
-              answer = payload['message'].toString();
-            } else if (payload['partner_response'] != null) {
-              final pr = payload['partner_response'];
-              if (pr is Map && pr['answer'] != null) {
-                answer = pr['answer'].toString();
-              } else if (pr is Map && pr['message'] != null) {
-                answer = pr['message'].toString();
-              } else if (pr is Map && pr['response'] != null) {
-                answer = pr['response'].toString();
-              } else {
-                answer = pr.toString();
-              }
-            } else {
-              answer = '分析成功，但未取得回覆內容。';
-            }
 
+          final reply = res['companion_reply'] ??
+              (res['data'] is Map ? res['data']['companion_reply'] : null);
+
+          if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
             _messages.add({
               'isElf': true,
-              'text': answer,
+              'text': reply.toString(),
             });
+
+            // 判斷意圖若為 meal_record 且含草稿，自動觸發飲食紀錄確認彈窗
+            final intent = res['intent_category'] ?? '';
+            final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
+            if (intent == 'meal_record' && mealRecords.isNotEmpty) {
+              _showMealRecordDraftDialog(context, mealRecords);
+            }
           } else {
             _messages.add({
               'isElf': true,
-              'text': '飲食分析服務暫時無法使用，請稍後再試。',
+              'text': res['message'] ?? '讀取精靈回覆失敗，請稍後再試。',
             });
           }
         });
@@ -625,12 +616,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }).catchError((e) {
         _showDogResponseThenIdle();
         setState(() {
-          if (_messages.isNotEmpty && _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...') {
+          if (_messages.isNotEmpty &&
+              (_messages.last['text'] == '正在思考中...' ||
+               _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
             _messages.removeLast();
           }
           _messages.add({
             'isElf': true,
-            'text': '飲食分析服務發生異常，請稍後再試。',
+            'text': '連線發生錯誤: $e',
           });
         });
         _scrollToBottom(); // 新增：發生異常後滑到底部
@@ -1081,7 +1074,306 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   }
-} // 程式碼區塊或元件結構結束
+
+  /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者自行修正餐期、餐點名稱與數量
+  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords) {
+    // 1. 深拷貝為本地可變狀態，確保使用者修改不影響全域原數據
+    final List<Map<String, dynamic>> editableRecords = mealRecords.map((rec) {
+      final items = (rec['meal_items'] as List<dynamic>? ?? []).map((item) {
+        return {
+          'name': item['name']?.toString() ?? '',
+          'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+          'unit': item['unit']?.toString() ?? '',
+        };
+      }).toList();
+      return {
+        'meal_period': rec['meal_period']?.toString() ?? '早餐',
+        'meal_items': items,
+      };
+    }).toList();
+
+    const List<String> mealPeriodOptions = ['早餐', '午餐', '晚餐', '其他'];
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isSaving = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              backgroundColor: AppColors.background,
+              title: Row(
+                children: const [
+                  Icon(Icons.edit_note, color: AppColors.primary, size: 28),
+                  SizedBox(width: 8),
+                  Text(
+                    '核對與修改飲食紀錄草稿',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '陪伴精靈已為您整理出以下飲食草稿啦~\n請確認紀錄是否正確\n修正完畢後，請按下確認儲存',
+                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
+                    ),
+                    const SizedBox(height: 12),
+                    ...editableRecords.asMap().entries.map((recEntry) {
+                      final recIndex = recEntry.key;
+                      final record = recEntry.value;
+                      final currentPeriod = record['meal_period'].toString();
+                      final items = record['meal_items'] as List<Map<String, dynamic>>;
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 1. 可編輯餐期：下拉選單 (Dropdown)
+                            Row(
+                              children: [
+                                const Text(
+                                  '餐期：',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.background,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppColors.border),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: mealPeriodOptions.contains(currentPeriod)
+                                            ? currentPeriod
+                                            : '早餐',
+                                        isExpanded: true,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                        onChanged: isSaving
+                                            ? null
+                                            : (newPeriod) {
+                                                if (newPeriod != null) {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_period'] = newPeriod;
+                                                  });
+                                                }
+                                              },
+                                        items: mealPeriodOptions.map((period) {
+                                          return DropdownMenuItem<String>(
+                                            value: period,
+                                            child: Text(period),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 16),
+
+                            // 2. 餐點品項列表 (可編輯名稱與數量)
+                            ...items.asMap().entries.map((itemEntry) {
+                              final itemIndex = itemEntry.key;
+                              final item = itemEntry.value;
+                              final currentQty = item['quantity'] as int;
+                              final unitStr = item['unit'].toString();
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                child: Row(
+                                  children: [
+                                    // (A) 餐點名稱可編輯輸入框
+                                    Expanded(
+                                      flex: 5,
+                                      child: TextFormField(
+                                        initialValue: item['name'].toString(),
+                                        enabled: !isSaving,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                        decoration: InputDecoration(
+                                          isDense: true,
+                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                          border: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          hintText: '餐點名稱',
+                                        ),
+                                        onChanged: (val) {
+                                          editableRecords[recIndex]['meal_items'][itemIndex]['name'] = val;
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // (B) 數量可加減計數按鈕 [-] 1 [+]
+                                    Row(
+                                      children: [
+                                        InkWell(
+                                          onTap: (isSaving || currentQty <= 1)
+                                              ? null
+                                              : () {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty - 1;
+                                                  });
+                                                },
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: (currentQty <= 1 || isSaving)
+                                                  ? Colors.grey.shade300
+                                                  : AppColors.primary.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                                          child: Text(
+                                            '$currentQty',
+                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                        InkWell(
+                                          onTap: isSaving
+                                              ? null
+                                              : () {
+                                                  setDialogState(() {
+                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty + 1;
+                                                  });
+                                                },
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(width: 4),
+
+                                    // (C) 單位展示（唯讀）
+                                    Text(
+                                      unitStr,
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                  child: const Text('取消', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            // 🔑 核心儲存邏輯：讀取使用者修正後的最新 editableRecords
+                            for (var record in editableRecords) {
+                              final mealPeriod = record['meal_period']?.toString() ?? '早餐';
+                              final items = record['meal_items'] as List<Map<String, dynamic>>;
+                              for (var item in items) {
+                                final name = item['name']?.toString().trim() ?? '';
+                                final qty = item['quantity']?.toString() ?? '1';
+                                final unit = item['unit']?.toString() ?? '';
+                                if (name.isNotEmpty) {
+                                  // =========================================================================
+                                  // 🔥【將飲食紀錄傳到後端資料庫的核心 API 呼叫】
+                                  // 呼叫 DietService().createDietRecord(...) 發送 POST /api/diet-records 請求
+                                  // 將使用者最終確認修正後的餐點名稱 (dishName)、餐期 (mealType)、
+                                  // 數量份量 (portions) 與紀錄時間 (mealDate) 持久化存入資料庫中。
+                                  // =========================================================================
+                                  await DietService().createDietRecord(
+                                    dishName: name,
+                                    mealType: mealPeriod,
+                                    amount: '$qty $unit'.trim(),
+                                    description: '陪伴精靈解析並經使用者核對修正',
+                                    mealDate: DateTime.now(),
+                                  );
+                                }
+                              }
+                            }
+                            if (ctx.mounted) Navigator.of(ctx).pop();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🎉 飲食紀錄已成功儲存！'),
+                                  backgroundColor: AppColors.primary,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            setDialogState(() => isSaving = false);
+                            debugPrint('儲存飲食草稿失敗: $e');
+                          }
+                        },
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('確認儲存', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
 
 class _NutrientInfo extends StatelessWidget { // 定義 _NutrientInfo 類別，繼承自 StatelessWidget
   final String label, value, unit; // 宣告類別成員或方法內部的區域變數

@@ -186,8 +186,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
       final result = await DietService().createDietRecord(
         dishName: dishName,
         mealType: _mealType,
+        amount: portionText.isNotEmpty ? portionText : '1 份',
         description: '手動輸入飲食紀錄',
-        portions: portionText.isNotEmpty ? portionText : '1 份',
         nutrition: nutritionString,
         mealDate: _selectedDate,
       );
