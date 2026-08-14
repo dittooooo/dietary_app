@@ -1266,7 +1266,6 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
       oldDelegate.target != target; // 標記此方法為覆寫父類別之方法
 
   void _drawDashedLine(Canvas canvas, Offset p1, Offset p2, Paint paint, double dashWidth, double dashSpace) {
-    double distance = (p2.dx - p1.dx).abs();
     double currentX = p1.dx;
     while (currentX < p2.dx) {
       canvas.drawLine(
@@ -1430,11 +1429,14 @@ class _DietRecordTileState extends State<DietRecordTile> {
 
   String _parsePortionAtIndex(dynamic record, int index) {
     if (record == null) return "1份";
+    final amountVal = record['amount'];
     final portionsVal = record['portions'];
     final descriptionVal = record['description'];
-    final sourceStr = (portionsVal != null && portionsVal.toString().trim().isNotEmpty)
-        ? portionsVal.toString().trim()
-        : (descriptionVal != null ? descriptionVal.toString().trim() : '');
+    final sourceStr = (amountVal != null && amountVal.toString().trim().isNotEmpty)
+        ? amountVal.toString().trim()
+        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+            ? portionsVal.toString().trim()
+            : (descriptionVal != null ? descriptionVal.toString().trim() : ''));
 
     if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
       return "1份";

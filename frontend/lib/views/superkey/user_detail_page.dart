@@ -66,11 +66,6 @@ class UserDetailPage extends StatelessWidget {
               '特殊疾病',
               userData['healthConditions'] ?? '無',
             ), // 建立並顯示使用者特殊疾病資訊的唯讀輸入框欄位
-            const SizedBox(height: 30), // 插入 30 像素高度的垂直空白間距
-            const Text(
-              '向右滑動可返回清單',
-              style: TextStyle(color: Colors.black54),
-            ), // 顯示提示文字「向右滑動可返回清單」
           ], // 子元件清單結束
         ), // 垂直佈局結束
       ), // 滾動視圖結束

@@ -246,7 +246,7 @@ class DietService {
     required String dishName,
     required String mealType,
     required String description,
-    String portions = '',
+    String amount = '1 份',
     String nutrition = '',
     DateTime? mealDate,
   }) async {
@@ -271,7 +271,7 @@ class DietService {
           'dishName': dishName,
           'mealType': apiMealType,
           'description': apiDescription,
-          'portions': portions,
+          'amount': amount,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],

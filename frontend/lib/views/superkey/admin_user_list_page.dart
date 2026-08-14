@@ -2,6 +2,7 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'user_detail_page.dart'; // 匯入 user_detail_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
+import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper 進行字串對應轉換
 
 class AdminUserListPage extends StatefulWidget { // 定義 AdminUserListPage 類別，繼承自 StatefulWidget
   const AdminUserListPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -87,7 +88,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                         
                         return Card( // 回傳建構完成的元件或方法計算結果
                           color: AppColors.background, // 設定顏色數值（Color）
-                          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), // 設定外邊距或內边距的數值大小（EdgeInsets）
                           elevation: 2, // 執行相對應的邏輯計算或設定屬性參數
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
                           child: ListTile( // 執行相對應的邏輯計算或設定屬性參數
@@ -105,7 +106,10 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                               if (_isDeleteMode) { // 執行相對應的邏輯計算或設定屬性參數
                                 _showDeleteConfirmDialog(profileId, displayName); // 執行相對應的邏輯計算或設定屬性參數
                               } else { // 程式碼區塊或元件結構結束
-                                // 跳轉至使用者詳情頁
+                                // 跳轉至使用者詳情頁，並將目標與疾病統一轉換為中文顯示
+                                final String goalText = ProfileValueMapper.dietGoalsToDisplaySet(userProfile['dietGoal']).join(', ');
+                                final String healthText = ProfileValueMapper.healthConditionsToDisplaySet(userProfile['healthConditions']).join(', ');
+
                                 final Map<String, String> mappedDetail = {
                                   'id': "#$profileId",
                                   'name': displayName,
@@ -113,8 +117,8 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                                   'gender': userProfile['gender'] ?? '未填',
                                   'height': "${userProfile['height'] ?? '未填'}",
                                   'weight': "${userProfile['weight'] ?? '未填'}",
-                                  'goal': userProfile['dietGoal'] ?? '養成健康飲食習慣',
-                                  'healthConditions': userProfile['healthConditions'] ?? '無',
+                                  'goal': goalText.isNotEmpty ? goalText : '養成健康飲食習慣',
+                                  'healthConditions': healthText.isNotEmpty ? healthText : '無疾病',
                                 };
                                 Navigator.push( // 導航路由跳轉：開啟並推入新頁面
                                   context, // 執行相對應的邏輯計算或設定屬性參數

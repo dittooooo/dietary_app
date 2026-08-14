@@ -177,11 +177,14 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
 
   String _parsePortionAtIndex(dynamic record, int index) {
     if (record == null) return "1份";
+    final amountVal = record['amount'];
     final portionsVal = record['portions'];
     final descriptionVal = record['description'];
-    final sourceStr = (portionsVal != null && portionsVal.toString().trim().isNotEmpty)
-        ? portionsVal.toString().trim()
-        : (descriptionVal != null ? descriptionVal.toString().trim() : '');
+    final sourceStr = (amountVal != null && amountVal.toString().trim().isNotEmpty)
+        ? amountVal.toString().trim()
+        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+            ? portionsVal.toString().trim()
+            : (descriptionVal != null ? descriptionVal.toString().trim() : ''));
 
     if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
       return "1份";

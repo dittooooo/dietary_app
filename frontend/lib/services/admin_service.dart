@@ -246,7 +246,11 @@ class AdminService {
       if (response.statusCode == 200) {
         return {'success': true, 'data': decoded['data'] ?? decoded};
       }
-      return {'success': false, ...decoded};
+      return {
+        'success': false,
+        ...decoded,
+        'message': decoded['message'] ?? decoded['error'] ?? '更新失敗 (${response.statusCode})',
+      };
     } catch (e) {
       return {'success': false, 'message': 'Update diet record failed: $e'};
     }
@@ -266,6 +270,58 @@ class AdminService {
       print('Delete diet record failed: $e');
       return false;
     }
+  }
+
+  Future<Map<String, double?>> fetchDishNutrition(String dishName) async {
+    final token = await _token();
+    if (token == null || dishName.trim().isEmpty) {
+      return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+    }
+    try {
+      final response = await _client.post(
+        '/dietary-agent/dish-nutrition',
+        {'dish_name': dishName.trim()},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final decoded = _decodeMap(response.body);
+        final dishNut = decoded['data']?['dish_nutrition'] ?? decoded['dish_nutrition'];
+        if (dishNut != null && dishNut['nutrients'] is List) {
+          final List nutrients = dishNut['nutrients'];
+          double? calories;
+          double? protein;
+          double? fat;
+          double? carbs;
+
+          for (final n in nutrients) {
+            if (n is Map) {
+              final String name = (n['name'] ?? '').toString();
+              final double? amt = double.tryParse((n['amount_per_serving'] ?? '').toString());
+              if (amt != null) {
+                if (name.contains('熱量') || name.contains('calories') || name.contains('kcal')) {
+                  calories = amt;
+                } else if (name.contains('蛋白質') || name.contains('protein')) {
+                  protein = amt;
+                } else if (name.contains('脂肪') || name.contains('fat')) {
+                  fat = amt;
+                } else if (name.contains('碳水') || name.contains('carbohydrate')) {
+                  carbs = amt;
+                }
+              }
+            }
+          }
+          return {
+            'calories': calories,
+            'protein': protein,
+            'fat': fat,
+            'carbohydrates': carbs,
+          };
+        }
+      }
+    } catch (e) {
+      print('Fetch dish nutrition error: $e');
+    }
+    return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
   }
 
   Future<Map<String, dynamic>> createDietRecord(
@@ -288,7 +344,11 @@ class AdminService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return {'success': true, 'data': decoded['data'] ?? decoded};
       }
-      return {'success': false, ...decoded};
+      return {
+        'success': false,
+        ...decoded,
+        'message': decoded['message'] ?? decoded['error'] ?? '新增失敗 (${response.statusCode})',
+      };
     } catch (e) {
       return {'success': false, 'message': 'Create diet record failed: $e'};
     }

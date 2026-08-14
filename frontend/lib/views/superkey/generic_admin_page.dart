@@ -32,13 +32,25 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
   Future<void> _fetchData() async { // 定義非同步方法（Future），執行耗時操作
     setState(() => _isLoading = true); // 更新狀態數據並通知 UI 重新渲染畫面
     try {
-      final query = _searchController.text.trim();
+      final query = _searchController.text.trim().toLowerCase();
       
-      // 飲食紀錄監控：使用 nickname 或 dishName 搜尋
-      final results = await AdminService().listDietRecords(dishName: query, nickname: query);
+      // 不直接向後端同時帶入 nickname 與 dishName (會被後端 SQL 判定為 AND 導致找不到資料)
+      // 先獲取全量數據，再於前端進行 OR 模糊比對篩選
+      final allRecords = await AdminService().listDietRecords();
       
+      final filteredList = allRecords.where((item) {
+        if (query.isEmpty) return true;
+        
+        final dishName = (item['dishName'] ?? '').toString().toLowerCase();
+        final description = (item['description'] ?? '').toString().toLowerCase();
+        final userObj = item['user'] ?? {};
+        final nickname = (userObj['userProfile']?['nickname'] ?? userObj['email']?.split('@')[0] ?? '').toString().toLowerCase();
+        
+        return dishName.contains(query) || description.contains(query) || nickname.contains(query);
+      }).toList();
+
       setState(() {
-        _dataList = results;
+        _dataList = filteredList;
       });
     } catch (e) {
       debugPrint('管理端加載資料出錯: $e');
@@ -49,7 +61,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
 
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
-    final isDietRecord = widget.title.contains('飲食紀錄');
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
       backgroundColor: AppColors.surface, // 設定顏色數值（Color）
       appBar: AppBar( // 設定頂部的導航欄（AppBar）
@@ -94,16 +105,44 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                           String name = '未命名';
                           String desc = '';
                           
-                          final userObj = item['user'] ?? {};
-                          final nickname = userObj['userProfile']?.containsKey('nickname') == true
-                              ? userObj['userProfile']['nickname']
-                              : userObj['email']?.split('@')[0];
-                          name = '${item['dishName'] ?? ''} (${nickname ?? ''})';
+                          final dishNameStr = (item['dishName'] ?? '').toString();
+                          final userObj = item['user'] is Map ? item['user'] : null;
+                          String nicknameStr = '';
+                          if (userObj != null) {
+                            if (userObj['userProfile'] is Map && userObj['userProfile']['nickname'] != null) {
+                              nicknameStr = userObj['userProfile']['nickname'].toString();
+                            } else if (userObj['email'] != null) {
+                              nicknameStr = userObj['email'].toString().split('@')[0];
+                            }
+                          }
+                          name = (nicknameStr.isNotEmpty && nicknameStr != '無名稱')
+                              ? '$dishNameStr ($nicknameStr)'
+                              : dishNameStr;
                           
-                          final dateStr = item['createdAt'] != null
-                              ? DateTime.parse(item['createdAt']).toLocal().toString().substring(0, 16)
+                          final rawDate = item['date'] ?? item['mealDate'] ?? item['createdAt'];
+                          final dateStr = rawDate != null
+                              ? DateTime.parse(rawDate.toString()).toLocal().toString().substring(0, 10)
                               : '無日期';
-                          desc = '時段: ${item['mealType'] ?? ''} • 時間: $dateStr\n備註: ${item['description'] ?? ''}';
+
+                          String displayMealType = item['mealType'] ?? '';
+                          String rawDesc = (item['description'] ?? '').toString();
+                          if (rawDesc.contains('[MealType:OTHER]')) {
+                            displayMealType = 'OTHER';
+                          }
+                          String displayNote = _cleanDescription(rawDesc);
+
+                          final mealTypeStr = displayMealType == 'BREAKFAST'
+                              ? '早餐'
+                              : (displayMealType == 'LUNCH'
+                                  ? '午餐'
+                                  : (displayMealType == 'DINNER' ? '晚餐' : '其他'));
+
+                          final nutMap = item['nutrition'] is Map ? item['nutrition'] : {};
+                          final rawCal = item['calories'] ?? nutMap['calories'];
+                          final calText = _formatNutrient(rawCal, 'kcal');
+                          final displayCalText = calText.isNotEmpty ? calText : '無數據';
+
+                          desc = '時段: $mealTypeStr • 日期: $dateStr\n熱量: $displayCalText • 份量: ${item['amount'] ?? 1} 份\n備註: ${displayNote.isEmpty ? '無' : displayNote}';
 
                           return Card( // 回傳建構完成的元件或方法計算結果
                             color: AppColors.background, // 設定顏色數值（Color）
@@ -142,6 +181,23 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
+  String _cleanDescription(String text) {
+    return text
+        .replaceAll(RegExp(r'\[UserId:\d+\]'), '')
+        .replaceAll('[MealType:OTHER]', '')
+        .trim();
+  }
+
+  String _formatNutrient(dynamic val, String unit) {
+    if (val == null) return '';
+    String str = val.toString().trim();
+    if (str.isEmpty || str == 'null') return '';
+    if (str.toLowerCase().contains(unit.toLowerCase())) {
+      return str;
+    }
+    return '$str $unit';
+  }
+
   void _showDeleteDialog(dynamic item) { // 執行相對應的邏輯計算或設定屬性參數
     final int id = item['id'];
     showDialog( // 執行相對應的邏輯計算或設定屬性參數
@@ -176,118 +232,418 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
   } // 程式碼區塊或元件結構結束
 
   void _showEditDietRecordDialog(dynamic record) {
-    final nameController = TextEditingController(text: record['dishName']);
-    final descController = TextEditingController(text: record['description'] ?? '');
+    final nameController = TextEditingController(text: record['dishName'] ?? '');
+    final amountController = TextEditingController(text: '${record['amount'] ?? 1} 份');
     
-    // Safely format Map or String of nutrition into editable text
-    String nutritionText = '';
-    if (record['nutrition'] != null) {
-      if (record['nutrition'] is Map) {
-        final Map nut = record['nutrition'];
-        final List<String> parts = [];
-        if (nut['calories'] != null) parts.add('熱量: ${nut['calories']}');
-        if (nut['protein'] != null) parts.add('蛋白質: ${nut['protein']}');
-        if (nut['fat'] != null) parts.add('脂肪: ${nut['fat']}');
-        if (nut['carbohydrates'] != null) parts.add('碳水: ${nut['carbohydrates']}');
-        nutritionText = parts.join(', ');
-      } else {
-        nutritionText = record['nutrition'].toString();
-      }
-    }
-    final nutritionController = TextEditingController(text: nutritionText);
+    final nutMap = record['nutrition'] is Map ? record['nutrition'] : {};
+
+    String rawCalStr = _formatNutrient(record['calories'] ?? nutMap['calories'], 'kcal');
+    String rawProteinStr = _formatNutrient(record['protein'] ?? nutMap['protein'], 'g');
+    String rawFatStr = _formatNutrient(record['fat'] ?? nutMap['fat'], 'g');
+    String rawCarbsStr = _formatNutrient(record['carbohydrates'] ?? nutMap['carbohydrates'], 'g');
+
+    bool autoFetched = false;
+    final rawDesc = (record['description'] ?? '').toString();
+    final descController = TextEditingController(text: _cleanDescription(rawDesc));
+    
     String mealType = record['mealType'] ?? 'LUNCH';
+    if (rawDesc.contains('[MealType:OTHER]')) {
+      mealType = 'OTHER';
+    } else if (!['BREAKFAST', 'LUNCH', 'DINNER', 'OTHER'].contains(mealType)) {
+      mealType = 'OTHER';
+    }
+
+    DateTime selectedDate = DateTime.now();
+    if (record['date'] != null) {
+      try {
+        selectedDate = DateTime.parse(record['date']);
+      } catch (_) {}
+    } else if (record['createdAt'] != null) {
+      try {
+        selectedDate = DateTime.parse(record['createdAt']);
+      } catch (_) {}
+    }
+
+    int? selectedUserId = record['user']?['id'] ?? record['userId'];
+    final matchUser = RegExp(r'\[UserId:(\d+)\]').firstMatch(rawDesc);
+    if (matchUser != null) {
+      selectedUserId = int.tryParse(matchUser.group(1) ?? '');
+    }
+
+    List<dynamic> users = [];
+    bool loadingUsers = true;
+    bool userHasError = false;
+    bool nameHasError = false;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.background,
-          title: const Text('編輯飲食監控數據', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: '餐點名稱')),
-                TextField(controller: descController, decoration: const InputDecoration(labelText: '描述備註')),
-                TextField(controller: nutritionController, decoration: const InputDecoration(labelText: '營養資訊')),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Text('餐別時段：'),
-                    DropdownButton<String>(
-                      value: mealType,
-                      dropdownColor: AppColors.background,
-                      items: const [
-                        DropdownMenuItem(value: 'BREAKFAST', child: Text('早餐')),
-                        DropdownMenuItem(value: 'LUNCH', child: Text('午餐')),
-                        DropdownMenuItem(value: 'DINNER', child: Text('晚餐')),
-                      ],
-                      onChanged: (val) => setDialogState(() => mealType = val!),
+        builder: (context, setDialogState) {
+          if (loadingUsers) {
+            AdminService().listUsers().then((list) {
+              setDialogState(() {
+                users = list;
+                loadingUsers = false;
+                if (selectedUserId == null && users.isNotEmpty) {
+                  final firstUser = users[0];
+                  final userObj = firstUser['user'] ?? {};
+                  selectedUserId = userObj['id'];
+                }
+              });
+            }).catchError((_) {
+              setDialogState(() => loadingUsers = false);
+            });
+            return const AlertDialog(
+              backgroundColor: AppColors.background,
+              title: Text('讀取使用者清單中...'),
+              content: SizedBox(
+                height: 100,
+                child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              ),
+            );
+          }
+
+          if (rawCalStr.isEmpty && !autoFetched) {
+            autoFetched = true;
+            AdminService().fetchDishNutrition(nameController.text.trim()).then((nut) {
+              if (nut['calories'] != null) {
+                setDialogState(() {
+                  rawCalStr = '${nut['calories']} kcal';
+                  if (nut['protein'] != null) rawProteinStr = '${nut['protein']} g';
+                  if (nut['fat'] != null) rawFatStr = '${nut['fat']} g';
+                  if (nut['carbohydrates'] != null) rawCarbsStr = '${nut['carbohydrates']} g';
+                });
+              }
+            });
+          }
+
+          List<String> nutParts = [];
+          if (rawCalStr.isNotEmpty) nutParts.add('熱量: $rawCalStr');
+          if (rawProteinStr.isNotEmpty) nutParts.add('蛋白質: $rawProteinStr');
+          if (rawFatStr.isNotEmpty) nutParts.add('脂肪: $rawFatStr');
+          if (rawCarbsStr.isNotEmpty) nutParts.add('碳水: $rawCarbsStr');
+          if (nutParts.isEmpty) nutParts.add('熱量: 估算中...');
+          String nutritionText = nutParts.join(', ');
+
+          return AlertDialog(
+            backgroundColor: AppColors.background,
+            title: const Text('編輯飲食監控數據', style: TextStyle(fontWeight: FontWeight.bold)),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. 選擇使用者 (可編輯)
+                  const Text('選擇使用者：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: userHasError ? AppColors.danger : AppColors.border,
+                        width: userHasError ? 2.0 : 1.0,
+                      ),
                     ),
-                  ],
+                    child: users.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text('無使用者可選擇', style: TextStyle(color: AppColors.danger)),
+                          )
+                        : DropdownButtonHideUnderline(
+                            child: DropdownButton<int>(
+                              value: selectedUserId,
+                              isExpanded: true,
+                              dropdownColor: AppColors.background,
+                              items: users.map((u) {
+                                final userObj = u['user'] ?? {};
+                                final int uId = userObj['id'] ?? 0;
+                                final String nick = u['nickname'] ?? (userObj['email'] != null ? userObj['email'].split('@')[0] : '無名稱');
+                                return DropdownMenuItem<int>(
+                                  value: uId,
+                                  child: Text('$nick (ID: $uId)'),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  selectedUserId = val;
+                                  userHasError = false;
+                                });
+                              },
+                            ),
+                          ),
+                  ),
+                  if (userHasError)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4, left: 4),
+                      child: Text('請選擇使用者', style: TextStyle(color: AppColors.danger, fontSize: 12)),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // 2. 紀錄日期 (可編輯)
+                  const Text('紀錄日期：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2023),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18, color: AppColors.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. 餐點名稱 (可編輯)
+                  TextField(
+                    controller: nameController,
+                    onChanged: (val) {
+                      if (userHasError || nameHasError) {
+                        setDialogState(() => nameHasError = false);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: '餐點名稱',
+                      hintText: '例：火腿蛋吐司',
+                      errorText: nameHasError ? '此欄位為必填' : null,
+                      errorStyle: const TextStyle(color: AppColors.danger),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.danger, width: 2),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.danger, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 4. 數量 / 份量 (可編輯)
+                  TextField(
+                    controller: amountController,
+                    decoration: InputDecoration(
+                      labelText: '數量 / 份量',
+                      hintText: '例：1 份',
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 5. 餐別時段 (可編輯)
+                  const Text('餐別時段：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: mealType,
+                        isExpanded: true,
+                        dropdownColor: AppColors.background,
+                        items: const [
+                          DropdownMenuItem(value: 'BREAKFAST', child: Text('早餐')),
+                          DropdownMenuItem(value: 'LUNCH', child: Text('午餐')),
+                          DropdownMenuItem(value: 'DINNER', child: Text('晚餐')),
+                          DropdownMenuItem(value: 'OTHER', child: Text('其他')),
+                        ],
+                        onChanged: (val) => setDialogState(() => mealType = val!),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 6. 營養資訊 (唯讀)
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(text: nutritionText),
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: '營養資訊',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 7. 描述備註 (唯讀)
+                  TextField(
+                    readOnly: true,
+                    controller: descController,
+                    style: const TextStyle(color: Colors.black87),
+                    decoration: InputDecoration(
+                      labelText: '描述備註',
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('取消', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-            TextButton(
-              onPressed: () async {
-                if (nameController.text.trim().isEmpty) return;
-                Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在保存更新...')));
-                
-                double? parseVal(String text, String pattern) {
-                  final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
-                  final match = regExp.firstMatch(text);
-                  if (match != null) {
-                    return double.tryParse(match.group(1) ?? '');
+                onPressed: () async {
+                  bool hasErr = false;
+                  if (selectedUserId == null) {
+                    userHasError = true;
+                    hasErr = true;
                   }
-                  return null;
-                }
-
-                final nutritionStr = nutritionController.text.trim();
-                final calories = parseVal(nutritionStr, r'(?:熱量|calories|kcal)');
-                final protein = parseVal(nutritionStr, r'(?:蛋白質|protein)');
-                final fat = parseVal(nutritionStr, r'(?:脂肪|fat)');
-                final carbohydrates = parseVal(nutritionStr, r'(?:碳水化合物|碳水|carbs|carbohydrates)');
-
-                final payload = {
-                  'dishName': nameController.text.trim(),
-                  'description': descController.text.trim(),
-                  'calories': calories,
-                  'protein': protein,
-                  'fat': fat,
-                  'carbohydrates': carbohydrates,
-                  'mealType': mealType,
-                };
-                
-                final res = await AdminService().updateDietRecord(record['id'], payload);
-                if (mounted) {
-                  if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('飲食紀錄更新成功！')));
-                    _fetchData();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('更新失敗: ${res['message']}')));
+                  if (nameController.text.trim().isEmpty) {
+                    nameHasError = true;
+                    hasErr = true;
                   }
-                }
-              },
-              child: const Text('保存', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+
+                  if (hasErr) {
+                    setDialogState(() {});
+                    return;
+                  }
+
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在保存更新...')));
+
+                  final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+                  final rawAmountStr = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+                  final int parsedAmount = int.tryParse(rawAmountStr) ?? 1;
+                  final dishNameStr = nameController.text.trim();
+
+                  String apiMealType = mealType;
+                  String userNote = _cleanDescription(descController.text);
+                  if (userNote.isEmpty) {
+                    userNote = '管理員手動新增紀錄';
+                  }
+
+                  String prefix = '[UserId:$selectedUserId]';
+                  if (mealType == 'OTHER') {
+                    apiMealType = 'DINNER';
+                    prefix += '[MealType:OTHER]';
+                  }
+
+                  String apiDescription = '$prefix$userNote';
+
+                  final nut = await AdminService().fetchDishNutrition(dishNameStr);
+
+                  final Map<String, dynamic> payload = {
+                    'dishName': dishNameStr,
+                    'amount': parsedAmount,
+                    'date': dateStr,
+                    'mealType': apiMealType,
+                    'description': apiDescription,
+                    if (nut['calories'] != null) 'calories': nut['calories'],
+                    if (nut['protein'] != null) 'protein': nut['protein'],
+                    if (nut['fat'] != null) 'fat': nut['fat'],
+                    if (nut['carbohydrates'] != null) 'carbohydrates': nut['carbohydrates'],
+                  };
+
+                  final res = await AdminService().updateDietRecord(record['id'], payload);
+                  if (mounted) {
+                    if (res['success'] == true) {
+                      _fetchData();
+                      showDialog(
+                        context: context,
+                        builder: (alertCtx) => AlertDialog(
+                          backgroundColor: AppColors.background,
+                          title: const Text('保存成功', style: TextStyle(fontWeight: FontWeight.bold)),
+                          content: const Text('飲食紀錄已成功更新！'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(alertCtx),
+                              child: const Text('確定', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      final errMsg = res['message'] ?? res['error'] ?? '未知錯誤';
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('更新失敗: $errMsg')));
+                    }
+                  }
+                },
+                child: const Text('保存', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
+  String _getAutoMealType() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 11) return 'BREAKFAST';
+    if (hour >= 11 && hour < 17) return 'LUNCH';
+    return 'DINNER';
+  }
+
   void _showCreateDietRecordDialog() {
     final nameController = TextEditingController();
-    final descController = TextEditingController();
-    final nutritionController = TextEditingController();
-    String mealType = 'LUNCH';
+    final amountController = TextEditingController(text: '1 份');
+    String mealType = _getAutoMealType();
+    DateTime selectedDate = DateTime.now();
     int? selectedUserId;
     List<dynamic> users = [];
     bool loadingUsers = true;
+    bool userHasError = false;
+    bool nameHasError = false;
 
     showDialog(
       context: context,
@@ -325,105 +681,256 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Text('選擇使用者：'),
-                      Expanded(
-                        child: users.isEmpty
-                            ? const Text('無使用者')
-                            : DropdownButton<int>(
-                                value: selectedUserId,
-                                isExpanded: true,
-                                dropdownColor: AppColors.background,
-                                items: users.map((u) {
-                                  final userObj = u['user'] ?? {};
-                                  final int uId = userObj['id'] ?? 0;
-                                  final String nick = u['nickname'] ?? (userObj['email'] != null ? userObj['email'].split('@')[0] : '無名稱');
-                                  return DropdownMenuItem<int>(
-                                    value: uId,
-                                    child: Text('$nick (ID: $uId)'),
-                                  );
-                                }).toList(),
-                                onChanged: (val) => setDialogState(() => selectedUserId = val),
-                              ),
+                  // 1. 選擇使用者
+                  const Text('選擇使用者：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: userHasError ? AppColors.danger : AppColors.border,
+                        width: userHasError ? 2.0 : 1.0,
                       ),
-                    ],
+                    ),
+                    child: users.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text('無使用者可選擇', style: TextStyle(color: AppColors.danger)),
+                          )
+                        : DropdownButtonHideUnderline(
+                            child: DropdownButton<int>(
+                              value: selectedUserId,
+                              isExpanded: true,
+                              dropdownColor: AppColors.background,
+                              items: users.map((u) {
+                                final userObj = u['user'] ?? {};
+                                final int uId = userObj['id'] ?? 0;
+                                final String nick = u['nickname'] ?? (userObj['email'] != null ? userObj['email'].split('@')[0] : '無名稱');
+                                return DropdownMenuItem<int>(
+                                  value: uId,
+                                  child: Text('$nick (ID: $uId)'),
+                                );
+                              }).toList(),
+                              onChanged: (val) {
+                                setDialogState(() {
+                                  selectedUserId = val;
+                                  userHasError = false;
+                                });
+                              },
+                            ),
+                          ),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(controller: nameController, decoration: const InputDecoration(labelText: '餐點名稱')),
-                  TextField(controller: descController, decoration: const InputDecoration(labelText: '描述備註')),
-                  TextField(controller: nutritionController, decoration: const InputDecoration(labelText: '營養資訊', hintText: '例：熱量: 500 kcal, 蛋白質: 20 g')),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Text('餐別時段：'),
-                      DropdownButton<String>(
+                  if (userHasError)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 4, left: 4),
+                      child: Text('請選擇使用者', style: TextStyle(color: AppColors.danger, fontSize: 12)),
+                    ),
+                  const SizedBox(height: 16),
+
+                  // 2. 紀錄日期
+                  const Text('紀錄日期：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  InkWell(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2023),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18, color: AppColors.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. 餐點名稱
+                  TextField(
+                    controller: nameController,
+                    onChanged: (val) {
+                      if (userHasError || nameHasError) {
+                        setDialogState(() => nameHasError = false);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      labelText: '餐點名稱',
+                      hintText: '例：火腿蛋吐司',
+                      errorText: nameHasError ? '此欄位為必填' : null,
+                      errorStyle: const TextStyle(color: AppColors.danger),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.danger, width: 2),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.danger, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 4. 數量 / 份量
+                  TextField(
+                    controller: amountController,
+                    decoration: InputDecoration(
+                      labelText: '數量 / 份量',
+                      hintText: '例：1 份',
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 5. 餐別時段 (包含早餐、午餐、晚餐、其他)
+                  const Text('餐別時段：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
                         value: mealType,
+                        isExpanded: true,
                         dropdownColor: AppColors.background,
                         items: const [
                           DropdownMenuItem(value: 'BREAKFAST', child: Text('早餐')),
                           DropdownMenuItem(value: 'LUNCH', child: Text('午餐')),
                           DropdownMenuItem(value: 'DINNER', child: Text('晚餐')),
+                          DropdownMenuItem(value: 'OTHER', child: Text('其他')),
                         ],
                         onChanged: (val) => setDialogState(() => mealType = val!),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
               TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('取消', style: TextStyle(color: Colors.grey)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
                 onPressed: () async {
+                  bool hasErr = false;
                   if (selectedUserId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請選擇要指派的使用者')));
-                    return;
+                    userHasError = true;
+                    hasErr = true;
                   }
                   if (nameController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請輸入餐點名稱')));
+                    nameHasError = true;
+                    hasErr = true;
+                  }
+
+                  if (hasErr) {
+                    setDialogState(() {});
                     return;
                   }
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在新增記錄...')));
 
-                  double? parseVal(String text, String pattern) {
-                    final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
-                    final match = regExp.firstMatch(text);
-                    if (match != null) {
-                      return double.tryParse(match.group(1) ?? '');
-                    }
-                    return null;
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在新增紀錄...')));
+
+                  final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+                  final rawAmountStr = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+                  final int parsedAmount = int.tryParse(rawAmountStr) ?? 1;
+                  final dishNameStr = nameController.text.trim();
+
+                  String apiMealType = mealType;
+                  String userNote = '管理員手動新增紀錄';
+                  String prefix = '[UserId:$selectedUserId]';
+                  if (mealType == 'OTHER') {
+                    apiMealType = 'DINNER';
+                    prefix += '[MealType:OTHER]';
                   }
 
-                  final nutritionStr = nutritionController.text.trim();
-                  final calories = parseVal(nutritionStr, r'(?:熱量|calories|kcal)');
-                  final protein = parseVal(nutritionStr, r'(?:蛋白質|protein)');
-                  final fat = parseVal(nutritionStr, r'(?:脂肪|fat)');
-                  final carbohydrates = parseVal(nutritionStr, r'(?:碳水化合物|碳水|carbs|carbohydrates)');
+                  String apiDescription = '$prefix$userNote';
 
-                  final payload = {
-                    'dishName': nameController.text.trim(),
-                    'description': descController.text.trim(),
-                    'calories': calories,
-                    'protein': protein,
-                    'fat': fat,
-                    'carbohydrates': carbohydrates,
-                    'mealType': mealType,
+                  final nut = await AdminService().fetchDishNutrition(dishNameStr);
+
+                  final Map<String, dynamic> payload = {
+                    'dishName': dishNameStr,
+                    'description': apiDescription,
+                    'amount': parsedAmount,
+                    'date': dateStr,
+                    'mealType': apiMealType,
+                    if (nut['calories'] != null) 'calories': nut['calories'],
+                    if (nut['protein'] != null) 'protein': nut['protein'],
+                    if (nut['fat'] != null) 'fat': nut['fat'],
+                    if (nut['carbohydrates'] != null) 'carbohydrates': nut['carbohydrates'],
                   };
 
                   final res = await AdminService().createDietRecord(selectedUserId!, payload);
                   if (mounted) {
                     if (res['success'] == true) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('飲食紀錄新增成功！')));
                       _fetchData();
+                      showDialog(
+                        context: context,
+                        builder: (alertCtx) => AlertDialog(
+                          backgroundColor: AppColors.background,
+                          title: const Text('新增成功', style: TextStyle(fontWeight: FontWeight.bold)),
+                          content: const Text('飲食紀錄已成功新增至資料庫！'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(alertCtx),
+                              child: const Text('確定', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('新增失敗: ${res['message']}')));
+                      final errMsg = res['message'] ?? res['error'] ?? '未知錯誤';
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('新增失敗: $errMsg')));
                     }
                   }
                 },
-                child: const Text('新增', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('新增', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           );
