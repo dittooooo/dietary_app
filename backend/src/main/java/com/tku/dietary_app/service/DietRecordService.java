@@ -81,6 +81,8 @@ public class DietRecordService {
 
         DietaryAgentService.NutritionValues nutritionValues = dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
 
+        LocalDate recordDate = resolveRecordDateForCreate(request);
+
         return dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName().trim())
@@ -88,7 +90,8 @@ public class DietRecordService {
                 .protein(selectNutritionValue(nutritionValues.protein(), request.getProtein()))
                 .fat(selectNutritionValue(nutritionValues.fat(), request.getFat()))
                 .carbohydrates(selectNutritionValue(nutritionValues.carbohydrates(), request.getCarbohydrates()))
-                .date(resolveRecordDateForCreate(request))
+                .date(recordDate)
+                .mealDate(recordDate)
                 .description(normalizeNullableText(request.getDescription()))
                 .mealType(normalizeMealTypeRequired(request.getMealType()))
                 .amount(resolveAmount(request.getAmount()))
@@ -169,6 +172,7 @@ public class DietRecordService {
         LocalDate requestedDate = resolveRequestedDate(request);
         if (requestedDate != null) {
             record.setDate(requestedDate);
+            record.setMealDate(requestedDate);
         }
         if (request.getDescription() != null) {
             record.setDescription(normalizeNullableText(request.getDescription()));
