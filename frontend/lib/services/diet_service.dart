@@ -1,8 +1,10 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../config/api_config.dart';
 import '../core/api_client.dart';
+import '../utils/profile_value_mapper.dart';
 
 class DietService {
   final ApiClient _client = ApiClient();
@@ -19,7 +21,7 @@ class DietService {
       case 'DINNER':
         return 'DINNER';
       default:
-        return mealType;
+        return mealType.trim().toUpperCase();
     }
   }
 
@@ -35,7 +37,9 @@ class DietService {
       'calories': parseVal(r'(?:熱量|calories|kcal)\D*(\d+(?:\.\d+)?)'),
       'protein': parseVal(r'(?:蛋白質|protein)\D*(\d+(?:\.\d+)?)'),
       'fat': parseVal(r'(?:脂肪|fat)\D*(\d+(?:\.\d+)?)'),
-      'carbohydrates': parseVal(r'(?:碳水化合物|碳水|carbs|carbohydrates)\D*(\d+(?:\.\d+)?)'),
+      'carbohydrates': parseVal(
+        r'(?:碳水化合物|碳水|carbs|carbohydrates)\D*(\d+(?:\.\d+)?)',
+      ),
     };
   }
 
@@ -51,9 +55,31 @@ class DietService {
     return prefs.getString('jwt_token');
   }
 
+  Future<SharedPreferences> _prefs() async {
+    return SharedPreferences.getInstance();
+  }
+
   String _errorMessage(String action, int statusCode, String body) {
-    final detail = body.trim().isEmpty ? 'no response body' : body;
-    return '$action failed ($statusCode): $detail';
+    final detail = body.trim().isEmpty ? '無伺服器回應內容' : body;
+    return '$action失敗 ($statusCode): $detail';
+  }
+
+  Map<String, dynamic> _decodeObject(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    return {};
+  }
+
+  List<dynamic> _unwrapListResponse(String body) {
+    final decoded = jsonDecode(body);
+    if (decoded is List) return decoded;
+    if (decoded is Map<String, dynamic>) {
+      final data = decoded['data'];
+      if (data is List) return data;
+    }
+    return [];
   }
 
   Future<List<dynamic>> getMyDietRecords() async {
@@ -67,9 +93,22 @@ class DietService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is List) return data;
-        if (data is Map && data.containsKey('data')) return data['data'] ?? [];
+        final rawList = _unwrapListResponse(response.body);
+        return rawList.map((record) {
+          if (record is Map) {
+            final desc = (record['description'] ?? '').toString();
+            if (desc.startsWith('[MealType:OTHER]')) {
+              final newRecord = Map<String, dynamic>.from(record);
+              newRecord['mealType'] = 'OTHER';
+              newRecord['description'] = desc.replaceFirst(
+                '[MealType:OTHER]',
+                '',
+              );
+              return newRecord;
+            }
+          }
+          return record;
+        }).toList();
       }
       return [];
     } catch (e) {
@@ -78,10 +117,72 @@ class DietService {
     }
   }
 
+  int _parseAmount(dynamic amt) {
+    if (amt is int) return amt;
+    if (amt is double) return amt.toInt();
+    if (amt == null) return 1;
+    final digits = amt.toString().replaceAll(RegExp(r'[^\d]'), '');
+    return int.tryParse(digits) ?? 1;
+  }
+
+  Future<Map<String, double?>> fetchDishNutrition(String dishName) async {
+    final token = await _token();
+    if (token == null || dishName.trim().isEmpty) {
+      return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+    }
+    try {
+      final response = await _client.post(
+        '/dietary-agent/dish-nutrition',
+        {'dish_name': dishName.trim()},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final decoded = _decodeObject(response.body);
+        final dishNut = decoded['data']?['dish_nutrition'] ?? decoded['dish_nutrition'];
+        if (dishNut != null && dishNut['nutrients'] is List) {
+          final List nutrients = dishNut['nutrients'];
+          double? calories;
+          double? protein;
+          double? fat;
+          double? carbs;
+
+          for (final n in nutrients) {
+            if (n is Map) {
+              final String name = (n['name'] ?? '').toString();
+              final double? amt = double.tryParse((n['amount_per_serving'] ?? '').toString());
+              if (amt != null) {
+                if (name.contains('熱量') || name.contains('calories') || name.contains('kcal')) {
+                  calories = amt;
+                } else if (name.contains('蛋白質') || name.contains('protein')) {
+                  protein = amt;
+                } else if (name.contains('脂肪') || name.contains('fat')) {
+                  fat = amt;
+                } else if (name.contains('碳水') || name.contains('carbohydrate')) {
+                  carbs = amt;
+                }
+              }
+            }
+          }
+          return {
+            'calories': calories,
+            'protein': protein,
+            'fat': fat,
+            'carbohydrates': carbs,
+          };
+        }
+      }
+    } catch (e) {
+      print('Fetch dish nutrition error: $e');
+    }
+    return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+  }
+
+  /// 新增飲食紀錄 (3 大核心必填欄位: dishName, mealType, amount)
   Future<Map<String, dynamic>> createDietRecord({
     required String dishName,
     required String mealType,
-    required String description,
+    required dynamic amount,
+    String description = '',
     String nutrition = '',
     DateTime? mealDate,
   }) async {
@@ -90,40 +191,76 @@ class DietService {
       return {'success': false, 'message': 'Please sign in again.'};
     }
 
-    final parsedNutrition = _parseNutrition(nutrition);
+    Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
+    if (parsedNutrition['calories'] == null) {
+      final fetchedNut = await fetchDishNutrition(dishName);
+      if (fetchedNut['calories'] != null) {
+        parsedNutrition = fetchedNut;
+      }
+    }
+
+    final int intAmount = _parseAmount(amount);
+
+    String apiMealType = _mealTypeForApi(mealType);
+    String apiDescription = description;
+    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
+      apiMealType = 'DINNER';
+      apiDescription = '[MealType:OTHER]$description';
+    }
 
     try {
       final response = await _client.post(
         '/diet-records',
         {
           'dishName': dishName,
-          'mealType': _mealTypeForApi(mealType),
-          'description': description,
-          'nutrition': nutrition,
-          'calories': parsedNutrition['calories'],
-          'protein': parsedNutrition['protein'],
-          'fat': parsedNutrition['fat'],
-          'carbohydrates': parsedNutrition['carbohydrates'],
-          if (mealDate != null) 'mealDate': _formatDate(mealDate),
+          'mealType': apiMealType,
+          'description': apiDescription,
+          'amount': intAmount,
+          if (parsedNutrition['calories'] != null) 'calories': parsedNutrition['calories'],
+          if (parsedNutrition['protein'] != null) 'protein': parsedNutrition['protein'],
+          if (parsedNutrition['fat'] != null) 'fat': parsedNutrition['fat'],
+          if (parsedNutrition['carbohydrates'] != null) 'carbohydrates': parsedNutrition['carbohydrates'],
+          if (mealDate != null) 'date': _formatDate(mealDate),
         },
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return {'success': true, 'data': data};
+        final recordData = data['data'] ?? data;
+        if (recordData is Map) {
+          final desc = (recordData['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            final newRecord = Map<String, dynamic>.from(recordData);
+            newRecord['mealType'] = 'OTHER';
+            newRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
+            return {'success': true, 'data': newRecord};
+          }
+        }
+        return {'success': true, 'data': recordData};
       }
 
       return {
         'success': false,
-        'message': _errorMessage('Create diet record', response.statusCode, response.body),
+        'message': _errorMessage(
+          'Create diet record',
+          response.statusCode,
+          response.body,
+        ),
       };
     } catch (e) {
       return {'success': false, 'message': 'Create diet record failed: $e'};
     }
   }
 
-  Future<Map<String, dynamic>> uploadDietPhoto(int recordId, List<int> fileBytes, String filename) async {
+  Future<Map<String, dynamic>> uploadDietPhoto(
+    int recordId,
+    List<int> fileBytes,
+    String filename,
+  ) async {
     final token = await _token();
     if (token == null) {
       return {'success': false, 'message': 'Please sign in again.'};
@@ -137,14 +274,18 @@ class DietService {
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return {'success': true, 'data': data};
+        return {'success': true, 'data': data['data'] ?? data};
       }
 
       return {
         'success': false,
-        'message': _errorMessage('Upload diet photo', response.statusCode, response.body),
+        'message': _errorMessage(
+          'Upload diet photo',
+          response.statusCode,
+          response.body,
+        ),
       };
     } catch (e) {
       return {'success': false, 'message': 'Upload diet photo failed: $e'};
@@ -172,6 +313,7 @@ class DietService {
     required String dishName,
     required String mealType,
     required String description,
+    dynamic amount = 1,
     String nutrition = '',
     DateTime? mealDate,
   }) async {
@@ -181,32 +323,58 @@ class DietService {
     }
 
     final parsedNutrition = _parseNutrition(nutrition);
+    final int intAmount = _parseAmount(amount);
+
+    String apiMealType = _mealTypeForApi(mealType);
+    String apiDescription = description;
+    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
+      apiMealType = 'DINNER';
+      apiDescription = '[MealType:OTHER]$description';
+    }
 
     try {
       final response = await _client.put(
         '/diet-records/$id',
         {
           'dishName': dishName,
-          'mealType': _mealTypeForApi(mealType),
-          'description': description,
+          'mealType': apiMealType,
+          'description': apiDescription,
+          'amount': intAmount,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],
           'fat': parsedNutrition['fat'],
           'carbohydrates': parsedNutrition['carbohydrates'],
-          if (mealDate != null) 'mealDate': _formatDate(mealDate),
+          if (mealDate != null) 'date': _formatDate(mealDate),
         },
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        return {'success': true, 'data': data};
+        final recordData = data['data'] ?? data;
+        if (recordData is Map) {
+          final desc = (recordData['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            final newRecord = Map<String, dynamic>.from(recordData);
+            newRecord['mealType'] = 'OTHER';
+            newRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
+            return {'success': true, 'data': newRecord};
+          }
+        }
+        return {'success': true, 'data': recordData};
       }
 
       return {
         'success': false,
-        'message': _errorMessage('Update diet record', response.statusCode, response.body),
+        'message': _errorMessage(
+          'Update diet record',
+          response.statusCode,
+          response.body,
+        ),
       };
     } catch (e) {
       return {'success': false, 'message': 'Update diet record failed: $e'};
@@ -216,39 +384,191 @@ class DietService {
   Future<Map<String, dynamic>> askWeeklyAnalysis(String question) async {
     final token = await _token();
     if (token == null) {
-      return {'success': false, 'message': 'Please sign in again.'};
+      return {'success': false, 'message': '請重新登入。'};
     }
 
     try {
-      final normalizedQuestion = question.trim();
-      final isSingleDish = _looksLikeSingleDish(normalizedQuestion);
+      final prefs = await _prefs();
+      final payload = await _buildAskPayload(question);
       final response = await _client.post(
-        '/dietary/ask-weekly-analysis',
-        {
-          'question': normalizedQuestion,
-          'question_type': isSingleDish ? 'single_dish' : 'unknown',
-          'dish_names': isSingleDish ? [normalizedQuestion] : ['general'],
-        },
+        '/dietary-agent/ask',
+        payload,
         headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final decoded = _decodeObject(response.body);
+      if (response.statusCode != 200) {
+        return {
+          'success': false,
+          'message': _errorMessage('飲食分析', response.statusCode, response.body),
+        };
+      }
+
+      return {
+        'success': decoded['success'] != false,
+        'data': _normalizeAskResponse(
+          payload: payload,
+          partnerData: decoded['data'],
+          goalDisplay:
+              prefs.getString('user_diet_goal') ??
+              ProfileValueMapper.defaultDietGoalDisplay,
+        ),
+      };
+    } catch (e) {
+      return {'success': false, 'message': '飲食分析失敗: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> _buildAskPayload(String question) async {
+    final prefs = await _prefs();
+    final normalizedQuestion = question.trim();
+    final dishNames = _extractDishNames(normalizedQuestion);
+
+    String questionType = 'unknown';
+    if (normalizedQuestion.contains('比較') ||
+        normalizedQuestion.contains('和') ||
+        dishNames.length > 1) {
+      questionType = 'dish_comparison';
+    } else if (dishNames.isNotEmpty && dishNames.first != 'general') {
+      questionType = 'single_dish';
+    }
+
+    final Map<String, dynamic> payload = {
+      'question': normalizedQuestion,
+      'question_type': questionType,
+      'dish_names': dishNames,
+      'user_profile': {
+        'height_cm': prefs.getDouble('user_height'),
+        'weight_kg': prefs.getDouble('user_weight'),
+        'gender': prefs.getString('user_gender'),
+        'age': prefs.getInt('user_age'),
+      }..removeWhere((key, value) => value == null),
+    };
+
+    final healthConditions =
+        prefs.getStringList('user_health_conditions_raw') ?? const [];
+    payload['health_condition'] = {
+      'has_chronic_disease':
+          healthConditions.isNotEmpty && !healthConditions.contains('NONE'),
+      'chronic_diseases': healthConditions.isEmpty
+          ? ['NONE']
+          : healthConditions,
+    };
+
+    final records = await _buildWeeklyDietRecords();
+    if (records.isNotEmpty) {
+      payload['weekly_diet_records'] = records;
+    }
+
+    return payload;
+  }
+
+  Future<List<Map<String, dynamic>>> _buildWeeklyDietRecords() async {
+    final records = await getMyDietRecords();
+    return records.take(7).map((record) {
+      final rawDate =
+          record['date'] ?? record['mealDate'] ?? record['createdAt'];
+      return {
+        'date': _normalizeRecordDate(rawDate),
+        'meal': _mealTypeForApi(
+          '${record['mealType'] ?? record['meal'] ?? ''}',
+        ),
+        'dish_name': record['dishName'] ?? record['dish_name'] ?? '',
+        'note': record['description'] ?? record['note'] ?? '',
+      }..removeWhere((key, value) => value == null || value == '');
+    }).toList();
+  }
+
+  String _normalizeRecordDate(dynamic value) {
+    if (value == null) return '';
+    final text = value.toString();
+    if (text.contains('T')) {
+      return text.split('T').first;
+    }
+    return text;
+  }
+
+  List<String> _extractDishNames(String question) {
+    final cleaned = question.trim();
+    if (cleaned.isEmpty) return ['general'];
+
+    final candidates = cleaned
+        .split(RegExp(r'[,，、\n]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+
+    if (candidates.isEmpty) {
+      return ['general'];
+    }
+
+    if (candidates.length == 1) {
+      return [candidates.first];
+    }
+
+    return candidates;
+  }
+
+  Map<String, dynamic> _normalizeAskResponse({
+    required Map<String, dynamic> payload,
+    required dynamic partnerData,
+    required String goalDisplay,
+  }) {
+    final responseMap = partnerData is Map<String, dynamic>
+        ? Map<String, dynamic>.from(partnerData)
+        : {};
+    final profile = Map<String, dynamic>.from(
+      payload['user_profile'] is Map<String, dynamic>
+          ? payload['user_profile'] as Map<String, dynamic>
+          : const <String, dynamic>{},
+    );
+    profile['goal'] = goalDisplay;
+
+    return {
+      'user_profile': profile,
+      'health_condition': payload['health_condition'] ?? const {},
+      'weekly_diet_records': payload['weekly_diet_records'] ?? const [],
+      'partner_response': partnerData,
+      if (responseMap['answer'] != null) 'answer': responseMap['answer'],
+      if (responseMap['message'] != null) 'message': responseMap['message'],
+    };
+  }
+
+  /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
+  Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
+    final normalizedPrompt = userPrompt.trim();
+    if (normalizedPrompt.isEmpty) {
+      return {'success': false, 'message': 'User prompt cannot be empty.'};
+    }
+
+    final token = await _token();
+    try {
+      final response = await _client.post(
+        '${ApiConfig.companionBaseUrl}/companion/ask',
+        {'user_prompt': normalizedPrompt},
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return {'success': true, 'data': data};
+        return {
+          'success': data['success'] ?? true,
+          'companion_reply': data['companion_reply'] ?? '',
+          'intent_category': data['intent_category'] ?? 'general',
+          'meal_records': data['meal_records'] ?? [],
+          'dietary_agent_error': data['dietary_agent_error'],
+          'data': data,
+        };
       }
 
       return {
         'success': false,
-        'message': _errorMessage('Ask dietary analysis', response.statusCode, response.body),
+        'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
       };
     } catch (e) {
-      return {'success': false, 'message': 'Ask dietary analysis failed: $e'};
+      return {'success': false, 'message': 'Send companion prompt failed: $e'};
     }
-  }
-  bool _looksLikeSingleDish(String question) {
-    if (question.isEmpty) return false;
-    if (question.contains(RegExp(r'[?？,，、\s]'))) return false;
-    if (question.toLowerCase().contains('vs')) return false;
-    return question.length <= 12;
   }
 }

@@ -47,20 +47,38 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     // 解析疾病與目標 (相容多種後端命名與格式)
     var healthData = data['healthConditions'] ?? data['health_conditions']; // 執行相對應的邏輯計算或設定屬性參數
     if (healthData != null) { // 執行相對應的邏輯計算或設定屬性參數
+      Set<String> parsedDiseases = {};
       if (healthData is String && healthData.isNotEmpty) { // 執行相對應的邏輯計算或設定屬性參數
-        _diseases = healthData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
+        parsedDiseases = healthData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
       } else if (healthData is List) { // 執行相對應的邏輯計算或設定屬性參數
-        _diseases = Set<String>.from(healthData); // 執行相對應的邏輯計算或設定屬性參數
+        parsedDiseases = Set<String>.from(healthData); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
+      
+      _diseases = parsedDiseases.map((e) {
+        final upper = e.toUpperCase();
+        if (upper == 'DIABETES' || e.contains('糖尿')) return '糖尿病';
+        if (upper == 'HYPERTENSION' || e.contains('高血壓')) return '高血壓';
+        if (upper == 'NONE' || e == '無' || e.contains('無特殊疾病') || e.contains('無疾病') || e.toLowerCase() == 'none') return '無疾病';
+        return e;
+      }).toSet();
     } // 程式碼區塊或元件結構結束
     
     var goalData = data['dietGoal'] ?? data['diet_goal']; // 執行相對應的邏輯計算或設定屬性參數
     if (goalData != null) { // 執行相對應的邏輯計算或設定屬性參數
+      Set<String> parsedGoals = {};
       if (goalData is String && goalData.isNotEmpty) { // 執行相對應的邏輯計算或設定屬性參數
-        _goals = goalData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
+        parsedGoals = goalData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
       } else if (goalData is List) { // 執行相對應的邏輯計算或設定屬性參數
-        _goals = Set<String>.from(goalData); // 執行相對應的邏輯計算或設定屬性參數
+        parsedGoals = Set<String>.from(goalData); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
+      
+      _goals = parsedGoals.map((e) {
+        final upper = e.toUpperCase();
+        if (upper == 'LOSE_WEIGHT' || e.contains('減脂') || e.contains('減重')) return '減脂';
+        if (upper == 'GAIN_MUSCLE' || e.contains('增肌')) return '增肌';
+        if (upper == 'MAINTAIN' || e.contains('養生') || e.contains('維持') || e.contains('健康')) return '養生';
+        return e;
+      }).toSet();
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 

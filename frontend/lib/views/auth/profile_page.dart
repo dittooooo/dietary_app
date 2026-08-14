@@ -164,23 +164,13 @@ class _ProfilePageState extends State<ProfilePage> {
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.background.withOpacity(0.5), 
+                color: AppColors.background.withOpacity(0.7), 
                 border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
               ),
             ),
           ),
         ),
-        leading: !_isAdmin
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => HomePage(initialIndex: widget.returnIndex)),
-                    (route) => false,
-                  );
-                },
-              )
-            : null,
+        leading: null,
         title: const Text(
           '個人首頁',
           style: TextStyle(
@@ -206,8 +196,7 @@ class _ProfilePageState extends State<ProfilePage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 80), // 預留標題列高度
-              const SizedBox(height: 30),
+              SizedBox(height: 80 + MediaQuery.of(context).padding.top + 20), // 預留標題列高度
               // 1. 頭像區域 (包含相機按鈕)
             Center(
               child: Stack(
@@ -342,14 +331,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     }),
-                    _buildAdminButton('菜單管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '菜單管理'),
-                        ),
-                      );
-                    }),
                     _buildAdminButton('飲食紀錄管理', () {
                       Navigator.push(
                         context,
@@ -444,6 +425,27 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     ),
+      bottomNavigationBar: (ModalRoute.of(context)?.canPop ?? false)
+          ? BottomNavigationBar(
+              currentIndex: 2,
+              selectedItemColor: AppColors.primary,
+              unselectedItemColor: AppColors.textPrimary.withOpacity(0.4),
+              backgroundColor: AppColors.background,
+              type: BottomNavigationBarType.fixed,
+              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              unselectedLabelStyle: const TextStyle(fontSize: 12),
+              onTap: (index) => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)),
+                (route) => false,
+              ),
+              items: const [
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),
+                BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),
+                BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
+              ],
+            )
+          : null,
     );
   }
 

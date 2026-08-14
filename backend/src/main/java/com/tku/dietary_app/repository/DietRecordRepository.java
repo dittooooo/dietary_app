@@ -7,13 +7,22 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
+    interface DailyNutritionSummary {
+        Long getRecordCount();
+        Double getTotalCalories();
+        Double getTotalProtein();
+    }
+
     List<DietRecord> findByDishNameContainingIgnoreCase(String dishName);
 
-    List<DietRecord> findByUserIdOrderByMealDateDescCreatedAtDescIdDesc(Long userId);
+    List<DietRecord> findByUserIdOrderByDateDescCreatedAtDescIdDesc(Long userId);
+
+    List<DietRecord> findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDescIdDesc(Long userId, LocalDateTime createdAt);
 
     @Query("""
             SELECT COUNT(d) AS recordCount,
@@ -21,10 +30,10 @@ public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
                    COALESCE(SUM(d.protein), 0) AS totalProtein
             FROM DietRecord d
             WHERE d.user.id = :userId
-              AND d.mealDate = :mealDate
+              AND d.date = :recordDate
             """)
-    DailyNutritionSummary summarizeByUserAndMealDate(@Param("userId") Long userId,
-                                                     @Param("mealDate") LocalDate mealDate);
+    DailyNutritionSummary summarizeByUserAndRecordDate(@Param("userId") Long userId,
+                                                       @Param("recordDate") LocalDate recordDate);
 
     @Query("""
             SELECT d
@@ -34,9 +43,9 @@ public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
               AND (:nickname IS NULL OR LOWER(up.nickname) LIKE LOWER(CONCAT('%', :nickname, '%')))
               AND (:dishName IS NULL OR LOWER(d.dishName) LIKE LOWER(CONCAT('%', :dishName, '%')))
               AND (:mealType IS NULL OR d.mealType = :mealType)
-              AND (:startDate IS NULL OR d.mealDate >= :startDate)
-              AND (:endDate IS NULL OR d.mealDate < :endDate)
-            ORDER BY d.mealDate DESC, d.createdAt DESC, d.id DESC
+              AND (:startDate IS NULL OR d.date >= :startDate)
+              AND (:endDate IS NULL OR d.date < :endDate)
+            ORDER BY d.date DESC, d.createdAt DESC, d.id DESC
             """)
     List<DietRecord> findByAdminFilters(@Param("userId") Long userId,
                                         @Param("nickname") String nickname,
@@ -44,12 +53,4 @@ public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
                                         @Param("mealType") String mealType,
                                         @Param("startDate") LocalDate startDate,
                                         @Param("endDate") LocalDate endDate);
-
-    interface DailyNutritionSummary {
-        Long getRecordCount();
-
-        Double getTotalCalories();
-
-        Double getTotalProtein();
-    }
 }

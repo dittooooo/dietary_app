@@ -1,146 +1,184 @@
-//處理登入與註冊的具體業務，包含解析後端回傳的 JSON 以及存儲 JWT Token。
-import 'dart:convert'; // 匯入 dart:convert 套件或模組
-import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 套件或模組
-import '../core/api_client.dart'; // 匯入 api_client.dart 套件或模組
+import 'dart:convert';
 
-class AuthService { // 定義 AuthService 類別，封裝相關功能或資料
-  final ApiClient _client = ApiClient(); // 宣告唯讀的 API 請求客戶端物件實例
+import 'package:shared_preferences/shared_preferences.dart';
 
-  // 登入邏輯
-  Future<Map<String, dynamic>> login(String email, String password) async { // 處理使用者登入驗證，傳入帳號密碼並發送登入請求
-    final response = await _client.post('/login', { // 宣告類別屬性或方法內部的區域變數
-      'email': email, // 執行相對應的程式邏輯運算或欄位宣告設定
-      'password': password, // 執行相對應的程式邏輯運算或欄位宣告設定
-    }); // 程式碼區塊或結構結束
+import '../core/api_client.dart';
+import '../utils/profile_value_mapper.dart';
 
-    final Map<String, dynamic> responseData = _decodeBody(response.body); // 宣告類別屬性或方法內部的區域變數
+class AuthService {
+  static const String accessTokenKey = 'jwt_token';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String tokenTypeKey = 'token_type';
+  static const String needsOnboardingKey = 'needs_onboarding';
+  static const String accessTokenExpiresKey = 'access_token_expires_in_seconds';
+  static const String refreshTokenExpiresKey = 'refresh_token_expires_in_seconds';
 
-    if (response.statusCode == 200) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      // 如果回傳的是純字串 Token (如你的 login_page 邏輯)
-      if (responseData.isEmpty) { // 執行相對應的程式邏輯運算或欄位宣告設定
-        await _saveToken(response.body); // 執行相對應的程式邏輯運算或欄位宣告設定
-        return {'success': true}; // 回傳方法執行結果或計算完成的數據
-      } // 程式碼區塊或結構結束
-      
-      // 如果回傳的是 JSON 報錯袋
-      return {'success': false, ...responseData}; // 回傳方法執行結果或計算完成的數據
-    } // 程式碼區塊或結構結束
-    
-    return {'success': false, ...responseData}; // 回傳方法執行結果或計算完成的數據
-  } // 程式碼區塊或結構結束
+  final ApiClient _client = ApiClient();
 
-  // 註冊邏輯
-  Future<Map<String, dynamic>> register(String email, String password) async { // 處理使用者帳號註冊，傳入帳號密碼並發送註冊請求
-    final response = await _client.post('/register', { // 宣告類別屬性或方法內部的區域變數
-      'email': email, // 執行相對應的程式邏輯運算或欄位宣告設定
-      'password': password, // 執行相對應的程式邏輯運算或欄位宣告設定
-    }); // 程式碼區塊或結構結束
+  Future<Map<String, dynamic>> login(String email, String password) async {
+    final response = await _client.post('/login', {
+      'email': email,
+      'password': password,
+    });
 
-    final Map<String, dynamic> data = _decodeBody(response.body); // 宣告類別屬性或方法內部的區域變數
+    final data = _decodeBody(response.body);
+    return _handleAuthResponse(response.statusCode, data, rawBody: response.body);
+  }
 
-    if (response.statusCode == 200 && data['success'] == true) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      await _saveToken(data['token']); // 執行相對應的程式邏輯運算或欄位宣告設定
-      return {'success': true}; // 回傳方法執行結果或計算完成的數據
-    } // 程式碼區塊或結構結束
+  Future<Map<String, dynamic>> register(String email, String password) async {
+    final response = await _client.post('/register', {
+      'email': email,
+      'password': password,
+    });
 
-    return {'success': false, ...data}; // 回傳方法執行結果或計算完成的數據
-  } // 程式碼區塊或結構結束
+    final data = _decodeBody(response.body);
+    return _handleAuthResponse(response.statusCode, data, rawBody: response.body);
+  }
 
-  // 獲取個人資料 (串接後端並更新本地緩衝)
-  Future<Map<String, dynamic>> getUserProfile() async { // 獲取當前登入使用者的詳細個人檔案與設定資料
-    final prefs = await SharedPreferences.getInstance(); // 獲取本地存儲 SharedPreferences 的單例實例
-    final token = prefs.getString('jwt_token'); // 宣告類別屬性或方法內部的區域變數
-    
-    if (token == null) return {'success': false, 'message': '未登入'}; // 回傳方法執行結果或計算完成的數據
+  Future<Map<String, dynamic>> refreshAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final refreshToken = prefs.getString(refreshTokenKey);
 
-    try { // 執行相對應的程式邏輯運算或欄位宣告設定
-      final response = await _client.get('/user/profile', headers: { // 宣告類別屬性或方法內部的區域變數
-        'Authorization': 'Bearer $token', // 執行相對應的程式邏輯運算或欄位宣告設定
-      }); // 程式碼區塊或結構結束
+    if (refreshToken == null || refreshToken.isEmpty) {
+      return {
+        'success': false,
+        'message': 'No refresh token found.',
+      };
+    }
 
-      final Map<String, dynamic> data = _decodeBody(response.body); // 宣告類別屬性或方法內部的區域變數
+    final response = await _client.post('/refresh', {
+      'refreshToken': refreshToken,
+    });
 
-      if (response.statusCode == 200 && (data['success'] == true || data.containsKey('nickname'))) { // 執行相對應的程式邏輯運算或欄位宣告設定
-        // 更新本地快取
-        final userData = data['data'] ?? data; // 宣告類別屬性或方法內部的區域變數
-        final String? email = userData['email'] ?? userData['user']?['email']; // 宣告類別屬性或方法內部的區域變數
-        if (email != null && email.isNotEmpty) { // 執行相對應的程式邏輯運算或欄位宣告設定
-          await prefs.setString('user_email', email); // 執行相對應的程式邏輯運算或欄位宣告設定
-        } // 程式碼區塊或結構結束
-        await prefs.setString('user_nickname', userData['nickname'] ?? ''); // 執行相對應的程式邏輯運算或欄位宣告設定
-        await prefs.setString('user_pet_type', userData['petType'] ?? ''); // 執行相對應的程式邏輯運算或欄位宣告設定
-        // 額外儲存更多資訊以便編輯時使用
-        await prefs.setString('user_gender', userData['gender'] ?? '男'); // 執行相對應的程式邏輯運算或欄位宣告設定
+    final data = _decodeBody(response.body);
+    return _handleAuthResponse(
+      response.statusCode,
+      data,
+      preserveOnboardingState: true,
+    );
+  }
 
-        final String? role = userData['user']?['role'] ?? userData['role']; // 宣告類別屬性或方法內部的區域變數
-        if (role != null) { // 執行相對應的程式邏輯運算或欄位宣告設定
-          await prefs.setString('user_role', role); // 執行相對應的程式邏輯運算或欄位宣告設定
-        } // 程式碼區塊或結構結束
-        return {'success': true, 'data': userData}; // 回傳方法執行結果或計算完成的數據
-      } // 程式碼區塊或結構結束
-      
-      return {'success': false, ...data}; // 回傳方法執行結果或計算完成的數據
-    } catch (e) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      final cachedNickname = prefs.getString('user_nickname'); // 宣告類別屬性或方法內部的區域變數
-      if (cachedNickname != null) { // 執行相對應的程式邏輯運算或欄位宣告設定
-        return { // 回傳方法執行結果或計算完成的數據
-          'success': true,  // 執行相對應的程式邏輯運算或欄位宣告設定
-          'data': { // 執行相對應的程式邏輯運算或欄位宣告設定
-            'nickname': cachedNickname, // 執行相對應的程式邏輯運算或欄位宣告設定
-            'petType': prefs.getString('user_pet_type'), // 執行相對應的程式邏輯運算或欄位宣告設定
-          }, // 程式碼區塊或結構結束
-          'isOffline': true // 執行相對應的程式邏輯運算或欄位宣告設定
-        }; // 執行相對應的程式邏輯運算或欄位宣告設定
-      } // 程式碼區塊或結構結束
-      return {'success': false, 'message': '連線失敗'}; // 回傳方法執行結果或計算完成的數據
-    } // 程式碼區塊或結構結束
-  } // 程式碼區塊或結構結束
+  Future<Map<String, dynamic>> getUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
 
-  // 更新個人資料 (Onboarding)
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> profileData) async { // 更新使用者的個人檔案資訊（Onboarding/基本設定資料）
-    final prefs = await SharedPreferences.getInstance(); // 獲取本地存儲 SharedPreferences 的單例實例
-    final token = prefs.getString('jwt_token'); // 宣告類別屬性或方法內部的區域變數
-    
-    if (token == null) return {'success': false, 'message': '未登入'}; // 回傳方法執行結果或計算完成的數據
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '未登入'};
+    }
 
-    final response = await _client.post( // 宣告類別屬性或方法內部的區域變數
-      '/user/onboarding',  // 執行相對應的程式邏輯運算或欄位宣告設定
-      profileData, // 執行相對應的程式邏輯運算或欄位宣告設定
-      headers: {'Authorization': 'Bearer $token'}, // 執行相對應的程式邏輯運算或欄位宣告設定
-    ); // 程式碼區塊或結構結束
+    try {
+      final response = await _client.get(
+        '/user/profile',
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-    final Map<String, dynamic> data = _decodeBody(response.body); // 宣告類別屬性或方法內部的區域變數
+      final data = _decodeBody(response.body);
+      final userData = data['data'] is Map<String, dynamic>
+          ? data['data'] as Map<String, dynamic>
+          : data;
 
-    if (response.statusCode == 200) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      // 更新本地快取
-      if (data['success'] == true) { // 執行相對應的程式邏輯運算或欄位宣告設定
-        await prefs.setString('user_nickname', profileData['nickname']); // 執行相對應的程式邏輯運算或欄位宣告設定
-      } // 程式碼區塊或結構結束
-      return {'success': true, ...data}; // 回傳方法執行結果或計算完成的數據
-    } // 程式碼區塊或結構結束
+      if (response.statusCode == 200 &&
+          userData is Map<String, dynamic> &&
+          userData.isNotEmpty) {
+        await _cacheUserProfile(userData);
+        await prefs.setBool(needsOnboardingKey, false);
+        return {'success': true, 'data': userData};
+      }
 
-    return {'success': false, ...data}; // 回傳方法執行結果或計算完成的數據
-  } // 程式碼區塊或結構結束
+      return {'success': false, ...data};
+    } catch (e) {
+      final cachedNickname = prefs.getString('user_nickname');
+      if (cachedNickname != null && cachedNickname.isNotEmpty) {
+        return {
+          'success': true,
+          'data': {
+            'nickname': cachedNickname,
+            'petType': prefs.getString('user_pet_type'),
+          },
+          'isOffline': true,
+        };
+      }
+      return {'success': false, 'message': '取得使用者資料失敗'};
+    }
+  }
 
-  // 登出：清除所有本地資料
-  Future<void> logout() async { // 執行登出操作，清除本地存儲的 JWT Token 與快取設定
-    final prefs = await SharedPreferences.getInstance(); // 獲取本地存儲 SharedPreferences 的單例實例
-    await prefs.clear(); // 執行相對應的程式邏輯運算或欄位宣告設定
-  } // 程式碼區塊或結構結束
+  Future<Map<String, dynamic>> updateProfile(
+    Map<String, dynamic> profileData,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
 
-  // 統一檢查是否為管理員
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '未登入'};
+    }
+
+    final normalizedProfile = _normalizeProfilePayload(profileData);
+    final response = await _client.post(
+      '/user/onboarding',
+      normalizedProfile,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    final data = _decodeBody(response.body);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      final profile = data['data'] is Map<String, dynamic>
+          ? data['data'] as Map<String, dynamic>
+          : normalizedProfile;
+      await _cacheUserProfile(profile);
+      await prefs.setBool(needsOnboardingKey, false);
+      return {'success': true, ...data};
+    }
+
+    return {'success': false, ...data};
+  }
+
+  Map<String, dynamic> _normalizeProfilePayload(Map<String, dynamic> profileData) {
+    final normalized = Map<String, dynamic>.from(profileData);
+
+    final healthConditions = normalized['healthConditions'];
+    if (healthConditions is Iterable) {
+      normalized['healthConditions'] =
+          ProfileValueMapper.healthConditionsToApi(healthConditions);
+    }
+
+    final dietGoal = normalized['dietGoal'];
+    if (dietGoal is Iterable) {
+      normalized['dietGoal'] = ProfileValueMapper.firstDietGoalToApi(
+        dietGoal.map((item) => item.toString()),
+      );
+    } else {
+      normalized['dietGoal'] =
+          ProfileValueMapper.dietGoalToApi(dietGoal?.toString());
+    }
+
+    normalized['petType'] =
+        ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
+
+    return normalized;
+  }
+
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _clearSession(prefs);
+  }
+
   Future<bool> isAdmin() async {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('user_role');
     return role == 'ROLE_ADMIN';
   }
 
-  // 上傳頭像到後端
-  Future<Map<String, dynamic>> uploadAvatar(List<int> fileBytes, String filename) async {
+  Future<Map<String, dynamic>> uploadAvatar(
+    List<int> fileBytes,
+    String filename,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    
-    if (token == null) return {'success': false, 'message': '未登入'};
+    final token = prefs.getString(accessTokenKey);
+
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '未登入'};
+    }
 
     try {
       final response = await _client.multipart(
@@ -149,35 +187,200 @@ class AuthService { // 定義 AuthService 類別，封裝相關功能或資料
         filename,
         headers: {'Authorization': 'Bearer $token'},
       );
+      final data = _decodeBody(response.body);
 
-      if (response.statusCode == 200) {
-        return {'success': true, 'avatarUrl': response.body};
+      if (response.statusCode == 200 && data['success'] == true) {
+        final avatarUrl = data['data']?.toString();
+        if (avatarUrl != null && avatarUrl.isNotEmpty) {
+          await prefs.setString('user_avatar_url', avatarUrl);
+        }
+        return {'success': true, 'avatarUrl': avatarUrl};
       }
-      return {'success': false, 'message': '上傳失敗，請檢查檔案格式與網路後再試'};
+
+      return {'success': false, ...data};
     } catch (e) {
-      return {'success': false, 'message': '連線失敗: $e'};
+      return {'success': false, 'message': '上傳頭像失敗: $e'};
     }
   }
 
-  // 私有工具：儲存 Token (強化過濾機制)
-  Future<void> _saveToken(String token) async { // 私有方法：安全清理並儲存 JWT Token 到本地持久化快取
-    final prefs = await SharedPreferences.getInstance(); // 獲取本地存儲 SharedPreferences 的單例實例
-    // 移除可能存在的空白與多餘引號 (部分後端回傳純字串時會帶引號)
-    String cleanToken = token.trim(); // 宣告類別屬性或方法內部的區域變數
-    if (cleanToken.startsWith('"') && cleanToken.endsWith('"')) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      cleanToken = cleanToken.substring(1, cleanToken.length - 1); // 執行相對應的程式邏輯運算或欄位宣告設定
-    } // 程式碼區塊或結構結束
-    await prefs.setString('jwt_token', cleanToken); // 執行相對應的程式邏輯運算或欄位宣告設定
-  } // 程式碼區塊或結構結束
+  Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(accessTokenKey);
+  }
 
-  // 私有工具：安全解析 JSON
-  Map<String, dynamic> _decodeBody(String body) { // 私有方法：安全將 API 回傳的 body 字串解析為 Map 鍵值對
-    try { // 執行相對應的程式邏輯運算或欄位宣告設定
-      final decoded = jsonDecode(body); // 將 JSON 字串反序列化解析為 Map 結構資料
-      if (decoded is Map<String, dynamic>) return decoded; // 回傳方法執行結果或計算完成的數據
-      return {};  // 回傳方法執行結果或計算完成的數據
-    } catch (_) { // 執行相對應的程式邏輯運算或欄位宣告設定
-      return {};  // 回傳方法執行結果或計算完成的數據
-    } // 程式碼區塊或結構結束
-  } // 程式碼區塊或結構結束
-} // 程式碼區塊或結構結束
+  Future<bool> getNeedsOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(needsOnboardingKey) ?? false;
+  }
+
+  Future<void> clearSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _clearSession(prefs);
+  }
+
+  Future<Map<String, dynamic>> _handleAuthResponse(
+    int statusCode,
+    Map<String, dynamic> data, {
+    bool preserveOnboardingState = false,
+    String? rawBody,
+  }) async {
+    if (statusCode != 200) {
+      return {'success': false, ...data};
+    }
+
+    var accessToken = data['accessToken']?.toString() ?? '';
+    if (accessToken.isEmpty && data['token'] != null) {
+      accessToken = data['token'].toString();
+    }
+    if (accessToken.isEmpty && rawBody != null) {
+      final trimmed = rawBody.trim();
+      if (!trimmed.startsWith('{') && trimmed.split('.').length == 3) {
+        accessToken = trimmed;
+      }
+    }
+
+    var refreshToken = data['refreshToken']?.toString() ?? '';
+    if (refreshToken.isEmpty) {
+      refreshToken = 'mock_refresh_token_for_compatibility';
+    }
+
+    if (accessToken.isEmpty) {
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Auth response is missing access token.',
+      };
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(accessTokenKey, accessToken);
+    await prefs.setString(refreshTokenKey, refreshToken);
+    await prefs.setString(tokenTypeKey, data['tokenType']?.toString() ?? 'Bearer');
+
+    final role = data['role']?.toString();
+    if (role != null && role.isNotEmpty) {
+      await prefs.setString('user_role', role);
+    } else {
+      await prefs.remove('user_role');
+    }
+
+    final needsOnboarding = preserveOnboardingState
+        ? (prefs.getBool(needsOnboardingKey) ?? false)
+        : (data['needsOnboarding'] == true);
+    await prefs.setBool(needsOnboardingKey, needsOnboarding);
+
+    await prefs.setInt(
+      accessTokenExpiresKey,
+      _asInt(data['accessTokenExpiresInSeconds']),
+    );
+    await prefs.setInt(
+      refreshTokenExpiresKey,
+      _asInt(data['refreshTokenExpiresInSeconds']),
+    );
+
+    return {
+      'success': true,
+      'message': data['message'],
+      'needsOnboarding': needsOnboarding,
+      'accessToken': accessToken,
+      'refreshToken': refreshToken,
+      'role': role,
+      'tokenType': data['tokenType'] ?? 'Bearer',
+    };
+  }
+
+  Future<void> _cacheUserProfile(Map<String, dynamic> userData) async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = userData['email']?.toString() ??
+        userData['user']?['email']?.toString();
+    final nickname = userData['nickname']?.toString();
+    final petType = userData['petType']?.toString();
+    final gender = userData['gender']?.toString();
+    final role = userData['user']?['role']?.toString() ??
+        userData['role']?.toString();
+    final dietGoal = userData['dietGoal']?.toString() ??
+        userData['diet_goal']?.toString();
+    final age = _asInt(userData['age']);
+    final height = _asDouble(userData['height']);
+    final weight = _asDouble(userData['weight']);
+    final healthConditions = userData['healthConditions'];
+
+    if (email != null && email.isNotEmpty) {
+      await prefs.setString('user_email', email);
+    }
+    if (nickname != null) {
+      await prefs.setString('user_nickname', nickname);
+    }
+    if (petType != null) {
+      await prefs.setString(
+        'user_pet_type',
+        ProfileValueMapper.petTypeToDisplay(petType),
+      );
+      await prefs.setString('user_pet_type_raw', ProfileValueMapper.petTypeToApi(petType));
+    }
+    if (gender != null) {
+      await prefs.setString('user_gender', gender);
+    }
+    if (role != null) {
+      await prefs.setString('user_role', role);
+    }
+    if (dietGoal != null) {
+      await prefs.setString(
+        'user_diet_goal',
+        ProfileValueMapper.dietGoalToDisplay(dietGoal),
+      );
+      await prefs.setString(
+        'user_diet_goal_raw',
+        ProfileValueMapper.dietGoalToApi(dietGoal),
+      );
+    }
+    if (age > 0) {
+      await prefs.setInt('user_age', age);
+    }
+    if (height > 0) {
+      await prefs.setDouble('user_height', height);
+    }
+    if (weight > 0) {
+      await prefs.setDouble('user_weight', weight);
+    }
+    if (healthConditions is List) {
+      await prefs.setStringList(
+        'user_health_conditions_raw',
+        ProfileValueMapper.healthConditionsToApi(healthConditions),
+      );
+    }
+  }
+
+  Future<void> _clearSession(SharedPreferences prefs) async {
+    await prefs.remove(accessTokenKey);
+    await prefs.remove(refreshTokenKey);
+    await prefs.remove(tokenTypeKey);
+    await prefs.remove(needsOnboardingKey);
+    await prefs.remove(accessTokenExpiresKey);
+    await prefs.remove(refreshTokenExpiresKey);
+    await prefs.remove('user_role');
+  }
+
+  Map<String, dynamic> _decodeBody(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map<String, dynamic>) {
+        return decoded;
+      }
+      return {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse('${value ?? ''}') ?? 0;
+  }
+
+  double _asDouble(dynamic value) {
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse('${value ?? ''}') ?? 0;
+  }
+}

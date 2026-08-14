@@ -18,19 +18,27 @@ public class DietRecordResponse {
     private String dishName;
     private String description;
     private String mealType;
-    private LocalDate mealDate;
+    private Integer amount;
     private String photoUrl;
+    private LocalDate date;
+    private LocalDate mealDate;
     private LocalDateTime createdAt;
     private NutritionResponse nutrition;
 
     public static DietRecordResponse fromEntity(DietRecord dietRecord) {
+        LocalDate recordDate = dietRecord.getDate() != null
+                ? dietRecord.getDate()
+                : (dietRecord.getCreatedAt() == null ? null : dietRecord.getCreatedAt().toLocalDate());
+
         return DietRecordResponse.builder()
                 .id(dietRecord.getId())
                 .dishName(dietRecord.getDishName())
                 .description(dietRecord.getDescription())
                 .mealType(dietRecord.getMealType())
-                .mealDate(dietRecord.getMealDate())
+                .amount(dietRecord.getAmount())
                 .photoUrl(dietRecord.getPhotoUrl())
+                .date(recordDate)
+                .mealDate(recordDate)
                 .createdAt(dietRecord.getCreatedAt())
                 .nutrition(NutritionResponse.fromDietRecord(
                         dietRecord.getCalories(),

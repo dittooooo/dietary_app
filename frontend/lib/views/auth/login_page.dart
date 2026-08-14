@@ -41,6 +41,7 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
           // 儲存 Email 到本地，供 ProfilePage 使用
           final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
           await prefs.setString('user_email', _emailController.text.trim()); // 執行相對應的邏輯計算或設定屬性參數
+          await prefs.setString('user_password', _passwordController.text);
           
           Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
             context, // 執行相對應的邏輯計算或設定屬性參數
@@ -92,7 +93,7 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.background, // 設定顏色數值（Color）
+      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
       body: SingleChildScrollView( // 設定頁面的主要內容區域（body）
         padding: const EdgeInsets.symmetric(horizontal: 40.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
         child: Form( // 執行相對應的邏輯計算或設定屬性參數
@@ -266,7 +267,7 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
             ), // 執行相對應的邏輯計算或設定屬性參數
             errorStyle: const TextStyle(color: AppColors.danger), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
             filled: true, // 執行相對應的邏輯計算或設定屬性參數
-            fillColor: AppColors.surface, // 設定顏色數值（Color）
+            fillColor: AppColors.background, // 設定顏色數值（Color）
           ), // 執行相對應的邏輯計算或設定屬性參數
         ), // 執行相對應的邏輯計算或設定屬性參數
       ], // 執行相對應的邏輯計算或設定屬性參數

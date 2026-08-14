@@ -1,0 +1,960 @@
+[
+  {
+    "recipe_id": "r481092",
+    "name": "台式咖喱風味黃豆芽炒豆皮",
+    "servings": "4",
+    "ingredients": [
+      {
+        "name_raw": "黃豆芽",
+        "name": "黃豆芽",
+        "amount_raw": "1包",
+        "amount_value": 1,
+        "amount_unit": "包",
+        "amount_note": null,
+        "db_id": "E7700401",
+        "樣品名稱": "黃豆芽",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "紅蘿蔔絲",
+        "name": "紅蘿蔔絲",
+        "amount_raw": "1大匙",
+        "amount_value": 1,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "E0200101",
+        "樣品名稱": "胡蘿蔔",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "蔥段",
+        "name": "蔥段",
+        "amount_raw": "1大匙",
+        "amount_value": 1,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "E2300101",
+        "樣品名稱": "青蔥(有機)",
+        "llm_category": "蔬菜類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "醃燻豆包",
+        "name": "醃燻豆包",
+        "amount_raw": "2片",
+        "amount_value": 2,
+        "amount_unit": "片",
+        "amount_note": null,
+        "db_id": "R2300401",
+        "樣品名稱": "冷凍豆沙包",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "雞粉",
+        "name": "雞粉",
+        "amount_raw": "1茶匙",
+        "amount_value": 1,
+        "amount_unit": "茶匙",
+        "amount_note": null,
+        "db_id": "P0400301",
+        "樣品名稱": "鮮雞精",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "鹽",
+        "name": "鹽",
+        "amount_raw": "0.5茶匙",
+        "amount_value": 0.5,
+        "amount_unit": "茶匙",
+        "amount_note": null,
+        "db_id": "K0314101",
+        "樣品名稱": "鵪鶉鹹蛋",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "咖喱粉",
+        "name": "咖喱粉",
+        "amount_raw": "1.5小匙",
+        "amount_value": 1.5,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "P0200401",
+        "樣品名稱": "咖哩粉",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 100,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "胡椒粉",
+        "name": "胡椒粉",
+        "amount_raw": "0.5茶匙",
+        "amount_value": 0.5,
+        "amount_unit": "茶匙",
+        "amount_note": null,
+        "db_id": "P0101101",
+        "樣品名稱": "白胡椒粉",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481094",
+    "name": "鮪魚玉米蛋優格",
+    "servings": "1",
+    "ingredients": [
+      {
+        "name_raw": "水煮鮪魚罐頭",
+        "name": "水煮鮪魚罐頭",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "R6900101",
+        "樣品名稱": "香筍鮪魚罐頭",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "玉米罐頭",
+        "name": "玉米罐頭",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "R1600201",
+        "樣品名稱": "玉米醬罐頭",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "無糖優格",
+        "name": "無糖優格",
+        "amount_raw": "2大匙",
+        "amount_value": 2,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "L0106101",
+        "樣品名稱": "低脂鮮乳",
+        "llm_category": "乳品類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "水煮蛋",
+        "name": "水煮蛋",
+        "amount_raw": "2顆",
+        "amount_value": 2,
+        "amount_unit": "顆",
+        "amount_note": null,
+        "db_id": "K0111101",
+        "樣品名稱": "雞水煮蛋",
+        "llm_category": "蛋類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481096",
+    "name": "巧克力豆酥餅",
+    "servings": "3",
+    "ingredients": [
+      {
+        "name_raw": "低筋麵粉",
+        "name": "低筋麵粉",
+        "amount_raw": "120克",
+        "amount_value": 120,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "A0320202",
+        "樣品名稱": "低筋麵粉",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "泡打粉",
+        "name": "泡打粉",
+        "amount_raw": "2克",
+        "amount_value": 2,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "BASE004",
+        "樣品名稱": "純植物油",
+        "llm_category": "基本類",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "全蛋液",
+        "name": "全蛋液",
+        "amount_raw": "35克",
+        "amount_value": 35,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "K0121101",
+        "樣品名稱": "雞鐵蛋",
+        "llm_category": "蛋類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "香草精",
+        "name": "香草精",
+        "amount_raw": "5克",
+        "amount_value": 5,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "E4000101",
+        "樣品名稱": "芫荽",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "無鹽奶油",
+        "name": "無鹽奶油",
+        "amount_raw": "80克",
+        "amount_value": 80,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "M0900101",
+        "樣品名稱": "奶油(固態,不加鹽)",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "鹽",
+        "name": "鹽",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "BASE002",
+        "樣品名稱": "精製食鹽",
+        "llm_category": "基本類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "細砂糖",
+        "name": "細砂糖",
+        "amount_raw": "35克",
+        "amount_value": 35,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "P0201001",
+        "樣品名稱": "糖粉",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "巧克力豆",
+        "name": "巧克力豆",
+        "amount_raw": "60克",
+        "amount_value": 60,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "Q6100501",
+        "樣品名稱": "白巧克力風味糖",
+        "match_method": "global_fuzzy_fallback"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481102",
+    "name": "韓式飯捲",
+    "servings": "4",
+    "ingredients": [
+      {
+        "name_raw": "米",
+        "name": "米",
+        "amount_raw": "三碗",
+        "amount_value": 3,
+        "amount_unit": "碗",
+        "amount_note": "三碗",
+        "db_id": "A0500204",
+        "樣品名稱": "稉米(台稉8號)",
+        "llm_category": "穀物類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "大片海苔",
+        "name": "大片海苔",
+        "amount_raw": "四片",
+        "amount_value": 4,
+        "amount_unit": "片",
+        "amount_note": "四片",
+        "db_id": "F0210101",
+        "樣品名稱": "紫菜",
+        "llm_category": "豆類",
+        "llm_confidence": 80,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "廣達香優質純肉鬆",
+        "name": "肉鬆",
+        "amount_raw": "約80克",
+        "amount_value": 80,
+        "amount_unit": "克",
+        "amount_note": "約",
+        "db_id": "R6800301",
+        "樣品名稱": "魚肉鬆",
+        "llm_category": "加工調理食品及其他類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "紅糟燒肉片",
+        "name": "紅糟燒肉片",
+        "amount_raw": "約8片",
+        "amount_value": 8,
+        "amount_unit": "片",
+        "amount_note": "約",
+        "db_id": "R5600101",
+        "樣品名稱": "豬肉脯",
+        "llm_category": "肉類",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "小熱狗",
+        "name": "小熱狗",
+        "amount_raw": "四根",
+        "amount_value": 4,
+        "amount_unit": "根",
+        "amount_note": "四根",
+        "db_id": "R5300501",
+        "樣品名稱": "熱狗",
+        "llm_category": "肉類",
+        "llm_confidence": null,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "雞蛋",
+        "name": "雞蛋",
+        "amount_raw": "兩顆",
+        "amount_value": 2,
+        "amount_unit": "顆",
+        "amount_note": "兩顆",
+        "db_id": "I0420701",
+        "樣品名稱": "雞睪丸",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "小黃瓜",
+        "name": "小黃瓜",
+        "amount_raw": "一根",
+        "amount_value": 1,
+        "amount_unit": "根",
+        "amount_note": "一根",
+        "db_id": "E7100101",
+        "樣品名稱": "黃櫛瓜",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "美乃滋",
+        "name": "美乃滋",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": null,
+        "樣品名稱": null
+      },
+      {
+        "name_raw": "壽司竹簾",
+        "name": "壽司竹簾",
+        "amount_raw": "一個",
+        "amount_value": 1,
+        "amount_unit": "個",
+        "amount_note": "一個",
+        "db_id": "E1300101",
+        "樣品名稱": "茭白筍",
+        "llm_category": "加工調理食品及其他類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481105",
+    "name": "歐姆蛋",
+    "servings": "2",
+    "ingredients": [
+      {
+        "name_raw": "雞蛋",
+        "name": "雞蛋",
+        "amount_raw": "4顆",
+        "amount_value": 4,
+        "amount_unit": "顆",
+        "amount_note": null,
+        "db_id": "I0420701",
+        "樣品名稱": "雞睪丸",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "鮮奶油（或鮮奶、豆漿）",
+        "name": "鮮奶油",
+        "amount_raw": "40m",
+        "amount_value": 40,
+        "amount_unit": "m",
+        "amount_note": null,
+        "db_id": "M0900301",
+        "樣品名稱": "奶油(液態)",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "食用油",
+        "name": "油",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "BASE004",
+        "樣品名稱": "純植物油",
+        "llm_category": "基礎物質",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "奶油 （或食用油）",
+        "name": "奶油",
+        "amount_raw": "10g",
+        "amount_value": 10,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "L0110101",
+        "樣品名稱": "高脂強化鮮乳(鈣強化)",
+        "llm_category": "乳品類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481110",
+    "name": "奶油蒜炒香菇",
+    "servings": "3",
+    "ingredients": [
+      {
+        "name_raw": "香菇",
+        "name": "香菇",
+        "amount_raw": "6朵",
+        "amount_value": 6,
+        "amount_unit": "朵",
+        "amount_note": null,
+        "db_id": "G0810101",
+        "樣品名稱": "乾香菇",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "蒜頭",
+        "name": "蒜頭",
+        "amount_raw": "2瓣",
+        "amount_value": 2,
+        "amount_unit": "瓣",
+        "amount_note": null,
+        "db_id": "E2100101",
+        "樣品名稱": "大蒜",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "奶油",
+        "name": "奶油",
+        "amount_raw": "10克",
+        "amount_value": 10,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "L0110101",
+        "樣品名稱": "高脂強化鮮乳(鈣強化)",
+        "llm_category": "乳品類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "醬油",
+        "name": "醬油",
+        "amount_raw": "1茶匙",
+        "amount_value": 1,
+        "amount_unit": "茶匙",
+        "amount_note": null,
+        "db_id": "P0700101",
+        "樣品名稱": "醬油",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "鹽",
+        "name": "鹽",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "K0314101",
+        "樣品名稱": "鵪鶉鹹蛋",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "水",
+        "name": "水",
+        "amount_raw": "30毫升",
+        "amount_value": 30,
+        "amount_unit": "毫升",
+        "amount_note": null,
+        "db_id": "BASE001",
+        "樣品名稱": "純水",
+        "llm_category": "基礎物質",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481117",
+    "name": "烤雞溫沙拉",
+    "servings": "2",
+    "ingredients": [
+      {
+        "name_raw": "牛蕃茄",
+        "name": "牛蕃茄",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "D1900202",
+        "樣品名稱": "紅鈴西瓜",
+        "llm_category": "水果類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "小黃瓜",
+        "name": "小黃瓜",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "E7100101",
+        "樣品名稱": "黃櫛瓜",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "海藻",
+        "name": "海藻",
+        "amount_raw": "5克",
+        "amount_value": 5,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "F0800101",
+        "樣品名稱": "裙帶菜",
+        "llm_category": "藻類",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "葡萄",
+        "name": "葡萄",
+        "amount_raw": "50克",
+        "amount_value": 50,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "D1700302",
+        "樣品名稱": "意大利葡萄",
+        "llm_category": "水果類",
+        "llm_confidence": null,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "玉米粒",
+        "name": "玉米粒",
+        "amount_raw": "2大匙",
+        "amount_value": 2,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "R1600101",
+        "樣品名稱": "玉米粒罐頭",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "烤雞肉",
+        "name": "烤雞肉",
+        "amount_raw": "100克",
+        "amount_value": 100,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "I0400201",
+        "樣品名稱": "肉雞",
+        "llm_category": "肉類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "沙拉醬",
+        "name": "沙拉醬",
+        "amount_raw": "2大匙",
+        "amount_value": 2,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "P1100101",
+        "樣品名稱": "沙拉醬",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "醋",
+        "name": "醋",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "P0600101",
+        "樣品名稱": "米醋",
+        "match_method": "exact"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481119",
+    "name": "椒鹽軟殼蟹",
+    "servings": "2",
+    "ingredients": [
+      {
+        "name_raw": "軟殼蟹",
+        "name": "軟殼蟹",
+        "amount_raw": "2隻",
+        "amount_value": 2,
+        "amount_unit": "隻",
+        "amount_note": null,
+        "db_id": null,
+        "樣品名稱": null
+      },
+      {
+        "name_raw": "青蔥",
+        "name": "青蔥",
+        "amount_raw": "2根",
+        "amount_value": 2,
+        "amount_unit": "根",
+        "amount_note": null,
+        "db_id": "E23001",
+        "樣品名稱": "青蔥平均值",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "蒜",
+        "name": "蒜",
+        "amount_raw": "4-5顆",
+        "amount_value": 4.5,
+        "amount_unit": "顆",
+        "amount_note": null,
+        "db_id": "P0101701",
+        "樣品名稱": "蒜粉",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "辣椒",
+        "name": "辣椒",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "P1003201",
+        "樣品名稱": "辣椒醬",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 100,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "蒜酥",
+        "name": "蒜酥",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "P0200901",
+        "樣品名稱": "蒜頭酥",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "酒",
+        "name": "酒",
+        "amount_raw": "1大匙",
+        "amount_value": 1,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "M1100101",
+        "樣品名稱": "大豆油",
+        "llm_category": "豆類",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "鹽",
+        "name": "鹽",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "BASE002",
+        "樣品名稱": "精製食鹽",
+        "llm_category": "基本類",
+        "llm_confidence": 90,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "黑胡椒",
+        "name": "黑胡椒粉",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "P0101301",
+        "樣品名稱": "黑胡椒粉",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "酥炸粉",
+        "name": "酥炸粉",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "P1500201",
+        "樣品名稱": "炸雞粉",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "胡椒鹽",
+        "name": "胡椒鹽",
+        "amount_raw": "適量",
+        "amount_value": null,
+        "amount_unit": null,
+        "amount_note": "適量",
+        "db_id": "P0101301",
+        "樣品名稱": "黑胡椒粉",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481120",
+    "name": "燒十三香胖雞翼",
+    "servings": "3",
+    "ingredients": [
+      {
+        "name_raw": "雞翼",
+        "name": "雞翼",
+        "amount_raw": "450克",
+        "amount_value": 450,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "I04061",
+        "樣品名稱": "二節翅平均值",
+        "llm_category": "肉類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "十三香",
+        "name": "十三香",
+        "amount_raw": "1.5大匙",
+        "amount_value": 1.5,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "P0100401",
+        "樣品名稱": "五香粉",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "米酒",
+        "name": "米酒",
+        "amount_raw": "2大匙",
+        "amount_value": 2,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "H0205101",
+        "樣品名稱": "米豆",
+        "llm_category": "豆類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "李錦記蠔油",
+        "name": "蠔油",
+        "amount_raw": "2大匙",
+        "amount_value": 2,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "P0800301",
+        "樣品名稱": "蠔油",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "冰糖",
+        "name": "冰糖",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "N0100201",
+        "樣品名稱": "冰糖",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "水",
+        "name": "水",
+        "amount_raw": "300毫升",
+        "amount_value": 300,
+        "amount_unit": "毫升",
+        "amount_note": null,
+        "db_id": "BASE004",
+        "樣品名稱": "純植物油",
+        "llm_category": "基礎物質",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "紅蘿蔔",
+        "name": "紅蘿蔔",
+        "amount_raw": "1條",
+        "amount_value": 1,
+        "amount_unit": "條",
+        "amount_note": null,
+        "db_id": "E0200101",
+        "樣品名稱": "胡蘿蔔",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "油",
+        "name": "油",
+        "amount_raw": "1大匙",
+        "amount_value": 1,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "BASE004",
+        "樣品名稱": "純植物油",
+        "llm_category": "基礎物質",
+        "llm_confidence": 85,
+        "match_method": "llm_context_inference"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481127",
+    "name": "地瓜蔬果輕食沙拉",
+    "servings": "1",
+    "ingredients": [
+      {
+        "name_raw": "烤地瓜",
+        "name": "烤地瓜",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "B0800101",
+        "樣品名稱": "荸薺",
+        "llm_category": "澱粉類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "水煮蛋",
+        "name": "水煮蛋",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "K0111101",
+        "樣品名稱": "雞水煮蛋",
+        "match_method": "global_fuzzy_fallback"
+      },
+      {
+        "name_raw": "蘋果",
+        "name": "蘋果",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "D32001",
+        "樣品名稱": "蘋果平均值(青皮)",
+        "llm_category": "水果類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "酪梨",
+        "name": "酪梨",
+        "amount_raw": "80克",
+        "amount_value": 80,
+        "amount_unit": "克",
+        "amount_note": null,
+        "db_id": "D3000103",
+        "樣品名稱": "西洋梨(黃皮)",
+        "llm_category": "水果類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "紫洋蔥",
+        "name": "紫洋蔥",
+        "amount_raw": "35",
+        "amount_value": 35,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "E2400201",
+        "樣品名稱": "紫洋蔥",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "核桃仁",
+        "name": "核桃仁",
+        "amount_raw": "1大匙",
+        "amount_value": 1,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "C0405101",
+        "樣品名稱": "生核桃",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "奇異果",
+        "name": "奇異果",
+        "amount_raw": "1",
+        "amount_value": 1,
+        "amount_unit": "",
+        "amount_note": null,
+        "db_id": "D0500201",
+        "樣品名稱": "奇異果",
+        "match_method": "exact"
+      },
+      {
+        "name_raw": "胡麻沙拉醬",
+        "name": "胡麻沙拉醬",
+        "amount_raw": "1.5大匙",
+        "amount_value": 1.5,
+        "amount_unit": "大匙",
+        "amount_note": null,
+        "db_id": "P1000901",
+        "樣品名稱": "麻醬",
+        "llm_category": "調味料及香辛料類",
+        "llm_confidence": 95,
+        "match_method": "llm_context_inference"
+      },
+      {
+        "name_raw": "白芝麻",
+        "name": "白芝麻",
+        "amount_raw": "1小匙",
+        "amount_value": 1,
+        "amount_unit": "小匙",
+        "amount_note": null,
+        "db_id": "C1605101",
+        "樣品名稱": "白芝麻(生)",
+        "match_method": "exact"
+      }
+    ]
+  }
+]

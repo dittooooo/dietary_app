@@ -1,0 +1,284 @@
+[
+  {
+    "recipe_id": "r481014",
+    "recipe_name": "清炒苦瓜",
+    "resolved_ingredients": [
+      {
+        "original": "苦瓜",
+        "matched": "苦瓜(白皮)",
+        "整合編號": "E6500101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜",
+        "matched": "大蒜",
+        "整合編號": "E2100101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "朝天椒",
+        "matched": "朝天椒(長果)",
+        "整合編號": "E7500602",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "鹽巴",
+        "matched": "精製食鹽",
+        "整合編號": "BASE002",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "糖",
+        "matched": "紅砂糖",
+        "整合編號": "N0100301",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "水",
+        "matched": "純水",
+        "整合編號": "BASE001",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "油",
+        "matched": "純植物油",
+        "整合編號": "BASE004",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "鰹魚粉",
+        "matched": "鰹魚粉",
+        "整合編號": "P0400401",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481015",
+    "recipe_name": "酪梨輕食早餐",
+    "resolved_ingredients": [
+      {
+        "original": "酪梨",
+        "matched": "酪梨",
+        "整合編號": "D0900101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "紫色洋蔥",
+        "matched": "紫洋蔥",
+        "整合編號": "E2400201",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "烤地瓜",
+        "matched": "甘薯",
+        "整合編號": "B0400501",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "水煮蛋",
+        "matched": "雞蛋(高維生素A&E)",
+        "整合編號": "K0100801",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蘋果",
+        "matched": "蘋果平均值(混色)",
+        "整合編號": "D32004",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "核桃",
+        "matched": "核桃仁",
+        "整合編號": "C0405101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "胡麻醬",
+        "matched": "黑芝麻醬",
+        "整合編號": "P1301201",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481017",
+    "recipe_name": "薑片虱目魚皮湯",
+    "resolved_ingredients": [
+      {
+        "original": "虱目魚皮",
+        "matched": "虱目魚皮",
+        "整合編號": "J0401101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "老薑",
+        "matched": "老薑",
+        "整合編號": "E1900103",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "鹽巴",
+        "matched": "精製食鹽",
+        "整合編號": "BASE002",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "糖",
+        "matched": "紅砂糖",
+        "整合編號": "N0100301",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "水",
+        "matched": "純水",
+        "整合編號": "BASE001",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "麻油",
+        "matched": "香油",
+        "整合編號": "P0900201",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "米酒",
+        "matched": "米酒",
+        "整合編號": "CUSTOM_003",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481018",
+    "recipe_name": "肉燥豆腐",
+    "resolved_ingredients": [
+      {
+        "original": "瘦豬絞肉",
+        "matched": "豬絞肉平均值",
+        "整合編號": "I03104",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "豆腐",
+        "matched": "嫩豆腐",
+        "整合編號": "R4701201",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "雪白菇",
+        "matched": "雪白菇",
+        "整合編號": "G0300101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "蒜頭",
+        "整合編號": "E2100101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "金蘭無添加醬油",
+        "matched": "醬油",
+        "整合編號": "P0700101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "橄欖油",
+        "matched": "橄欖油",
+        "整合編號": "M2700101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "水",
+        "matched": "純水",
+        "整合編號": "BASE001",
+        "method": "Global Search + LLM"
+      }
+    ]
+  },
+  {
+    "recipe_id": "r481019",
+    "recipe_name": "椒麻皮蛋拌麵",
+    "resolved_ingredients": [
+      {
+        "original": "皮蛋",
+        "matched": "雞皮蛋",
+        "整合編號": "K0113101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "花椒粉",
+        "matched": "花椒粉",
+        "整合編號": "P0100801",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蒜頭",
+        "matched": "蒜頭",
+        "整合編號": "E2100101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "青蔥",
+        "matched": "青蔥平均值",
+        "整合編號": "E23001",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "烏醋",
+        "matched": "烏醋",
+        "整合編號": "P0600701",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "醬油",
+        "matched": "醬油",
+        "整合編號": "P0700101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "蠔油膏",
+        "matched": "蠔油膏",
+        "整合編號": "P0800301",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "醬油膏",
+        "matched": "醬油膏",
+        "整合編號": "None",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "韓式辣椒粉",
+        "matched": "辣椒粉",
+        "整合編號": "P0101801",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "油",
+        "matched": "純植物油",
+        "整合編號": "BASE004",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "關廟麵",
+        "matched": "無對應",
+        "整合編號": "None",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "豬油",
+        "matched": "豬油",
+        "整合編號": "M0200101",
+        "method": "Global Search + LLM"
+      },
+      {
+        "original": "白芝麻粒",
+        "matched": "白芝麻粒",
+        "整合編號": "C1605101",
+        "method": "Global Search + LLM"
+      }
+    ]
+  }
+]

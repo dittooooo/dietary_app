@@ -23,8 +23,4 @@ public class NutritionResponse {
                 .carbohydrates(carbohydrates != null ? carbohydrates + " g" : null)
                 .build();
     }
-
-    public static NutritionResponse fromMenuItem(Double calories, Double protein, Double fat, Double carbohydrates) {
-        return fromDietRecord(calories, protein, fat, carbohydrates);
-    }
 }

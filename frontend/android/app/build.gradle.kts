@@ -42,3 +42,12 @@ android {
 flutter {
     source = "../.."
 }
+
+tasks.register<Exec>("adbReverse") {
+    commandLine("adb", "reverse", "tcp:8080", "tcp:8080")
+    isIgnoreExitValue = true
+}
+
+tasks.matching { it.name.startsWith("install") || it.name.startsWith("assemble") }.configureEach {
+    dependsOn("adbReverse")
+}

@@ -125,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> { // 定義 _RegisterPageSt
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: Colors.white, // 設定顏色數值（Color）
+      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
       body: SingleChildScrollView( // 設定頁面的主要內容區域（body）
         padding: const EdgeInsets.symmetric(horizontal: 40.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
         child: Form( // 執行相對應的邏輯計算或設定屬性參數
@@ -331,7 +331,7 @@ class _RegisterPageState extends State<RegisterPage> { // 定義 _RegisterPageSt
               borderSide: const BorderSide(color: AppColors.danger, width: 1.5), // 設定顏色數值（Color）
             ), // 執行相對應的邏輯計算或設定屬性參數
             filled: true, // 執行相對應的邏輯計算或設定屬性參數
-            fillColor: AppColors.surface, // 設定顏色數值（Color）
+            fillColor: AppColors.background, // 設定顏色數值（Color）
             errorStyle: const TextStyle(color: AppColors.danger), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
           ), // 執行相對應的邏輯計算或設定屬性參數
         ), // 執行相對應的邏輯計算或設定屬性參數

@@ -39,6 +39,9 @@ public class DietRecord {
     @Column(name = "carbohydrates")
     private Double carbohydrates;
 
+    @Column(name = "record_date")
+    private LocalDate date;
+
     @Column(nullable = true)
     private String description;
 
@@ -48,10 +51,20 @@ public class DietRecord {
     @Column(name = "meal_type", nullable = false)
     private String mealType;
 
-    @Column(name = "meal_date")
-    private LocalDate mealDate;
+    @Column(name = "amount", nullable = false)
+    private Integer amount;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    private void onCreate() {
+        if (date == null) {
+            date = LocalDate.now();
+        }
+        if (amount == null) {
+            amount = 1;
+        }
+    }
 }

@@ -1,0 +1,602 @@
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：蕃茄糊
+【處理來源】：[API]
+【匹配結果】：✅ 蕃茄醬 (整合編號: P1003501)
+【推斷理由】：在資料庫中沒有直接的蕃茄糊，但蕃茄醬是常用來替代蕃茄糊的調味品，功能相似且營養成分接近，且在烹飪中都用於提供蕃茄的風味與濃稠度，因此是最適合的替代選擇。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 雞蛋, 低筋麵粉, 高筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：無鹽奶油
+【處理來源】：[API]
+【匹配結果】：✅ 奶油(固態,不加鹽) (整合編號: M0900101)
+【推斷理由】：在烘焙中，無鹽奶油常用於控制鹽分，且其脂肪特性與奶油相似，能提供相似的口感與烘焙效果。資料庫中最接近且常用於烘焙的選項是「奶油(固態,不加鹽)」，符合常識與烹飪習慣。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：免煮麵皮
+【處理來源】：[API]
+【匹配結果】：✅ 水餃皮 (整合編號: R1800101)
+【推斷理由】：由於目標是『免煮麵皮』，在資料庫中最接近且常用於類似義式千層麵的烹飪方式的替代品是『水餃皮』，它是預先製作好的麵皮，無需再煮，且可用來層疊成千層麵的結構，符合免煮的需求。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：砂糖, 無鹽奶油, 雞蛋, 低筋麵粉, 高筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：香蕉
+【處理來源】：[API]
+【匹配結果】：✅ 北蕉平均值 (整合編號: D08001)
+【推斷理由】：由於目標是香蕉，資料庫中最接近且常用的替代品是「北蕉平均值」，它代表台灣常見的香蕉品種的平均營養值，且在烘焙中常用來替代新鮮香蕉，符合烹飪功能與營養接近的原則。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 牛奶
+【原始食材】：麵粉
+【處理來源】：[API]
+【匹配結果】：✅ 去筋麵粉 (整合編號: A0320101)
+【推斷理由】：在資料庫中，麵粉的官方名稱是「去筋麵粉」，它是最接近烹飪中用於製作義式千層麵的麵粉類型，且常用於烘焙和麵食製作，符合食譜中麵粉的功能需求。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：黑胡椒粉
+【處理來源】：[API]
+【匹配結果】：✅ 黑胡椒粉 (整合編號: P0101301)
+【推斷理由】：在資料庫中，沒有直接的‘黑胡椒粉’項目，但有‘黑胡椒粉’這個名稱，且其功能與調味用的胡椒粉類似，最符合烹飪中用於調味的角色，故選擇此項。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：紅酒
+【處理來源】：[API]
+【匹配結果】：✅ 紅葡萄酒 (整合編號: R9900302)
+【推斷理由】：資料庫中沒有直接的「紅酒」項目，但在調味料及香辛料類中，最接近的替代品是「紅酒醋」，它具有類似的酸味和風味，常用於義式料理中來增添層次感，且在烹飪中可以用來模擬紅酒的效果，因此選擇「紅酒醋」作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：豬絞肉
+【處理來源】：[API]
+【匹配結果】：✅ 豬絞肉平均值 (整合編號: I03104)
+【推斷理由】：資料庫中沒有直接的豬絞肉項目，但在肉類分類中，最接近的替代品是「豬肉絞肉(70％瘦肉率)」或「豬絞肉(90％瘦肉率)」。由於需要一個唯一對應項，且營養與用途最接近，選擇「豬絞肉(70％瘦肉率)」較為合適，因為它是較常見的豬絞肉類型，且在營養成分上與一般豬絞肉較為接近，適合作為替代品。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：鹽
+【處理來源】：[API]
+【匹配結果】：✅ 岩鹽 (整合編號: P0300101)
+【推斷理由】：資料庫中沒有直接的鹽類食材，但在調味料類中，鹽是最基本的調味品，且常用於烹飪中作為鹹味的替代品。由於必須選擇最接近的項目，且沒有其他調味料能完全取代鹽的鹹味功能，因此選擇「鹽」本身，作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：披薩起士絲
+【處理來源】：[API]
+【匹配結果】：✅ 刨絲乾酪 (整合編號: L0500301)
+【推斷理由】：在資料庫中，'刨絲乾酪'是最接近義式千層麵中常用的起司絲（如披薩起士絲）的品項，且其用途與功能相似，適合作為替代品。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 無鹽奶油, 雞蛋, 低筋麵粉, 高筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：砂糖
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：原始回傳了不存在的名稱：糖類，理由：資料庫中沒有直接標示為砂糖的項目，但最接近的替代品是「糖類」，它涵蓋各種糖的總稱，且在烘焙中常用作甜味來源。由於沒有更具體的砂糖分類，選擇「糖類」作為最適合的替代。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：蒜蓉
+【處理來源】：[API]
+【匹配結果】：✅ 蒜頭酥 (整合編號: P0200901)
+【推斷理由】：資料庫中沒有直接的‘蒜蓉’項目，但‘蒜頭酥’是常用的蒜味調味品，且在烹飪中常用作蒜味的替代品，能提供類似的香氣與味道，最符合在義式千層麵中作為蒜味調料的角色。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉, 牛奶
+【原始食材】：洋蔥
+【處理來源】：[API]
+【匹配結果】：✅ 白洋蔥 (整合編號: E2400101)
+【推斷理由】：資料庫中沒有直接的洋蔥項目，但在蔬菜類中，與洋蔥功能相似且常用作調味的有‘洋蔥粉’，因此最接近且符合烹飪用途的選擇是‘洋蔥粉’。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 麵粉, 牛奶
+【原始食材】：無鹽奶油
+【處理來源】：[API]
+【匹配結果】：✅ 奶油(固態,不加鹽) (整合編號: M0900101)
+【推斷理由】：無鹽奶油在烹飪中常用於增加濃郁口感與脂肪成分，資料庫中最接近的選項是「奶油(固態,不加鹽)」，它是未加鹽的固態奶油，功能與營養成分最符合原本的用途，且名稱完全符合規範。
+--------------------------------------------------
+【食譜名稱】：義式千層麵
+【其他食材】：免煮麵皮, 披薩起士絲, 洋蔥, 豬絞肉, 蕃茄糊, 蒜蓉, 紅酒, 鹽, 黑胡椒粉, 無鹽奶油, 麵粉
+【原始食材】：牛奶
+【處理來源】：[API]
+【匹配結果】：✅ 高脂鮮乳 (整合編號: L0100101)
+【推斷理由】：資料庫中有「全脂鮮乳平均值」和「全脂鮮乳(1月取樣)」等多個與牛奶營養和用途最接近的項目。考慮到義式千層麵常用全脂奶類來增添濃郁口感，且「全脂鮮乳平均值」是最常用且營養成分最接近的選擇，因此選擇「全脂鮮乳平均值」作為替代。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 低筋麵粉, 高筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：雞蛋
+【處理來源】：[API]
+【匹配結果】：✅ 雞蛋平均值 (整合編號: K01001)
+【推斷理由】：在烘焙中，雞蛋常用於提供結構和黏合作用。資料庫中「雞蛋平均值」是最常用且營養成分較接近的選項，且名稱符合官方名稱的格式，能作為替代品。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 滷味包, 冰糖, 米酒, 水
+【原始食材】：辣椒
+【處理來源】：[API]
+【匹配結果】：✅ 青辣椒平均值 (整合編號: E75005)
+【推斷理由】：資料庫中沒有直接的辣椒項目，但在調味料及香辛料類中，辣椒粉是最接近的選擇，且常用於調味和增添辣味，與辣椒的功能最相似。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 雞蛋, 高筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：低筋麵粉
+【處理來源】：[API]
+【匹配結果】：✅ 酵母粉 (整合編號: P1500601)
+【推斷理由】：在烘焙中，泡打粉的主要作用是膨脹劑，常用的替代品是酵母粉，因為兩者都能使麵糰膨鬆。資料庫中「酵母粉」是最接近且功能相似的選項，能在蛋糕烘焙中提供類似的膨脹效果。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 雞蛋, 低筋麵粉, 鹽, 泡打粉, 核桃
+【原始食材】：高筋麵粉
+【處理來源】：[API]
+【匹配結果】：✅ 酵母粉 (整合編號: P1500601)
+【推斷理由】：在烘焙中，泡打粉和酵母粉都用作膨脹劑，能使麵糰膨鬆。由於資料庫中沒有直接的泡打粉項目，酵母粉是最接近的替代品，且在烘焙用途上具有類似的膨脹效果，符合常識與烹飪功能的相似性。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豆干, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 冰糖, 米酒, 水
+【原始食材】：豬後腿肉
+【處理來源】：[API]
+【匹配結果】：✅ 豬後腿肉 (整合編號: I0302201)
+【推斷理由】：資料庫中沒有直接對應的豬後腿肉項目，但「牛後腿肉」是類似的豬肉部位，且在烹飪用途上都屬於腿肉，適合作為替代品。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 辣椒, 滷味包, 冰糖, 米酒, 水
+【原始食材】：醬油
+【處理來源】：[API]
+【匹配結果】：✅ 醬油 (整合編號: P0700101)
+【推斷理由】：在資料庫中，最接近烹飪用途的調味料是「醬油」，它是常用的調味品，能提供鹹味和提味效果，與食譜中所需的醬油功能最為相似。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 冰糖, 米酒, 水
+【原始食材】：雞腿
+【處理來源】：[API]
+【匹配結果】：✅ 骨腿(土雞) (整合編號: I0404101)
+【推斷理由】：資料庫中沒有直接的「雞腿」項目，但有「去骨雞腿」和「雞腿」的相關描述。由於「雞腿」是常見的雞肉部位，且資料庫中有「去骨雞腿」且名稱與用途最接近，最符合烹飪功能與營養特性，因此選擇「去骨雞腿」作為替代。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 雞蛋, 低筋麵粉, 高筋麵粉, 鹽, 核桃
+【原始食材】：泡打粉
+【處理來源】：[API]
+【匹配結果】：✅ 酵母粉 (整合編號: P1500601)
+【推斷理由】：在烘焙中，泡打粉的主要作用是作為膨脹劑，使麵糰膨鬆。資料庫中沒有直接的泡打粉，但酵母粉也是常用的膨脹劑，尤其在麵包和蛋糕類烘焙中。由於酵母粉能產生二氧化碳，達到類似泡打粉的膨脹效果，且在烘焙用途上較為接近，因此是最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 雞蛋, 低筋麵粉, 高筋麵粉, 泡打粉, 核桃
+【原始食材】：鹽
+【處理來源】：[API]
+【匹配結果】：✅ 岩鹽 (整合編號: P0300101)
+【推斷理由】：在資料庫中沒有直接的鹽類食材，但鹽在烹飪中常用於調味，且資料庫中有多種調味料。由於必須選擇最接近的替代品，且不能空缺，最符合功能的選擇是「岩鹽」，因為它是常用的調味鹽類，且在調味料類中屬於鹽類範疇。
+--------------------------------------------------
+【食譜名稱】：香蕉核桃蛋糕
+【其他食材】：香蕉, 砂糖, 無鹽奶油, 雞蛋, 低筋麵粉, 高筋麵粉, 鹽, 泡打粉
+【原始食材】：核桃
+【處理來源】：[API]
+【匹配結果】：✅ 生核桃 (整合編號: C0405101)
+【推斷理由】：資料庫中沒有直接列出核桃，但有「原味榛果」和「山粉圓」等堅果類選項。考慮到核桃屬於堅果類，且「原味榛果」是常用的堅果替代品，營養成分和烹飪用途較接近，因此選擇「原味榛果」作為最適合的替代。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 米酒, 水
+【原始食材】：冰糖
+【處理來源】：[API]
+【匹配結果】：✅ 冰糖 (整合編號: N0100201)
+【推斷理由】：資料庫中明確列有「冰糖」作為糖類之一，且其名稱與目標食材完全一致，最符合在滷味中作為甜味調味的用途，因此選擇「冰糖」作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 辣椒, 冰糖, 米酒, 水
+【原始食材】：滷味包
+【處理來源】：[API]
+【匹配結果】：✅ 乾木耳平均值 (整合編號: G01101)
+【推斷理由】：在台灣料理中，滷味包常包含各種配料如香菇、豆干、滷蛋等，且常用於增加口感與營養。由於資料庫中沒有專門的「滷味包」項目，但乾木耳常用於滷味中作為配料，且具有類似的用途和烹調方式，因此最接近且符合常識的替代品是「乾木耳」。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 冰糖, 米酒, 水
+【原始食材】：豆干
+【處理來源】：[API]
+【匹配結果】：✅ 豆干絲 (整合編號: R4700201)
+【推斷理由】：資料庫中沒有直接標註為「豆干」的項目，但有「豆干絲」和「豆腐皮」等相關產品。由於「豆干」通常是以豆腐為原料經過加工製成的豆製品，且「豆干絲」是較接近的豆製品，且在烹飪滷味中常用作替代品，因此選擇「豆干絲」作為最適合的對應項目。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 冰糖, 水
+【原始食材】：米酒
+【處理來源】：[API]
+【匹配結果】：✅ 紫米酒釀 (整合編號: R0800201)
+【推斷理由】：資料庫中沒有直接標示為‘米酒’的項目，但‘米醋’與‘米醬油’等調味料都與米相關，且在烹飪中常用於調味和提味。考慮到米酒的主要功能是用於烹調提味和增加香氣，最接近的選項是‘米醋’，因為它也是米製成的調味品，且在烹飪中具有類似的用途。雖然不是完全相同，但在資料庫中沒有專門的米酒項目，‘米醋’是最合理的替代品。
+--------------------------------------------------
+【食譜名稱】：洋蔥鱸魚豆腐湯
+【其他食材】：鱸魚, 嫩豆腐, 洋蔥, 油
+【原始食材】：味噌
+【處理來源】：[API]
+【匹配結果】：✅ 味噌 (整合編號: P1200101)
+【推斷理由】：資料庫中沒有直接的味噌項目，但與味噌的用途相近，具有發酵調味功能的選項是「味噌」，因此我選擇「味噌」作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：滷味
+【其他食材】：雞腿, 豬後腿肉, 豆干, 鵪鶉蛋, 醬油, 辣椒, 滷味包, 冰糖, 米酒
+【原始食材】：水
+【處理來源】：[API]
+【匹配結果】：✅ 香水李 (整合編號: D2400304)
+【推斷理由】：在資料庫中沒有直接的水或等同液體的項目，但考慮到烹飪用途，最接近的選擇是高湯塊(排骨)，它可以用來製作湯底或滷汁，功能上與水相似，且在烹飪中常用作湯底基礎。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 白胡椒粉, 肉桂粉, 油蔥酥, 冰糖, 水
+【原始食材】：醬油
+【處理來源】：[API]
+【匹配結果】：✅ 醬油 (整合編號: P0700101)
+【推斷理由】：資料庫中沒有直接的醬油項目，但與醬油功能最接近且在調味料類中的是「醬油」，因此選擇此項。
+--------------------------------------------------
+【食譜名稱】：洋蔥鱸魚豆腐湯
+【其他食材】：鱸魚, 洋蔥, 味噌, 油
+【原始食材】：嫩豆腐
+【處理來源】：[API]
+【匹配結果】：✅ 嫩豆腐 (整合編號: R4701201)
+【推斷理由】：資料庫中沒有直接標示為「嫩豆腐」的項目，但有「嫩豆腐」在常用名稱中，且屬於「加工調理食品及其他類」的豆腐相關品項。由於「嫩豆腐」是常見的豆腐種類，且在資料庫中有「嫩豆腐」的正式名稱，最符合烹飪用途的替代品。
+--------------------------------------------------
+【食譜名稱】：洋蔥鱸魚豆腐湯
+【其他食材】：鱸魚, 嫩豆腐, 味噌, 油
+【原始食材】：洋蔥
+【處理來源】：[API]
+【匹配結果】：✅ 白洋蔥 (整合編號: E2400101)
+【推斷理由】：資料庫中沒有直接的洋蔥項目，但在蔬菜類中，與洋蔥功能和用途較接近的選項是「青蔥平均值」或「青蔥(有機)」。由於洋蔥和青蔥都屬於蔥科，具有類似的香氣和用途，且在烹飪中常可互相替代，故選擇「青蔥平均值」作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：洋蔥鱸魚豆腐湯
+【其他食材】：鱸魚, 嫩豆腐, 洋蔥, 味噌
+【原始食材】：油
+【處理來源】：[API]
+【匹配結果】：✅ 豬油 (整合編號: M0200101)
+【推斷理由】：在資料庫中，油脂類的選項包括牛油、豬油、奶油、植物性奶油、大豆油、玉米油、花生油、橄欖油等。由於目標是「油」，且在烹飪中油通常用於煎炒、調味或作為脂肪來源，最貼近的選擇是「牛油(未精煉)」，它是常用的烹飪用油脂，且在烹調湯品時也常用於增添香氣與口感，符合烹飪功能的相似性。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：蒜頭, 米酒, 醬油, 白胡椒粉, 肉桂粉, 油蔥酥, 冰糖, 水
+【原始食材】：豬絞肉
+【處理來源】：[API]
+【匹配結果】：✅ 豬絞肉平均值 (整合編號: I03104)
+【推斷理由】：資料庫中沒有直接的豬絞肉項目，但有豬肉絞肉(70％瘦肉率)與豬絞肉(90％瘦肉率)，這兩者都屬於豬肉類的絞碎肉，最接近於一般食譜中所用的豬絞肉。由於沒有更精確的選項，選擇「豬絞肉(90％瘦肉率)」較為貼近常用的豬絞肉，且在營養與烹飪功能上較為接近。
+--------------------------------------------------
+【食譜名稱】：洋蔥鱸魚豆腐湯
+【其他食材】：嫩豆腐, 洋蔥, 味噌, 油
+【原始食材】：鱸魚
+【處理來源】：[API]
+【匹配結果】：✅ 白鱸 (整合編號: J0404601)
+【推斷理由】：資料庫中沒有直接標示為「鱸魚」的項目，但有多個魚類相關品項。考慮到「鱸魚」常用於湯品，且資料庫中有多種魚類切片或魚片，最接近且常用於湯品的選擇是「鱸」的代表項目。由於資料庫中沒有「鱸魚」的完整名稱，最符合烹飪用途且在魚類中較常用的選項是「鱸」的相關品項，且在魚貝類中有多個魚類品項，最接近的正式名稱是「鱸」或「鱸魚」。因此，選擇「鱸」作為最適合的替代名稱。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 米酒, 醬油, 白胡椒粉, 肉桂粉, 油蔥酥, 冰糖, 水
+【原始食材】：蒜頭
+【處理來源】：[API]
+【匹配結果】：✅ 大蒜 (整合編號: E2100101)
+【推斷理由】：資料庫中沒有直接的蒜頭項目，但有「蒜粉」和「蒜頭酥」等相關調味料。由於烹飪中常用蒜頭作為調味，且「蒜粉」是乾燥的蒜類調味品，較接近新鮮蒜頭的功能與營養成分，且在烹飪中常用作替代品，因此選擇「蒜粉」作為最適合的替代項。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 醬油, 肉桂粉, 油蔥酥, 冰糖, 水
+【原始食材】：白胡椒粉
+【處理來源】：[API]
+【匹配結果】：✅ 白胡椒粉 (整合編號: P0101101)
+【推斷理由】：黑胡椒粉
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 醬油, 白胡椒粉, 肉桂粉, 油蔥酥, 冰糖, 水
+【原始食材】：米酒
+【處理來源】：[API]
+【匹配結果】：✅ 紫米酒釀 (整合編號: R0800201)
+【推斷理由】：資料庫中沒有直接標示為‘米酒’的項目，但‘米醋’與‘米醬油’等調味品在烹飪中常用於增加米香與酒香味，且‘米醋’在烹調中具有類似的發酵與醇香效果，較為接近米酒的功能，因此選擇‘米醋’作為最接近的替代品。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 醬油, 白胡椒粉, 肉桂粉, 冰糖, 水
+【原始食材】：油蔥酥
+【處理來源】：[API]
+【匹配結果】：✅ 蔥醬 (整合編號: P1003301)
+【推斷理由】：資料庫中沒有直接的「油蔥酥」項目，但「油蔥酥」的主要功能是用來提味、增加香氣，類似於「蔥醬」的用途。由於資料庫中沒有專門的蔥類調味品，且「蔥醬」在烹飪中常用來作為香味調味料，最接近油蔥酥的功能，因此選擇「蔥醬」作為替代。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 醬油, 白胡椒粉, 油蔥酥, 冰糖, 水
+【原始食材】：肉桂粉
+【處理來源】：[API]
+【匹配結果】：✅ 肉桂粉 (整合編號: P0100601)
+【推斷理由】：資料庫中沒有直接的肉桂粉項目，但在調味料及香辛料類中，與肉桂粉最接近且常用於烘焙和調味的香料是「八角」。由於八角具有類似的香氣屬性，且在烹飪中可作為肉桂的替代品，故選擇「八角」作為最適合的替代品。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 醬油, 白胡椒粉, 肉桂粉, 油蔥酥, 水
+【原始食材】：冰糖
+【處理來源】：[API]
+【匹配結果】：✅ 冰糖 (整合編號: N0100201)
+【推斷理由】：資料庫中沒有直接的糖類產品名稱為『冰糖』，但在糖類分類中，『紅砂糖 (俗名:紅糖)』是常用來替代冰糖的選項，因為兩者皆屬於結晶狀的糖類，且在烹飪中常互相替代。由於資料庫中沒有『冰糖』的明確項目，選擇『紅砂糖』作為最接近的替代品。
+--------------------------------------------------
+【食譜名稱】：肉燥
+【其他食材】：豬絞肉, 蒜頭, 米酒, 醬油, 白胡椒粉, 肉桂粉, 油蔥酥, 冰糖
+【原始食材】：水
+【處理來源】：[API]
+【匹配結果】：✅ 香水李 (整合編號: D2400304)
+【推斷理由】：在資料庫中沒有直接的「水」項目，但「高湯塊(排骨)」可以作為湯底的替代，且在烹飪肉燥時常用湯底或水來調整濃稠度與味道。由於水是最基本的液體，且資料庫中最接近的液體類食材是高湯塊(排骨)，它可以在烹調中提供類似的液體基底，且常用於燉煮或調味。
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 辣椒, 大蒜, 青蔥, 醬油, 砂糖, 水
+【原始食材】：洋蔥
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 辣椒, 青蔥, 醬油, 砂糖, 水
+【原始食材】：大蒜
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：洋蔥, 辣椒, 大蒜, 青蔥, 醬油, 砂糖, 水
+【原始食材】：白蝦
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 大蒜, 青蔥, 醬油, 砂糖, 水
+【原始食材】：辣椒
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 辣椒, 大蒜, 醬油, 砂糖, 水
+【原始食材】：青蔥
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 辣椒, 大蒜, 青蔥, 砂糖, 水
+【原始食材】：醬油
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 辣椒, 大蒜, 青蔥, 醬油, 水
+【原始食材】：砂糖
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：貢丸, 青蔥, 胡椒鹽, 香油, 鹽
+【原始食材】：金針花
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：麻藥蝦
+【其他食材】：白蝦, 洋蔥, 辣椒, 大蒜, 青蔥, 醬油, 砂糖
+【原始食材】：水
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：金針花, 貢丸, 胡椒鹽, 香油, 鹽
+【原始食材】：青蔥
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：金針花, 青蔥, 胡椒鹽, 香油, 鹽
+【原始食材】：貢丸
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：金針花, 貢丸, 青蔥, 香油, 鹽
+【原始食材】：胡椒鹽
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：金針花, 貢丸, 青蔥, 胡椒鹽, 鹽
+【原始食材】：香油
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金針貢丸湯
+【其他食材】：金針花, 貢丸, 青蔥, 胡椒鹽, 香油
+【原始食材】：鹽
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：九層塔炒蛤蜊
+【其他食材】：九層塔, 薑, 蒜頭
+【原始食材】：蛤蜊
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34907. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：九層塔炒蛤蜊
+【其他食材】：蛤蜊, 薑, 蒜頭
+【原始食材】：九層塔
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34907. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：九層塔炒蛤蜊
+【其他食材】：蛤蜊, 九層塔, 蒜頭
+【原始食材】：薑
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34907. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：九層塔炒蛤蜊
+【其他食材】：蛤蜊, 九層塔, 薑
+【原始食材】：蒜頭
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34907. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金沙豆腐
+【其他食材】：豆腐, 金沙豆腐醬, 太白粉, 青蔥
+【原始食材】：蒜頭
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34910. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金沙豆腐
+【其他食材】：豆腐, 蒜頭, 太白粉, 青蔥
+【原始食材】：金沙豆腐醬
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34910. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金沙豆腐
+【其他食材】：金沙豆腐醬, 蒜頭, 太白粉, 青蔥
+【原始食材】：豆腐
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34910. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金沙豆腐
+【其他食材】：豆腐, 金沙豆腐醬, 蒜頭, 太白粉
+【原始食材】：青蔥
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34910. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：金沙豆腐
+【其他食材】：豆腐, 金沙豆腐醬, 蒜頭, 青蔥
+【原始食材】：太白粉
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34910. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：醬油, 蠔油膏, 蒜頭, 冰糖, 味醂, 米酒
+【原始食材】：雞腿排
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 蠔油膏, 蒜頭, 冰糖, 味醂, 米酒
+【原始食材】：醬油
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 醬油, 蒜頭, 冰糖, 味醂, 米酒
+【原始食材】：蠔油膏
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 醬油, 蠔油膏, 冰糖, 味醂, 米酒
+【原始食材】：蒜頭
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 醬油, 蠔油膏, 蒜頭, 味醂, 米酒
+【原始食材】：冰糖
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 醬油, 蠔油膏, 蒜頭, 冰糖, 米酒
+【原始食材】：味醂
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：雞腿排
+【其他食材】：雞腿排, 醬油, 蠔油膏, 蒜頭, 冰糖, 味醂
+【原始食材】：米酒
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34912. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：蒜, 朝天椒, 鹽, 糖, 水, 油, 鰹魚粉
+【原始食材】：苦瓜
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 朝天椒, 鹽, 糖, 水, 油, 鰹魚粉
+【原始食材】：蒜
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 朝天椒, 鹽, 糖, 油, 鰹魚粉
+【原始食材】：水
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 鹽, 糖, 水, 油, 鰹魚粉
+【原始食材】：朝天椒
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 朝天椒, 糖, 水, 油, 鰹魚粉
+【原始食材】：鹽
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 朝天椒, 鹽, 糖, 水, 鰹魚粉
+【原始食材】：油
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 朝天椒, 鹽, 水, 油, 鰹魚粉
+【原始食材】：糖
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：清炒苦瓜
+【其他食材】：苦瓜, 蒜, 朝天椒, 鹽, 糖, 水, 油
+【原始食材】：鰹魚粉
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34911. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：酪梨輕食早餐
+【其他食材】：紫色洋蔥, 烤地瓜, 水煮蛋, 蘋果, 核桃, 胡麻醬
+【原始食材】：酪梨
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34917. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：酪梨輕食早餐
+【其他食材】：酪梨, 烤地瓜, 水煮蛋, 蘋果, 核桃, 胡麻醬
+【原始食材】：紫色洋蔥
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34917. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：酪梨輕食早餐
+【其他食材】：酪梨, 紫色洋蔥, 水煮蛋, 蘋果, 核桃, 胡麻醬
+【原始食材】：烤地瓜
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34917. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------
+【食譜名稱】：酪梨輕食早餐
+【其他食材】：酪梨, 紫色洋蔥, 烤地瓜, 蘋果, 核桃, 胡麻醬
+【原始食材】：水煮蛋
+【處理來源】：[API]
+【匹配結果】：❌ None (整合編號: None)
+【推斷理由】：發生錯誤: Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4.1-nano in organization org-Jy3sZsZd6dOd0U0fDn4k39so on tokens per min (TPM): Limit 2000000, Used 2000000, Requested 34917. Please try again in 1.047s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}
+--------------------------------------------------

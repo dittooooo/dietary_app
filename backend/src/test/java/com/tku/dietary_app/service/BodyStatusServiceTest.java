@@ -39,7 +39,7 @@ class BodyStatusServiceTest {
     void repeatedSettlementDoesNotApplyScoreTwiceForSameDate() {
         UserProfile profile = profileWithScores(50, 50, LocalDate.of(2026, 7, 29));
         when(userProfileRepository.findByUserIdForUpdate(1L)).thenReturn(Optional.of(profile));
-        when(dietRecordRepository.summarizeByUserAndMealDate(
+        when(dietRecordRepository.summarizeByUserAndRecordDate(
                 eq(1L),
                 eq(LocalDate.of(2026, 7, 30))
         )).thenReturn(summary(1L, 2950.0, 84.0));
@@ -65,7 +65,7 @@ class BodyStatusServiceTest {
         assertThat(response.getSettled()).isFalse();
         assertThat(profile.getBodyScore()).isEqualTo(60);
         assertThat(profile.getMuscleScore()).isEqualTo(55);
-        verify(dietRecordRepository, never()).summarizeByUserAndMealDate(any(), any());
+        verify(dietRecordRepository, never()).summarizeByUserAndRecordDate(any(), any());
     }
 
     private UserProfile profileWithScores(int bodyScore, int muscleScore, LocalDate lastSettleDate) {

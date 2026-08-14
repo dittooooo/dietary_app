@@ -1,0 +1,129 @@
+{
+  "question": "你覺得我今天要吃雞排便當還是排骨便當嗎",
+  "question_type": "dish_comparison",
+  "dish_nutrition": [
+    {
+      "dish_name": "排骨便當",
+      "nutrients": [
+        {
+          "name": "熱量",
+          "amount_per_serving": 2718.06,
+          "unit": "kcal"
+        },
+        {
+          "name": "蛋白質",
+          "amount_per_serving": 67.16,
+          "unit": "g"
+        },
+        {
+          "name": "脂質",
+          "amount_per_serving": 74.04,
+          "unit": "g"
+        },
+        {
+          "name": "碳水化合物",
+          "amount_per_serving": 96.25,
+          "unit": "g"
+        },
+        {
+          "name": "糖質總量",
+          "amount_per_serving": 5.02,
+          "unit": "g"
+        },
+        {
+          "name": "膳食纖維",
+          "amount_per_serving": 5.93,
+          "unit": "g"
+        },
+        {
+          "name": "鈉",
+          "amount_per_serving": 2564.62,
+          "unit": "mg"
+        },
+        {
+          "name": "飽和脂肪",
+          "amount_per_serving": 28.12,
+          "unit": "g"
+        }
+      ]
+    },
+    {
+      "dish_name": "雞排便當",
+      "nutrients": [
+        {
+          "name": "熱量",
+          "amount_per_serving": 969.46,
+          "unit": "kcal"
+        },
+        {
+          "name": "蛋白質",
+          "amount_per_serving": 7.02,
+          "unit": "g"
+        },
+        {
+          "name": "脂質",
+          "amount_per_serving": 5.56,
+          "unit": "g"
+        },
+        {
+          "name": "碳水化合物",
+          "amount_per_serving": 96.25,
+          "unit": "g"
+        },
+        {
+          "name": "糖質總量",
+          "amount_per_serving": 5.02,
+          "unit": "g"
+        },
+        {
+          "name": "膳食纖維",
+          "amount_per_serving": 5.93,
+          "unit": "g"
+        },
+        {
+          "name": "鈉",
+          "amount_per_serving": 2423.73,
+          "unit": "mg"
+        },
+        {
+          "name": "飽和脂肪",
+          "amount_per_serving": 4.32,
+          "unit": "g"
+        }
+      ]
+    }
+  ],
+  "dish_advice": [
+    {
+      "dish_name": "排骨便當",
+      "suitability": "較不建議",
+      "key_reasons": [
+        "熱量非常高（約2718 kcal），不利體重控制。",
+        "飽和脂肪含量高（約28.12 g），增加心血管負擔。",
+        "鈉含量極高（約2565 mg），不利高血壓控制。"
+      ],
+      "suggestions": [
+        "若選擇，建議大幅減少份量並搭配低鈉蔬菜。",
+        "避免額外加鹽，並注意當日總鈉攝取量。",
+        "盡量避免頻繁食用此類高油高鈉餐點。"
+      ]
+    },
+    {
+      "dish_name": "雞排便當",
+      "suitability": "較建議",
+      "key_reasons": [
+        "熱量較低（約969 kcal），較適合過重且有高血壓者控制體重。",
+        "飽和脂肪含量較低（約4.32 g），有助降低心血管風險。",
+        "鈉含量雖高（約2424 mg），但略低於排骨便當，仍需注意攝取量。"
+      ],
+      "suggestions": [
+        "可搭配多蔬菜增加膳食纖維，幫助血壓控制。",
+        "避免額外加鹽或高鈉調味料，減少鈉攝取。",
+        "控制份量，避免過量熱量攝取。"
+      ]
+    }
+  ],
+  "conclusion": "較建議選擇雞排便當，因其熱量與飽和脂肪較低，較適合有高血壓且體重偏重的您。但兩者鈉含量皆偏高，建議控制份量並搭配蔬菜，避免額外加鹽。近期飲食已有偏鹹情況，請特別留意鈉攝取。實際仍需依個人血糖、病況與醫囑調整。",
+  "cypher_used": null,
+  "graph_rows": null
+}

@@ -46,7 +46,7 @@ class DogAvatar extends StatelessWidget {
       case DogBodyType.normal:
       case DogBodyType.muscle:
       case DogBodyType.heavy:
-        return Offset.zero;
+        return const Offset(0, 20);
     }
   }
 

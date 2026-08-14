@@ -9,6 +9,8 @@ import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套�
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 import '../../config/api_config.dart'; // 匯入 api_config.dart
 import 'dart:convert'; // 處理 JSON 轉換
+import 'manual_record_page.dart'; // 匯入手動紀錄頁面
+import '../../services/auth_service.dart';
 
 class DiaryPage extends StatefulWidget { // 定義 DiaryPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
@@ -28,6 +30,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
 
   List<dynamic> _allRecords = []; // 從後端獲取的所有紀錄
   bool _isLoading = false;
+  String? _avatarUrl;
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
@@ -43,8 +46,24 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
         _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
         _jwtToken = prefs.getString('jwt_token'); // 讀取 JWT Token
+        _avatarUrl = prefs.getString('user_avatar_url');
       }); // 程式碼區塊或結構結束
     } // 程式碼區塊或結構結束
+    final result = await AuthService().getUserProfile();
+    if (result['success'] == true) {
+      final userData = result['data'];
+      final avatarPath = userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+        final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+        if (mounted) {
+          setState(() {
+            _avatarUrl = fullUrl;
+          });
+        }
+        await prefs.setString('user_avatar_url', fullUrl);
+      }
+    }
   } // 程式碼區塊或結構結束
 
   Future<void> _fetchRecords() async {
@@ -53,6 +72,10 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
       final records = await DietService().getMyDietRecords();
+      debugPrint("DEBUG: Fetched ${records.length} records: $records");
+      for (var r in records) {
+        debugPrint("DEBUG: record id=${r['id']}, dishName=${r['dishName']}, mealDate=${r['mealDate']}, createdAt=${r['createdAt']} -> parsed=${_getRecordDate(r)}");
+      }
       setState(() {
         _jwtToken = token; // 確保 JWT Token 在 UI 載入前就緒，防止圖片 headers 變更觸發二次下載
         _allRecords = records;
@@ -80,7 +103,32 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
     
-    // 1. Try mealDate first
+    // 0. Try date first (from backend record_date field)
+    final dateVal = record['date'];
+    if (dateVal != null) {
+      if (dateVal is String) {
+        try {
+          return DateTime.parse(dateVal);
+        } catch (_) {}
+      } else if (dateVal is List && dateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(dateVal[0].toString()),
+            int.parse(dateVal[1].toString()),
+            int.parse(dateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (dateVal is Map) {
+        try {
+          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
+          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
+          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -127,6 +175,51 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     return null;
   }
 
+  String _parsePortionAtIndex(dynamic record, int index) {
+    if (record == null) return "1份";
+    final amountVal = record['amount'];
+    final portionsVal = record['portions'];
+    final descriptionVal = record['description'];
+    final sourceStr = (amountVal != null && amountVal.toString().trim().isNotEmpty)
+        ? amountVal.toString().trim()
+        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+            ? portionsVal.toString().trim()
+            : (descriptionVal != null ? descriptionVal.toString().trim() : ''));
+
+    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
+      return "1份";
+    }
+    final parts = sourceStr.split(RegExp(r',\s*'));
+    if (index >= parts.length) return "1份";
+    final part = parts[index].trim();
+    
+    final match = RegExp(r'^(\d+(?:\.\d+)?)\s*(?:份)?$').firstMatch(part);
+    if (match != null) {
+      final numStr = match.group(1)!;
+      final val = double.tryParse(numStr);
+      if (val != null) {
+        if (val == val.toInt()) {
+          return "${val.toInt()}份";
+        }
+        return "${val}份";
+      }
+    }
+    if (part.contains("份")) {
+      final m = RegExp(r'(\d+(?:\.\d+)?)\s*份').firstMatch(part);
+      if (m != null) {
+        final val = double.tryParse(m.group(1)!);
+        if (val != null) {
+          if (val == val.toInt()) {
+            return "${val.toInt()}份";
+          }
+          return "${val}份";
+        }
+      }
+      return part;
+    }
+    return "1份";
+  }
+
   // 根據日期過濾今日的飲食紀錄
   List<dynamic> _getRecordsForSelectedDate() {
     return _allRecords.where((record) {
@@ -147,6 +240,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     final breakfastRecords = todayRecords.where((r) => r['mealType'] == 'BREAKFAST').toList();
     final lunchRecords = todayRecords.where((r) => r['mealType'] == 'LUNCH').toList();
     final dinnerRecords = todayRecords.where((r) => r['mealType'] == 'DINNER').toList();
+    final otherRecords = todayRecords.where((r) => r['mealType'] == 'OTHER' || r['mealType'] == '其他').toList();
 
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
       backgroundColor: AppColors.surface, // 設定顏色數值（Color）
@@ -171,6 +265,8 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                             _buildMealSection("中餐", Icons.wb_sunny, lunchRecords),
                             const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                             _buildMealSection("晚餐", Icons.nights_stay_outlined, dinnerRecords),
+                            const SizedBox(height: 15),
+                            _buildMealSection("其他", Icons.more_horiz, otherRecords),
                           ], // 執行相對應的邏輯計算或設定屬性參數
                         ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
@@ -181,10 +277,24 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           // 頂部固定標題列
           Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
             top: 0, left: 0, right: 0, // 執行相對應的邏輯計算或設定屬性參數
-            child: SafeArea(child: _buildHeader(context)), // 執行相對應的邏輯計算或設定屬性參數
+            child: _buildHeader(context), // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ManualRecordPage(initialDate: widget.date),
+            ),
+          );
+          _fetchRecords(); // 新增完成後重新整理頁面數據
+        },
+        backgroundColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      ),
       bottomNavigationBar: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
         currentIndex: 1,  // 執行相對應的邏輯計算或設定屬性參數
         selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
@@ -202,16 +312,17 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   } // 程式碼區塊或元件結構結束
 
   Widget _buildHeader(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
     return ClipRect( // 回傳建構完成的元件或方法計算結果
         child: BackdropFilter( // 執行相對應的邏輯計算或設定屬性參數
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15), // 執行相對應的邏輯計算或設定屬性參數
           child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-            height: 80,  // 執行相對應的邏輯計算或設定屬性參數
+            height: 80 + statusBarHeight,  // 執行相對應的邏輯計算或設定屬性參數
             decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
               color: AppColors.background.withOpacity(0.5), // 設定顏色數值（Color）
               border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)), // 設定顏色數值（Color）
             ), // 執行相對應的邏輯計算或設定屬性參數
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+          padding: EdgeInsets.fromLTRB(16, statusBarHeight + 20, 16, 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
           child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
             mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
             children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -229,14 +340,19 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                 onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
                 child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                   decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                  child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+                  child: CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
                     radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
                     backgroundColor: AppColors.background,  // 設定顏色數值（Color）
-                    child: Icon( // 顯示預設的圖示元件（Icon）
-                      Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
-                      color: AppColors.textPrimary,  // 設定顏色數值（Color）
-                      size: 35, // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                        ? NetworkImage(_avatarUrl!)
+                        : null,
+                    child: _avatarUrl == null || _avatarUrl!.isEmpty
+                        ? const Icon( // 顯示預設的圖示元件（Icon）
+                            Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                            color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                            size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                          )
+                        : null, // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -364,7 +480,30 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                           width: 80, decoration: BoxDecoration(border: Border(right: BorderSide(color: AppColors.border, width: 1.5))), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 30, color: AppColors.secondary), Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]), // 建立垂直排列元件（Column），縱向排列多個子元件
                         ), // 執行相對應的邏輯計算或設定屬性參數
-                        Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(isExpanded ? items.join("\n") : items.take(2).join("\n"), style: const TextStyle(fontSize: 18, height: 1.4, color: AppColors.textPrimary)))), // 建立間距容器（Padding），用於設定內部邊距
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text.rich(
+                              TextSpan(
+                                children: [
+                                  for (int i = 0; i < (isExpanded ? items.length : items.take(2).length); i++) ...[
+                                    if (i > 0) const TextSpan(text: "\n"),
+                                    TextSpan(
+                                      text: items[i],
+                                      style: const TextStyle(fontSize: 18, height: 1.4, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    ),
+                                    TextSpan(
+                                      text: " (${_parsePortionAtIndex(record, i)})",
+                                      style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                    ),
+                                  ]
+                                ],
+                              ),
+                              maxLines: isExpanded ? 10 : 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ), // 建立間距容器（Padding），用於設定內部邊距
                         Row( // 建立水平排列元件（Row），橫向排列多個子元件
                           children: [ // 執行相對應的邏輯計算或設定屬性參數
                              if (needsExpansion) IconButton(icon: Icon(isExpanded ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: AppColors.textPrimary), onPressed: () { setState(() { if (isExpanded) _expandedMeals.remove(record['id'].toString()); else _expandedMeals.add(record['id'].toString()); }); }), // 更新狀態數據並通知 UI 重新渲染畫面

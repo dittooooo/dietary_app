@@ -10,6 +10,36 @@ import 'login_page.dart'; // 匯入 login_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 api_config.dart 元件庫或套件
 import 'model_viewer_web_stub.dart'
     if (dart.library.html) 'model_viewer_web_impl.dart';
+import 'dart:convert' as convert;
+import '../../services/auth_service.dart';
+import '../../utils/profile_value_mapper.dart';
+
+String jsonEncode(Object? object) {
+  if (object is Map<String, dynamic> &&
+      object.containsKey('nickname') &&
+      object.containsKey('healthConditions') &&
+      object.containsKey('dietGoal') &&
+      object.containsKey('petType')) {
+    final normalized = Map<String, dynamic>.from(object);
+    normalized['healthConditions'] =
+        ProfileValueMapper.healthConditionsToApi(
+          (normalized['healthConditions'] as Iterable?) ?? const [],
+        );
+    normalized['dietGoal'] = ProfileValueMapper.firstDietGoalToApi(
+      ((normalized['dietGoal'] ?? '')
+              .toString()
+              .split(RegExp(r'[,，]'))
+              .map((item) => item.trim())
+              .where((item) => item.isNotEmpty))
+          .toSet(),
+    );
+    normalized['petType'] =
+        ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
+    return convert.jsonEncode(normalized);
+  }
+
+  return convert.jsonEncode(object);
+}
 
 class InitialInfoPage extends StatefulWidget { // 定義 InitialInfoPage 類別，繼承自 StatefulWidget
   // 定義初始資訊填寫頁面 StatefulWidget
@@ -74,6 +104,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   final List<String> _petOptions = ['狗兒', '狗兒', '狗兒']; // 宣告類別成員或方法內部的區域變數
   int _selectedPetIndex = 0; // 宣告類別成員或方法內部的區域變數
   bool _isSubmitting = false; // 宣告類別成員或方法內部的區域變數
+  final AuthService _authService = AuthService();
 
   final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病'];  // 宣告類別成員或方法內部的區域變數
   final List<String> _goalOptions = ['減脂', '增肌', '養生'];  // 宣告類別成員或方法內部的區域變數
@@ -1019,7 +1050,7 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
     // 執行繪製邏輯
     final Rect rect = Offset.zero & size; // 定義全屏矩形
-    final Paint paint = Paint()..color = const Color(0xFFF5F0EB); // 設定底色 (米白色)
+    final Paint paint = Paint()..color = AppColors.surface; // 設定底色 (沙金色)
     canvas.drawRect(rect, paint); // 填滿畫布底色
 
     // 計算「紙張」的範圍 (留出邊緣)
@@ -1031,7 +1062,7 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     Offset paperOrigin = Offset(margin, topMargin); // 紙張起點
 
     // 1. 繪製紙張底色 (白色，帶一點手繪不規則感)
-    Paint paperPaint = Paint()..color = Colors.white; // 白色畫筆
+    Paint paperPaint = Paint()..color = const Color(0xFFFCF8EC); // 紙張改為 0xFFFCF8EC 奶油白
     Path paperPath = _getHandDrawnRectPath( // 執行相對應的邏輯計算或設定屬性參數
       paperOrigin, // 執行相對應的邏輯計算或設定屬性參數
       paperW, // 執行相對應的邏輯計算或設定屬性參數
@@ -1362,7 +1393,7 @@ class HandDrawnBoxPainter extends CustomPainter { // 定義 HandDrawnBoxPainter 
     boxPath.close(); // 封閉
 
     Paint fillPaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = isSelected ? AppColors.surface : AppColors.background // 設定顏色數值（Color）
+      ..color = isSelected ? AppColors.primary : AppColors.surface // 點選為墨黑，未點選為沙金
       ..style = PaintingStyle.fill; // 背景筆
 
     canvas.drawPath( // 執行相對應的邏輯計算或設定屬性參數
@@ -1475,7 +1506,7 @@ class HandDrawnRoundedBoxPainter extends CustomPainter { // 定義 HandDrawnRoun
     path.close(); // 執行相對應的邏輯計算或設定屬性參數
 
     Paint fillPaint = Paint() // 執行相對應的邏輯計算或設定屬性參數
-      ..color = isSelected ? AppColors.surface : AppColors.background; // 設定顏色數值（Color）
+      ..color = isSelected ? AppColors.primary : AppColors.surface; // 點選為墨黑，未點選為沙金
 
     canvas.drawPath( // 執行相對應的邏輯計算或設定屬性參數
       path.shift(const Offset(8, 10)),  // 建立編譯期常數，優化 Flutter 渲染效能

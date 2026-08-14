@@ -1,7 +1,8 @@
 {
   "info": {
-    "name": "Dietary App Backend",
-    "description": "Postman collection for authentication, user profile, role permission, and admin APIs.",
+    "_postman_id": "7d2d9694-596d-4d88-9ee4-5a1ce5da0001",
+    "name": "Dietary App API",
+    "description": "Dietary App backend API collection (updated 2026-08-06).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,55 +11,56 @@
       "value": "http://localhost:8080"
     },
     {
-      "key": "userToken",
+      "key": "accessToken",
       "value": ""
     },
     {
-      "key": "adminToken",
+      "key": "refreshToken",
       "value": ""
     },
     {
-      "key": "createdUserProfileId",
+      "key": "adminAccessToken",
       "value": ""
     },
     {
-      "key": "restaurantId",
-      "value": ""
-    },
-    {
-      "key": "menuId",
+      "key": "adminRefreshToken",
       "value": ""
     },
     {
       "key": "dietRecordId",
       "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "01 Auth",
+      "name": "Auth",
       "item": [
         {
-          "name": "Register User",
+          "name": "Register",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('register status is 200 or existing account is 400', function () {",
-                  "  pm.expect([200, 400]).to.include(pm.response.code);",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
                   "});",
-                  "if (pm.response.code === 200) {",
-                  "  const json = pm.response.json();",
-                  "  pm.test('register success response has token', function () {",
-                  "    pm.expect(json.success).to.eql(true);",
-                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
-                  "    pm.expect(json.needsOnboarding).to.eql(true);",
-                  "  });",
-                  "  pm.collectionVariables.set('userToken', json.token);",
-                  "}"
-                ],
-                "type": "text/javascript"
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.test('Register success', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('accessToken', json.accessToken || '');",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken || '');"
+                ]
               }
             }
           ],
@@ -72,7 +74,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user001@gmail.com\",\n  \"password\": \"User123\"\n}"
+              "raw": "{\n  \"email\": \"user001@example.com\",\n  \"password\": \"User123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/register",
@@ -87,22 +89,27 @@
           }
         },
         {
-          "name": "Login User",
+          "name": "Login",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('login status is 200', function () {",
+                  "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "const token = pm.response.text().replace(/^\\\"|\\\"$/g, '');",
-                  "pm.test('login returns token text', function () {",
-                  "  pm.expect(token).to.be.a('string').and.not.empty;",
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.test('Login success', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
                   "});",
-                  "pm.collectionVariables.set('userToken', token);"
-                ],
-                "type": "text/javascript"
+                  "",
+                  "pm.collectionVariables.set('accessToken', json.accessToken || '');",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken || '');"
+                ]
               }
             }
           ],
@@ -116,7 +123,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user001@gmail.com\",\n  \"password\": \"User123\"\n}"
+              "raw": "{\n  \"email\": \"user001@example.com\",\n  \"password\": \"User123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/login",
@@ -131,22 +138,27 @@
           }
         },
         {
-          "name": "Login Admin",
+          "name": "Refresh",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('admin login status is 200', function () {",
+                  "pm.test('Status is 200', function () {",
                   "  pm.response.to.have.status(200);",
                   "});",
-                  "const token = pm.response.text().replace(/^\\\"|\\\"$/g, '');",
-                  "pm.test('admin login returns token text', function () {",
-                  "  pm.expect(token).to.be.a('string').and.not.empty;",
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.test('Refresh success', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
                   "});",
-                  "pm.collectionVariables.set('adminToken', token);"
-                ],
-                "type": "text/javascript"
+                  "",
+                  "pm.collectionVariables.set('accessToken', json.accessToken || '');",
+                  "pm.collectionVariables.set('refreshToken', json.refreshToken || '');"
+                ]
               }
             }
           ],
@@ -160,36 +172,64 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"Admin123\"\n}"
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/login",
+              "raw": "{{baseUrl}}/api/refresh",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "login"
+                "refresh"
               ]
             }
           }
         },
         {
-          "name": "Login Failed - Wrong Password",
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "logout"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin Login",
           "event": [
             {
               "listen": "test",
               "script": {
+                "type": "text/javascript",
                 "exec": [
-                  "pm.test('wrong password should return 401', function () {",
-                  "  pm.response.to.have.status(401);",
+                  "pm.test('Status is 200', function () {",
+                  "  pm.response.to.have.status(200);",
                   "});",
-                  "const json = pm.response.json();",
-                  "pm.test('wrong password should return error message', function () {",
-                  "  pm.expect(json.error).to.be.a('string').and.not.empty;",
-                  "});"
-                ],
-                "type": "text/javascript"
+                  "",
+                  "var json = pm.response.json();",
+                  "pm.test('Admin login success', function () {",
+                  "  pm.expect(json.success).to.eql(true);",
+                  "  pm.expect(json.accessToken).to.be.a('string');",
+                  "  pm.expect(json.refreshToken).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('adminAccessToken', json.accessToken || '');",
+                  "pm.collectionVariables.set('adminRefreshToken', json.refreshToken || '');"
+                ]
               }
             }
           ],
@@ -203,7 +243,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"WrongPassword123\"\n}"
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Admin123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/login",
@@ -220,49 +260,25 @@
       ]
     },
     {
-      "name": "02 User",
+      "name": "User",
       "item": [
         {
           "name": "Complete Onboarding",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('onboarding status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.test('onboarding response is success', function () {",
-                  "  pm.expect(json.success).to.eql(true);",
-                  "  pm.expect(json.data).to.be.an('object');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{userToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"nickname\": \"Postman User\",\n  \"gender\": \"female\",\n  \"age\": 22,\n  \"height\": 165.5,\n  \"weight\": 55.2,\n  \"healthConditions\": [\"none\"],\n  \"dietGoal\": \"weight_control\",\n  \"petType\": \"cat\"\n}"
+              "raw": "{\n  \"nickname\": \"Milo\",\n  \"gender\": \"MALE\",\n  \"age\": 25,\n  \"height\": 170,\n  \"weight\": 65,\n  \"healthConditions\": [\"DIABETES\"],\n  \"dietGoal\": \"LOSE_WEIGHT\",\n  \"petType\": \"DOG\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/user/onboarding",
@@ -278,38 +294,15 @@
           }
         },
         {
-          "name": "Get User Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('profile status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.test('profile response is success', function () {",
-                  "  pm.expect(json.success).to.eql(true);",
-                  "  pm.expect(json.data).to.be.an('object');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get Profile",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{userToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/user/profile",
               "host": [
@@ -324,42 +317,71 @@
           }
         },
         {
-          "name": "User Cannot Access Admin Users",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('normal user admin access is forbidden', function () {",
-                  "  pm.expect(pm.response.code).to.eql(403);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get My Diet Records",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{userToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/users",
+              "raw": "{{baseUrl}}/api/user/diet-records",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "admin",
-                "users"
+                "user",
+                "diet-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add My Diet Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('dietRecordId', json.data.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dishName\": \"Chicken Salad\",\n  \"calories\": 350,\n  \"protein\": 30,\n  \"fat\": 8,\n  \"carbohydrates\": 25,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Lunch\",\n  \"mealType\": \"LUNCH\",\n  \"amount\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user/diet-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "user",
+                "diet-records"
               ]
             }
           }
@@ -367,39 +389,317 @@
       ]
     },
     {
-      "name": "03 Admin Users",
+      "name": "Diet Records",
+      "item": [
+        {
+          "name": "List Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diet-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diet-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  var json = pm.response.json();",
+                  "  if (json.data && json.data.id) {",
+                  "    pm.collectionVariables.set('dietRecordId', json.data.id);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dishName\": \"Salmon Bento\",\n  \"calories\": 520,\n  \"protein\": 32,\n  \"fat\": 18,\n  \"carbohydrates\": 48,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Dinner\",\n  \"mealType\": \"DINNER\",\n  \"amount\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/diet-records",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diet-records"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dishName\": \"Salmon Bento With Greens\",\n  \"calories\": 540,\n  \"protein\": 34,\n  \"fat\": 18,\n  \"carbohydrates\": 50,\n  \"date\": \"2026-08-06\",\n  \"description\": \"Updated\",\n  \"mealType\": \"DINNER\",\n  \"amount\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/diet-records/{{dietRecordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diet-records",
+                "{{dietRecordId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/diet-records/{{dietRecordId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diet-records",
+                "{{dietRecordId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Upload Record Photo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/diet-records/{{dietRecordId}}/photo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "diet-records",
+                "{{dietRecordId}}",
+                "photo"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Body Status",
+      "item": [
+        {
+          "name": "Get Body Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/body-status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "body-status"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Settle Daily Scores",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/body-status/settle",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "body-status",
+                "settle"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Recalculate Body Metrics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/body-status/recalculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "body-status",
+                "recalculate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dietary Agent",
+      "item": [
+        {
+          "name": "Ask",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"question\": \"Is this dinner plan okay for me today?\",\n  \"question_type\": \"diet_advice\",\n  \"dish_info_list\": [\n    {\n      \"dish_name\": \"chicken breast\",\n      \"amount\": 1\n    },\n    {\n      \"dish_name\": \"rice\",\n      \"amount\": 2\n    }\n  ],\n  \"user_profile\": {\n    \"height_cm\": 170,\n    \"weight_kg\": 65,\n    \"gender\": \"MALE\",\n    \"age\": 25\n  },\n  \"health_condition\": {\n    \"has_chronic_disease\": true,\n    \"chronic_diseases\": [\"DIABETES\"]\n  },\n  \"weekly_diet_records\": [\n    {\n      \"date\": \"2026-08-06\",\n      \"meal\": \"DINNER\",\n      \"dish_name\": \"chicken breast\",\n      \"note\": \"low oil\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dietary-agent/ask",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dietary-agent",
+                "ask"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dish Nutrition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dish_name\": \"chicken lunch box\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/dietary-agent/dish-nutrition",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "dietary-agent",
+                "dish-nutrition"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
       "item": [
         {
           "name": "List Users",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('admin list users status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "pm.test('response is array', function () {",
-                  "  pm.expect(pm.response.json()).to.be.an('array');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/users",
               "host": [
@@ -414,80 +714,46 @@
           }
         },
         {
-          "name": "Search Users",
+          "name": "Get User",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
             "url": {
-              "raw": "{{baseUrl}}/api/admin/users?keyword=user001",
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "admin",
-                "users"
-              ],
-              "query": [
-                {
-                  "key": "keyword",
-                  "value": "user001"
-                }
+                "users",
+                "{{userId}}"
               ]
             }
           }
         },
         {
-          "name": "Create User By Admin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('create user status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.test('created user profile has id', function () {",
-                  "  pm.expect(json.id).to.exist;",
-                  "});",
-                  "pm.collectionVariables.set('createdUserProfileId', json.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Create User",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"created-by-admin@gmail.com\",\n  \"password\": \"Adminuser123\",\n  \"role\": \"ROLE_USER\",\n  \"name\": \"Admin Created User\",\n  \"gender\": \"male\",\n  \"age\": 30,\n  \"height\": 175.0,\n  \"weight\": 70.0,\n  \"specialDisease\": \"none\",\n  \"dietGoal\": \"maintain\",\n  \"dietaryHistory\": \"normal\",\n  \"petType\": \"dog\"\n}"
+              "raw": "{\n  \"email\": \"managed.user@example.com\",\n  \"password\": \"Managed123\",\n  \"role\": \"ROLE_USER\",\n  \"name\": \"Managed User\",\n  \"gender\": \"MALE\",\n  \"age\": 28,\n  \"height\": 172,\n  \"weight\": 68,\n  \"specialDisease\": \"NONE\",\n  \"dietGoal\": \"MAINTAIN\",\n  \"dietaryHistory\": \"\",\n  \"petType\": \"DOG\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/users",
@@ -503,31 +769,25 @@
           }
         },
         {
-          "name": "Update User By Admin",
+          "name": "Update User",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "PUT",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"created-by-admin@gmail.com\",\n  \"password\": \"\",\n  \"role\": \"ROLE_USER\",\n  \"name\": \"Admin Updated User\",\n  \"gender\": \"male\",\n  \"age\": 31,\n  \"height\": 176.0,\n  \"weight\": 71.0,\n  \"specialDisease\": \"none\",\n  \"dietGoal\": \"muscle_gain\",\n  \"dietaryHistory\": \"high_protein\",\n  \"petType\": \"dog\"\n}"
+              "raw": "{\n  \"email\": \"managed.user@example.com\",\n  \"password\": \"\",\n  \"role\": \"ROLE_USER\",\n  \"name\": \"Managed User Updated\",\n  \"gender\": \"MALE\",\n  \"age\": 29,\n  \"height\": 172,\n  \"weight\": 67,\n  \"specialDisease\": \"NONE\",\n  \"dietGoal\": \"MAINTAIN\",\n  \"dietaryHistory\": \"updated by admin\",\n  \"petType\": \"DOG\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/admin/users/{{createdUserProfileId}}",
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -535,427 +795,7 @@
                 "api",
                 "admin",
                 "users",
-                "{{createdUserProfileId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete User By Admin",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/users/{{createdUserProfileId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "users",
-                "{{createdUserProfileId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "04 Admin Restaurants",
-      "item": [
-        {
-          "name": "Create Restaurant",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('create restaurant status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('restaurantId', json.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Healthy Box\",\n  \"address\": \"Taipei Test Road 1\",\n  \"phone\": \"02-12345678\",\n  \"menu\": \"Chicken Box, Salmon Box\",\n  \"review\": \"Low oil and low salt\",\n  \"stars\": 5,\n  \"latitude\": 25.033,\n  \"longitude\": 121.5654,\n  \"healthLevel\": \"A\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/restaurants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "restaurants"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Restaurants",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/restaurants",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "restaurants"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Search Restaurants",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/restaurants?name=Healthy",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "restaurants"
-              ],
-              "query": [
-                {
-                  "key": "name",
-                  "value": "Healthy"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Restaurant",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Healthy Box Updated\",\n  \"address\": \"Taipei Test Road 2\",\n  \"phone\": \"02-87654321\",\n  \"menu\": \"Chicken Box, Beef Box\",\n  \"review\": \"Updated review\",\n  \"stars\": 4,\n  \"latitude\": 25.034,\n  \"longitude\": 121.566,\n  \"healthLevel\": \"B\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/restaurants/{{restaurantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "restaurants",
-                "{{restaurantId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Restaurant",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/restaurants/{{restaurantId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "restaurants",
-                "{{restaurantId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "05 Admin Menus",
-      "item": [
-        {
-          "name": "Create Menu Item",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('create menu status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('menuId', json.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"restaurantName\": \"Healthy Box\",\n  \"dishName\": \"Sous Vide Chicken Box\",\n  \"ingredients\": \"chicken breast, broccoli, brown rice\",\n  \"nutrition\": \"protein:35g, carb:45g, fat:10g\",\n  \"recommendLevel\": \"high\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/menus",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "menus"
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Menu Items",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/menus",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "menus"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Search Menu Items",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/menus?dishName=Chicken",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "menus"
-              ],
-              "query": [
-                {
-                  "key": "dishName",
-                  "value": "Chicken"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Menu Item",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/menus/{{menuId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "menus",
-                "{{menuId}}"
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "06 Admin Diet Records",
-      "item": [
-        {
-          "name": "Create Diet Record",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('create diet record status is 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "const json = pm.response.json();",
-                  "pm.collectionVariables.set('dietRecordId', json.id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Sous Vide Chicken Box\",\n  \"nutrition\": \"protein:35g, carb:45g, fat:10g\",\n  \"cumulativeNutrition\": \"protein:80g, carb:120g, fat:30g\",\n  \"healthLevel\": \"A\",\n  \"mealType\": \"BREAKFAST\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records"
+                "{{userId}}"
               ]
             }
           }
@@ -963,18 +803,13 @@
         {
           "name": "List Diet Records",
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/admin/diet-records",
               "host": [
@@ -984,213 +819,6 @@
                 "api",
                 "admin",
                 "diet-records"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Search Diet Records",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records?dishName=Chicken",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records"
-              ],
-              "query": [
-                {
-                  "key": "dishName",
-                  "value": "Chicken"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Diet Records By Date",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records?date=2026-05-06",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records"
-              ],
-              "query": [
-                {
-                  "key": "date",
-                  "value": "2026-05-06"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Diet Records By Date And Meal",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records?date=2026-05-06&mealType=BREAKFAST",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records"
-              ],
-              "query": [
-                {
-                  "key": "date",
-                  "value": "2026-05-06"
-                },
-                {
-                  "key": "mealType",
-                  "value": "BREAKFAST"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "List Diet Records By Week",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records?weekStart=2026-05-05",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records"
-              ],
-              "query": [
-                {
-                  "key": "weekStart",
-                  "value": "2026-05-05"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Update Diet Record",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"dishName\": \"Sous Vide Chicken Box Updated\",\n  \"nutrition\": \"protein:40g, carb:35g, fat:12g\",\n  \"cumulativeNutrition\": \"protein:95g, carb:130g, fat:35g\",\n  \"healthLevel\": \"A\",\n  \"mealType\": \"DINNER\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records/{{dietRecordId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records",
-                "{{dietRecordId}}"
-              ]
-            }
-          }
-        },
-        {
-          "name": "Delete Diet Record",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{adminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/diet-records/{{dietRecordId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "diet-records",
-                "{{dietRecordId}}"
               ]
             }
           }

@@ -9,6 +9,10 @@ import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/auth_service.dart';
+import '../../config/api_config.dart';
+
 class ReportPage extends StatefulWidget { // 定義 ReportPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
   const ReportPage({super.key, required this.date}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -30,11 +34,37 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   bool _isLoading = false;
   List<double> _weeklyData = [];
   List<double> _monthlyData = [];
+  String? _avatarUrl;
+
+  Future<void> _loadAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _avatarUrl = prefs.getString('user_avatar_url');
+      });
+    }
+    final result = await AuthService().getUserProfile();
+    if (result['success'] == true) {
+      final userData = result['data'];
+      final avatarPath = userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
+      if (avatarPath != null && avatarPath.isNotEmpty) {
+        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+        final fullUrl = avatarPath.startsWith('http') ? avatarPath : '$serverBase$avatarPath';
+        if (mounted) {
+          setState(() {
+            _avatarUrl = fullUrl;
+          });
+        }
+        await prefs.setString('user_avatar_url', fullUrl);
+      }
+    }
+  }
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
+    _loadAvatar();
     
     // 初始化呼吸與懸浮動畫
     _hoverController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
@@ -71,29 +101,41 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0.0;
     
-    // 1. Try to parse from record['nutrition']
-    final nutritionStr = record['nutrition'] ?? '';
-    if (nutritionStr.isNotEmpty) {
-      try {
-        final cleanStr = nutritionStr.toString().trim();
-        if (cleanStr.startsWith('{') && cleanStr.endsWith('}')) {
-          final parsed = jsonDecode(cleanStr);
-          if (parsed is Map && parsed.containsKey('calories')) {
-            return double.tryParse(parsed['calories'].toString()) ?? 0.0;
+    final nutrition = record['nutrition'];
+    if (nutrition != null) {
+      if (nutrition is Map) {
+        final calVal = nutrition['calories'];
+        if (calVal != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(calVal.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
           }
         }
-      } catch (_) {}
+      } else {
+        final nutritionStr = nutrition.toString().trim();
+        if (nutritionStr.isNotEmpty) {
+          try {
+            if (nutritionStr.startsWith('{') && nutritionStr.endsWith('}')) {
+              final parsed = jsonDecode(nutritionStr);
+              if (parsed is Map && parsed.containsKey('calories')) {
+                final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(parsed['calories'].toString());
+                if (numMatch != null) {
+                  return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+                }
+              }
+            }
+          } catch (_) {}
 
-      // Try parsing standard formats like "195 kcal" or just raw number
-      final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
-      final match = numRegExp.firstMatch(nutritionStr.toString());
-      if (match != null) {
-        final val = double.tryParse(match.group(1) ?? '');
-        if (val != null) return val;
+          final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
+          final match = numRegExp.firstMatch(nutritionStr);
+          if (match != null) {
+            final val = double.tryParse(match.group(1) ?? '');
+            if (val != null) return val;
+          }
+        }
       }
     }
 
-    // 2. Try to parse from dishName or description if they contain numbers
     final dishName = record['dishName'] ?? '';
     final desc = record['description'] ?? '';
     final combined = '$dishName $desc';
@@ -103,18 +145,41 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       if (val != null) return val;
     }
 
-    // Fallback default: if there is a dishName, return a default like 400.0, otherwise 0.0
     return dishName.toString().trim().isNotEmpty ? 400.0 : 0.0;
   }
 
   double _getNutrientFromRecord(dynamic record, String pattern) {
     if (record == null) return 0.0;
-    final nutritionStr = record['nutrition'] ?? '';
-    if (nutritionStr.isNotEmpty) {
-      final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
-      final match = regExp.firstMatch(nutritionStr.toString());
-      if (match != null) {
-        return double.tryParse(match.group(1) ?? '') ?? 0.0;
+    final nutrition = record['nutrition'];
+    if (nutrition == null) return 0.0;
+
+    String englishKey = '';
+    if (pattern.contains('蛋白質') || pattern.contains('protein')) {
+      englishKey = 'protein';
+    } else if (pattern.contains('脂肪') || pattern.contains('fat')) {
+      englishKey = 'fat';
+    } else if (pattern.contains('碳水') || pattern.contains('carbohydrate') || pattern.contains('carb')) {
+      englishKey = 'carbohydrates';
+    }
+
+    if (nutrition is Map) {
+      if (englishKey.isNotEmpty) {
+        final val = nutrition[englishKey];
+        if (val != null) {
+          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(val.toString());
+          if (numMatch != null) {
+            return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
+          }
+        }
+      }
+    } else {
+      final nutritionStr = nutrition.toString().trim();
+      if (nutritionStr.isNotEmpty) {
+        final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+        final match = regExp.firstMatch(nutritionStr);
+        if (match != null) {
+          return double.tryParse(match.group(1) ?? '') ?? 0.0;
+        }
       }
     }
     return 0.0;
@@ -218,7 +283,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.background, // 設定顏色數值（Color）
+      backgroundColor: const Color(0xFFE7D9B1), // 設定顏色數值（Color）
       body: Stack( // 設定頁面的主要內容區域（body）
         children: [ // 執行相對應的邏輯計算或設定屬性參數
           Positioned.fill( // 執行相對應的邏輯計算或設定屬性參數
@@ -266,14 +331,13 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       }, // 程式碼區塊或元件結構結束
                     ), // 執行相對應的邏輯計算或設定屬性參數
                     const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                    const Text("小精靈目前狀態：休息中", style: TextStyle(color: AppColors.textSecondary, fontSize: 14)), // 建立文字顯示元件（Text）
                   ], // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                     margin: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                      color: const Color.fromARGB(255, 227, 224, 224), // 建立編譯期常數，優化 Flutter 渲染效能
+                      color: AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
                       borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
                       boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
                         BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
@@ -307,7 +371,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                     margin: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                     decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                      color: const Color.fromARGB(255, 208, 231, 192), // 建立編譯期常數，優化 Flutter 渲染效能
+                      color: AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
                       borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
                       boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
                         BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
@@ -325,6 +389,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       ], // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
+                  const SizedBox(height: 25), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+
+                  // 新增：飲食明細 Grid 呈現
+                  _buildEatenFoodGrid(),
                   const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                 ], // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -396,14 +464,19 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
       child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
         decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        child: const CircleAvatar( // 建立編譯期常數，優化 Flutter 渲染效能
+        child: CircleAvatar(
           radius: 25,  // 執行相對應的邏輯計算或設定屬性參數
           backgroundColor: AppColors.background,  // 設定顏色數值（Color）
-          child: Icon( // 顯示預設的圖示元件（Icon）
-            Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
-            color: AppColors.textPrimary,  // 設定顏色數值（Color）
-            size: 35, // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
+              ? NetworkImage(_avatarUrl!)
+              : null,
+          child: _avatarUrl == null || _avatarUrl!.isEmpty
+              ? const Icon( // 顯示預設的圖示元件（Icon）
+                  Icons.person,  // 執行相對應的邏輯計算或設定屬性參數
+                  color: AppColors.textPrimary,  // 設定顏色數值（Color）
+                  size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                )
+              : null, // 執行相對應的邏輯計算或設定屬性參數
         ), // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
@@ -412,7 +485,32 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
     
-    // 1. Try mealDate first
+    // 0. Try date first (from backend record_date field)
+    final dateVal = record['date'];
+    if (dateVal != null) {
+      if (dateVal is String) {
+        try {
+          return DateTime.parse(dateVal);
+        } catch (_) {}
+      } else if (dateVal is List && dateVal.length >= 3) {
+        try {
+          return DateTime(
+            int.parse(dateVal[0].toString()),
+            int.parse(dateVal[1].toString()),
+            int.parse(dateVal[2].toString()),
+          );
+        } catch (_) {}
+      } else if (dateVal is Map) {
+        try {
+          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
+          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
+          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          return DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    
+    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -543,7 +641,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 248, 242, 191), // 鵝黃色背景
+        color: AppColors.background, // 鵝黃色背景
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)),
@@ -579,13 +677,13 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             ],
           ),
           const SizedBox(height: 5),
-          _buildDetailRow("早餐", "($bPercent%)", breakfastCal.toInt().toString(), Colors.orange),
+          _buildDetailRow("早餐", "($bPercent%)", breakfastCal.round().toString(), Colors.orange),
           const SizedBox(height: 12),
-          _buildDetailRow("午餐", "($lPercent%)", lunchCal.toInt().toString(), Colors.green),
+          _buildDetailRow("午餐", "($lPercent%)", lunchCal.round().toString(), Colors.green),
           const SizedBox(height: 12),
-          _buildDetailRow("晚餐", "($dPercent%)", dinnerCal.toInt().toString(), Colors.blue),
+          _buildDetailRow("晚餐", "($dPercent%)", dinnerCal.round().toString(), Colors.blue),
           const SizedBox(height: 12),
-          _buildDetailRow("其他", "($oPercent%)", otherCal.toInt().toString(), Colors.grey),
+          _buildDetailRow("其他", "($oPercent%)", otherCal.round().toString(), Colors.grey),
         ],
       ),
     );
@@ -626,7 +724,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         }
       } catch (_) {}
     }
-    int current = todayCal.toInt();
+    int current = todayCal.round();
     int target = 2000; // 宣告類別成員或方法內部的區域變數
     double progress = (current / target).clamp(0.0, 1.0); // 宣告類別成員或方法內部的區域變數
     Color progressColor = progress >= 1.0 ? AppColors.danger : (progress >= 0.8 ? Colors.orange : Colors.green); // 設定顏色數值（Color）
@@ -707,6 +805,15 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
         LayoutBuilder( // 執行相對應的邏輯計算或設定屬性參數
           builder: (context, constraints) { // 執行相對應的邏輯計算或設定屬性參數
+            final sundayOffset = widget.date.weekday % 7;
+            final sunday = widget.date.subtract(Duration(days: sundayOffset));
+            final weekdaysZh = ["日", "一", "二", "三", "四", "五", "六"];
+            List<String> labels = [];
+            for (int i = 0; i < 7; i++) {
+              final d = sunday.add(Duration(days: i));
+              labels.add("${d.month}/${d.day}\n(${weekdaysZh[i]})");
+            }
+
             return MouseRegion( // 回傳建構完成的元件或方法計算結果
               onHover: (event) => _handleTouch(event.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
               onExit: (_) => setState(() => _hoveredIdx = null), // 更新狀態數據並通知 UI 重新渲染畫面
@@ -714,10 +821,16 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                 onPanUpdate: (details) => _handleTouch(details.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
                 onTapDown: (details) => _handleTouch(details.localPosition, constraints.maxWidth, data.length), // 執行相對應的邏輯計算或設定屬性參數
                 child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  height: 200, // 執行相對應的邏輯計算或設定屬性參數
+                  height: 220, // 執行相對應的邏輯計算或設定屬性參數
                   width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
                   child: CustomPaint( // 執行相對應的邏輯計算或設定屬性參數
-                    painter: MockLineChartPainter(data: data, hoveredIdx: _hoveredIdx), // 執行相對應的邏輯計算或設定屬性參數
+                    painter: MockLineChartPainter(
+                      data: data,
+                      hoveredIdx: _hoveredIdx,
+                      labels: labels,
+                      avg: avg,
+                      target: 2000.0,
+                    ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -733,6 +846,218 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     int idx = (localPosition.dx / step).round().clamp(0, count - 1); // 宣告類別成員或方法內部的區域變數
     setState(() { _hoveredIdx = idx; }); // 更新狀態數據並通知 UI 重新渲染畫面
   } // 程式碼區塊或元件結構結束
+
+  Widget _buildEatenFoodGrid() {
+    if (_viewType == 0) {
+      final todayRecords = _allRecords.where((record) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) return false;
+        return rDate.year == widget.date.year &&
+               rDate.month == widget.date.month &&
+               rDate.day == widget.date.day;
+      }).toList();
+
+      todayRecords.sort((a, b) {
+        final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
+        final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+        return orderA.compareTo(orderB);
+      });
+
+      if (todayRecords.isEmpty) {
+        return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const Center(
+            child: Text("今日尚無飲食紀錄", style: TextStyle(color: Colors.black54, fontSize: 14)),
+          ),
+        );
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 12),
+              child: Text("今日吃了什麼", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: todayRecords.length,
+              itemBuilder: (context, index) {
+                final record = todayRecords[index];
+                final dish = record['dishName'] ?? record['dish_name'] ?? '未命名餐點';
+                final meal = _mealTypeDisplay(record['mealType'] ?? record['meal'] ?? 'OTHER');
+                final cal = _getCaloriesFromRecord(record).round();
+                final protein = _getProteinFromRecord(record);
+                final fat = _getFatFromRecord(record);
+                final carbs = _getCarbsFromRecord(record);
+
+                return DietRecordTile(
+                  record: record,
+                  meal: meal,
+                  cal: cal,
+                  protein: protein,
+                  fat: fat,
+                  carbs: carbs,
+                  mealColor: _getMealColor(record['mealType'] ?? record['meal'] ?? 'OTHER'),
+                  dish: dish,
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    } else {
+      final sundayOffset = widget.date.weekday % 7;
+      final sunday = widget.date.subtract(Duration(days: sundayOffset));
+
+      final List<Map<String, dynamic>> daysData = [];
+      final weekdaysZh = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
+
+      for (int i = 0; i < 7; i++) {
+        final targetDate = sunday.add(Duration(days: i));
+        final dayRecords = _allRecords.where((record) {
+          final rDate = _getRecordDate(record);
+          if (rDate == null) return false;
+          return rDate.year == targetDate.year &&
+                 rDate.month == targetDate.month &&
+                 rDate.day == targetDate.day;
+        }).toList();
+
+        dayRecords.sort((a, b) {
+          final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
+          final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+          return orderA.compareTo(orderB);
+        });
+
+        daysData.add({
+          'dayName': weekdaysZh[i],
+          'dateStr': "${targetDate.month}/${targetDate.day}",
+          'records': dayRecords,
+        });
+      }
+
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 4, bottom: 12),
+              child: Text("本週飲食清單", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 7,
+              itemBuilder: (context, index) {
+                final day = daysData[index];
+                final List<dynamic> recs = day['records'];
+                final String dayName = day['dayName'];
+                final String dateStr = day['dateStr'];
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2)),
+                    ],
+                    border: Border.all(color: AppColors.border.withOpacity(0.5)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(dayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                          Text(dateStr, style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                        ],
+                      ),
+                      const Divider(height: 16, thickness: 0.5),
+                      if (recs.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Text("無紀錄", style: TextStyle(fontSize: 14, color: Colors.grey)),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: recs.length,
+                          itemBuilder: (context, rIdx) {
+                            final rec = recs[rIdx];
+                            final dish = rec['dishName'] ?? rec['dish_name'] ?? '未命名';
+                            final meal = _mealTypeDisplay(rec['mealType'] ?? rec['meal'] ?? 'OTHER');
+                            final cal = _getCaloriesFromRecord(rec).toInt();
+                            final protein = _getProteinFromRecord(rec);
+                            final fat = _getFatFromRecord(rec);
+                            final carbs = _getCarbsFromRecord(rec);
+
+                            return DietRecordTile(
+                              record: rec,
+                              meal: meal,
+                              cal: cal,
+                              protein: protein,
+                              fat: fat,
+                              carbs: carbs,
+                              mealColor: _getMealColor(rec['mealType'] ?? rec['meal'] ?? 'OTHER'),
+                              dish: dish,
+                            );
+                          },
+                        ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  // DietRecordTile handles the nutrition display now.
+  // Removed old helper.
+
+  String _mealTypeDisplay(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return '早餐';
+    if (m.contains('LUNCH') || m.contains('午')) return '午餐';
+    if (m.contains('DINNER') || m.contains('晚')) return '晚餐';
+    return '其他';
+  }
+
+  int _getMealOrder(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return 1;
+    if (m.contains('LUNCH') || m.contains('午')) return 2;
+    if (m.contains('DINNER') || m.contains('晚')) return 3;
+    return 4; // 其他
+  }
+
+  Color _getMealColor(dynamic mealType) {
+    final m = mealType.toString().toUpperCase();
+    if (m.contains('BREAKFAST') || m.contains('早')) return Colors.orange;
+    if (m.contains('LUNCH') || m.contains('午')) return Colors.green;
+    if (m.contains('DINNER') || m.contains('晚')) return Colors.blue;
+    return Colors.grey;
+  }
 } // 程式碼區塊或元件結構結束
 
 class DiagonalLinesPainter extends CustomPainter { // 定義 DiagonalLinesPainter 類別，繼承自 CustomPainter
@@ -813,7 +1138,17 @@ class NutrientPiePainter extends CustomPainter {
 class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainter 類別，繼承自 CustomPainter
   final List<double> data; // 宣告類別成員或方法內部的區域變數
   final int? hoveredIdx; // 宣告類別成員或方法內部的區域變數
-  MockLineChartPainter({required this.data, this.hoveredIdx}); // 執行相對應的邏輯計算或設定屬性參數
+  final List<String> labels;
+  final double avg;
+  final double target;
+
+  MockLineChartPainter({
+    required this.data,
+    this.hoveredIdx,
+    required this.labels,
+    required this.avg,
+    required this.target,
+  }); // 執行相對應的邏輯計算或設定屬性參數
 
   @override // 標記此方法為覆寫父類別之方法
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
@@ -828,8 +1163,56 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
       if (v < minVal) minVal = v; // 執行相對應的邏輯計算或設定屬性參數
     } // 程式碼區塊或元件結構結束
     
+    // 將建議攝取與平均值納入邊界計算，確保虛線總是能正常顯示在圖表中
+    if (target > maxVal) maxVal = target;
+    if (avg > maxVal) maxVal = avg;
+    if (target < minVal) minVal = target;
+    if (avg < minVal) minVal = avg;
+    
     minVal = minVal * 0.8; // 執行相對應的邏輯計算或設定屬性參數
     final double range = (maxVal - minVal) == 0 ? 1.0 : (maxVal - minVal); // 宣告類別成員或方法內部的區域變數
+
+    final double chartHeight = size.height - 45; // 預留底部空間給兩行 X 軸標籤
+
+    // 輔助計算 Y 軸座標的函數
+    double yForValue(double val) {
+      return chartHeight - ((val - minVal) / range * chartHeight) + 10;
+    }
+
+    // 繪製虛線輔助線
+    final targetY = yForValue(target);
+    final avgY = yForValue(avg);
+
+    final targetPaint = Paint()
+      ..color = Colors.green.withOpacity(0.6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    _drawDashedLine(canvas, Offset(0, targetY), Offset(size.width, targetY), targetPaint, 5.0, 3.0);
+
+    final avgPaint = Paint()
+      ..color = Colors.orange.withOpacity(0.6)
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    _drawDashedLine(canvas, Offset(0, avgY), Offset(size.width, avgY), avgPaint, 5.0, 3.0);
+
+    // 標示輔助線文字
+    final targetTextPainter = TextPainter(
+      text: TextSpan(
+        text: ' 建議攝取: ${target.round()} kcal',
+        style: TextStyle(color: Colors.green.shade700, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    targetTextPainter.paint(canvas, Offset(5, targetY - 16));
+
+    final avgTextPainter = TextPainter(
+      text: TextSpan(
+        text: ' 本週平均: ${avg.round()} kcal',
+        style: TextStyle(color: Colors.orange.shade700, fontSize: 12, fontWeight: FontWeight.bold),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    avgTextPainter.paint(canvas, Offset(5, avgY - 16));
 
     final paint = Paint()..color = Colors.blue.withOpacity(0.5)..style = PaintingStyle.stroke..strokeWidth = 3.0; // 設定顏色數值（Color）
     final path = Path(); // 宣告類別成員或方法內部的區域變數
@@ -837,7 +1220,7 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
     List<Offset> points = []; // 執行相對應的邏輯計算或設定屬性參數
     for (int i = 0; i < data.length; i++) { // 執行相對應的邏輯計算或設定屬性參數
       double x = i * stepX; // 宣告類別成員或方法內部的區域變數
-      double y = size.height - ((data[i] - minVal) / range * size.height); // 宣告類別成員或方法內部的區域變數
+      double y = yForValue(data[i]);
       points.add(Offset(x, y)); // 執行相對應的邏輯計算或設定屬性參數
       if (i == 0) path.moveTo(x, y); else path.lineTo(x, y); // 執行相對應的邏輯計算或設定屬性參數
     } // 程式碼區塊或元件結構結束
@@ -850,12 +1233,242 @@ class MockLineChartPainter extends CustomPainter { // 定義 MockLineChartPainte
       
       if (isHovered) { // 執行相對應的邏輯計算或設定屬性參數
         final textPainter = TextPainter( // 宣告類別成員或方法內部的區域變數
-          text: TextSpan(text: data[i].toInt().toString(), style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold, backgroundColor: Colors.white70)), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+          text: TextSpan(text: data[i].round().toString(), style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold, backgroundColor: Colors.white70)), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
           textDirection: TextDirection.ltr, // 執行相對應的邏輯計算或設定屬性參數
         )..layout(); // 執行相對應的邏輯計算或設定屬性參數
         textPainter.paint(canvas, Offset(points[i].dx - textPainter.width / 2, points[i].dy - 25)); // 執行相對應的邏輯計算或設定屬性參數
       } // 程式碼區塊或元件結構結束
+
+      // 繪製 X 軸日期與星期標籤
+      if (i < labels.length) {
+        final labelPainter = TextPainter(
+          text: TextSpan(
+            text: labels[i],
+            style: TextStyle(
+              color: Colors.black54,
+              fontSize: 10,
+              height: 1.2,
+              fontWeight: isHovered ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        )..layout();
+        labelPainter.paint(canvas, Offset(points[i].dx - labelPainter.width / 2, size.height - 30));
+      }
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
-  @override bool shouldRepaint(covariant MockLineChartPainter oldDelegate) => oldDelegate.hoveredIdx != hoveredIdx || oldDelegate.data != data; // 標記此方法為覆寫父類別之方法
+  @override bool shouldRepaint(covariant MockLineChartPainter oldDelegate) => 
+      oldDelegate.hoveredIdx != hoveredIdx || 
+      oldDelegate.data != data || 
+      oldDelegate.labels != labels ||
+      oldDelegate.avg != avg ||
+      oldDelegate.target != target; // 標記此方法為覆寫父類別之方法
+
+  void _drawDashedLine(Canvas canvas, Offset p1, Offset p2, Paint paint, double dashWidth, double dashSpace) {
+    double currentX = p1.dx;
+    while (currentX < p2.dx) {
+      canvas.drawLine(
+        Offset(currentX, p1.dy),
+        Offset((currentX + dashWidth).clamp(p1.dx, p2.dx), p1.dy),
+        paint,
+      );
+      currentX += dashWidth + dashSpace;
+    }
+  }
 } // 程式碼區塊或元件結構結束
+
+class DietRecordTile extends StatefulWidget {
+  final dynamic record;
+  final String meal;
+  final int cal;
+  final double protein;
+  final double fat;
+  final double carbs;
+  final Color mealColor;
+  final String dish;
+
+  const DietRecordTile({
+    super.key,
+    required this.record,
+    required this.meal,
+    required this.cal,
+    required this.protein,
+    required this.fat,
+    required this.carbs,
+    required this.mealColor,
+    required this.dish,
+  });
+
+  @override
+  State<DietRecordTile> createState() => _DietRecordTileState();
+}
+
+class _DietRecordTileState extends State<DietRecordTile> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 4)),
+        ],
+        border: Border.all(color: AppColors.border.withOpacity(0.4)),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: _isExpanded,
+          onExpansionChanged: (val) {
+            setState(() {
+              _isExpanded = val;
+            });
+          },
+          trailing: Icon(
+            _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+            color: AppColors.textPrimary,
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: widget.mealColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.meal,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: widget.mealColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      for (int i = 0; i < widget.dish.split(', ').length; i++) ...[
+                        if (i > 0) const TextSpan(text: ", ", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                        TextSpan(
+                          text: widget.dish.split(', ')[i],
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        ),
+                        TextSpan(
+                          text: " (${_parsePortionAtIndex(widget.record, i)})",
+                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                        ),
+                      ]
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                "${widget.cal} kcal",
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+            ],
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(height: 16, thickness: 0.5),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("蛋白質", "${widget.protein.toStringAsFixed(1)}克", Colors.orange),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("脂肪", "${widget.fat.toStringAsFixed(1)}g", Colors.redAccent),
+                  const SizedBox(height: 8),
+                  _buildNutritionRow("碳水化合物", "${widget.carbs.toStringAsFixed(1)}g", Colors.lightBlue),
+                  if (widget.record['description'] != null &&
+                      widget.record['description'].toString().trim().isNotEmpty &&
+                      widget.record['description'].toString().trim() != '手動輸入飲食紀錄' &&
+                      !widget.record['description'].toString().contains('份')) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      "備註: ${widget.record['description']}",
+                      style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
+                    ),
+                  ]
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutritionRow(String label, String value, Color color) {
+    return Row(
+      children: [
+        Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Text(
+          "$label:",
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        ),
+      ],
+    );
+  }
+
+  String _parsePortionAtIndex(dynamic record, int index) {
+    if (record == null) return "1份";
+    final amountVal = record['amount'];
+    final portionsVal = record['portions'];
+    final descriptionVal = record['description'];
+    final sourceStr = (amountVal != null && amountVal.toString().trim().isNotEmpty)
+        ? amountVal.toString().trim()
+        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty)
+            ? portionsVal.toString().trim()
+            : (descriptionVal != null ? descriptionVal.toString().trim() : ''));
+
+    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
+      return "1份";
+    }
+    final parts = sourceStr.split(RegExp(r',\s*'));
+    if (index >= parts.length) return "1份";
+    final part = parts[index].trim();
+    
+    final match = RegExp(r'^(\d+(?:\.\d+)?)\s*(?:份)?$').firstMatch(part);
+    if (match != null) {
+      final numStr = match.group(1)!;
+      final val = double.tryParse(numStr);
+      if (val != null) {
+        if (val == val.toInt()) {
+          return "${val.toInt()}份";
+        }
+        return "${val}份";
+      }
+    }
+    if (part.contains("份")) {
+      final m = RegExp(r'(\d+(?:\.\d+)?)\s*份').firstMatch(part);
+      if (m != null) {
+        final val = double.tryParse(m.group(1)!);
+        if (val != null) {
+          if (val == val.toInt()) {
+            return "${val.toInt()}份";
+          }
+          return "${val}份";
+        }
+      }
+      return part;
+    }
+    return "1份";
+  }
+}

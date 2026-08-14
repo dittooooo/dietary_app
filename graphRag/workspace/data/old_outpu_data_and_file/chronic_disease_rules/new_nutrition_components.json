@@ -1,0 +1,178 @@
+{
+  "source_file": "chronic_disease_rules_v2_20260512_revised_fat_omega3.json",
+  "description": "Cleaned new nutrition components and nutrition concept components derived from chronic_disease_rules_v2. chronic_disease_rules_v2 itself is not modified. IDs in this file are renumbered sequentially and legacy IDs are preserved for traceability.",
+  "version": "1.2",
+  "id_policy": {
+    "prefix": "NNUT",
+    "start": "NNUT001",
+    "scope": "new_nutrition_components only",
+    "note": "Because chronic_disease_rules_v2 was not modified, legacy_nutrition_ids_in_chronic_rules records the IDs currently used inside that file. If strict ID matching is required later, use this mapping to update chronic_disease_rules_v2 in a separate step."
+  },
+  "count": 8,
+  "nutrients": [
+    {
+      "nutrition_id": "NNUT001",
+      "name_zh": "普林",
+      "name_en": "Purine",
+      "unit": "mg",
+      "category": "bioactive_compound",
+      "component_type": "measurable_dietary_factor",
+      "source_column": null,
+      "suggested_source_column": "普林(mg)",
+      "requires_external_data": true,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT010"],
+      "used_in_disease_rules": ["gout", "hyperuricemia"],
+      "mapping_note": "普林不在原 nutrition_components.json 中，且無法由既有營養成分等價替代；痛風與高尿酸血症規則需保留。內臟來源普林不另建新成分，應視為普林的食物類別條件。"
+    },
+    {
+      "nutrition_id": "NNUT002",
+      "name_zh": "咖啡因",
+      "name_en": "Caffeine",
+      "unit": "mg",
+      "category": "bioactive_compound",
+      "component_type": "measurable_dietary_factor",
+      "source_column": null,
+      "suggested_source_column": "咖啡因(mg)",
+      "requires_external_data": true,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT013"],
+      "used_in_disease_rules": ["gastroesophageal_reflux_disease"],
+      "mapping_note": "咖啡因不在原 nutrition_components.json 中，且是胃食道逆流常見症狀觸發因子；若未來資料庫沒有咖啡因含量，可先以食物類別與症狀觸發規則處理。"
+    },
+    {
+      "nutrition_id": "NNUT003",
+      "name_zh": "不飽和脂肪",
+      "name_en": "Unsaturated Fat",
+      "unit": "mg",
+      "category": "nutrition_concept",
+      "component_type": "composite_nutrition_concept",
+      "relation_target_type": "nutrition_concept",
+      "concept_id": "NC_UNSATURATED_FAT",
+      "source_column": null,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT001"],
+      "used_in_disease_rules": [
+        "hypertension",
+        "hyperlipidemia",
+        "diabetes_mellitus",
+        "cardiovascular_disease",
+        "stroke",
+        "metabolic_syndrome"
+      ],
+      "mapped_nutrients": [
+        {
+          "nutrition_id": "NUT067",
+          "name_zh": "脂肪酸M總量",
+          "name_en": "Total Monounsaturated Fatty Acids",
+          "abbreviation": "MUFA",
+          "mapping_role": "component_of_unsaturated_fat"
+        },
+        {
+          "nutrition_id": "NUT073",
+          "name_zh": "脂肪酸P總量",
+          "name_en": "Total Polyunsaturated Fatty Acids",
+          "abbreviation": "PUFA",
+          "mapping_role": "component_of_unsaturated_fat"
+        }
+      ],
+      "calculation_rule": {
+        "metric": "unsaturated_fat_sum",
+        "operator": "sum",
+        "components": ["NUT067", "NUT073"],
+        "unit": "mg"
+      },
+      "mapping_note": "不飽和脂肪是概念層，不是原始資料庫單一欄位；實際由 NUT067(MUFA) 與 NUT073(PUFA) 組成。可作為 NutritionConcept 節點，再連到兩個 NutritionComponent。"
+    },
+    {
+      "nutrition_id": "NNUT004",
+      "name_zh": "Omega-3 脂肪酸",
+      "name_en": "Omega-3 Fatty Acids",
+      "unit": "mg",
+      "category": "nutrition_concept",
+      "component_type": "composite_nutrition_concept",
+      "relation_target_type": "nutrition_concept",
+      "concept_id": "NC_OMEGA_3_FATTY_ACIDS",
+      "parent_nutrition_id": "NUT073",
+      "parent_name_zh": "脂肪酸P總量",
+      "parent_name_en": "Total Polyunsaturated Fatty Acids",
+      "source_column": null,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT003"],
+      "used_in_disease_rules": ["hyperlipidemia", "cardiovascular_disease"],
+      "mapped_nutrients": [
+        {
+          "nutrition_id": "NUT075",
+          "name_zh": "次亞麻油酸(18:3)",
+          "name_en": "Alpha-Linolenic Acid",
+          "abbreviation": "ALA",
+          "mapping_role": "plant_based_omega_3_component"
+        },
+        {
+          "nutrition_id": "NUT078",
+          "name_zh": "廿碳五烯酸(20:5)",
+          "name_en": "Eicosapentaenoic Acid",
+          "abbreviation": "EPA",
+          "mapping_role": "marine_omega_3_component",
+          "aggregation_group": "EPA+DHA"
+        },
+        {
+          "nutrition_id": "NUT080",
+          "name_zh": "廿二碳六烯酸(22:6)",
+          "name_en": "Docosahexaenoic Acid",
+          "abbreviation": "DHA",
+          "mapping_role": "marine_omega_3_component",
+          "aggregation_group": "EPA+DHA"
+        }
+      ],
+      "calculation_rules": [
+        {
+          "metric": "EPA_DHA_sum",
+          "operator": "sum",
+          "components": ["NUT078", "NUT080"],
+          "unit": "mg",
+          "aggregation_group": "EPA+DHA"
+        },
+        {
+          "metric": "ALA",
+          "operator": "direct",
+          "components": ["NUT075"],
+          "unit": "mg"
+        }
+      ],
+      "mapping_note": "Omega-3 是概念層，不是原始資料庫單一欄位；實際由 NUT075(ALA)、NUT078(EPA)、NUT080(DHA) 表示。EPA+DHA 需加總；ALA 另行判斷，不可直接等量替代 EPA+DHA。"
+    },
+    {
+      "nutrition_id": "NNUT005",
+      "name_zh": "楊桃神經毒性成分",
+      "name_en": "Star Fruit Neurotoxic Compounds",
+      "unit": null,
+      "category": "dietary_risk_factor",
+      "component_type": "non_quantified_food_specific_risk_factor",
+      "source_column": null,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT009"],
+      "used_in_disease_rules": ["chronic_kidney_disease"],
+      "mapping_note": "慢性腎臟病規則中保留的特殊禁忌因子；不建議以一般營養素含量判斷，應以 food_category 是否為楊桃或楊桃萃取物判斷。"
+    },
+    {
+      "nutrition_id": "NNUT006",
+      "name_zh": "辛辣刺激成分",
+      "name_en": "Spicy Compounds",
+      "unit": null,
+      "category": "dietary_trigger_factor",
+      "component_type": "symptom_trigger_concept",
+      "source_column": null,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT014"],
+      "used_in_disease_rules": ["gastroesophageal_reflux_disease"],
+      "mapping_note": "胃食道逆流規則中保留的症狀觸發因子；通常以食物類別、是否含辣椒/辣椒素、或使用者症狀紀錄判斷，不適合當成一般可量化營養素。"
+    },
+    {
+      "nutrition_id": "NNUT007",
+      "name_zh": "酸性食物成分",
+      "name_en": "Acidic Food Components",
+      "unit": "pH",
+      "category": "dietary_trigger_factor",
+      "component_type": "symptom_trigger_concept",
+      "source_column": null,
+      "legacy_nutrition_ids_in_chronic_rules": ["NNUT015"],
+      "used_in_disease_rules": ["gastroesophageal_reflux_disease"],
+      "mapping_note": "胃食道逆流規則中保留的症狀觸發因子；若資料庫有 pH 可用 pH 門檻，否則以柑橘、番茄等食物類別與症狀紀錄判斷。"
+    }
+  ]
+}
