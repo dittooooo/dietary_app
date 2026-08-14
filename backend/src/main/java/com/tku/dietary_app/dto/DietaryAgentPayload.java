@@ -12,16 +12,16 @@ import java.util.List;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"question", "dish_names", "question_type", "user_profile", "health_condition", "weekly_diet_records"})
+@JsonPropertyOrder({"question", "question_type", "dish_info_list", "user_profile", "health_condition", "weekly_diet_records"})
 public class DietaryAgentPayload {
 
     private String question;
 
-    @JsonProperty("dish_names")
-    private List<String> dishNames;
-
     @JsonProperty("question_type")
     private String questionType;
+
+    @JsonProperty("dish_info_list")
+    private List<DishInfoDto> dishInfoList;
 
     @JsonProperty("user_profile")
     private UserProfileDto userProfile;
@@ -71,5 +71,16 @@ public class DietaryAgentPayload {
         private String dishName;
 
         private String note;
+    }
+
+    @Data
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"dish_name", "amount"})
+    public static class DishInfoDto {
+        @JsonProperty("dish_name")
+        private String dishName;
+
+        private Integer amount;
     }
 }

@@ -1,20 +1,27 @@
 package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.dto.AdminUserRequest;
+import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
-import com.tku.dietary_app.dto.MenuItemRequest;
-import com.tku.dietary_app.dto.MenuItemResponse;
-import com.tku.dietary_app.dto.RestaurantRequest;
 import com.tku.dietary_app.service.AdminService;
 import com.tku.dietary_app.service.DietRecordService;
-import com.tku.dietary_app.service.MenuItemService;
-import com.tku.dietary_app.service.RestaurantService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 
 @RestController
@@ -23,146 +30,80 @@ import java.time.LocalDate;
 public class AdminController {
 
     private final AdminService adminService;
-    private final RestaurantService restaurantService;
-    private final MenuItemService menuItemService;
     private final DietRecordService dietRecordService;
 
-    // 標籤 1：使用者清單 (含搜尋)
     @GetMapping("/users")
-    public ResponseEntity<?> listUsers(@RequestParam(required = false) String keyword) {
-        if (keyword != null) return ResponseEntity.ok(adminService.searchUsers(keyword));
-        return ResponseEntity.ok(adminService.getAllUsers());
-    }
-
-    // 單筆查詢
-    @GetMapping("/users/{id}")
-    public ResponseEntity<?> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(adminService.getUserById(id));
-    }
-
-    // 標籤 2：確認新增
-    @PostMapping("/users")
-    public ResponseEntity<?> addUser(@RequestBody AdminUserRequest request) {
-        return ResponseEntity.ok(adminService.createUser(request));
-    }
-
-    // 標籤 3：確認編輯
-    @PutMapping("/users/{id}")
-    public ResponseEntity<?> editUser(@PathVariable Long id, @RequestBody AdminUserRequest request) {
-        return ResponseEntity.ok(adminService.updateUser(id, request));
-    }
-
-    // 標籤 4：確認刪除
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> removeUser(@PathVariable Long id) {
-        adminService.deleteUser(id);
-        return ResponseEntity.ok("刪除成功");
-    }
-
-    // ===== 餐廳管理 =====
-
-    @GetMapping("/restaurants")
-    public ResponseEntity<?> listRestaurants(@RequestParam(required = false) String name) {
-        if (name != null) return ResponseEntity.ok(restaurantService.searchByName(name));
-        return ResponseEntity.ok(restaurantService.getAllRestaurants());
-    }
-
-    @GetMapping("/restaurants/{id}")
-    public ResponseEntity<?> getRestaurant(@PathVariable Long id) {
-        return ResponseEntity.ok(restaurantService.getById(id));
-    }
-
-    @PostMapping("/restaurants")
-    public ResponseEntity<?> addRestaurant(@RequestBody RestaurantRequest request) {
-        return ResponseEntity.ok(restaurantService.create(request));
-    }
-
-    @PutMapping("/restaurants/{id}")
-    public ResponseEntity<?> editRestaurant(@PathVariable Long id, @RequestBody RestaurantRequest request) {
-        return ResponseEntity.ok(restaurantService.update(id, request));
-    }
-
-    @DeleteMapping("/restaurants/{id}")
-    public ResponseEntity<?> removeRestaurant(@PathVariable Long id) {
-        restaurantService.delete(id);
-        return ResponseEntity.ok("刪除成功");
-    }
-
-    // ===== 菜單管理 =====
-
-    @GetMapping("/menus")
-    public ResponseEntity<?> listMenuItems(@RequestParam(required = false) String dishName) {
-        if (dishName != null) {
-            return ResponseEntity.ok(
-                menuItemService.searchByDishName(dishName)
-                    .stream()
-                    .map(MenuItemResponse::fromEntity)
-                    .toList()
-            );
+    public ResponseEntity<ApiResponse<?>> listUsers(@RequestParam(required = false) String keyword) {
+        if (keyword != null) {
+            return ResponseEntity.ok(ApiResponse.success(adminService.searchUsers(keyword)));
         }
-        return ResponseEntity.ok(
-            menuItemService.getAllMenuItems()
-                .stream()
-                .map(MenuItemResponse::fromEntity)
-                .toList()
-        );
+        return ResponseEntity.ok(ApiResponse.success(adminService.getAllUsers()));
     }
 
-    @PostMapping("/menus")
-    public ResponseEntity<?> addMenuItem(@RequestBody MenuItemRequest request) {
-        return ResponseEntity.ok(MenuItemResponse.fromEntity(menuItemService.create(request)));
+    @GetMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<?>> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(adminService.getUserById(id)));
     }
 
-    @PutMapping("/menus/{id}")
-    public ResponseEntity<?> editMenuItem(@PathVariable Long id, @RequestBody MenuItemRequest request) {
-        return ResponseEntity.ok(MenuItemResponse.fromEntity(menuItemService.update(id, request)));
+    @PostMapping("/users")
+    public ResponseEntity<ApiResponse<?>> addUser(@Valid @RequestBody AdminUserRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("使用者建立成功", adminService.createUser(request)));
     }
 
-    @DeleteMapping("/menus/{id}")
-    public ResponseEntity<?> removeMenuItem(@PathVariable Long id) {
-        menuItemService.delete(id);
-        return ResponseEntity.ok("刪除成功");
+    @PutMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<?>> editUser(@PathVariable Long id, @Valid @RequestBody AdminUserRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("使用者更新成功", adminService.updateUser(id, request)));
     }
 
-    // ===== 過去飲食管理 =====
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<ApiResponse<Void>> removeUser(@PathVariable Long id) {
+        adminService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("使用者刪除成功", null));
+    }
 
     @GetMapping("/diet-records")
-    public ResponseEntity<?> listDietRecords(@RequestParam(required = false) Long userId,
-                                             @RequestParam(required = false) String nickname,
-                                             @RequestParam(required = false) String dishName,
-                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-                                             @RequestParam(required = false) String mealType,
-                                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
-        return ResponseEntity.ok(
-            dietRecordService.getAdminRecords(userId, nickname, dishName, date, mealType, weekStart)
-                .stream()
-                .map(DietRecordResponse::fromEntity)
-                .toList()
-        );
+    public ResponseEntity<ApiResponse<?>> listDietRecords(@RequestParam(required = false) Long userId,
+                                                          @RequestParam(required = false) String nickname,
+                                                          @RequestParam(required = false) String dishName,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                                          @RequestParam(required = false) String mealType,
+                                                          @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate weekStart) {
+        return ResponseEntity.ok(ApiResponse.success(
+                dietRecordService.getAdminRecords(userId, nickname, dishName, date, mealType, weekStart)
+                        .stream()
+                        .map(DietRecordResponse::fromEntity)
+                        .toList()
+        ));
     }
 
     @PostMapping("/diet-records")
-    public ResponseEntity<?> addDietRecord(@RequestParam Long userId, @RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(DietRecordResponse.fromEntity(
-            dietRecordService.create(userId, request)
+    public ResponseEntity<ApiResponse<?>> addDietRecord(@RequestParam Long userId, @Valid @RequestBody DietRecordRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "飲食紀錄建立成功",
+                DietRecordResponse.fromEntity(dietRecordService.create(userId, request))
         ));
     }
 
     @PutMapping("/diet-records/{id}")
-    public ResponseEntity<?> editDietRecord(@PathVariable Long id, @RequestBody DietRecordRequest request) {
-        return ResponseEntity.ok(DietRecordResponse.fromEntity(
-            dietRecordService.updateByAdmin(id, request)
+    public ResponseEntity<ApiResponse<?>> editDietRecord(@PathVariable Long id, @Valid @RequestBody DietRecordRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "飲食紀錄更新成功",
+                DietRecordResponse.fromEntity(dietRecordService.updateByAdmin(id, request))
         ));
     }
 
     @DeleteMapping("/diet-records/{id}")
-    public ResponseEntity<?> removeDietRecord(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> removeDietRecord(@PathVariable Long id) {
         dietRecordService.deleteByAdmin(id);
-        return ResponseEntity.ok("刪除成功");
+        return ResponseEntity.ok(ApiResponse.success("飲食紀錄刪除成功", null));
     }
 
     @PostMapping("/diet-records/{id}/photo")
-    public ResponseEntity<?> uploadDietPhoto(@PathVariable Long id, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) throws java.io.IOException {
-        return ResponseEntity.ok(dietRecordService.savePhotoByAdmin(id, file));
+    public ResponseEntity<ApiResponse<?>> uploadDietPhoto(@PathVariable Long id,
+                                                          @RequestParam("file") MultipartFile file) throws IOException {
+        return ResponseEntity.ok(ApiResponse.success(
+                "照片上傳成功",
+                dietRecordService.savePhotoByAdmin(id, file)
+        ));
     }
 }

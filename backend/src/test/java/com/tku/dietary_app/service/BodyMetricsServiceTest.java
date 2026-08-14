@@ -13,7 +13,7 @@ class BodyMetricsServiceTest {
     @Test
     void recalculatesBmrTdeeAndRecommendedCaloriesByMdRules() {
         UserProfile profile = UserProfile.builder()
-                .gender("男")
+                .gender("male")
                 .age(30)
                 .height(170.0)
                 .weight(70.0)

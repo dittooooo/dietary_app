@@ -1,37 +1,40 @@
 package com.tku.dietary_app.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
 import java.util.List;
-import org.hibernate.annotations.CreationTimestamp;//自動記錄資料建立時間
 
 @Data
 public class OnboardingRequest {
 
-    @NotBlank(message = "暱稱不能為空")
+    @NotBlank(message = "nickname 為必填欄位")
     private String nickname;
 
-    @NotBlank(message = "性別不能為空")
+    @NotBlank(message = "gender 為必填欄位")
     private String gender;
 
-    @NotNull(message = "年齡不能為空")
-    @Min(value = 1, message = "年齡必須大於0")
+    @NotNull(message = "age 為必填欄位")
+    @Min(value = 1, message = "age 必須大於 0")
     private Integer age;
 
-    @NotNull(message = "身高不能為空")
-    @Min(value = 1, message = "身高必須大於0")
+    @NotNull(message = "height 為必填欄位")
+    @Min(value = 1, message = "height 必須大於 0")
     private Double height;
 
-    @NotNull(message = "體重不能為空")
-    @Min(value = 1, message = "體重必須大於0")
+    @NotNull(message = "weight 為必填欄位")
+    @Min(value = 1, message = "weight 必須大於 0")
     private Double weight;
 
-    @NotEmpty(message = "健康狀況不能為空")
+    @NotEmpty(message = "healthConditions 至少要提供一項")
     private List<String> healthConditions;
 
-    @NotBlank(message = "飲食目標不能為空")
+    @NotBlank(message = "dietGoal 為必填欄位")
     private String dietGoal;
 
-    @NotBlank(message = "小精靈角色不能為空")
+    @NotBlank(message = "petType 為必填欄位")
     private String petType;
 }
