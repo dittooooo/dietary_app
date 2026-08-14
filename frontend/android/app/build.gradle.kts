@@ -44,7 +44,18 @@ flutter {
 }
 
 tasks.register<Exec>("adbReverse") {
-    commandLine("adb", "reverse", "tcp:8080", "tcp:8080")
+    val sdkDir = providers.fileContents(layout.projectDirectory.file("../local.properties"))
+        .asText
+        .map { contents ->
+            contents.lineSequence()
+                .firstOrNull { it.startsWith("sdk.dir=") }
+                ?.substringAfter("sdk.dir=")
+                ?.replace("\\\\", "\\")
+                ?: error("sdk.dir is missing from android/local.properties")
+        }
+    val adbExecutable = sdkDir.map { "$it\\platform-tools\\adb.exe" }
+
+    commandLine(adbExecutable.get(), "reverse", "tcp:8080", "tcp:8080")
     isIgnoreExitValue = true
 }
 

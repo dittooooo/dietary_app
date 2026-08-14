@@ -176,9 +176,7 @@ public class DietRecordService {
         if (hasText(request.getMealType())) {
             record.setMealType(normalizeMealTypeRequired(request.getMealType()));
         }
-        if (request.getAmount() != null || record.getAmount() == null) {
-            record.setAmount(resolveAmount(request.getAmount()));
-        }
+        record.setAmount(resolveAmount(request.getAmount()));
     }
 
     private Double resolveUpdatedNutritionValue(Double requestValue,
