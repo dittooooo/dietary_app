@@ -117,11 +117,71 @@ class DietService {
     }
   }
 
+  int _parseAmount(dynamic amt) {
+    if (amt is int) return amt;
+    if (amt is double) return amt.toInt();
+    if (amt == null) return 1;
+    final digits = amt.toString().replaceAll(RegExp(r'[^\d]'), '');
+    return int.tryParse(digits) ?? 1;
+  }
+
+  Future<Map<String, double?>> fetchDishNutrition(String dishName) async {
+    final token = await _token();
+    if (token == null || dishName.trim().isEmpty) {
+      return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+    }
+    try {
+      final response = await _client.post(
+        '/dietary-agent/dish-nutrition',
+        {'dish_name': dishName.trim()},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        final decoded = _decodeObject(response.body);
+        final dishNut = decoded['data']?['dish_nutrition'] ?? decoded['dish_nutrition'];
+        if (dishNut != null && dishNut['nutrients'] is List) {
+          final List nutrients = dishNut['nutrients'];
+          double? calories;
+          double? protein;
+          double? fat;
+          double? carbs;
+
+          for (final n in nutrients) {
+            if (n is Map) {
+              final String name = (n['name'] ?? '').toString();
+              final double? amt = double.tryParse((n['amount_per_serving'] ?? '').toString());
+              if (amt != null) {
+                if (name.contains('熱量') || name.contains('calories') || name.contains('kcal')) {
+                  calories = amt;
+                } else if (name.contains('蛋白質') || name.contains('protein')) {
+                  protein = amt;
+                } else if (name.contains('脂肪') || name.contains('fat')) {
+                  fat = amt;
+                } else if (name.contains('碳水') || name.contains('carbohydrate')) {
+                  carbs = amt;
+                }
+              }
+            }
+          }
+          return {
+            'calories': calories,
+            'protein': protein,
+            'fat': fat,
+            'carbohydrates': carbs,
+          };
+        }
+      }
+    } catch (e) {
+      print('Fetch dish nutrition error: $e');
+    }
+    return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+  }
+
   /// 新增飲食紀錄 (3 大核心必填欄位: dishName, mealType, amount)
   Future<Map<String, dynamic>> createDietRecord({
     required String dishName,
     required String mealType,
-    required String amount,
+    required dynamic amount,
     String description = '',
     String nutrition = '',
     DateTime? mealDate,
@@ -131,7 +191,15 @@ class DietService {
       return {'success': false, 'message': 'Please sign in again.'};
     }
 
-    final parsedNutrition = _parseNutrition(nutrition);
+    Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
+    if (parsedNutrition['calories'] == null) {
+      final fetchedNut = await fetchDishNutrition(dishName);
+      if (fetchedNut['calories'] != null) {
+        parsedNutrition = fetchedNut;
+      }
+    }
+
+    final int intAmount = _parseAmount(amount);
 
     String apiMealType = _mealTypeForApi(mealType);
     String apiDescription = description;
@@ -147,12 +215,11 @@ class DietService {
           'dishName': dishName,
           'mealType': apiMealType,
           'description': apiDescription,
-          'amount': amount,
-          'nutrition': nutrition,
-          'calories': parsedNutrition['calories'],
-          'protein': parsedNutrition['protein'],
-          'fat': parsedNutrition['fat'],
-          'carbohydrates': parsedNutrition['carbohydrates'],
+          'amount': intAmount,
+          if (parsedNutrition['calories'] != null) 'calories': parsedNutrition['calories'],
+          if (parsedNutrition['protein'] != null) 'protein': parsedNutrition['protein'],
+          if (parsedNutrition['fat'] != null) 'fat': parsedNutrition['fat'],
+          if (parsedNutrition['carbohydrates'] != null) 'carbohydrates': parsedNutrition['carbohydrates'],
           if (mealDate != null) 'date': _formatDate(mealDate),
         },
         headers: {'Authorization': 'Bearer $token'},
@@ -246,7 +313,7 @@ class DietService {
     required String dishName,
     required String mealType,
     required String description,
-    String amount = '1 份',
+    dynamic amount = 1,
     String nutrition = '',
     DateTime? mealDate,
   }) async {
@@ -256,6 +323,7 @@ class DietService {
     }
 
     final parsedNutrition = _parseNutrition(nutrition);
+    final int intAmount = _parseAmount(amount);
 
     String apiMealType = _mealTypeForApi(mealType);
     String apiDescription = description;
@@ -271,7 +339,7 @@ class DietService {
           'dishName': dishName,
           'mealType': apiMealType,
           'description': apiDescription,
-          'amount': amount,
+          'amount': intAmount,
           'nutrition': nutrition,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],

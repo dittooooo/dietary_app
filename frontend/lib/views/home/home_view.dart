@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'package:flutter/services.dart';
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
@@ -52,8 +53,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     _dogController.setState(DogAnimationState.idle);
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
     
-    // 檢查並顯示飲食總結報告彈窗
+    // 檢查並顯示飲食總結報告彈窗，並於初始化/Hot Restart時強制收起鍵盤
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
+      FocusManager.instance.primaryFocus?.unfocus();
       _checkAndShowDietSummaryDialog();
     });
   } // 程式碼區塊或元件結構結束
@@ -331,6 +334,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         ? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
         : '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
 
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    FocusManager.instance.primaryFocus?.unfocus();
+    FocusScope.of(context).unfocus();
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -341,89 +348,90 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           ),
           backgroundColor: AppColors.background,
           elevation: 10,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 標題與日期
-                Text(
-                  '$dateStr 飲食總結報告',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 標題與日期
+                  Text(
+                    '$dateStr 飲食總結報告',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                
-                // 留出空白區域，位置留大一點 (1.6x of 120 = 192)
-                const SizedBox(height: 192),
-                
-                // 飲食營養素匯總與圓餅圖
-                Container(
-                  padding: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16.0),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // 飲食營養素匯總與圓餅圖
+                  Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildSummaryRow('總熱量攝取', '${calories.toStringAsFixed(0)} kcal', Icons.local_fire_department, AppColors.danger),
+                        const Divider(height: 16, thickness: 0.5),
+                        MacronutrientPieChart(
+                          protein: protein,
+                          fat: fat,
+                          carbs: carbs,
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      _buildSummaryRow('總熱量攝取', '${calories.toStringAsFixed(0)} kcal', Icons.local_fire_department, AppColors.danger),
-                      const Divider(height: 16, thickness: 0.5),
-                      MacronutrientPieChart(
-                        protein: protein,
-                        fat: fat,
-                        carbs: carbs,
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // 精靈評語
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          comment,
-                          style: TextStyle(
-                            fontSize: 13.0,
-                            color: AppColors.textPrimary.withOpacity(0.85),
-                            height: 1.35,
+                  const SizedBox(height: 16),
+                  
+                  // 精靈評語
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            comment,
+                            style: TextStyle(
+                              fontSize: 13.0,
+                              color: AppColors.textPrimary.withOpacity(0.85),
+                              height: 1.35,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // 按鈕區
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.background,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+                      ],
                     ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    '太棒了，我知道了！',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 20),
+                  
+                  // 按鈕區
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      '太棒了，我知道了！',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -561,6 +569,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     });
   }
   void _handleMessage(String text) { // 執行相對應的邏輯計算或設定屬性參數
+    FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
       _messages.add({'isElf': false, 'text': text}); // 執行相對應的邏輯計算或設定屬性參數
@@ -603,7 +612,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             final intent = res['intent_category'] ?? '';
             final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
             if (intent == 'meal_record' && mealRecords.isNotEmpty) {
-              _showMealRecordDraftDialog(context, mealRecords);
+              _showMealRecordDraftDialog(context, mealRecords, userPrompt: text);
             }
           } else {
             _messages.add({
@@ -808,6 +817,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             ), // 執行相對應的邏輯計算或設定屬性參數
           ),
           Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
+            child: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              behavior: HitTestBehavior.opaque,
               child: ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
                 controller: _chatScrollController, // 新增：連結滾動控制器
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 127), // 新增：底部預留 127 像素，防止文字被小精靈 3D 模型遮擋
@@ -819,10 +831,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   } else if (msg['type'] == 'nutrient') { // 執行相對應的邏輯計算或設定屬性參數
                     return _buildNutrientCard(); // 回傳建構完成的元件或方法計算結果
                   } // 程式碼區塊或元件結構結束
-                  return _buildChatMessage(msg['isElf'], msg['text'], options: msg['options']); // 回傳建構完成的元件或方法計算結果
+                  return _buildChatMessage(
+                    msg['isElf'],
+                    msg['text'],
+                    options: msg['options'],
+                  );
                 }, // 程式碼區塊或元件結構結束
               ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
+            ),
+          ),
             SafeArea(
               top: false,
               child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
@@ -887,35 +904,35 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) { // 定義用於重複使用的 UI 封裝建構方法
-    return Align( // 回傳建構完成的元件或方法計算結果
-      alignment: isElf ? Alignment.centerLeft : Alignment.centerRight, // 執行相對應的邏輯計算或設定屬性參數
-      child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-            margin: const EdgeInsets.symmetric(vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75), // 執行相對應的邏輯計算或設定屬性參數
-            decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-              color: isElf ? AppColors.background : AppColors.secondary, // 設定顏色數值（Color）
-              borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
-              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-              border: isElf ? Border.all(color: AppColors.border) : null, // 設定容器的四周邊框線條樣式
-            ), // 執行相對應的邏輯計算或設定屬性參數
-            child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-              crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-              children: [ // 執行相對應的邏輯計算或設定屬性參數
-                Text( // 建立文字顯示元件（Text）
-                  isElf ? _stripEmojis(text) : text, // 執行相對應的邏輯計算或設定屬性參數
+  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) {
+    return Align(
+      alignment: isElf ? Alignment.centerLeft : Alignment.centerRight,
+      child: Column(
+        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            decoration: BoxDecoration(
+              color: isElf ? AppColors.background : AppColors.secondary,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)],
+              border: isElf ? Border.all(color: AppColors.border) : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isElf ? _stripEmojis(text) : text,
                   style: TextStyle(
                     color: isElf ? AppColors.textPrimary : AppColors.background,
                     fontSize: 15,
                     fontWeight: FontWeight.normal,
                     height: 1.4,
-                  ), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                ), // 執行相對應的邏輯計算或設定屬性參數
-                if (isElf && options != null) ...[ // 執行相對應的邏輯計算或設定屬性參數
+                  ),
+                ),
+                if (isElf && options != null) ...[
                   const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   const Divider(height: 1), // 建立編譯期常數，優化 Flutter 渲染效能
                   const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
@@ -1075,8 +1092,34 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     ); // 程式碼區塊或元件結構結束
   }
 
+  DateTime _parseDateFromPrompt(String prompt) {
+    final now = DateTime.now();
+    if (prompt.isEmpty) return now;
+
+    // Matches YYYY/MM/DD, YYYY-MM-DD, YYYY年MM月DD日
+    final regFull = RegExp(r'(\d{4})[/-年](\d{1,2})[/-月](\d{1,2})');
+    final matchFull = regFull.firstMatch(prompt);
+    if (matchFull != null) {
+      final y = int.tryParse(matchFull.group(1)!) ?? now.year;
+      final m = int.tryParse(matchFull.group(2)!) ?? now.month;
+      final d = int.tryParse(matchFull.group(3)!) ?? now.day;
+      return DateTime(y, m, d);
+    }
+
+    // Matches MM/DD, MM-DD, MM月DD日 (e.g. 8/12, 8月12日)
+    final regShort = RegExp(r'(\d{1,2})[/-月](\d{1,2})');
+    final matchShort = regShort.firstMatch(prompt);
+    if (matchShort != null) {
+      final m = int.tryParse(matchShort.group(1)!) ?? now.month;
+      final d = int.tryParse(matchShort.group(2)!) ?? now.day;
+      return DateTime(now.year, m, d);
+    }
+
+    return now;
+  }
+
   /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者自行修正餐期、餐點名稱與數量
-  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords) {
+  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords, {String userPrompt = ''}) {
     // 1. 深拷貝為本地可變狀態，確保使用者修改不影響全域原數據
     final List<Map<String, dynamic>> editableRecords = mealRecords.map((rec) {
       final items = (rec['meal_items'] as List<dynamic>? ?? []).map((item) {
@@ -1099,6 +1142,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       barrierDismissible: false,
       builder: (ctx) {
         bool isSaving = false;
+        DateTime selectedDate = _parseDateFromPrompt(userPrompt);
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -1125,11 +1169,54 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 精簡頂部提示說明
                     const Text(
-                      '陪伴精靈已為您整理出以下飲食草稿啦~\n請確認紀錄是否正確\n修正完畢後，請按下確認儲存',
-                      style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4),
+                      '請核對或修改以下草稿內容：',
+                      style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 12),
+
+                    // 1. 紀錄日期選擇器 (可點擊選擇)
+                    InkWell(
+                      onTap: isSaving
+                          ? null
+                          : () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: selectedDate,
+                                firstDate: DateTime(2023),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                              );
+                              if (picked != null) {
+                                setDialogState(() {
+                                  selectedDate = picked;
+                                });
+                              }
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              '紀錄日期：${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 2. 草稿紀錄卡片 (餐點名稱為主體)
                     ...editableRecords.asMap().entries.map((recEntry) {
                       final recIndex = recEntry.key;
                       final record = recEntry.value;
@@ -1138,161 +1225,140 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: AppColors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // 1. 可編輯餐期：下拉選單 (Dropdown)
-                            Row(
-                              children: [
-                                const Text(
-                                  '餐期：',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: AppColors.secondary,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.background,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: AppColors.border),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: mealPeriodOptions.contains(currentPeriod)
-                                            ? currentPeriod
-                                            : '早餐',
-                                        isExpanded: true,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                        onChanged: isSaving
-                                            ? null
-                                            : (newPeriod) {
-                                                if (newPeriod != null) {
-                                                  setDialogState(() {
-                                                    editableRecords[recIndex]['meal_period'] = newPeriod;
-                                                  });
-                                                }
-                                              },
-                                        items: mealPeriodOptions.map((period) {
-                                          return DropdownMenuItem<String>(
-                                            value: period,
-                                            child: Text(period),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(height: 16),
-
-                            // 2. 餐點品項列表 (可編輯名稱與數量)
                             ...items.asMap().entries.map((itemEntry) {
                               final itemIndex = itemEntry.key;
                               final item = itemEntry.value;
                               final currentQty = item['quantity'] as int;
                               final unitStr = item['unit'].toString();
 
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                child: Row(
-                                  children: [
-                                    // (A) 餐點名稱可編輯輸入框
-                                    Expanded(
-                                      flex: 5,
-                                      child: TextFormField(
-                                        initialValue: item['name'].toString(),
-                                        enabled: !isSaving,
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                                        decoration: InputDecoration(
-                                          isDense: true,
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                          border: OutlineInputBorder(
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // (A) 餐點名稱 (主體 - 醒目淺色背景輸入框)
+                                  TextFormField(
+                                    initialValue: item['name'].toString(),
+                                    enabled: !isSaving,
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    decoration: InputDecoration(
+                                      labelText: '餐點名稱',
+                                      filled: true,
+                                      fillColor: AppColors.background,
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+                                    ),
+                                    onChanged: (val) {
+                                      editableRecords[recIndex]['meal_items'][itemIndex]['name'] = val;
+                                    },
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // (B) 餐別與數量列
+                                  Row(
+                                    children: [
+                                      // 餐別選擇
+                                      Expanded(
+                                        flex: 5,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.background,
                                             borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: AppColors.border),
                                           ),
-                                          hintText: '餐點名稱',
+                                          child: DropdownButtonHideUnderline(
+                                            child: DropdownButton<String>(
+                                              value: mealPeriodOptions.contains(currentPeriod) ? currentPeriod : '早餐',
+                                              isExpanded: true,
+                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                              onChanged: isSaving
+                                                  ? null
+                                                  : (newPeriod) {
+                                                      if (newPeriod != null) {
+                                                        setDialogState(() {
+                                                          editableRecords[recIndex]['meal_period'] = newPeriod;
+                                                        });
+                                                      }
+                                                    },
+                                              items: mealPeriodOptions.map((period) {
+                                                return DropdownMenuItem<String>(
+                                                  value: period,
+                                                  child: Text('餐別: $period'),
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
                                         ),
-                                        onChanged: (val) {
-                                          editableRecords[recIndex]['meal_items'][itemIndex]['name'] = val;
-                                        },
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
+                                      const SizedBox(width: 10),
 
-                                    // (B) 數量可加減計數按鈕 [-] 1 [+]
-                                    Row(
-                                      children: [
-                                        InkWell(
-                                          onTap: (isSaving || currentQty <= 1)
-                                              ? null
-                                              : () {
-                                                  setDialogState(() {
-                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty - 1;
-                                                  });
-                                                },
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: (currentQty <= 1 || isSaving)
-                                                  ? Colors.grey.shade300
-                                                  : AppColors.primary.withOpacity(0.15),
-                                              borderRadius: BorderRadius.circular(6),
+                                      // 數量加減器 [- 1 +] 份
+                                      Row(
+                                        children: [
+                                          InkWell(
+                                            onTap: (isSaving || currentQty <= 1)
+                                                ? null
+                                                : () {
+                                                    setDialogState(() {
+                                                      editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty - 1;
+                                                    });
+                                                  },
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: (currentQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
                                             ),
-                                            child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                                          child: Text(
-                                            '$currentQty',
-                                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                        InkWell(
-                                          onTap: isSaving
-                                              ? null
-                                              : () {
-                                                  setDialogState(() {
-                                                    editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty + 1;
-                                                  });
-                                                },
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(4),
-                                            decoration: BoxDecoration(
-                                              color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
-                                              borderRadius: BorderRadius.circular(6),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                                            child: Text(
+                                              '$currentQty',
+                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                                             ),
-                                            child: const Icon(Icons.add, size: 16, color: AppColors.primary),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 4),
-
-                                    // (C) 單位展示（唯讀）
-                                    Text(
-                                      unitStr,
-                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                    ),
-                                  ],
-                                ),
+                                          InkWell(
+                                            onTap: isSaving
+                                                ? null
+                                                : () {
+                                                    setDialogState(() {
+                                                      editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty + 1;
+                                                    });
+                                                  },
+                                            borderRadius: BorderRadius.circular(6),
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            unitStr,
+                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               );
                             }).toList(),
                           ],
@@ -1304,7 +1370,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               ),
               actions: [
                 TextButton(
-                  onPressed: isSaving ? null : () => Navigator.of(ctx).pop(),
+                  onPressed: isSaving
+                      ? null
+                      : () {
+                          SystemChannels.textInput.invokeMethod('TextInput.hide');
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          Navigator.of(ctx).pop();
+                        },
                   child: const Text('取消', style: TextStyle(color: Colors.grey)),
                 ),
                 ElevatedButton(
@@ -1319,7 +1391,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       : () async {
                           setDialogState(() => isSaving = true);
                           try {
-                            // 🔑 核心儲存邏輯：讀取使用者修正後的最新 editableRecords
                             for (var record in editableRecords) {
                               final mealPeriod = record['meal_period']?.toString() ?? '早餐';
                               final items = record['meal_items'] as List<Map<String, dynamic>>;
@@ -1328,27 +1399,24 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                                 final qty = item['quantity']?.toString() ?? '1';
                                 final unit = item['unit']?.toString() ?? '';
                                 if (name.isNotEmpty) {
-                                  // =========================================================================
-                                  // 🔥【將飲食紀錄傳到後端資料庫的核心 API 呼叫】
-                                  // 呼叫 DietService().createDietRecord(...) 發送 POST /api/diet-records 請求
-                                  // 將使用者最終確認修正後的餐點名稱 (dishName)、餐期 (mealType)、
-                                  // 數量份量 (portions) 與紀錄時間 (mealDate) 持久化存入資料庫中。
-                                  // =========================================================================
                                   await DietService().createDietRecord(
                                     dishName: name,
                                     mealType: mealPeriod,
                                     amount: '$qty $unit'.trim(),
                                     description: '陪伴精靈解析並經使用者核對修正',
-                                    mealDate: DateTime.now(),
+                                    mealDate: selectedDate,
                                   );
                                 }
                               }
                             }
+                            SystemChannels.textInput.invokeMethod('TextInput.hide');
+                            FocusManager.instance.primaryFocus?.unfocus();
                             if (ctx.mounted) Navigator.of(ctx).pop();
                             if (context.mounted) {
+                              FocusScope.of(context).unfocus();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('🎉 飲食紀錄已成功儲存！'),
+                                  content: Text('飲食紀錄已成功儲存！'),
                                   backgroundColor: AppColors.primary,
                                 ),
                               );

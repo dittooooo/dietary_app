@@ -19,10 +19,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
   late String _mealType; // 宣告類別成員或方法內部的區域變數
   final List<TextEditingController> _itemControllers = [TextEditingController()]; // 宣告類別成員或方法內部的區域變數
   final List<TextEditingController> _portionControllers = [TextEditingController(text: '1')];
-  final TextEditingController _caloriesController = TextEditingController();
-  final TextEditingController _proteinController = TextEditingController();
-  final TextEditingController _fatController = TextEditingController();
-  final TextEditingController _carbsController = TextEditingController();
   XFile? _selectedImage; // 執行相對應的邏輯計算或設定屬性參數
   Uint8List? _imageBytes; // 執行相對應的邏輯計算或設定屬性參數
   final ImagePicker _picker = ImagePicker(); // 宣告類別成員或方法內部的區域變數
@@ -151,10 +147,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
 
     try {
       final dishName = items.join(', ');
-      final caloriesText = _caloriesController.text.trim();
-      final proteinText = _proteinController.text.trim();
-      final fatText = _fatController.text.trim();
-      final carbsText = _carbsController.text.trim();
 
       List<String> portions = [];
       for (int i = 0; i < _itemControllers.length; i++) {
@@ -174,21 +166,11 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
       }
       final portionText = portions.join(', ');
 
-      final List<String> nutritionParts = [];
-      if (caloriesText.isNotEmpty) nutritionParts.add('熱量: $caloriesText kcal');
-      if (proteinText.isNotEmpty) nutritionParts.add('蛋白質: $proteinText g');
-      if (fatText.isNotEmpty) nutritionParts.add('脂肪: $fatText g');
-      if (carbsText.isNotEmpty) nutritionParts.add('碳水化合物: $carbsText g');
-      final nutritionString = nutritionParts.isNotEmpty 
-          ? nutritionParts.join(', ') 
-          : '熱量: 0 kcal, 蛋白質: 0 g, 脂肪: 0 g, 碳水化合物: 0 g';
-
       final result = await DietService().createDietRecord(
         dishName: dishName,
         mealType: _mealType,
         amount: portionText.isNotEmpty ? portionText : '1 份',
         description: '手動輸入飲食紀錄',
-        nutrition: nutritionString,
         mealDate: _selectedDate,
       );
 
@@ -221,10 +203,11 @@ class _ManualRecordPageState extends State<ManualRecordPage> { // 定義 _Manual
                   cleanP = pVal.toString();
                 }
               }
+              final double? calVal = recordData != null ? double.tryParse((recordData['calories'] ?? '').toString()) : null;
               elfItems.add({
                 'name': _itemControllers[i].text.trim(),
                 'portion': '${cleanP}份',
-                'calories': caloriesText.isNotEmpty && validIdx == 0 ? '$caloriesText kcal' : '-- kcal',
+                'calories': calVal != null ? '$calVal kcal' : '-- kcal',
               });
               validIdx++;
             }
