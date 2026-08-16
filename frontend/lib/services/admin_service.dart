@@ -123,21 +123,30 @@ class AdminService {
     }
   }
 
-  Future<bool> deleteUser(int id) async {
+  Future<Map<String, dynamic>> deleteUser(int id) async {
     final token = await _token();
-    if (token == null) return false;
+    if (token == null) {
+      return {'success': false, 'message': '請重新登入'};
+    }
 
     try {
       final response = await _client.delete(
         '/admin/users/$id',
         headers: {'Authorization': 'Bearer $token'},
       );
-      return response.statusCode == 200 || response.statusCode == 204;
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return {'success': true};
+      }
+
+      final data = _decodeMap(response.body);
+      final msg = data['message'] ?? data['error'] ?? '刪除失敗 (HTTP ${response.statusCode})';
+      return {'success': false, 'message': msg};
     } catch (e) {
-      print('Delete user failed: $e');
-      return false;
+      return {'success': false, 'message': '刪除請求失敗: $e'};
     }
   }
+
 
   Future<List<dynamic>> listRestaurants({String? name}) async {
     return [];

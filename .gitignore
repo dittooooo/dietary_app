@@ -14,3 +14,9 @@ graphRag/workspace/cache/
 graphRag/workspace/data/neo4J/
 graphRag/workspace/src/nutrition_agent_v2/test_area/output/
 *.dump
+
+# Local automation scripts
+start_backends.bat
+start_backends.ps1
+start_backends.*
+

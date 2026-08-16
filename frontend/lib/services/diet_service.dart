@@ -542,33 +542,44 @@ class DietService {
     }
 
     final token = await _token();
-    try {
-      final response = await _client.post(
-        '${ApiConfig.companionBaseUrl}/companion/ask',
-        {'user_prompt': normalizedPrompt},
-        headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-      );
+    final candidateUrls = ApiConfig.companionCandidateBaseUrls;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    Object? lastError;
+    for (final baseUrl in candidateUrls) {
+      try {
+        final response = await _client.post(
+          '$baseUrl/companion/ask',
+          {'user_prompt': normalizedPrompt},
+          headers: {
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return {
+            'success': data['success'] ?? true,
+            'companion_reply': data['companion_reply'] ?? '',
+            'intent_category': data['intent_category'] ?? 'general',
+            'meal_records': data['meal_records'] ?? [],
+            'dietary_agent_error': data['dietary_agent_error'],
+            'data': data,
+          };
+        }
+        
+        // 若 Http Status 非 200 但能連通，保留錯誤訊息
         return {
-          'success': data['success'] ?? true,
-          'companion_reply': data['companion_reply'] ?? '',
-          'intent_category': data['intent_category'] ?? 'general',
-          'meal_records': data['meal_records'] ?? [],
-          'dietary_agent_error': data['dietary_agent_error'],
-          'data': data,
+          'success': false,
+          'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
         };
+      } catch (e) {
+        lastError = e;
+        // 連線拒絕 (SocketException) 或逾時，自動切換至下一個候選 URL (如 10.0.2.2 或 127.0.0.1)
+        continue;
       }
-
-      return {
-        'success': false,
-        'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
-      };
-    } catch (e) {
-      return {'success': false, 'message': 'Send companion prompt failed: $e'};
     }
+
+    return {'success': false, 'message': 'Send companion prompt failed: $lastError'};
   }
 }
+

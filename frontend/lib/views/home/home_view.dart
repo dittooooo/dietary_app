@@ -78,7 +78,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
         {
           'isElf': true, 
-          'text': '嗨 $_userNickname！我是您的$_petType助理。\n在下方輸入餐點時，請遵循以下規則，我才能給出精準的建議：\n1. 避免抽象名稱（例如：午餐、家常菜）\n2. 抽象餐點稍微翻譯一下餐點（抽象餐點例如：冷露歐蕾)\n3. 建議說明大致份量（例如：排骨飯一盒）'
+          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'
         }, // 執行相對應的邏輯計算或設定屬性參數
       ]; // 程式碼區塊或元件結構結束
     }); // 程式碼區塊或元件結構結束
@@ -98,7 +98,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         _dietGoal = g; // 執行相對應的邏輯計算或設定屬性參數
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-          _messages[0]['text'] = '嗨 $_userNickname！我是您的$_petType助理。\n在下方輸入餐點時，請遵循以下規則，我才能給出精準的建議：\n1. 避免抽象名稱（例如：午餐、家常菜）\n2. 抽象餐點稍微翻譯一下餐點（抽象餐點例如：冷露歐蕾)\n3. 建議說明大致份量（例如：排骨飯一盒）'; // 執行相對應的邏輯計算或設定屬性參數
+          _messages[0]['text'] = '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'; // 執行相對應的邏輯計算或設定屬性參數
         } // 程式碼區塊或元件結構結束
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束

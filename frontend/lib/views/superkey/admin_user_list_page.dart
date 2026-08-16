@@ -164,16 +164,18 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 Navigator.of(context).pop(); // 關閉對話框
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
                 
-                final success = await AdminService().deleteUser(userId);
+                final res = await AdminService().deleteUser(userId);
                 
                 if (mounted) {
-                  if (success) {
+                  if (res['success'] == true) {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已成功刪除使用者：$name')));
                     _fetchUsers(); // 重新整理清單
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('刪除失敗，請檢查權限')));
+                    final String msg = res['message'] ?? '刪除失敗';
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                   }
                 }
+
               }, // 程式碼區塊或元件結構結束
               child: const Text('確認刪除', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
             ), // 執行相對應的邏輯計算或設定屬性參數
