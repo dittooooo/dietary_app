@@ -16,7 +16,8 @@ public class BodyMetricsService {
     public void recalculateAndApply(UserProfile profile) {
         validateRequiredProfileData(profile);
 
-        double bmr = calculateBmr(profile.getGender(), profile.getWeight(), profile.getHeight(), profile.getAge());
+        Integer age = AgeCalculator.calculateAge(profile.getBirthDate(), profile.getAge());
+        double bmr = calculateBmr(profile.getGender(), profile.getWeight(), profile.getHeight(), age);
         double tdee = bmr * ACTIVITY_FACTOR;
 
         profile.setBmr(bmr);
@@ -126,7 +127,8 @@ public class BodyMetricsService {
         if (profile == null) {
             throw new IllegalArgumentException("找不到使用者個人資料，無法計算身體數據");
         }
-        calculateBmr(profile.getGender(), profile.getWeight(), profile.getHeight(), profile.getAge());
+        Integer age = AgeCalculator.calculateAge(profile.getBirthDate(), profile.getAge());
+        calculateBmr(profile.getGender(), profile.getWeight(), profile.getHeight(), age);
     }
 
     private String normalizeGender(String gender) {

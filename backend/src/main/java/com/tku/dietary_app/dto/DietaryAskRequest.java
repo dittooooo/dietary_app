@@ -1,7 +1,7 @@
 package com.tku.dietary_app.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -46,6 +46,9 @@ public class DietaryAskRequest {
 
         private String gender;
         private Integer age;
+
+        @JsonProperty("diet_goal")
+        private String dietGoal;
     }
 
     @Data
@@ -62,12 +65,36 @@ public class DietaryAskRequest {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class WeeklyDietRecordDto {
         private LocalDate date;
-        private String meal;
 
+        @JsonProperty("record")
+        private List<WeeklyMealRecordDto> record;
+    }
+
+    @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class WeeklyMealRecordDto {
         @JsonProperty("dish_name")
         private String dishName;
 
+        @JsonProperty("meal_type")
+        private String mealType;
+
+        private NutritionDto nutrition;
+
+        @NotNull(message = "amount 為必填")
+        @Positive(message = "amount 必須大於 0")
+        private Integer amount;
+
         private String note;
+    }
+
+    @Data
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class NutritionDto {
+        private Double calories;
+        private Double protein;
+        private Double fat;
+        private Double carbohydrates;
     }
 
     @Data

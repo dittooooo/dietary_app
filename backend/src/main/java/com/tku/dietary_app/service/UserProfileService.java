@@ -30,7 +30,8 @@ public class UserProfileService {
 
         userProfile.setNickname(request.getNickname());
         userProfile.setGender(request.getGender());
-        userProfile.setAge(request.getAge());
+        userProfile.setBirthDate(request.getBirthDate());
+        userProfile.setAge(AgeCalculator.calculateAge(request.getBirthDate()));
         userProfile.setHeight(request.getHeight());
         userProfile.setWeight(request.getWeight());
         userProfile.setHealthConditions(String.join(",", request.getHealthConditions()));

@@ -22,6 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/diet-records")
@@ -49,12 +53,23 @@ public class DietRecordController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> create(@RequestBody DietRecordRequest request) {
+    public ResponseEntity<ApiResponse<?>> create(@RequestBody Object requestBody) {
         User user = getLoginUser();
-        return ResponseEntity.ok(ApiResponse.success(
-                "飲食紀錄建立成功",
-                DietRecordResponse.fromEntity(dietRecordService.create(user.getId(), request))
-        ));
+        List<DietRecordRequest> requests = parseCreateRequests(requestBody);
+        if (requests.isEmpty()) {
+            throw new IllegalArgumentException("dish_info_list 至少需要一筆");
+        }
+
+        List<DietRecordResponse> createdRecords = new ArrayList<>();
+        for (DietRecordRequest request : requests) {
+            createdRecords.add(DietRecordResponse.fromEntity(dietRecordService.create(user.getId(), request)));
+        }
+
+        if (createdRecords.size() == 1) {
+            return ResponseEntity.ok(ApiResponse.success("飲食紀錄建立成功", createdRecords.get(0)));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("飲食紀錄建立成功", createdRecords));
     }
 
     @PutMapping("/{id}")
@@ -80,5 +95,78 @@ public class DietRecordController {
                 "照片上傳成功",
                 dietRecordService.savePhoto(id, user.getId(), file)
         ));
+    }
+
+    private List<DietRecordRequest> parseCreateRequests(Object requestBody) {
+        if (requestBody == null) {
+            throw new IllegalArgumentException("請提供飲食紀錄資料");
+        }
+
+        if (requestBody instanceof List<?> list) {
+            List<DietRecordRequest> requests = new ArrayList<>();
+            for (Object item : list) {
+                requests.add(parseSingleRequest((Map<?, ?>) item));
+            }
+            return requests;
+        }
+
+        if (requestBody instanceof Map<?, ?> map) {
+            Object dishInfoList = map.get("dish_info_list");
+            if (dishInfoList instanceof List<?> list) {
+                List<DietRecordRequest> requests = new ArrayList<>();
+                for (Object item : list) {
+                    requests.add(parseSingleRequest((Map<?, ?>) item));
+                }
+                return requests;
+            }
+            return List.of(parseSingleRequest(map));
+        }
+
+        throw new IllegalArgumentException("請提供正確的飲食紀錄資料格式");
+    }
+
+    private DietRecordRequest parseSingleRequest(Map<?, ?> item) {
+        if (item == null) {
+            throw new IllegalArgumentException("飲食紀錄資料不可為空");
+        }
+
+        DietRecordRequest request = new DietRecordRequest();
+        request.setDishName(readText(item, "dish_name", "dishName"));
+        request.setCalories(readDouble(item, "calories"));
+        request.setProtein(readDouble(item, "protein"));
+        request.setFat(readDouble(item, "fat"));
+        request.setCarbohydrates(readDouble(item, "carbohydrates"));
+        String recordDateText = readText(item, "record_date", "date");
+        request.setDate(recordDateText == null ? null : LocalDate.parse(recordDateText));
+        request.setDescription(readText(item, "description"));
+        request.setMealType(readText(item, "meal_type", "mealType"));
+        request.setAmount(readInteger(item, "amount"));
+        return request;
+    }
+
+    private String readText(Map<?, ?> map, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            Object value = map.get(fieldName);
+            if (value != null && !(value instanceof String str && str.isBlank()) && !value.toString().isBlank()) {
+                return value.toString();
+            }
+        }
+        return null;
+    }
+
+    private Double readDouble(Map<?, ?> map, String fieldName) {
+        Object value = map.get(fieldName);
+        if (value == null || value.toString().isBlank()) {
+            return null;
+        }
+        return Double.parseDouble(value.toString());
+    }
+
+    private Integer readInteger(Map<?, ?> map, String fieldName) {
+        Object value = map.get(fieldName);
+        if (value == null || value.toString().isBlank()) {
+            return null;
+        }
+        return Integer.parseInt(value.toString());
     }
 }

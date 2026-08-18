@@ -2,6 +2,7 @@ package com.tku.dietary_app.controller;
 
 import com.tku.dietary_app.config.JwtAuthenticationFilter;
 import com.tku.dietary_app.config.SecurityConfig;
+import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.FileValidationException;
@@ -123,6 +124,52 @@ class ApiSecurityAndExceptionTest {
     }
 
     @Test
+    void dietRecordCreateAcceptsDishInfoListPayload() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietRecordService.create(eq(1L), any())).thenAnswer(invocation -> {
+            var request = invocation.getArgument(1, com.tku.dietary_app.dto.DietRecordRequest.class);
+            return DietRecord.builder()
+                    .id(10L)
+                    .user(loginUser)
+                    .dishName(request.getDishName())
+                    .date(request.getDate())
+                    .description(request.getDescription())
+                    .mealType(request.getMealType())
+                    .amount(request.getAmount() == null ? 1 : request.getAmount())
+                    .build();
+        });
+
+        mockMvc.perform(post("/api/diet-records")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dish_info_list": [
+                                    {
+                                      "dish_name": "雞胸肉",
+                                      "amount": 1,
+                                      "meal_type": "LUNCH",
+                                      "record_date": "2026-08-18",
+                                      "description": "午餐"
+                                    },
+                                    {
+                                      "dish_name": "白飯",
+                                      "amount": 2,
+                                      "meal_type": "LUNCH",
+                                      "record_date": "2026-08-18",
+                                      "description": "主食"
+                                    }
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].dishName").value("雞胸肉"))
+                .andExpect(jsonPath("$.data[1].dishName").value("白飯"));
+    }
+
+    @Test
     void dietRecordForbiddenOperationMapsTo403() throws Exception {
         User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
@@ -175,7 +222,7 @@ class ApiSecurityAndExceptionTest {
     }
 
     @Test
-    void dietaryAgentAskAcceptsDishInfoList() throws Exception {
+    void dietaryAgentAskAcceptsDishInfoListAndNestedRecords() throws Exception {
         User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
         when(dietaryAgentService.ask(eq(1L), any())).thenReturn(Map.of("answer", "ok"));
@@ -186,15 +233,39 @@ class ApiSecurityAndExceptionTest {
                         .content("""
                                 {
                                   "question": "這餐可以嗎？",
-                                  "question_type": "diet_advice",
+                                  "question_type": "single_dish",
                                   "dish_info_list": [
+                                    {"dish_name": "雞胸肉", "amount": 1},
+                                    {"dish_name": "白飯", "amount": 2}
+                                  ],
+                                  "user_profile": {
+                                    "height_cm": 170,
+                                    "weight_kg": 65,
+                                    "gender": "MALE",
+                                    "age": 25,
+                                    "diet_goal": "maintain"
+                                  },
+                                  "health_condition": {
+                                    "has_chronic_disease": false,
+                                    "chronic_diseases": []
+                                  },
+                                  "weekly_diet_records": [
                                     {
-                                      "dish_name": "雞胸肉",
-                                      "amount": 1
-                                    },
-                                    {
-                                      "dish_name": "白飯",
-                                      "amount": 2
+                                      "date": "2026-08-18",
+                                      "record": [
+                                        {
+                                          "dish_name": "雞胸肉",
+                                          "meal_type": "LUNCH",
+                                          "nutrition": {
+                                            "calories": 350.0,
+                                            "protein": 30.0,
+                                            "fat": 8.0,
+                                            "carbohydrates": 25.0
+                                          },
+                                          "amount": 1,
+                                          "note": "低油"
+                                        }
+                                      ]
                                     }
                                   ]
                                 }

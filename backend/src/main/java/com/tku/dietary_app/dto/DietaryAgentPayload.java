@@ -35,7 +35,7 @@ public class DietaryAgentPayload {
     @Data
     @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age"})
+    @JsonPropertyOrder({"height_cm", "weight_kg", "gender", "age", "diet_goal"})
     public static class UserProfileDto {
         @JsonProperty("height_cm")
         private Double heightCm;
@@ -45,6 +45,9 @@ public class DietaryAgentPayload {
 
         private String gender;
         private Integer age;
+
+        @JsonProperty("diet_goal")
+        private String dietGoal;
     }
 
     @Data

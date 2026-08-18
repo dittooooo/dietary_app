@@ -80,18 +80,21 @@ public class DietaryAgentService {
     }
 
     private DietaryAgentPayload buildPayload(Long userId, DietaryAskRequest request, UserProfile userProfile) {
+        Integer resolvedAge = AgeCalculator.calculateAge(userProfile.getBirthDate(), userProfile.getAge());
         DietaryAgentPayload.UserProfileDto userProfileDto = request.getUserProfile() != null
                 ? DietaryAgentPayload.UserProfileDto.builder()
                 .heightCm(request.getUserProfile().getHeightCm())
                 .weightKg(request.getUserProfile().getWeightKg())
                 .gender(request.getUserProfile().getGender())
-                .age(request.getUserProfile().getAge())
+                .age(request.getUserProfile().getAge() != null ? request.getUserProfile().getAge() : resolvedAge)
+                .dietGoal(request.getUserProfile().getDietGoal())
                 .build()
                 : DietaryAgentPayload.UserProfileDto.builder()
                 .heightCm(userProfile.getHeight())
                 .weightKg(userProfile.getWeight())
                 .gender(userProfile.getGender())
-                .age(userProfile.getAge())
+                .age(resolvedAge)
+                .dietGoal(userProfile.getDietGoal())
                 .build();
 
         HealthConditionDto healthConditionDto = request.getHealthCondition() != null
@@ -102,17 +105,12 @@ public class DietaryAgentService {
                 : buildHealthConditionDto(userProfile);
 
         List<WeeklyDietRecordDto> weeklyDietRecords = request.getWeeklyDietRecords() != null
-                ? request.getWeeklyDietRecords().stream()
-                .map(record -> WeeklyDietRecordDto.builder()
-                        .date(record.getDate())
-                        .meal(record.getMeal())
-                        .dishName(record.getDishName())
-                        .note(record.getNote())
-                        .build())
-                .collect(Collectors.toList())
+                ? flattenWeeklyDietRecords(request.getWeeklyDietRecords())
                 : fetchWeeklyDietRecords(userId);
 
-        List<DishInfoDto> dishInfoList = request.getDishInfoList().stream()
+        List<DishInfoDto> dishInfoList = request.getDishInfoList() == null
+                ? List.of()
+                : request.getDishInfoList().stream()
                 .map(dish -> DishInfoDto.builder()
                         .dishName(dish.getDishName())
                         .amount(dish.getAmount())
@@ -127,6 +125,28 @@ public class DietaryAgentService {
                 .healthCondition(healthConditionDto)
                 .weeklyDietRecords(weeklyDietRecords)
                 .build();
+    }
+
+    private List<WeeklyDietRecordDto> flattenWeeklyDietRecords(List<DietaryAskRequest.WeeklyDietRecordDto> records) {
+        if (records == null || records.isEmpty()) {
+            return List.of();
+        }
+
+        List<WeeklyDietRecordDto> flattened = new ArrayList<>();
+        for (DietaryAskRequest.WeeklyDietRecordDto weeklyRecord : records) {
+            if (weeklyRecord == null || weeklyRecord.getRecord() == null || weeklyRecord.getRecord().isEmpty()) {
+                continue;
+            }
+            for (DietaryAskRequest.WeeklyMealRecordDto mealRecord : weeklyRecord.getRecord()) {
+                flattened.add(WeeklyDietRecordDto.builder()
+                        .date(weeklyRecord.getDate())
+                        .meal(mealRecord.getMealType())
+                        .dishName(mealRecord.getDishName())
+                        .note(mealRecord.getNote())
+                        .build());
+            }
+        }
+        return flattened;
     }
 
     private HealthConditionDto buildHealthConditionDto(UserProfile userProfile) {
