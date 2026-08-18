@@ -60,7 +60,8 @@ public class AdminService {
                 .user(savedUser)
                 .nickname(request.getName().trim())
                 .gender(request.getGender().trim())
-                .age(request.getAge())
+                .birthDate(request.getBirthDate())
+                .age(AgeCalculator.calculateAge(request.getBirthDate()))
                 .height(request.getHeight())
                 .weight(request.getWeight())
                 .healthConditions(request.getSpecialDisease().trim())
@@ -81,7 +82,8 @@ public class AdminService {
 
         profile.setNickname(request.getName().trim());
         profile.setGender(request.getGender().trim());
-        profile.setAge(request.getAge());
+        profile.setBirthDate(request.getBirthDate());
+        profile.setAge(AgeCalculator.calculateAge(request.getBirthDate(), profile.getAge()));
         profile.setHeight(request.getHeight());
         profile.setWeight(request.getWeight());
         profile.setHealthConditions(request.getSpecialDisease().trim());

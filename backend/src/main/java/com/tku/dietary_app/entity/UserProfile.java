@@ -1,5 +1,6 @@
 package com.tku.dietary_app.entity;
 
+import com.tku.dietary_app.service.AgeCalculator;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +44,9 @@ public class UserProfile {
 
     @Column(nullable = false)
     private String gender;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
     @Column(nullable = false)
     private Integer age;
@@ -96,7 +101,11 @@ public class UserProfile {
     private LocalDateTime updatedAt;
 
     @PrePersist
+    @PreUpdate
     void applyBodyStatusDefaults() {
+        if (birthDate != null) {
+            age = AgeCalculator.calculateAge(birthDate);
+        }
         if (bodyScore == null) {
             bodyScore = 50;
         }

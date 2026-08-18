@@ -1,6 +1,7 @@
 package com.tku.dietary_app.dto;
 
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.service.AgeCalculator;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -48,7 +49,7 @@ public class UserProfileResponse {
                 .hasCompletedOnboarding(profile.getUser() == null ? null : profile.getUser().getHasCompletedOnboarding())
                 .nickname(profile.getNickname())
                 .gender(profile.getGender())
-                .age(profile.getAge())
+                .age(AgeCalculator.calculateAge(profile.getBirthDate(), profile.getAge()))
                 .height(profile.getHeight())
                 .weight(profile.getWeight())
                 .healthConditions(splitHealthConditions(profile.getHealthConditions()))
