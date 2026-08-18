@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -17,9 +18,8 @@ public class OnboardingRequest {
     @NotBlank(message = "gender 為必填欄位")
     private String gender;
 
-    @NotNull(message = "age 為必填欄位")
-    @Min(value = 1, message = "age 必須大於 0")
-    private Integer age;
+    @NotNull(message = "birthDate 為必填欄位")
+    private LocalDate birthDate;
 
     @NotNull(message = "height 為必填欄位")
     @Min(value = 1, message = "height 必須大於 0")

@@ -9,6 +9,8 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class AdminUserRequest {
     @NotBlank(message = "email 為必填欄位")
@@ -30,9 +32,8 @@ public class AdminUserRequest {
     @Size(max = 20, message = "gender 長度不可超過 20")
     private String gender;
 
-    @NotNull(message = "age 為必填欄位")
-    @Min(value = 1, message = "age 必須大於 0")
-    private Integer age;
+    @NotNull(message = "birthDate 為必填欄位")
+    private LocalDate birthDate;
 
     @NotNull(message = "height 為必填欄位")
     @DecimalMin(value = "0.1", message = "height 必須大於 0")

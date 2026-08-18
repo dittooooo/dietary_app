@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,7 +110,7 @@ class AdminServiceTest {
         request.setRole("ADMIN");
         request.setName("Admin");
         request.setGender("female");
-        request.setAge(25);
+        request.setBirthDate(LocalDate.of(1999, 5, 13));
         request.setHeight(165.0);
         request.setWeight(55.0);
         request.setSpecialDisease("none");
