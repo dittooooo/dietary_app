@@ -100,6 +100,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0.0;
+
+    if (record['calories'] != null) {
+      final val = double.tryParse(record['calories'].toString());
+      if (val != null && val > 0) return val;
+    }
     
     final nutrition = record['nutrition'];
     if (nutrition != null) {
@@ -145,13 +150,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       if (val != null) return val;
     }
 
-    return dishName.toString().trim().isNotEmpty ? 400.0 : 0.0;
+    return dishName.toString().trim().isNotEmpty ? 380.0 : 0.0;
   }
 
   double _getNutrientFromRecord(dynamic record, String pattern) {
     if (record == null) return 0.0;
-    final nutrition = record['nutrition'];
-    if (nutrition == null) return 0.0;
 
     String englishKey = '';
     if (pattern.contains('蛋白質') || pattern.contains('protein')) {
@@ -161,6 +164,14 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     } else if (pattern.contains('碳水') || pattern.contains('carbohydrate') || pattern.contains('carb')) {
       englishKey = 'carbohydrates';
     }
+
+    if (englishKey.isNotEmpty && record[englishKey] != null) {
+      final val = double.tryParse(record[englishKey].toString());
+      if (val != null && val > 0) return val;
+    }
+
+    final nutrition = record['nutrition'];
+    if (nutrition == null) return 0.0;
 
     if (nutrition is Map) {
       if (englishKey.isNotEmpty) {

@@ -80,19 +80,32 @@ class ProfileValueMapper {
     return defaultPetTypeDisplay;
   }
 
+  static String genderToApi(String? value) {
+    final normalized = (value ?? '').trim();
+    if (normalized == '女' || normalized.toUpperCase() == 'FEMALE') {
+      return 'FEMALE';
+    }
+    return 'MALE';
+  }
+
   static String healthConditionToApi(String? value) {
     final normalized = (value ?? '').trim();
     final upper = normalized.toUpperCase();
 
-    if (upper == 'DIABETES' || normalized.contains('糖尿')) {
-      return 'DIABETES';
-    }
-    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) {
-      return 'HYPERTENSION';
-    }
+    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) return 'HYPERTENSION';
+    if (upper == 'HYPERLIPIDEMIA' || normalized.contains('高血脂')) return 'HYPERLIPIDEMIA';
+    if (upper == 'DIABETES' || normalized.contains('糖尿')) return 'DIABETES';
+    if (upper == 'CARDIOVASCULAR' || normalized.contains('心血管')) return 'CARDIOVASCULAR';
+    if (upper == 'KIDNEY_DISEASE' || normalized.contains('腎臟')) return 'KIDNEY_DISEASE';
+    if (upper == 'STROKE' || normalized.contains('中風')) return 'STROKE';
+    if (upper == 'METABOLIC_SYNDROME' || normalized.contains('代謝症候群')) return 'METABOLIC_SYNDROME';
+    if (upper == 'GOUT' || normalized.contains('痛風')) return 'GOUT';
+    if (upper == 'HYPERURICEMIA' || normalized.contains('高尿酸')) return 'HYPERURICEMIA';
+    if (upper == 'GERD' || normalized.contains('胃食道逆流')) return 'GERD';
     if (upper == 'NONE' ||
         normalized == '無' ||
         normalized.contains('無特殊疾病') ||
+        normalized.contains('無疾病') ||
         normalized.toLowerCase() == 'none') {
       return 'NONE';
     }
@@ -104,20 +117,25 @@ class ProfileValueMapper {
     final normalized = (value ?? '').trim();
     final upper = normalized.toUpperCase();
 
-    if (upper == 'DIABETES' || normalized.contains('糖尿')) {
-      return '糖尿病';
-    }
-    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) {
-      return '高血壓';
-    }
+    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) return '高血壓';
+    if (upper == 'HYPERLIPIDEMIA' || normalized.contains('高血脂')) return '高血脂';
+    if (upper == 'DIABETES' || normalized.contains('糖尿')) return '糖尿病';
+    if (upper == 'CARDIOVASCULAR' || normalized.contains('心血管')) return '心血管疾病';
+    if (upper == 'KIDNEY_DISEASE' || normalized.contains('腎臟')) return '慢性腎臟病';
+    if (upper == 'STROKE' || normalized.contains('中風')) return '腦中風';
+    if (upper == 'METABOLIC_SYNDROME' || normalized.contains('代謝症候群')) return '代謝症候群';
+    if (upper == 'GOUT' || normalized.contains('痛風')) return '痛風';
+    if (upper == 'HYPERURICEMIA' || normalized.contains('高尿酸')) return '高尿酸血症';
+    if (upper == 'GERD' || normalized.contains('胃食道逆流')) return '胃食道逆流';
     if (upper == 'NONE' ||
         normalized == '無' ||
         normalized.contains('無特殊疾病') ||
+        normalized.contains('無疾病') ||
         normalized.toLowerCase() == 'none') {
-      return '無特殊疾病';
+      return '無疾病';
     }
 
-    return normalized.isNotEmpty ? normalized : '無特殊疾病';
+    return normalized.isNotEmpty ? normalized : '無疾病';
   }
 
   static List<String> healthConditionsToApi(Iterable<dynamic> values) {
@@ -144,7 +162,7 @@ class ProfileValueMapper {
         .where((item) => item.isNotEmpty)
         .toSet();
 
-    return values.isEmpty ? {'無特殊疾病'} : values;
+    return values.isEmpty ? {'無疾病'} : values;
   }
 
   static Set<String> dietGoalsToDisplaySet(dynamic value) {

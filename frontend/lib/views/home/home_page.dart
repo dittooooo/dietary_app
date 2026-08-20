@@ -29,63 +29,62 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
     _checkAdminRole(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
 
-  Future<void> _checkAdminRole() async { // 定義非同步方法（Future），執行耗時操作
-    // 1. 先嘗試從本地快取讀取，立即改變 UI
-    final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
-    final cachedRole = prefs.getString('user_role'); // 宣告類別成員或方法內部的區域變數
-    if (cachedRole == 'ROLE_ADMIN') { // 執行相對應的邏輯計算或設定屬性參數
-      _applyAdminConfig(); // 執行相對應的邏輯計算或設定屬性參數
-    } else { // 程式碼區塊或元件結構結束
-      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-        setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-          _isAdmin = false; // 執行相對應的邏輯計算或設定屬性參數
-          _pages = [ // 執行相對應的邏輯計算或設定屬性參數
-            HomeView(initialOpenChat: widget.showChat), // 執行相對應的邏輯計算或設定屬性參數
-            const DietaryRecordPage(), // 建立編譯期常數，優化 Flutter 渲染效能
-            const ProfilePage(), // 建立編譯期常數，優化 Flutter 渲染效能
-          ]; // 程式碼區塊或元件結構結束
-          _isRoleChecked = true; // 執行相對應的邏輯計算或設定屬性參數
-        }); // 程式碼區塊或元件結構結束
-      } // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
+  Future<void> _checkAdminRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedRole = prefs.getString('user_role');
+    final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
 
-    // 2. 向後端確認最新狀態，確保資料同步
-    final result = await AuthService().getUserProfile(); // 宣告類別成員或方法內部的區域變數
-    if (mounted && result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-      final data = result['data']; // 宣告類別成員或方法內部的區域變數
-      final String? role = data?['user']?['role'] ?? data?['role']; // 宣告類別成員或方法內部的區域變數
-      if (role == 'ROLE_ADMIN') { // 執行相對應的邏輯計算或設定屬性參數
-        if (cachedRole != 'ROLE_ADMIN') { // 執行相對應的邏輯計算或設定屬性參數
-          await prefs.setString('user_role', 'ROLE_ADMIN'); // 執行相對應的邏輯計算或設定屬性參數
-          _applyAdminConfig(); // 執行相對應的邏輯計算或設定屬性參數
-        } // 程式碼區塊或元件結構結束
-      } else { // 程式碼區塊或元件結構結束
-        if (cachedRole == 'ROLE_ADMIN') { // 執行相對應的邏輯計算或設定屬性參數
-          await prefs.remove('user_role'); // 執行相對應的邏輯計算或設定屬性參數
-          setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-            _isAdmin = false; // 執行相對應的邏輯計算或設定屬性參數
-            _selectedIndex = 0; // 執行相對應的邏輯計算或設定屬性參數
-            _pages = [ // 執行相對應的邏輯計算或設定屬性參數
-              HomeView(initialOpenChat: widget.showChat), // 執行相對應的邏輯計算或設定屬性參數
-              const DietaryRecordPage(), // 建立編譯期常數，優化 Flutter 渲染效能
-              const ProfilePage(), // 建立編譯期常數，優化 Flutter 渲染效能
-            ]; // 程式碼區塊或元件結構結束
-            _isRoleChecked = true; // 執行相對應的邏輯計算或設定屬性參數
-          }); // 程式碼區塊或元件結構結束
-        } // 程式碼區塊或元件結構結束
-      } // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+    final bool isCachedAdmin = (cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN') ||
+        (cachedEmail == 'admin@gmail.com');
 
-  void _applyAdminConfig() { // 執行相對應的邏輯計算或設定屬性參數
-    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-      _isAdmin = true; // 執行相對應的邏輯計算或設定屬性參數
-      _selectedIndex = 0; // 管理員只有一頁，索引強制為 0
-      _pages = [ // 執行相對應的邏輯計算或設定屬性參數
-        const ProfilePage(returnIndex: 0), // 建立編譯期常數，優化 Flutter 渲染效能
-      ]; // 程式碼區塊或元件結構結束
-      _isRoleChecked = true; // 執行相對應的邏輯計算或設定屬性參數
-    }); // 程式碼區塊或元件結構結束
+    if (isCachedAdmin) {
+      _applyAdminConfig();
+    } else {
+      _applyUserConfig();
+    }
+
+    final result = await AuthService().getUserProfile();
+    if (mounted && result['success'] == true) {
+      final data = result['data'];
+      final String? role = data?['user']?['role'] ?? data?['role'];
+      final String? email = (data?['email'] ?? data?['user']?['email'] ?? cachedEmail)?.toString().trim().toLowerCase();
+      final bool isBackendAdmin = role == 'ROLE_ADMIN' ||
+          role == 'ADMIN' ||
+          (email == 'admin@gmail.com');
+
+      if (isBackendAdmin) {
+        await prefs.setString('user_role', 'ROLE_ADMIN');
+        _applyAdminConfig();
+      } else {
+        await prefs.setString('user_role', 'ROLE_USER');
+        _applyUserConfig();
+      }
+    }
+  }
+
+  void _applyUserConfig() {
+    if (mounted) {
+      setState(() {
+        _isAdmin = false;
+        _pages = [
+          HomeView(initialOpenChat: widget.showChat),
+          const DietaryRecordPage(),
+          const ProfilePage(),
+        ];
+        _isRoleChecked = true;
+      });
+    }
+  }
+
+  void _applyAdminConfig() {
+    setState(() {
+      _isAdmin = true;
+      _selectedIndex = 0;
+      _pages = [
+        const ProfilePage(returnIndex: 0),
+      ];
+      _isRoleChecked = true;
+    });
   } // 程式碼區塊或元件結構結束
 
   void _onItemTapped(int index) { // 執行相對應的邏輯計算或設定屬性參數

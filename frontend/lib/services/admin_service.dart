@@ -130,6 +130,19 @@ class AdminService {
     }
 
     try {
+      // 1. 自動先清理該使用者的飲食紀錄關聯
+      final records = await listDietRecords(userId: id);
+      for (final rec in records) {
+        final recId = rec['id'];
+        if (recId != null) {
+          final int? rId = recId is int ? recId : int.tryParse(recId.toString());
+          if (rId != null) {
+            await deleteDietRecord(rId);
+          }
+        }
+      }
+
+      // 2. 執行刪除使用者請求
       final response = await _client.delete(
         '/admin/users/$id',
         headers: {'Authorization': 'Bearer $token'},
@@ -140,10 +153,18 @@ class AdminService {
       }
 
       final data = _decodeMap(response.body);
-      final msg = data['message'] ?? data['error'] ?? '刪除失敗 (HTTP ${response.statusCode})';
-      return {'success': false, 'message': msg};
+      final rawMsg = (data['message'] ?? data['error'] ?? '').toString();
+      
+      String userFriendlyMsg = '刪除失敗 (HTTP ${response.statusCode})';
+      if (rawMsg.contains('violates foreign key constraint') || rawMsg.contains('diet_records') || rawMsg.contains('could not execute statement')) {
+        userFriendlyMsg = '刪除失敗：該使用者仍有關聯資料約束，無法直刪除。';
+      } else if (rawMsg.isNotEmpty) {
+        userFriendlyMsg = rawMsg;
+      }
+
+      return {'success': false, 'message': userFriendlyMsg};
     } catch (e) {
-      return {'success': false, 'message': '刪除請求失敗: $e'};
+      return {'success': false, 'message': '刪除請求失敗，請稍後再試'};
     }
   }
 
@@ -199,6 +220,7 @@ class AdminService {
   }
 
   Future<List<dynamic>> listDietRecords({
+    int? userId,
     String? nickname,
     String? dishName,
     String? mealType,
@@ -208,6 +230,9 @@ class AdminService {
 
     try {
       final params = <String>[];
+      if (userId != null) {
+        params.add('userId=$userId');
+      }
       if (nickname != null && nickname.isNotEmpty) {
         params.add('nickname=${Uri.encodeComponent(nickname)}');
       }

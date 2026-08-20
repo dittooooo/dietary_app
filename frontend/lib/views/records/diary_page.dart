@@ -628,7 +628,10 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     if (nutritionVal == null) return [];
     
     String formatValue(String key, dynamic val) {
+      if (val == null) return '--';
       final sVal = val.toString().trim();
+      if (sVal.isEmpty || sVal == 'null' || sVal == 'None') return '--';
+
       if (key.contains('熱量') || key.toLowerCase().contains('calories') || key.toLowerCase().contains('cal')) {
         if (sVal.contains('kcal') || sVal.contains('卡')) return sVal;
         return '$sVal kcal';

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_pr
 import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
+import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper
 import './login_page.dart';  // 匯入 login_page.dart 元件庫或套件
 
 class EditProfilePage extends StatefulWidget { // 定義 EditProfilePage 類別，繼承自 StatefulWidget
@@ -30,7 +31,19 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
   Set<String> _goals = {}; // 執行相對應的邏輯計算或設定屬性參數
 
   final List<String> _genderOptions = ['男', '女']; // 宣告類別成員或方法內部的區域變數
-  final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病']; // 宣告類別成員或方法內部的區域變數
+  final List<String> _diseaseOptions = [
+    '高血壓',
+    '高血脂',
+    '糖尿病',
+    '心血管疾病',
+    '慢性腎臟病',
+    '腦中風',
+    '代謝症候群',
+    '痛風',
+    '高尿酸血症',
+    '胃食道逆流',
+    '無疾病',
+  ];
   final List<String> _goalOptions = ['減脂', '增肌', '養生']; // 宣告類別成員或方法內部的區域變數
 
   @override // 標記此方法為覆寫父類別之方法
@@ -42,81 +55,68 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     _ageController = TextEditingController(text: data['age']?.toString() ?? ''); // 執行相對應的邏輯計算或設定屬性參數
     _heightController = TextEditingController(text: data['height']?.toString() ?? ''); // 執行相對應的邏輯計算或設定屬性參數
     _weightController = TextEditingController(text: data['weight']?.toString() ?? ''); // 執行相對應的邏輯計算或設定屬性參數
-    _gender = data['gender'] ?? '男'; // 執行相對應的邏輯計算或設定屬性參數
+    
+    final rawGender = (data['gender'] ?? '').toString().trim();
+    if (rawGender == '女' || rawGender.toUpperCase() == 'FEMALE') {
+      _gender = '女';
+    } else {
+      _gender = '男';
+    }
     
     // 解析疾病與目標 (相容多種後端命名與格式)
-    var healthData = data['healthConditions'] ?? data['health_conditions']; // 執行相對應的邏輯計算或設定屬性參數
-    if (healthData != null) { // 執行相對應的邏輯計算或設定屬性參數
-      Set<String> parsedDiseases = {};
-      if (healthData is String && healthData.isNotEmpty) { // 執行相對應的邏輯計算或設定屬性參數
-        parsedDiseases = healthData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
-      } else if (healthData is List) { // 執行相對應的邏輯計算或設定屬性參數
-        parsedDiseases = Set<String>.from(healthData); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-      
-      _diseases = parsedDiseases.map((e) {
-        final upper = e.toUpperCase();
-        if (upper == 'DIABETES' || e.contains('糖尿')) return '糖尿病';
-        if (upper == 'HYPERTENSION' || e.contains('高血壓')) return '高血壓';
-        if (upper == 'NONE' || e == '無' || e.contains('無特殊疾病') || e.contains('無疾病') || e.toLowerCase() == 'none') return '無疾病';
-        return e;
-      }).toSet();
-    } // 程式碼區塊或元件結構結束
-    
-    var goalData = data['dietGoal'] ?? data['diet_goal']; // 執行相對應的邏輯計算或設定屬性參數
-    if (goalData != null) { // 執行相對應的邏輯計算或設定屬性參數
-      Set<String> parsedGoals = {};
-      if (goalData is String && goalData.isNotEmpty) { // 執行相對應的邏輯計算或設定屬性參數
-        parsedGoals = goalData.split(RegExp(r'[,\s]+')).map((e) => e.trim()).where((e) => e.isNotEmpty).toSet(); // 執行相對應的邏輯計算或設定屬性參數
-      } else if (goalData is List) { // 執行相對應的邏輯計算或設定屬性參數
-        parsedGoals = Set<String>.from(goalData); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-      
-      _goals = parsedGoals.map((e) {
-        final upper = e.toUpperCase();
-        if (upper == 'LOSE_WEIGHT' || e.contains('減脂') || e.contains('減重')) return '減脂';
-        if (upper == 'GAIN_MUSCLE' || e.contains('增肌')) return '增肌';
-        if (upper == 'MAINTAIN' || e.contains('養生') || e.contains('維持') || e.contains('健康')) return '養生';
-        return e;
-      }).toSet();
-    } // 程式碼區塊或元件結構結束
+    var healthData = data['healthConditions'] ?? data['health_conditions'];
+    _diseases = ProfileValueMapper.healthConditionsToDisplaySet(healthData);
+    if (_diseases.contains('無特殊疾病')) {
+      _diseases.remove('無特殊疾病');
+      _diseases.add('無疾病');
+    }
+
+    var goalData = data['dietGoal'] ?? data['diet_goal'];
+    _goals = ProfileValueMapper.dietGoalsToDisplaySet(goalData);
   } // 程式碼區塊或元件結構結束
 
-  Future<void> _updateProfile() async { // 定義非同步方法（Future），執行耗時操作
-    if (!_formKey.currentState!.validate()) return; // 執行相對應的邏輯計算或設定屬性參數
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    try { // 執行相對應的邏輯計算或設定屬性參數
-      final body = { // 宣告類別成員或方法內部的區域變數
-        'nickname': _nameController.text.trim(), // 執行相對應的邏輯計算或設定屬性參數
-        'gender': _gender, // 執行相對應的邏輯計算或設定屬性參數
-        'age': int.tryParse(_ageController.text) ?? 0, // 執行相對應的邏輯計算或設定屬性參數
-        'height': double.tryParse(_heightController.text) ?? 0.0, // 執行相對應的邏輯計算或設定屬性參數
-        'weight': double.tryParse(_weightController.text) ?? 0.0, // 執行相對應的邏輯計算或設定屬性參數
-        'healthConditions': _diseases.toList(), // 執行相對應的邏輯計算或設定屬性參數
-        'dietGoal': _goals.join(', '), // 執行相對應的邏輯計算或設定屬性參數
-        'petType': widget.initialData['petType'] ?? '狗兒', // 執行相對應的邏輯計算或設定屬性參數
-      }; // 執行相對應的邏輯計算或設定屬性參數
+    try {
+      final ageVal = int.tryParse(_ageController.text) ?? 20;
+      final targetYear = DateTime.now().year - ageVal;
+      final birthDate = widget.initialData['birthDate'] ?? widget.initialData['birth_date'] ?? '$targetYear-01-01';
 
-      final result = await _authService.updateProfile(body); // 宣告類別成員或方法內部的區域變數
+      final body = {
+        'nickname': _nameController.text.trim(),
+        'gender': ProfileValueMapper.genderToApi(_gender),
+        'birthDate': birthDate,
+        'age': ageVal,
+        'height': double.tryParse(_heightController.text) ?? 160.0,
+        'weight': double.tryParse(_weightController.text) ?? 50.0,
+        'healthConditions': ProfileValueMapper.healthConditionsToApi(_diseases),
+        'dietGoal': ProfileValueMapper.firstDietGoalToApi(_goals),
+        'petType': ProfileValueMapper.petTypeToApi(widget.initialData['petType']?.toString()),
+      };
 
-      if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-        if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-          ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-            const SnackBar(content: Text('個人資料修改成功！')) // 建立文字顯示元件（Text）
-          ); // 程式碼區塊或元件結構結束
-          Navigator.pop(context, true); // 導航路由返回：關閉當前頁面並返回上一頁
-        } // 程式碼區塊或元件結構結束
-      } else { // 程式碼區塊或元件結構結束
-        throw Exception(result['message'] ?? 'Server returned error'); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-    } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-        ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-          SnackBar(content: Text('保存失敗: $e')) // 建立文字顯示元件（Text）
-        ); // 程式碼區塊或元件結構結束
-      } // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+      final result = await _authService.updateProfile(body);
+
+      if (result['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('個人資料修改成功！'))
+          );
+          Navigator.pop(context, true);
+        }
+      } else {
+        final msg = result['message'] ?? '伺服器回應錯誤';
+        throw Exception(msg);
+      }
+    } catch (e) {
+      if (mounted) {
+        final cleanMsg = e.toString().replaceAll('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失敗: $cleanMsg'))
+        );
+      }
+    }
+  }
 
   Future<void> _deleteAccount() async { // 定義非同步方法（Future），執行耗時操作
     final confirm = await showDialog<bool>( // 宣告類別成員或方法內部的區域變數
@@ -292,64 +292,83 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildTagSelector(String label, List<String> options, Set<String> selection) { // 定義用於重複使用的 UI 封裝建構方法
-    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-      decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        border: Border(bottom: BorderSide(color: AppColors.border)), // 設定顏色數值（Color）
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-            child: Wrap( // 執行相對應的邏輯計算或設定屬性參數
-              spacing: 8, // 執行相對應的邏輯計算或設定屬性參數
-              alignment: WrapAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
-              children: options.map((opt) { // 執行相對應的邏輯計算或設定屬性參數
-                final isSelected = selection.contains(opt); // 宣告類別成員或方法內部的區域變數
-                 return FilterChip( // 回傳建構完成的元件或方法計算結果
-                   label: Text(opt, style: TextStyle(color: isSelected ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5))), // 建立文字顯示元件（Text）
-                   selected: isSelected, // 執行相對應的邏輯計算或設定屬性參數
-                  onSelected: (val) { // 執行相對應的邏輯計算或設定屬性參數
-                    setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                      if (label == '疾病') { // 執行相對應的邏輯計算或設定屬性參數
-                        if (opt == '無疾病') { // 執行相對應的邏輯計算或設定屬性參數
-                          if (val) { // 執行相對應的邏輯計算或設定屬性參數
-                            selection.clear(); // 執行相對應的邏輯計算或設定屬性參數
-                            selection.add('無疾病'); // 執行相對應的邏輯計算或設定屬性參數
-                          } else { // 程式碼區塊或元件結構結束
-                            selection.remove('無疾病'); // 執行相對應的邏輯計算或設定屬性參數
-                          } // 程式碼區塊或元件結構結束
-                        } else { // 程式碼區塊或元件結構結束
-                          if (val) { // 執行相對應的邏輯計算或設定屬性參數
-                            selection.remove('無疾病'); // 執行相對應的邏輯計算或設定屬性參數
-                            selection.add(opt); // 執行相對應的邏輯計算或設定屬性參數
-                          } else { // 程式碼區塊或元件結構結束
-                            selection.remove(opt); // 執行相對應的邏輯計算或設定屬性參數
-                          } // 程式碼區塊或元件結構結束
-                        } // 程式碼區塊或元件結構結束
-                      } else { // 程式碼區塊或元件結構結束
-                        // 目標選項維持原本的複選邏輯
-                        if (val) { // 執行相對應的邏輯計算或設定屬性參數
-                          selection.add(opt); // 執行相對應的邏輯計算或設定屬性參數
-                        } else { // 程式碼區塊或元件結構結束
-                          selection.remove(opt); // 執行相對應的邏輯計算或設定屬性參數
-                        } // 程式碼區塊或元件結構結束
-                      } // 程式碼區塊或元件結構結束
-                    }); // 程式碼區塊或元件結構結束
-                  }, // 程式碼區塊或元件結構結束
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none), // 設定容器的圓角弧度半徑大小
-                  showCheckmark: false, // 執行相對應的邏輯計算或設定屬性參數
-                   backgroundColor: AppColors.surface.withOpacity(0.5), // 設定顏色數值（Color）
-                   selectedColor: AppColors.secondary.withOpacity(0.2), // 設定顏色數值（Color）
-                 ); // 程式碼區塊或元件結構結束
-              }).toList(), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-          const Icon(Icons.chevron_right, color: Colors.grey), // 設定顏色數值（Color）
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+  Widget _buildTagSelector(String label, List<String> options, Set<String> selection) {
+    final sortedOptions = List<String>.from(options);
+    sortedOptions.sort((a, b) {
+      final aSelected = selection.contains(a);
+      final bSelected = selection.contains(b);
+      if (aSelected && !bSelected) return -1;
+      if (!aSelected && bSelected) return 1;
+      return options.indexOf(a).compareTo(options.indexOf(b));
+    });
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: sortedOptions.map((opt) {
+                  final isSelected = selection.contains(opt);
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: FilterChip(
+                      label: Text(
+                        opt,
+                        style: TextStyle(
+                          color: isSelected ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5),
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      selected: isSelected,
+                      onSelected: (val) {
+                        setState(() {
+                          if (label == '疾病') {
+                            if (opt == '無疾病') {
+                              if (val) {
+                                selection.clear();
+                                selection.add('無疾病');
+                              } else {
+                                selection.remove('無疾病');
+                              }
+                            } else {
+                              if (val) {
+                                selection.remove('無疾病');
+                                selection.add(opt);
+                              } else {
+                                selection.remove(opt);
+                              }
+                            }
+                          } else {
+                            if (val) {
+                              selection.add(opt);
+                            } else {
+                              selection.remove(opt);
+                            }
+                          }
+                        });
+                      },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
+                      showCheckmark: false,
+                      backgroundColor: AppColors.surface.withOpacity(0.5),
+                      selectedColor: AppColors.secondary.withOpacity(0.2),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.grey),
+        ],
+      ),
+    );
   } // 程式碼區塊或元件結構結束
 
   Widget _buildCustomButton(String text, Color color, {bool isFilled = false, required VoidCallback onTap}) { // 定義用於重複使用的 UI 封裝建構方法

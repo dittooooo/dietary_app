@@ -10,8 +10,8 @@ import 'login_page.dart'; // 匯入 login_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 api_config.dart 元件庫或套件
 import 'model_viewer_web_stub.dart'
     if (dart.library.html) 'model_viewer_web_impl.dart';
-import 'dart:convert' as convert;
 import '../../services/auth_service.dart';
+import '../../core/api_client.dart';
 import '../../utils/profile_value_mapper.dart';
 
 String jsonEncode(Object? object) {
@@ -35,10 +35,9 @@ String jsonEncode(Object? object) {
     );
     normalized['petType'] =
         ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
-    return convert.jsonEncode(normalized);
+    return json.encode(normalized);
   }
-
-  return convert.jsonEncode(object);
+  return json.encode(object);
 }
 
 class InitialInfoPage extends StatefulWidget { // 定義 InitialInfoPage 類別，繼承自 StatefulWidget
@@ -88,9 +87,35 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
 
   String _name = ''; // 保存：姓名 (對應 backend: nickname)
   String _gender = ''; // 保存：性別
-  String _age = ''; // 保存：年齡
+  String _age = '26'; // 保存：年齡
   String _height = ''; // 保存：身高
   String _weight = ''; // 保存 : 體重
+
+  int? _selectedBirthYear;
+  int? _selectedBirthMonth;
+  int? _selectedBirthDay;
+
+  String get _birthDateString =>
+      (_selectedBirthYear != null && _selectedBirthMonth != null && _selectedBirthDay != null)
+          ? '${_selectedBirthYear!.toString().padLeft(4, '0')}-${_selectedBirthMonth!.toString().padLeft(2, '0')}-${_selectedBirthDay!.toString().padLeft(2, '0')}'
+          : '';
+
+  int get _calculatedAge {
+    if (_selectedBirthYear == null || _selectedBirthMonth == null || _selectedBirthDay == null) {
+      return 0;
+    }
+    final now = DateTime.now();
+    int age = now.year - _selectedBirthYear!;
+    if (now.month < _selectedBirthMonth! ||
+        (now.month == _selectedBirthMonth! && now.day < _selectedBirthDay!)) {
+      age--;
+    }
+    return age < 0 ? 0 : age;
+  }
+
+  int _daysInMonth(int year, int month) {
+    return DateTime(year, month + 1, 0).day;
+  }
   
   // 持續性控制器，避免每一次 setState 重建 Widget 時重建模擬文字控制器導致焦點流失或數據重設
   late TextEditingController _nameController;
@@ -106,8 +131,20 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   bool _isSubmitting = false; // 宣告類別成員或方法內部的區域變數
   final AuthService _authService = AuthService();
 
-  final List<String> _diseaseOptions = ['糖尿病', '高血壓', '無疾病'];  // 宣告類別成員或方法內部的區域變數
-  final List<String> _goalOptions = ['減脂', '增肌', '養生'];  // 宣告類別成員或方法內部的區域變數
+  final List<String> _diseaseOptions = [
+    '高血壓',
+    '高血脂',
+    '糖尿病',
+    '心血管疾病',
+    '慢性腎臟病',
+    '腦中風',
+    '代謝症候群',
+    '痛風',
+    '高尿酸血症',
+    '胃食道逆流',
+    '無疾病',
+  ];
+  final List<String> _goalOptions = ['減脂', '增肌', '養生'];
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
@@ -235,133 +272,124 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
         return _name.trim().isNotEmpty; // 頁面0：名字必填
       case 1: // 執行相對應的邏輯計算或設定屬性參數
         return _gender.isNotEmpty; // 頁面1：性別必選
-      case 2: // 執行相對應的邏輯計算或設定屬性參數
-        return _isNumeric(_age); // 頁面2：年齡必須是數字
-      case 3: // 執行相對應的邏輯計算或設定屬性參數
+      case 2: // 頁面2：生日三項均必須選擇
+        return _selectedBirthYear != null && _selectedBirthMonth != null && _selectedBirthDay != null;
+      case 3: // 頁面3：身高體重必須是數字
         return _isNumeric(_height) && _isNumeric(_weight); // 頁面3：身高體重必須是數字
-      case 4: // 執行相對應的邏輯計算或設定屬性參數
+      case 4: // 頁面4：疾病必選
         return _diseases.isNotEmpty; // 頁面4：疾病必選
-      case 5: // 執行相對應的邏輯計算或設定屬性參數
+      case 5: // 頁面5：目標必選
         return _goals.isNotEmpty; // 頁面5：目標必選
-      case 6: // 執行相對應的邏輯計算或設定屬性參數
+      case 6: // 頁面6：精靈選擇暫不強制
         return true; // 頁面6：精靈選擇暫不強制
-      default: // 執行相對應的邏輯計算或設定屬性參數
-        return true; // 預設返回 True
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+      default:
+        return true;
+    }
+  }
 
-  String _validationMessage() { // 宣告類別成員或方法內部的區域變數
-    // 錯誤訊息生成器
-    switch (_currentPage) { // 執行相對應的邏輯計算或設定屬性參數
-      // 根據頁碼返回對應文字
-      case 0: // 執行相對應的邏輯計算或設定屬性參數
-        return '請輸入您的名字';  // 回傳建構完成的元件或方法計算結果
-      case 1: // 執行相對應的邏輯計算或設定屬性參數
-        return '請選擇性別';  // 回傳建構完成的元件或方法計算結果
-      case 2: // 執行相對應的邏輯計算或設定屬性參數
-        if (_age.trim().isEmpty) return '請輸入年齡'; // 回傳建構完成的元件或方法計算結果
-        return '年齡必須為數字';  // 回傳建構完成的元件或方法計算結果
-      case 3: // 執行相對應的邏輯計算或設定屬性參數
-        if (_height.trim().isEmpty || _weight.trim().isEmpty) return '請輸入身高與體重'; // 回傳建構完成的元件或方法計算結果
-        if (!_isNumeric(_height)) return '身高必須為數字'; // 回傳建構完成的元件或方法計算結果
-        if (!_isNumeric(_weight)) return '體重必須為數字'; // 回傳建構完成的元件或方法計算結果
-        return '請輸入正確的身高與體重';  // 回傳建構完成的元件或方法計算結果
-      case 4: // 執行相對應的邏輯計算或設定屬性參數
-        return '請選擇是否有特殊疾病';  // 回傳建構完成的元件或方法計算結果
-      case 5: // 執行相對應的邏輯計算或設定屬性參數
-        return '請選擇至少一個飲食目標';  // 回傳建構完成的元件或方法計算結果
-      default: // 執行相對應的邏輯計算或設定屬性參數
-        return '請完成本頁內容'; // 其他通用報錯
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  String _validationMessage() {
+    switch (_currentPage) {
+      case 0:
+        return '請輸入您的名字';
+      case 1:
+        return '請選擇性別';
+      case 2:
+        return '請選擇正確的生日日期';
+      case 3:
+        if (_height.trim().isEmpty || _weight.trim().isEmpty) return '請輸入身高與體重';
+        if (!_isNumeric(_height)) return '身高必須為數字';
+        if (!_isNumeric(_weight)) return '體重必須為數字';
+        return '請輸入正確的身高與體重';
+      case 4:
+        return '請選擇是否有特殊疾病';
+      case 5:
+        return '請選擇至少一個飲食目標';
+      default:
+        return '請完成本頁內容';
+    }
+  }
 
-  Future<void> _completeSetup() async { // 定義非同步方法（Future），執行耗時操作
-    // 防止重複提交
-    if (_isSubmitting) return; // 執行相對應的邏輯計算或設定屬性參數
+  Future<void> _completeSetup() async {
+    if (_isSubmitting) return;
 
-    debugPrint('開始啟動提交流程...'); // 執行相對應的邏輯計算或設定屬性參數
-    setState(() => _isSubmitting = true); // 更新狀態數據並通知 UI 重新渲染畫面
+    debugPrint('開始啟動提交流程...');
+    setState(() => _isSubmitting = true);
     
-    // 立即顯示提示避免使用者覺得沒反應
-    if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-      ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-        const SnackBar(content: Text('正在連線伺服器，請稍候...'), duration: Duration(milliseconds: 1500)), // 建立文字顯示元件（Text）
-      ); // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('正在連線伺服器，請稍候...'), duration: Duration(milliseconds: 1500)),
+      );
+    }
 
-    try { // 執行相對應的邏輯計算或設定屬性參數
-      // 獲取 JWT Token
-      final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
-      final token = prefs.getString('jwt_token'); // 宣告類別成員或方法內部的區域變數
+    try {
+      final prefs = await SharedPreferences.getInstance();
 
-      if (token == null) { // 執行相對應的邏輯計算或設定屬性參數
-        debugPrint('錯誤: 找不到 token'); // 執行相對應的邏輯計算或設定屬性參數
-        if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-          ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-            const SnackBar(content: Text('授權失效，請重新登入')), // 建立文字顯示元件（Text）
-          ); // 程式碼區塊或元件結構結束
-          Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
-            context, // 執行相對應的邏輯計算或設定屬性參數
-            MaterialPageRoute(builder: (context) => const LoginPage()), // 建立編譯期常數，優化 Flutter 渲染效能
-          ); // 程式碼區塊或元件結構結束
-        } // 程式碼區塊或元件結構結束
-        return; // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
+      String apiGender = 'MALE';
+      if (_gender == '女' || _gender.toUpperCase() == 'FEMALE') {
+        apiGender = 'FEMALE';
+      } else if (_gender == '男' || _gender.toUpperCase() == 'MALE') {
+        apiGender = 'MALE';
+      }
 
-      // 封裝用戶數據為 OnboardingRequest 格式 (根據 backend 變數)
-      final Map<String, dynamic> onboardingData = { // 宣告類別成員或方法內部的區域變數
-        'nickname': _name, // 執行相對應的邏輯計算或設定屬性參數
-        'gender': _gender, // 執行相對應的邏輯計算或設定屬性參數
-        'age': int.tryParse(_age) ?? 0, // 執行相對應的邏輯計算或設定屬性參數
-        'height': double.tryParse(_height) ?? 0, // 執行相對應的邏輯計算或設定屬性參數
-        'weight': double.tryParse(_weight) ?? 0, // 執行相對應的邏輯計算或設定屬性參數
-        'healthConditions': _diseases.toList(), // 執行相對應的邏輯計算或設定屬性參數
-        'dietGoal': _goals.join(', '), // 將 Set 轉為逗號分隔字串
-        'petType': _petOptions[_selectedPetIndex], // 執行相對應的邏輯計算或設定屬性參數
-      }; // 執行相對應的邏輯計算或設定屬性參數
+      // 封裝用戶數據為 OnboardingRequest 格式（轉換為後端 Enum / API 規格）
+      final Map<String, dynamic> onboardingData = {
+        'nickname': _name.trim(),
+        'gender': apiGender,
+        'birthDate': _birthDateString,
+        'age': _calculatedAge,
+        'height': double.tryParse(_height) ?? 170.0,
+        'weight': double.tryParse(_weight) ?? 60.0,
+        'healthConditions': ProfileValueMapper.healthConditionsToApi(_diseases),
+        'dietGoal': ProfileValueMapper.firstDietGoalToApi(_goals),
+        'petType': ProfileValueMapper.petTypeToApi(_petOptions[_selectedPetIndex]),
+      };
 
-      debugPrint('提交資料至後端: $onboardingData'); // 執行相對應的邏輯計算或設定屬性參數
+      debugPrint('提交資料至後端: $onboardingData');
 
-      final response = await http.post( // 宣告類別成員或方法內部的區域變數
-        Uri.parse('${ApiConfig.baseUrl}/user/onboarding'), // 執行相對應的邏輯計算或設定屬性參數
-        headers: { // 執行相對應的邏輯計算或設定屬性參數
-          'Content-Type': 'application/json', // 執行相對應的邏輯計算或設定屬性參數
-          'Authorization': 'Bearer $token', // 執行相對應的邏輯計算或設定屬性參數
-        }, // 程式碼區塊或元件結構結束
-        body: jsonEncode(onboardingData), // 設定頁面的主要內容區域（body）
-      ).timeout(const Duration(seconds: 15)); // 建立編譯期常數，優化 Flutter 渲染效能
+      final response = await ApiClient()
+          .post('/user/onboarding', onboardingData)
+          .timeout(const Duration(seconds: 15));
 
-      debugPrint('收到回應狀態碼: ${response.statusCode}'); // 執行相對應的邏輯計算或設定屬性參數
+      debugPrint('收到回應狀態碼: ${response.statusCode}');
 
-      if (response.statusCode == 200) { // 執行相對應的邏輯計算或設定屬性參數
-        final result = jsonDecode(response.body); // 宣告類別成員或方法內部的區域變數
-        debugPrint('API 回應內容: $result'); // 執行相對應的邏輯計算或設定屬性參數
-        if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-          if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-            debugPrint('提交成功，切換至首頁'); // 執行相對應的邏輯計算或設定屬性參數
-            Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
-              context, // 執行相對應的邏輯計算或設定屬性參數
-              MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                builder: (context) => const HomePage(), // 建立編譯期常數，優化 Flutter 渲染效能
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ); // 程式碼區塊或元件結構結束
-          } // 程式碼區塊或元件結構結束
-        } else { // 程式碼區塊或元件結構結束
-          throw Exception(result['message'] ?? '設定失敗'); // 執行相對應的邏輯計算或設定屬性參數
-        } // 程式碼區塊或元件結構結束
-      } else { // 程式碼區塊或元件結構結束
-        throw Exception('連線錯誤，請稍後再試'); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-    } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
-      debugPrint('提交過程發生例外: $e'); // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-        ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-          SnackBar(content: Text('發生錯誤: ${e.toString()}')), // 建立文字顯示元件（Text）
-        ); // 程式碼區塊或元件結構結束
-      } // 程式碼區塊或元件結構結束
-    } finally { // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) setState(() => _isSubmitting = false); // 更新狀態數據並通知 UI 重新渲染畫面
-    } // 程式碼區塊或元件結構結束
+      Map<String, dynamic> result = {};
+      try {
+        result = jsonDecode(response.body) is Map<String, dynamic>
+            ? jsonDecode(response.body) as Map<String, dynamic>
+            : {};
+      } catch (_) {}
+
+      debugPrint('API 回應內容: $result');
+
+      if (response.statusCode == 200 &&
+          (result['success'] == true || result['code'] == 200 || result.containsKey('data'))) {
+        await prefs.setBool(AuthService.needsOnboardingKey, false);
+        await prefs.setString('user_nickname', _name);
+        await prefs.setString('user_pet_type', _petOptions[_selectedPetIndex]);
+        if (mounted) {
+          debugPrint('提交成功，切換至首頁');
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HomePage(),
+            ),
+          );
+        }
+      } else {
+        final errorMsg = result['message'] ?? '設定失敗 (狀態碼 ${response.statusCode})';
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      debugPrint('提交過程發生例外: $e');
+      if (mounted) {
+        final cleanMsg = e.toString().replaceAll('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('發生錯誤: $cleanMsg')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -415,8 +443,8 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
             physics: const NeverScrollableScrollPhysics(), // 禁用手勢滑動，強制必須點擊「下一頁」並通過欄位校驗
             itemCount: 7, // 總頁數
             itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
-              // 構建分頁內容
-              return _buildPageByIndex(index); // 根據索引調用子頁面
+              // 構建分頁內容 (動畫撕頁期間隱藏底層 PageView 按鈕防重影)
+              return _buildPageByIndex(index, hideNavButtons: _isAnimatingPage); // 根據索引調用子頁面
             }, // 程式碼區塊或元件結構結束
           ), // 執行相對應的邏輯計算或設定屬性參數
           if (_isAnimatingPage) // 新增：如果正在播放動畫，將舊紙張覆蓋在 PageView 上並撕走
@@ -428,21 +456,21 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                   children: [
                     if (_isBackAnimating) ...[
                       // 返回上一步轉場：
-                      // 1. 底層渲染當前頁面 (即將被覆蓋的舊頁面)
-                      _buildPageByIndex(_animatingFromPage),
-                      // 2. 頂層渲染上一頁 (目標頁面)，並套用隨著動畫倒放逐漸展開的剪裁
+                      // 1. 底層當前舊頁面隱藏按鈕，防重影
+                      _buildPageByIndex(_animatingFromPage, hideNavButtons: true),
+                      // 2. 頂層目標頁面渲染按鈕，隨紙張一同捲展覆蓋
                       ClipPath(
                         clipper: PagePeelClipper(progress: progress),
-                        child: _buildPageByIndex(_animatingToPage),
+                        child: _buildPageByIndex(_animatingToPage, hideNavButtons: false),
                       ),
                     ] else ...[
                       // 前進下一步轉場：
-                      // 1. 底層渲染新頁面
-                      _buildPageByIndex(_animatingToPage),
-                      // 2. 頂層渲染當前頁面 (被撕走的頁面)，並套用漸隱剪裁
+                      // 1. 底層新頁面隱藏按鈕，防重影
+                      _buildPageByIndex(_animatingToPage, hideNavButtons: true),
+                      // 2. 頂層當前舊頁面渲染按鈕，隨紙張一同撕走
                       ClipPath(
                         clipper: PagePeelClipper(progress: progress),
-                        child: _buildPageByIndex(_animatingFromPage),
+                        child: _buildPageByIndex(_animatingFromPage, hideNavButtons: false),
                       ),
                     ],
                     // 3. 在最上層繪製捲角與摺痕陰影
@@ -513,39 +541,37 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     ))); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
 
+
+
   Widget _buildPageContainer({ // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
     // 封裝頁面通用容器
+    required int pageIndex, // 傳入實際頁碼
     required String title, // 頁面標題
     required Widget content, // 內容組件
     bool scrollable = true, // 是否可捲動
+    bool hideNavButtons = false, // 是否隱藏導航按鈕 (撕頁轉場時，底層紙張隱藏按鈕防重影)
   }) { // 執行相對應的邏輯計算或設定屬性參數
     final double topPadding = MediaQuery.of(context).padding.top;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
     final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
     return Padding( // 建立間距容器（Padding），用於設定內部邊距
-      // 內容邊距設定，將底部邊距加上 bottomPadding，配合紙張底邊下移
-      padding: EdgeInsets.fromLTRB(40, 140 + topPadding, 40, 30 + bottomPadding), // 底部邊距減小至 30 + bottomPadding，使 Stack 範圍延伸至最下方
+      padding: EdgeInsets.fromLTRB(40, 140 + topPadding, 40, 30 + bottomPadding),
       child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
-        // 頁面內部疊層
         clipBehavior: Clip.none, // 允許裝飾物溢出
         children: [ // 執行相對應的邏輯計算或設定屬性參數
           Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-            // 垂直排列
             crossAxisAlignment: CrossAxisAlignment.start, // 靠左對齊
             children: [ // 執行相對應的邏輯計算或設定屬性參數
               Material( // 執行相對應的邏輯計算或設定屬性參數
-                // 標題文字層
                 color: Colors.transparent, // 背景透明
                 child: Text( // 建立文字顯示元件（Text）
-                  // 顯示標題
                   title, // 標題內容
                   style: _titleStyle, // 標題風格
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
               const SizedBox(height: 20), // 標題與內容間距
               Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-                // 撐開剩餘空間
-                child: // 執行相對應的邏輯計算或設定屬性參數
+                child:
                     scrollable // 根據設定決定捲動性
                     ? SingleChildScrollView(child: content) // 啟動捲動
                     : content, // 靜態展示
@@ -553,308 +579,506 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
               SizedBox(height: scrollable ? 60 : 20), // 底部保留緩衝空間
             ], // 執行相對應的邏輯計算或設定屬性參數
           ), // 執行相對應的邏輯計算或設定屬性參數
-          if (!isKeyboardOpen) // 新增：在鍵盤彈出時隱藏下方按鈕，保證畫面上不顯示該按鈕
-            Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置
-              // 按鈕定位：設為 5，使其 100% 處於父 Stack 邊界內部，保證觸控事件 100% 靈敏
-              bottom: 5, // 執行相對應的邏輯計算或設定屬性參數
-            left: 0, // 執行相對應的邏輯計算或設定屬性參數
-            right: 0, // 執行相對應的邏輯計算或設定屬性參數
-            child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // 執行相對應的邏輯計算或設定屬性參數
-              children: [ // 執行相對應的邏輯計算或設定屬性參數
-                if (_currentPage > 0) // 執行相對應的邏輯計算或設定屬性參數
-                  GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
-                    behavior: HitTestBehavior.opaque, // 執行相對應的邏輯計算或設定屬性參數
-                    onTap: () { // 執行相對應的邏輯計算或設定屬性參數
-                      HapticFeedback.selectionClick(); // 執行相對應的邏輯計算或設定屬性參數
-                      _previousPage(); // 執行相對應的邏輯計算或設定屬性參數
-                    }, // 程式碼區塊或元件結構結束
-                    child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                      padding: const EdgeInsets.all(12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                      child: CustomPaint( // 執行相對應的邏輯計算或設定屬性參數
-                        painter: WashiTapeButtonPainter(text: '返回修改'), // 執行相對應的邏輯計算或設定屬性參數
-                        size: const Size(110, 40), // 建立編譯期常數，優化 Flutter 渲染效能
-                      ), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ) // 執行相對應的邏輯計算或設定屬性參數
-                else // 執行相對應的邏輯計算或設定屬性參數
-                  const SizedBox(width: 134), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+          if (!isKeyboardOpen && !hideNavButtons) // 按鈕繪製在紙張內部 (轉場底層防重影)
+            Positioned(
+              bottom: 5,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  if (pageIndex > 0)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        _previousPage();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        child: CustomPaint(
+                          painter: WashiTapeButtonPainter(text: '返回修改'),
+                          size: const Size(110, 40),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 134),
 
-                GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
-                  behavior: HitTestBehavior.opaque, // 執行相對應的邏輯計算或設定屬性參數
-                  onTap: () { // 執行相對應的邏輯計算或設定屬性參數
-                    HapticFeedback.mediumImpact(); // 執行相對應的邏輯計算或設定屬性參數
-                    if (_isSubmitting) return; // 執行相對應的邏輯計算或設定屬性參數
-                    _nextPage(); // 執行相對應的邏輯計算或設定屬性參數
-                  }, // 程式碼區塊或元件結構結束
-                  child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                    padding: const EdgeInsets.all(12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                    child: Opacity( // 執行相對應的邏輯計算或設定屬性參數
-                      opacity: _isSubmitting ? 0.6 : 1.0, // 執行相對應的邏輯計算或設定屬性參數
-                      child: CustomPaint( // 執行相對應的邏輯計算或設定屬性參數
-                        painter: WashiTapeButtonPainter( // 執行相對應的邏輯計算或設定屬性參數
-                          text: _isSubmitting  // 執行相對應的邏輯計算或設定屬性參數
-                              ? '提交中...'  // 執行相對應的邏輯計算或設定屬性參數
-                              : (_currentPage == 6 ? '完成' : '下一頁 >'), // 執行相對應的邏輯計算或設定屬性參數
-                        ), // 執行相對應的邏輯計算或設定屬性參數
-                        size: const Size(110, 40), // 建立編譯期常數，優化 Flutter 渲染效能
-                      ), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ], // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      if (_isSubmitting) return;
+                      _nextPage();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      child: Opacity(
+                        opacity: _isSubmitting ? 0.6 : 1.0,
+                        child: CustomPaint(
+                          painter: WashiTapeButtonPainter(
+                            text: _isSubmitting
+                                ? '提交中...'
+                                : (pageIndex == 6 ? '完成' : '下一頁 >'),
+                          ),
+                          size: const Size(110, 40),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildPageByIndex(int index) { // 定義用於重複使用的 UI 封裝建構方法
-    // 頁面導引邏輯
-    switch (index) { // 執行相對應的邏輯計算或設定屬性參數
-      // 分頁控制
-      case 0: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildNamePage(); // 0號頁：名字
-      case 1: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildGenderPage(); // 1號頁：性別
-      case 2: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildAgePage(); // 2號頁：年齡
-      case 3: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildHeightWeightPage(); // 3號頁：身高體重
-      case 4: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildDiseasesPage(); // 4號頁：疾病
-      case 5: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildGoalsPage(); // 5號頁：目標
-      case 6: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildElfSelectionPage(); // 6號頁：精靈選擇
-      default: // 執行相對應的邏輯計算或設定屬性參數
-        return _buildNamePage(); // 預設返回名字頁
-    } // 程式碼區塊或元件結構結束
+  Widget _buildPageByIndex(int index, {bool hideNavButtons = false}) {
+    switch (index) {
+      case 0:
+        return _buildNamePage(hideNavButtons: hideNavButtons);
+      case 1:
+        return _buildGenderPage(hideNavButtons: hideNavButtons);
+      case 2:
+        return _buildAgePage(hideNavButtons: hideNavButtons);
+      case 3:
+        return _buildHeightWeightPage(hideNavButtons: hideNavButtons);
+      case 4:
+        return _buildDiseasesPage(hideNavButtons: hideNavButtons);
+      case 5:
+        return _buildGoalsPage(hideNavButtons: hideNavButtons);
+      case 6:
+        return _buildElfSelectionPage(hideNavButtons: hideNavButtons);
+      default:
+        return _buildNamePage(hideNavButtons: hideNavButtons);
+    }
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildNamePage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構名字頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '嗨！您想我如何稱呼您呢?', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 40), // 增加間距
-            _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
-              '輸入您的名字', // 執行相對應的邏輯計算或設定屬性參數
-              _nameController, // 傳入持續性的姓名控制器
-              (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                _name = value; // 執行相對應的邏輯計算或設定屬性參數
-                _pageErrors.remove(0); // 執行相對應的邏輯計算或設定屬性參數
-              }), // 執行相對應的邏輯計算或設定屬性參數
-              onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
-            ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  Widget _buildNamePage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 0,
+      hideNavButtons: hideNavButtons,
+      title: '嗨！您想我如何稱呼您呢?',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+            _buildHandDrawnTextField(
+              '輸入您的名字',
+              _nameController,
+              (value) => setState(() {
+                _name = value;
+                _pageErrors.remove(0);
+              }),
+              onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+            ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildGenderPage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構性別頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '您的性別是?', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 60), // 增加間距
-          Row( // 建立水平排列元件（Row），橫向排列多個子元件
-            mainAxisAlignment: MainAxisAlignment.spaceAround, // 執行相對應的邏輯計算或設定屬性參數
-            children: [ // 執行相對應的邏輯計算或設定屬性參數
-              _buildHandDrawnButton( // 執行相對應的邏輯計算或設定屬性參數
-                '男', // 執行相對應的邏輯計算或設定屬性參數
-                _gender == '男', // 執行相對應的邏輯計算或設定屬性參數
-                () => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                  _gender = '男'; // 執行相對應的邏輯計算或設定屬性參數
-                  _pageErrors.remove(1); // 執行相對應的邏輯計算或設定屬性參數
-                }), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-              _buildHandDrawnButton( // 執行相對應的邏輯計算或設定屬性參數
-                '女', // 執行相對應的邏輯計算或設定屬性參數
-                _gender == '女', // 執行相對應的邏輯計算或設定屬性參數
-                () => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                  _gender = '女'; // 執行相對應的邏輯計算或設定屬性參數
-                  _pageErrors.remove(1); // 執行相對應的邏輯計算或設定屬性參數
-                }), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ], // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  Widget _buildGenderPage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 1,
+      hideNavButtons: hideNavButtons,
+      title: '您的性別是?',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 60),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildHandDrawnButton(
+                '男',
+                _gender == '男',
+                () => setState(() {
+                  _gender = '男';
+                  _pageErrors.remove(1);
+                }),
+              ),
+              _buildHandDrawnButton(
+                '女',
+                _gender == '女',
+                () => setState(() {
+                  _gender = '女';
+                  _pageErrors.remove(1);
+                }),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildAgePage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構年齡頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '請輸入您的年齡', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
-            '年齡', // 執行相對應的邏輯計算或設定屬性參數
-            _ageController, // 傳入持續性的年齡控制器
-            (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-              _age = value; // 執行相對應的邏輯計算或設定屬性參數
-              _pageErrors.remove(2); // 執行相對應的邏輯計算或設定屬性參數
-            }), // 執行相對應的邏輯計算或設定屬性參數
-            isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-            onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  Future<void> _showDropdownMenu<T>({
+    required BuildContext context,
+    required Rect buttonRect,
+    required T? selectedValue,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<T> onSelected,
+  }) async {
+    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
 
-  Widget _buildHeightWeightPage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構身高體重頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '請輸入您的身高與體重', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Row( // 建立水平排列元件（Row），橫向排列多個子元件
-            children: [ // 執行相對應的邏輯計算或設定屬性參數
-              Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-                child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                  crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-                  children: [ // 執行相對應的邏輯計算或設定屬性參數
-                    Text( // 建立文字顯示元件（Text）
-                      '身高', // 執行相對應的邏輯計算或設定屬性參數
-                      style: _buttonTextStyle.copyWith(fontSize: 22), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                    const SizedBox(height: 12), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                    _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
-                      'cm', // 執行相對應的邏輯計算或設定屬性參數
-                      _heightController, // 傳入持續性的身高控制器
-                      (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                        _height = value; // 執行相對應的邏輯計算或設定屬性參數
-                        _pageErrors.remove(3); // 執行相對應的邏輯計算或設定屬性參數
-                      }), // 執行相對應的邏輯計算或設定屬性參數
-                      isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ], // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-              const SizedBox(width: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-              Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-                child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                  crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-                  children: [ // 執行相對應的邏輯計算或設定屬性參數
-                    Text( // 建立文字顯示元件（Text）
-                      '體重', // 執行相對應的邏輯計算或設定屬性參數
-                      style: _buttonTextStyle.copyWith(fontSize: 22), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                    const SizedBox(height: 12), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                    _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
-                      'kg', // 執行相對應的邏輯計算或設定屬性參數
-                      _weightController, // 傳入持續性的體重控制器
-                      (value) => setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                        _weight = value; // 執行相對應的邏輯計算或設定屬性參數
-                        _pageErrors.remove(3); // 執行相對應的邏輯計算或設定屬性參數
-                      }), // 執行相對應的邏輯計算或設定屬性參數
-                      isNumber: true, // 執行相對應的邏輯計算或設定屬性參數
-                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(), // 修改：鍵盤送出只收回鍵盤，不自動前往下一頁
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ], // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ], // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+    // 計算彈出選單位置：從選擇框的正下方開始向下展開，100% 不會蓋住年/月/日選擇框
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromLTWH(
+        buttonRect.left,
+        buttonRect.top + buttonRect.height + 6,
+        buttonRect.width,
+        0,
+      ),
+      Offset.zero & overlay.size,
+    );
 
-  Widget _buildDiseasesPage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構疾病頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '您是否患有特殊疾病?', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Wrap( // 執行相對應的邏輯計算或設定屬性參數
-            spacing: 20, // 執行相對應的邏輯計算或設定屬性參數
-            runSpacing: 20, // 執行相對應的邏輯計算或設定屬性參數
-            children: _diseaseOptions // 執行相對應的邏輯計算或設定屬性參數
-                .map((disease) => _buildHandDrawnToggleButton( // 執行相對應的邏輯計算或設定屬性參數
-                      disease, // 執行相對應的邏輯計算或設定屬性參數
-                      _diseases.contains(disease), // 執行相對應的邏輯計算或設定屬性參數
-                      () { // 執行相對應的邏輯計算或設定屬性參數
-                        setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                          if (_diseases.contains(disease)) { // 執行相對應的邏輯計算或設定屬性參數
-                            _diseases.remove(disease); // 執行相對應的邏輯計算或設定屬性參數
-                          } else { // 程式碼區塊或元件結構結束
+    final T? selected = await showMenu<T>(
+      context: context,
+      position: position,
+      constraints: BoxConstraints(
+        minWidth: buttonRect.width,
+        maxWidth: buttonRect.width + 20,
+        maxHeight: 340, // 放大高度可同時呈現 8-9 個選項
+      ),
+      color: AppColors.background,
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      initialValue: selectedValue,
+      items: items.map((T item) {
+        final bool isCurrent = item == selectedValue;
+        return PopupMenuItem<T>(
+          value: item,
+          height: 40,
+          child: Text(
+            itemLabel(item),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+              color: isCurrent ? AppColors.primary : AppColors.textPrimary,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+
+    if (selected != null) {
+      onSelected(selected);
+    }
+  }
+
+  Widget _buildHandDrawnDropdown<T>({
+    required BuildContext context,
+    required T? value,
+    required List<T> items,
+    required String Function(T) itemLabel,
+    required ValueChanged<T> onChanged,
+    required double width,
+    String placeholder = '請選擇',
+  }) {
+    return Builder(
+      builder: (btnContext) {
+        final bool isSelected = value != null;
+        return GestureDetector(
+          onTap: () {
+            final RenderBox renderBox = btnContext.findRenderObject() as RenderBox;
+            final Offset offset = renderBox.localToGlobal(Offset.zero);
+            final Rect rect = offset & renderBox.size;
+
+            _showDropdownMenu<T>(
+              context: context,
+              buttonRect: rect,
+              selectedValue: value,
+              items: items,
+              itemLabel: itemLabel,
+              onSelected: onChanged,
+            );
+          },
+          child: CustomPaint(
+            painter: HandDrawnBoxPainter(),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: width,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isSelected ? itemLabel(value) : placeholder,
+                        style: _inputTextStyle.copyWith(
+                          color: isSelected ? AppColors.textPrimary : const Color(0xFF555555),
+                          fontSize: isSelected ? 15 : 14,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAgePage({bool hideNavButtons = false}) {
+    final currentYear = DateTime.now().year;
+    final years = List<int>.generate(currentYear - 1940 + 1, (i) => currentYear - i);
+    final months = List<int>.generate(12, (i) => i + 1);
+    final maxDays = _daysInMonth(_selectedBirthYear ?? 2000, _selectedBirthMonth ?? 1);
+    final days = List<int>.generate(maxDays, (i) => i + 1);
+
+    if (_selectedBirthDay != null && _selectedBirthDay! > maxDays) {
+      _selectedBirthDay = maxDays;
+    }
+
+    return _buildPageContainer(
+      pageIndex: 2,
+      hideNavButtons: hideNavButtons,
+      title: '請選擇您的生日',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 25),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 年 (西元)
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('年 (西元)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const SizedBox(height: 8),
+                    _buildHandDrawnDropdown<int>(
+                      context: context,
+                      value: _selectedBirthYear,
+                      items: years,
+                      placeholder: '請選擇',
+                      itemLabel: (y) => '$y 年',
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedBirthYear = val;
+                          _age = _calculatedAge.toString();
+                          _pageErrors.remove(2);
+                        });
+                      },
+                      width: double.infinity,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // 月
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('月', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const SizedBox(height: 8),
+                    _buildHandDrawnDropdown<int>(
+                      context: context,
+                      value: _selectedBirthMonth,
+                      items: months,
+                      placeholder: '請選擇',
+                      itemLabel: (m) => '$m 月',
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedBirthMonth = val;
+                          _age = _calculatedAge.toString();
+                          _pageErrors.remove(2);
+                        });
+                      },
+                      width: double.infinity,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // 日
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('日', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const SizedBox(height: 8),
+                    _buildHandDrawnDropdown<int>(
+                      context: context,
+                      value: _selectedBirthDay,
+                      items: days,
+                      placeholder: '請選擇',
+                      itemLabel: (d) => '$d 日',
+                      onChanged: (val) {
+                        setState(() {
+                          _selectedBirthDay = val;
+                          _age = _calculatedAge.toString();
+                          _pageErrors.remove(2);
+                        });
+                      },
+                      width: double.infinity,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeightWeightPage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 3,
+      hideNavButtons: hideNavButtons,
+      title: '請輸入您的身高與體重',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '身高',
+                      style: _buttonTextStyle.copyWith(fontSize: 22),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildHandDrawnTextField(
+                      'cm',
+                      _heightController,
+                      (value) => setState(() {
+                        _height = value;
+                        _pageErrors.remove(3);
+                      }),
+                      isNumber: true,
+                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 30),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '體重',
+                      style: _buttonTextStyle.copyWith(fontSize: 22),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildHandDrawnTextField(
+                      'kg',
+                      _weightController,
+                      (value) => setState(() {
+                        _weight = value;
+                        _pageErrors.remove(3);
+                      }),
+                      isNumber: true,
+                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiseasesPage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 4,
+      hideNavButtons: hideNavButtons,
+      title: '您是否患有特殊疾病?',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: _diseaseOptions
+                .map((disease) => _buildHandDrawnToggleButton(
+                      disease,
+                      _diseases.contains(disease),
+                      () {
+                        setState(() {
+                          if (_diseases.contains(disease)) {
+                            _diseases.remove(disease);
+                          } else {
                             if (disease == '無疾病') {
-                              // 若選擇的是「無疾病」，則將其他所有已選疾病清空，僅保留「無疾病」
                               _diseases.clear();
                               _diseases.add('無疾病');
                             } else {
-                              // 若選擇的是其他特定疾病，則將原本選中的「無疾病」自動移除
                               _diseases.remove('無疾病');
                               _diseases.add(disease);
                             }
-                          } // 程式碼區塊或元件結構結束
-                          if (_diseases.isNotEmpty) _pageErrors.remove(4); // 執行相對應的邏輯計算或設定屬性參數
-                        }); // 程式碼區塊或元件結構結束
-                      }, // 程式碼區塊或元件結構結束
-                    )) // 執行相對應的邏輯計算或設定屬性參數
-                .toList(), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+                          }
+                          if (_diseases.isNotEmpty) _pageErrors.remove(4);
+                        });
+                      },
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildGoalsPage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構目標頁面
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      title: '您的飲食目標是?', // 執行相對應的邏輯計算或設定屬性參數
-      content: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-        crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Wrap( // 執行相對應的邏輯計算或設定屬性參數
-            spacing: 20, // 執行相對應的邏輯計算或設定屬性參數
-            runSpacing: 20, // 執行相對應的邏輯計算或設定屬性參數
-            children: _goalOptions // 執行相對應的邏輯計算或設定屬性參數
-                .map((goal) => _buildHandDrawnToggleButton( // 執行相對應的邏輯計算或設定屬性參數
-                      goal, // 執行相對應的邏輯計算或設定屬性參數
-                      _goals.contains(goal), // 執行相對應的邏輯計算或設定屬性參數
-                      () { // 執行相對應的邏輯計算或設定屬性參數
-                        setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-                          if (_goals.contains(goal)) { // 執行相對應的邏輯計算或設定屬性參數
-                            _goals.remove(goal); // 執行相對應的邏輯計算或設定屬性參數
-                          } else { // 程式碼區塊或元件結構結束
-                            _goals.add(goal); // 執行相對應的邏輯計算或設定屬性參數
-                          } // 程式碼區塊或元件結構結束
-                          if (_goals.isNotEmpty) _pageErrors.remove(5); // 執行相對應的邏輯計算或設定屬性參數
-                        }); // 程式碼區塊或元件結構結束
-                      }, // 程式碼區塊或元件結構結束
-                    )) // 執行相對應的邏輯計算或設定屬性參數
-                .toList(), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  Widget _buildGoalsPage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 5,
+      hideNavButtons: hideNavButtons,
+      title: '您的飲食目標是?',
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 20,
+            runSpacing: 20,
+            children: _goalOptions
+                .map((goal) => _buildHandDrawnToggleButton(
+                      goal,
+                      _goals.contains(goal),
+                      () {
+                        setState(() {
+                          if (_goals.contains(goal)) {
+                            _goals.remove(goal);
+                          } else {
+                            _goals.add(goal);
+                          }
+                          if (_goals.isNotEmpty) _pageErrors.remove(5);
+                        });
+                      },
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildElfSelectionPage() { // 定義用於重複使用的 UI 封裝建構方法
-    // 建構精靈選擇頁面
-    // 強制選中奶油皮丘，只展示 3D 狗狗
-    return _buildPageContainer( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      // 調用容器
-      title: '這是您專屬的小精靈', // 標題
-      scrollable: false, // 禁止捲動以保持置中
+  Widget _buildElfSelectionPage({bool hideNavButtons = false}) {
+    return _buildPageContainer(
+      pageIndex: 6,
+      hideNavButtons: hideNavButtons,
+      title: '這是您專屬的小精靈',
+      scrollable: false,
       content: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
         clipBehavior: Clip.none, // 執行相對應的邏輯計算或設定屬性參數
         alignment: Alignment.center, // 執行相對應的邏輯計算或設定屬性參數
@@ -1671,7 +1895,7 @@ class WashiTapeButtonPainter extends CustomPainter { // 定義 WashiTapeButtonPa
   @override // 標記此方法為覆寫父類別之方法
   void paint(Canvas canvas, Size size) { // 執行相對應的邏輯計算或設定屬性參數
     Path baseShape = Path(); // 執行相對應的邏輯計算或設定屬性參數
-    Random rand = Random(); // 執行相對應的邏輯計算或設定屬性參數
+    Random rand = Random(text.hashCode);
     double w = size.width; // 宣告類別成員或方法內部的區域變數
     double h = size.height; // 宣告類別成員或方法內部的區域變數
 

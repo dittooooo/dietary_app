@@ -41,9 +41,17 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadUserData() async {
     // 1. 優先從本地快取讀取 (前端輔助，立即響應)
     final prefs = await SharedPreferences.getInstance();
+    final cachedRole = prefs.getString('user_role');
+    final cachedEmail = prefs.getString('user_email') ?? '...';
+    final cachedNickname = prefs.getString('user_nickname') ?? '管理員';
+    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN' ||
+        cachedRole == 'ADMIN' ||
+        cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
+
     setState(() {
-      _email = prefs.getString('user_email') ?? '...';
-      _nickname = prefs.getString('user_nickname') ?? '載入中...';
+      _email = cachedEmail;
+      _nickname = cachedNickname == '載入中...' ? (isCachedAdmin ? '系統管理員' : cachedNickname) : cachedNickname;
+      _isAdmin = isCachedAdmin;
     });
 
     // 2. 向後端請求最新資料 (後端為主，更新快取)
@@ -57,18 +65,19 @@ class _ProfilePageState extends State<ProfilePage> {
           final bodyValue = _fullUserData?['dogBodyType'] ?? _fullUserData?['bodyType'] ?? _fullUserData?['mascotBodyType'] ?? _fullUserData?['avatarBodyType'] ?? _fullUserData?['dietGoal'] ?? _fullUserData?['diet_goal'];
           _dogController.setBodyTypeFromBackend(bodyValue);
           _dogController.setState(DogAnimationState.idle);
-          _nickname = _fullUserData?['nickname'] ?? '未設定姓名';
+          _nickname = _fullUserData?['nickname'] ?? _nickname;
           
-          // 修正後的權限判斷：
-          // 1. 檢查嵌套路徑 (符合 Spring Boot/Jackson 預設序列化)
-          // 2. 檢查字串是否包含 ROLE_ADMIN
           final String? role = _fullUserData?['user']?['role'] ?? _fullUserData?['role'];
-          _isAdmin = role == 'ROLE_ADMIN';
+          _isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || _email.trim().toLowerCase() == 'admin@gmail.com';
         });
       } else {
-        debugPrint('更新資料失敗: ${result['message']}');
-        // 如果完全沒資料且報錯，才顯示失敗
-        if (_nickname == '載入中...') {
+        // 如果後端回傳 404 (管理者尚未建立 user_profile 紀錄)，依然確保 _isAdmin 依據 email / role 保持為 true！
+        if (isCachedAdmin || _email.trim().toLowerCase() == 'admin@gmail.com') {
+          setState(() {
+            _isAdmin = true;
+            if (_nickname == '載入中...') _nickname = '系統管理員';
+          });
+        } else if (_nickname == '載入中...') {
           setState(() => _nickname = '連線失敗');
         }
       }

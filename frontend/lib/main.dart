@@ -29,20 +29,26 @@ void main() async {
 
   if (token != null && token.isNotEmpty) {
     final role = prefs.getString('user_role');
-    if (role == 'ROLE_ADMIN') {
+    final email = prefs.getString('user_email');
+    final bool isAdmin = role == 'ROLE_ADMIN' ||
+        role == 'ADMIN' ||
+        (email != null && email.trim().toLowerCase() == 'admin@gmail.com');
+
+    if (isAdmin) {
       initialScreen = const HomePage();
     } else if (needsOnboarding) {
       initialScreen = const InitialInfoPage();
     } else {
+      // 本地有 Token 且已完成 Onboarding，預設保持登入直接進入首頁 (HomePage)
+      initialScreen = const HomePage();
       try {
         final result = await AuthService().getUserProfile();
-        if (result['success'] == true) {
-          initialScreen = const HomePage();
-        } else if ((result['message'] ?? '').toString().contains('onboarding')) {
+        if (result['message'] != null &&
+            result['message'].toString().contains('onboarding')) {
           initialScreen = const InitialInfoPage();
         }
       } catch (_) {
-        initialScreen = const LoginPage();
+        // 發生網路波動或伺服器連線問題時，依然保持登入狀態
       }
     }
   }

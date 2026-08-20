@@ -136,24 +136,43 @@ class AuthService {
   Map<String, dynamic> _normalizeProfilePayload(Map<String, dynamic> profileData) {
     final normalized = Map<String, dynamic>.from(profileData);
 
-    final healthConditions = normalized['healthConditions'];
-    if (healthConditions is Iterable) {
-      normalized['healthConditions'] =
-          ProfileValueMapper.healthConditionsToApi(healthConditions);
+    // 性別轉譯
+    normalized['gender'] = ProfileValueMapper.genderToApi(normalized['gender']?.toString());
+
+    // 生日 resolution (若無傳入 birthDate，根據年齡推算西元 YYYY-01-01)
+    if (normalized['birthDate'] == null || normalized['birthDate'].toString().isEmpty) {
+      if (normalized['birth_date'] != null && normalized['birth_date'].toString().isNotEmpty) {
+        normalized['birthDate'] = normalized['birth_date'];
+      } else {
+        final age = int.tryParse(normalized['age']?.toString() ?? '') ?? 20;
+        final year = DateTime.now().year - age;
+        normalized['birthDate'] = '$year-01-01';
+      }
     }
 
-    final dietGoal = normalized['dietGoal'];
-    if (dietGoal is Iterable) {
+    // 疾病條件轉譯
+    final rawHealth = normalized['healthConditions'] ?? normalized['health_conditions'];
+    if (rawHealth is Iterable) {
+      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(rawHealth);
+    } else if (rawHealth is String && rawHealth.isNotEmpty) {
+      final list = rawHealth.split(RegExp(r'[,\s]+')).where((e) => e.isNotEmpty);
+      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(list);
+    } else {
+      normalized['healthConditions'] = ['NONE'];
+    }
+
+    // 健康目標轉譯
+    final rawGoal = normalized['dietGoal'] ?? normalized['diet_goal'];
+    if (rawGoal is Iterable) {
       normalized['dietGoal'] = ProfileValueMapper.firstDietGoalToApi(
-        dietGoal.map((item) => item.toString()),
+        rawGoal.map((item) => item.toString()),
       );
     } else {
-      normalized['dietGoal'] =
-          ProfileValueMapper.dietGoalToApi(dietGoal?.toString());
+      normalized['dietGoal'] = ProfileValueMapper.dietGoalToApi(rawGoal?.toString());
     }
 
-    normalized['petType'] =
-        ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
+    // 寵物類型轉譯
+    normalized['petType'] = ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
 
     return normalized;
   }
@@ -358,6 +377,9 @@ class AuthService {
     await prefs.remove(accessTokenExpiresKey);
     await prefs.remove(refreshTokenExpiresKey);
     await prefs.remove('user_role');
+    await prefs.remove('user_email');
+    await prefs.remove('user_nickname');
+    await prefs.remove('user_password');
   }
 
   Map<String, dynamic> _decodeBody(String body) {

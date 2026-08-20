@@ -69,32 +69,47 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AuthService.accessTokenKey);
-      final needsOnboarding =
-          prefs.getBool(AuthService.needsOnboardingKey) ?? false;
+      final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
+      final cachedNickname = prefs.getString('user_nickname');
 
       if (token == null || token.isEmpty) return false;
-      if (needsOnboarding) return false;
+
+      // 如果本機紀錄已完成 onboarding 或有舊有暱稱，優先判斷為已完成
+      if (needsOnboarding == false || (cachedNickname != null && cachedNickname.isNotEmpty)) {
+        return true;
+      }
 
       final response = await http.get(
         Uri.parse('${ApiConfig.baseUrl}/user/profile'),
         headers: {'Authorization': 'Bearer $token'},
       ).timeout(const Duration(seconds: 5));
 
-      if (response.statusCode != 200) return false;
-
-      final decoded = jsonDecode(response.body);
-      final userData = decoded is Map<String, dynamic>
-          ? (decoded['data'] is Map<String, dynamic> ? decoded['data'] : decoded)
-          : <String, dynamic>{};
-      final role = userData['user']?['role'] ?? userData['role'];
-      if (role != null) {
-        await prefs.setString('user_role', role.toString());
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final userData = decoded is Map<String, dynamic>
+            ? (decoded['data'] is Map<String, dynamic> ? decoded['data'] : decoded)
+            : <String, dynamic>{};
+        final role = userData['user']?['role'] ?? userData['role'];
+        if (role != null) {
+          await prefs.setString('user_role', role.toString());
+        }
+        await prefs.setBool(AuthService.needsOnboardingKey, false);
+        return true;
       }
-      await prefs.setBool(AuthService.needsOnboardingKey, false);
-      return true;
+
+      // 若後端明確回傳 404 (尚未完成 onboarding)
+      if (response.statusCode == 404) {
+        await prefs.setBool(AuthService.needsOnboardingKey, true);
+        return false;
+      }
+
+      // 其他網路或暫時性狀態錯誤，若非 404 則預設信任本機資料或已完成
+      return needsOnboarding == false;
     } catch (e) {
       debugPrint('Check onboarding failed: $e');
-      return false;
+      final prefs = await SharedPreferences.getInstance();
+      final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
+      return needsOnboarding == false || prefs.getString('user_nickname') != null;
     }
   }
 

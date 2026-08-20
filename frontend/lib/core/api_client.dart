@@ -118,7 +118,7 @@ class ApiClient {
       ...?headers,
     };
 
-    _attachLatestAccessToken(resolvedHeaders);
+    await _attachLatestAccessToken(resolvedHeaders);
 
     var response = await send(resolvedHeaders);
     _logResponse(path, response);
@@ -130,7 +130,7 @@ class ApiClient {
           if (contentType != null) 'Content-Type': contentType,
           ...?headers,
         };
-        _attachLatestAccessToken(resolvedHeaders);
+        await _attachLatestAccessToken(resolvedHeaders);
         response = await send(resolvedHeaders);
         _logResponse('$path (retried)', response);
       }
@@ -140,22 +140,30 @@ class ApiClient {
     return response;
   }
 
-  void _attachLatestAccessToken(Map<String, String> headers) {
-    final currentAuthorization = headers['Authorization'];
-    if (currentAuthorization == null || !currentAuthorization.startsWith('Bearer ')) {
+  Future<void> _attachLatestAccessToken(Map<String, String> headers) async {
+    final existingAuth = headers['Authorization'];
+    if (existingAuth != null && existingAuth.startsWith('Bearer ') && existingAuth.length > 10) {
       return;
     }
 
-    final latestToken = _latestAccessToken;
-    if (latestToken == null || latestToken.isEmpty) {
-      return;
+    var token = _latestAccessToken;
+    if (token == null || token.isEmpty) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        token = prefs.getString(AuthService.accessTokenKey) ?? prefs.getString('jwt_token');
+        if (token != null && token.isNotEmpty) {
+          _latestAccessToken = token;
+        }
+      } catch (_) {}
     }
 
-    headers['Authorization'] = 'Bearer $latestToken';
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
   }
 
   bool _shouldAttemptRefresh(String path, int statusCode) {
-    if (statusCode != 401) {
+    if (statusCode != 401 && statusCode != 403) {
       return false;
     }
 

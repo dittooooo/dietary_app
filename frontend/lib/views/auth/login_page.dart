@@ -39,9 +39,17 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
         if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
           // 儲存 Email 到本地，供 ProfilePage 使用
-          final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
-          await prefs.setString('user_email', _emailController.text.trim()); // 執行相對應的邏輯計算或設定屬性參數
+          final prefs = await SharedPreferences.getInstance();
+          final userEmail = _emailController.text.trim().toLowerCase();
+          await prefs.setString('user_email', userEmail);
           await prefs.setString('user_password', _passwordController.text);
+          final role = result['role']?.toString() ?? result['data']?['role']?.toString();
+          final bool isAdmin = (userEmail == 'admin@gmail.com' || role == 'ROLE_ADMIN' || role == 'ADMIN');
+          if (isAdmin) {
+            await prefs.setString('user_role', 'ROLE_ADMIN');
+          } else {
+            await prefs.setString('user_role', 'ROLE_USER');
+          }
           
           Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
             context, // 執行相對應的邏輯計算或設定屬性參數

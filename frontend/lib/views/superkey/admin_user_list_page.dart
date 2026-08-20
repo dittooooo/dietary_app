@@ -80,10 +80,10 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                   ? ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
                       itemCount: _users.length, // 執行相對應的邏輯計算或設定屬性參數
                       itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
-                        final userProfile = _users[index]; // 這是 UserProfile 物件
-                        final userObj = userProfile['user'] ?? {}; // 內嵌的 User 物件
+                        final userProfile = _users[index]; // 這是 UserProfileResponse 物件
+                        final userObj = userProfile['user'] is Map ? userProfile['user'] : {};
                         final int profileId = userProfile['id'] ?? 0;
-                        final String email = userObj['email'] ?? '';
+                        final String email = (userProfile['email'] ?? userObj['email'] ?? '').toString();
                         final String displayName = userProfile['nickname'] ?? (email.isNotEmpty ? email.split('@')[0] : '使用者');
                         
                         return Card( // 回傳建構完成的元件或方法計算結果
@@ -171,7 +171,12 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已成功刪除使用者：$name')));
                     _fetchUsers(); // 重新整理清單
                   } else {
-                    final String msg = res['message'] ?? '刪除失敗';
+                    String msg = (res['message'] ?? '刪除失敗').toString();
+                    if (msg.contains('violates foreign key constraint') ||
+                        msg.contains('could not execute statement') ||
+                        msg.contains('diet_records')) {
+                      msg = '刪除失敗：該使用者仍有關聯約束，無法直接刪除。';
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                   }
                 }
