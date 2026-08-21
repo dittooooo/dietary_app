@@ -215,10 +215,17 @@ public class DietaryAgentService {
             throw new UpstreamServiceException("dish-nutrition 回應格式不正確");
         }
 
+        NutritionValues nutrientsArrayMatch = extractFromNutrientsArray(rootMap);
+        int nutrientsArrayScore = countPresent(nutrientsArrayMatch);
+
         List<Map<?, ?>> candidateMaps = collectCandidateMaps(rootMap);
 
         NutritionValues bestMatch = null;
-        int bestScore = 0;
+        int bestScore = nutrientsArrayScore;
+
+        if (nutrientsArrayScore > 0) {
+            bestMatch = nutrientsArrayMatch;
+        }
 
         for (Map<?, ?> candidate : candidateMaps) {
             NutritionValues parsed = new NutritionValues(
@@ -235,13 +242,6 @@ public class DietaryAgentService {
             }
         }
 
-        NutritionValues nutrientsArrayMatch = extractFromNutrientsArray(rootMap);
-        int nutrientsArrayScore = countPresent(nutrientsArrayMatch);
-        if (nutrientsArrayScore > bestScore) {
-            bestScore = nutrientsArrayScore;
-            bestMatch = nutrientsArrayMatch;
-        }
-
         if (bestMatch == null) {
             return new NutritionValues(null, null, null, null);
         }
@@ -250,13 +250,8 @@ public class DietaryAgentService {
     }
 
     private NutritionValues extractFromNutrientsArray(Map<?, ?> rootMap) {
-        Object dishNutrition = findValueIgnoreCase(rootMap, "dish_nutrition");
-        if (!(dishNutrition instanceof Map<?, ?> dishNutritionMap)) {
-            return new NutritionValues(null, null, null, null);
-        }
-
-        Object nutrients = findValueIgnoreCase(dishNutritionMap, "nutrients");
-        if (!(nutrients instanceof List<?> nutrientsList)) {
+        List<?> nutrientsList = findNutrientsList(rootMap);
+        if (nutrientsList == null || nutrientsList.isEmpty()) {
             return new NutritionValues(null, null, null, null);
         }
 
@@ -280,18 +275,43 @@ public class DietaryAgentService {
                 continue;
             }
 
-            if (matchesAnyKey(nutrientName, CALORIES_KEYS)) {
+            if (matchesAnyKey(nutrientName, CALORIES_KEYS, "熱量", "熱量(kcal)", "能量", "energy")) {
                 calories = amount;
-            } else if (matchesAnyKey(nutrientName, PROTEIN_KEYS)) {
+            } else if (matchesAnyKey(nutrientName, PROTEIN_KEYS, "蛋白質", "protein")) {
                 protein = amount;
-            } else if (matchesAnyKey(nutrientName, FAT_KEYS)) {
+            } else if (matchesAnyKey(nutrientName, FAT_KEYS, "脂肪", "fat")) {
                 fat = amount;
-            } else if (matchesAnyKey(nutrientName, CARBOHYDRATES_KEYS)) {
+            } else if (matchesAnyKey(nutrientName, CARBOHYDRATES_KEYS, "碳水化合物", "碳水", "carbohydrate")) {
                 carbohydrates = amount;
             }
         }
 
         return new NutritionValues(calories, protein, fat, carbohydrates);
+    }
+
+    private List<?> findNutrientsList(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            Object nutrients = findValueIgnoreCase(map, "nutrients");
+            if (nutrients instanceof List<?> nutrientsList) {
+                return nutrientsList;
+            }
+
+            for (Object child : map.values()) {
+                List<?> nested = findNutrientsList(child);
+                if (nested != null && !nested.isEmpty()) {
+                    return nested;
+                }
+            }
+        } else if (value instanceof List<?> list) {
+            for (Object child : list) {
+                List<?> nested = findNutrientsList(child);
+                if (nested != null && !nested.isEmpty()) {
+                    return nested;
+                }
+            }
+        }
+
+        return null;
     }
 
     private List<Map<?, ?>> collectCandidateMaps(Map<?, ?> rootMap) {
@@ -370,8 +390,17 @@ public class DietaryAgentService {
     }
 
     private boolean matchesAnyKey(String source, String[] keys) {
+        return matchesAnyKey(source, keys, new String[0]);
+    }
+
+    private boolean matchesAnyKey(String source, String[] keys, String... extraKeys) {
         String normalizedSource = source.trim().toLowerCase();
         for (String key : keys) {
+            if (normalizedSource.contains(key.toLowerCase())) {
+                return true;
+            }
+        }
+        for (String key : extraKeys) {
             if (normalizedSource.contains(key.toLowerCase())) {
                 return true;
             }
