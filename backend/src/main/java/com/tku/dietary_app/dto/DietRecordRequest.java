@@ -44,6 +44,8 @@ public class DietRecordRequest {
     )
     private String mealType;
 
+    private LocalDate mealDate;
+
     @Positive(message = "amount 必須大於 0")
     private Integer amount;
 }

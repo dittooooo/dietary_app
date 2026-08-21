@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_pr
 import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
+import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper
 import './login_page.dart';  // 匯入 login_page.dart 元件庫或套件
 
@@ -110,9 +111,8 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       }
     } catch (e) {
       if (mounted) {
-        final cleanMsg = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失敗: $cleanMsg'))
+          const SnackBar(content: Text(FriendlyErrorMessage.generic))
         );
       }
     }

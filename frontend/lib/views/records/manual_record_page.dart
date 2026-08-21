@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/diet_service.dart';
+import '../../utils/friendly_error_message.dart';
 import 'elf_feeding_page.dart';
 import 'simple_camera_page.dart';
 
@@ -165,27 +166,35 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
     if (source == null) return;
 
-    if (source == ImageSource.camera) {
-      if (!mounted) return;
-      final XFile? photo = await Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
-      );
-      if (photo != null) {
-        final bytes = await photo.readAsBytes();
-        setState(() {
-          _items[index].selectedImage = photo;
-          _items[index].imageBytes = bytes;
-        });
+    try {
+      if (source == ImageSource.camera) {
+        if (!mounted) return;
+        final XFile? photo = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
+        );
+        if (photo != null) {
+          final bytes = await photo.readAsBytes();
+          setState(() {
+            _items[index].selectedImage = photo;
+            _items[index].imageBytes = bytes;
+          });
+        }
+      } else {
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        if (image != null) {
+          final bytes = await image.readAsBytes();
+          setState(() {
+            _items[index].selectedImage = image;
+            _items[index].imageBytes = bytes;
+          });
+        }
       }
-    } else {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        final bytes = await image.readAsBytes();
-        setState(() {
-          _items[index].selectedImage = image;
-          _items[index].imageBytes = bytes;
-        });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+        );
       }
     }
   }
@@ -285,7 +294,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('儲存時發生錯誤: $e')),
+          const SnackBar(content: Text(FriendlyErrorMessage.dietRecord)),
         );
       }
     } finally {

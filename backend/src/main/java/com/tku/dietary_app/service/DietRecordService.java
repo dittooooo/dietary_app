@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +28,7 @@ public class DietRecordService {
     private final DietRecordRepository dietRecordRepository;
     private final UserRepository userRepository;
     private final DietaryAgentService dietaryAgentService;
+    private final Clock taipeiClock;
     private final ImageStorageService imageStorageService;
 
     @Value("${app.upload.dir}")
@@ -79,6 +81,8 @@ public class DietRecordService {
 
         DietaryAgentService.NutritionValues nutritionValues = dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
 
+        LocalDate recordDate = resolveRecordDateForCreate(request);
+
         return dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName().trim())
@@ -86,7 +90,8 @@ public class DietRecordService {
                 .protein(selectNutritionValue(nutritionValues.protein(), request.getProtein()))
                 .fat(selectNutritionValue(nutritionValues.fat(), request.getFat()))
                 .carbohydrates(selectNutritionValue(nutritionValues.carbohydrates(), request.getCarbohydrates()))
-                .date(resolveRecordDate(request.getDate()))
+                .date(recordDate)
+                .mealDate(recordDate)
                 .description(normalizeNullableText(request.getDescription()))
                 .mealType(normalizeMealTypeRequired(request.getMealType()))
                 .amount(resolveAmount(request.getAmount()))
@@ -164,8 +169,10 @@ public class DietRecordService {
         record.setFat(resolveUpdatedNutritionValue(request.getFat(), dishNameChanged, nutritionValues == null ? null : nutritionValues.fat(), record.getFat()));
         record.setCarbohydrates(resolveUpdatedNutritionValue(request.getCarbohydrates(), dishNameChanged, nutritionValues == null ? null : nutritionValues.carbohydrates(), record.getCarbohydrates()));
 
-        if (request.getDate() != null) {
-            record.setDate(request.getDate());
+        LocalDate requestedDate = resolveRequestedDate(request);
+        if (requestedDate != null) {
+            record.setDate(requestedDate);
+            record.setMealDate(requestedDate);
         }
         if (request.getDescription() != null) {
             record.setDescription(normalizeNullableText(request.getDescription()));
@@ -208,8 +215,13 @@ public class DietRecordService {
         return resolvedValue != null ? resolvedValue : fallbackValue;
     }
 
-    private LocalDate resolveRecordDate(LocalDate requestedDate) {
-        return requestedDate != null ? requestedDate : LocalDate.now();
+    private LocalDate resolveRecordDateForCreate(DietRecordRequest request) {
+        LocalDate requestedDate = resolveRequestedDate(request);
+        return requestedDate != null ? requestedDate : LocalDate.now(taipeiClock);
+    }
+
+    private LocalDate resolveRequestedDate(DietRecordRequest request) {
+        return request.getDate() != null ? request.getDate() : request.getMealDate();
     }
 
     private int resolveAmount(Integer amount) {

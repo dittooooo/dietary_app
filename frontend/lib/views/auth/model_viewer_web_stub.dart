@@ -2,6 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:model_viewer_plus/model_viewer_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+const String _modelViewerLoadingHtml = '''
+<div class="model-viewer-loading" slot="progress-bar">
+  <div class="model-viewer-loading__spinner"></div>
+</div>
+''';
+
+const String _modelViewerLoadingCss = '''
+.model-viewer-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.model-viewer-loading.is-hidden {
+  opacity: 0;
+}
+.model-viewer-loading__spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid rgba(238, 238, 238, 0.92);
+  border-top-color: #202808;
+  border-radius: 50%;
+  animation: modelViewerSpin 900ms linear infinite;
+}
+@keyframes modelViewerSpin {
+  to { transform: rotate(360deg); }
+}
+''';
+
+const String _modelViewerLoadingJs = '''
+(() => {
+  const model = document.querySelector('model-viewer');
+  const loading = document.querySelector('.model-viewer-loading');
+  if (!model || !loading) return;
+
+  const hideLoading = () => loading.classList.add('is-hidden');
+  const showLoading = () => loading.classList.remove('is-hidden');
+
+  model.addEventListener('load', hideLoading);
+  model.addEventListener('error', hideLoading);
+  model.addEventListener('progress', (event) => {
+    if (event.detail && event.detail.totalProgress >= 1) {
+      hideLoading();
+    } else {
+      showLoading();
+    }
+  });
+
+  if (model.loaded) hideLoading();
+})();
+''';
+
 Widget createWebModelView({
   required String colorScheme,
   required bool autoSpin,
@@ -119,10 +174,15 @@ class _MobileModelViewerAnimationSwitcherState
       cameraControls: widget.cameraControls,
       cameraOrbit: widget.cameraOrbit,
       backgroundColor: Colors.transparent,
+      loading: Loading.eager,
+      reveal: Reveal.auto,
       fieldOfView: widget.fieldOfView,
       animationName: widget.animationName,
       autoPlay: widget.autoPlay,
       interactionPrompt: InteractionPrompt.none,
+      innerModelViewerHtml: _modelViewerLoadingHtml,
+      relatedCss: _modelViewerLoadingCss,
+      relatedJs: _modelViewerLoadingJs,
       onWebViewCreated: _handleWebViewCreated,
     );
   }

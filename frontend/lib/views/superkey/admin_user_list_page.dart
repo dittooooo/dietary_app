@@ -2,6 +2,7 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'user_detail_page.dart'; // 匯入 user_detail_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
+import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper 進行字串對應轉換
 
 class AdminUserListPage extends StatefulWidget { // 定義 AdminUserListPage 類別，繼承自 StatefulWidget
@@ -360,7 +361,9 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('帳戶建立成功！')));
                     _fetchUsers(); // 刷新清單
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('帳戶建立失敗: ${res['message']}')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+                    );
                   }
                 }
               },

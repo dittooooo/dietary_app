@@ -30,12 +30,10 @@ public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
                    COALESCE(SUM(d.protein), 0) AS totalProtein
             FROM DietRecord d
             WHERE d.user.id = :userId
-              AND d.createdAt >= :startAt
-              AND d.createdAt < :endAt
+              AND d.date = :recordDate
             """)
-    DailyNutritionSummary summarizeByUserAndCreatedAtRange(@Param("userId") Long userId,
-                                                           @Param("startAt") LocalDateTime startAt,
-                                                           @Param("endAt") LocalDateTime endAt);
+    DailyNutritionSummary summarizeByUserAndRecordDate(@Param("userId") Long userId,
+                                                       @Param("recordDate") LocalDate recordDate);
 
     @Query("""
             SELECT d

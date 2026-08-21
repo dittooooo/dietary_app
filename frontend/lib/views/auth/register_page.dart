@@ -106,12 +106,12 @@ class _RegisterPageState extends State<RegisterPage> { // 定義 _RegisterPageSt
           ); // 程式碼區塊或元件結構結束
         } else { // 程式碼區塊或元件結構結束
           setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-            _emailError = result['email']; // 執行相對應的邏輯計算或設定屬性參數
-            _passwordError = result['password']; // 執行相對應的邏輯計算或設定屬性參數
+            _emailError = result['email'] != null ? '請確認信箱格式或是否已註冊' : null; // 執行相對應的邏輯計算或設定屬性參數
+            _passwordError = result['password'] != null ? '請確認密碼格式' : null; // 執行相對應的邏輯計算或設定屬性參數
           }); // 程式碼區塊或元件結構結束
           ScaffoldMessenger.of( // 執行相對應的邏輯計算或設定屬性參數
             context, // 執行相對應的邏輯計算或設定屬性參數
-          ).showSnackBar(SnackBar(content: Text(result['message'] ?? '註冊失敗'))); // 建立文字顯示元件（Text）
+          ).showSnackBar(const SnackBar(content: Text('註冊失敗，請確認資料後再試。'))); // 建立文字顯示元件（Text）
         } // 程式碼區塊或元件結構結束
       } // 程式碼區塊或元件結構結束
     } catch (e) { // 執行相對應的邏輯計算或設定屬性參數

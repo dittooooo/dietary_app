@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
+import '../../utils/friendly_error_message.dart';
 
 class GenericAdminListPage extends StatefulWidget { // 定義 GenericAdminListPage 類別，繼承自 StatefulWidget
   final String title; // 宣告類別成員或方法內部的區域變數
@@ -613,8 +614,10 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                         ),
                       );
                     } else {
-                      final errMsg = res['message'] ?? res['error'] ?? '未知錯誤';
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('更新失敗: $errMsg')));
+                      debugPrint('管理更新失敗: ${res['message'] ?? res['error'] ?? '未知錯誤'}');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+                      );
                     }
                   }
                 },
@@ -925,8 +928,10 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                         ),
                       );
                     } else {
-                      final errMsg = res['message'] ?? res['error'] ?? '未知錯誤';
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('新增失敗: $errMsg')));
+                      debugPrint('管理新增失敗: ${res['message'] ?? res['error'] ?? '未知錯誤'}');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+                      );
                     }
                   }
                 },

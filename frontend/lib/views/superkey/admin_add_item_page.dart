@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
+import '../../utils/friendly_error_message.dart';
 
 class AdminAddItemPage extends StatefulWidget { // 定義 AdminAddItemPage 類別，繼承自 StatefulWidget
   final String title; // 宣告類別成員或方法內部的區域變數
@@ -206,7 +207,9 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新餐廳' : '已成功新增餐廳')));
             Navigator.pop(context, true);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失敗: ${res['message']}')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+            );
           }
         } else {
           final payload = {
@@ -225,11 +228,15 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新菜單' : '已成功新增菜單')));
             Navigator.pop(context, true);
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作失敗: ${res['message']}')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+            );
           }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('操作出錯: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+        );
       } finally {
         setState(() => _isSaving = false);
       }

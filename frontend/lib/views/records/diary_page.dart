@@ -7,6 +7,7 @@ import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart
+import '../../utils/friendly_error_message.dart';
 import '../../config/api_config.dart'; // 匯入 api_config.dart
 import 'dart:convert'; // 處理 JSON 轉換
 import 'manual_record_page.dart'; // 匯入手動紀錄頁面
@@ -777,12 +778,15 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
                   mealType: record['mealType'],
                   description: record['description'] ?? '',
                   nutrition: newNutrition,
+                  mealDate: _getRecordDate(record),
                 );
                 if (res['success'] == true) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('更新成功！')));
                   _fetchRecords();
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('更新失敗: ${res['message']}')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text(FriendlyErrorMessage.dietRecord)),
+                  );
                 }
               }
             },
@@ -807,11 +811,15 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('照片上傳成功！')));
           _fetchRecords();
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('上傳失敗: ${res['message']}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+          );
         }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('開啟相簿或上傳失敗: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+      );
     }
   }
 

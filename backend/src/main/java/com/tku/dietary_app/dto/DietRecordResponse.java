@@ -26,9 +26,11 @@ public class DietRecordResponse {
     private NutritionResponse nutrition;
 
     public static DietRecordResponse fromEntity(DietRecord dietRecord) {
-        LocalDate recordDate = dietRecord.getDate() != null
+        LocalDate recordDate = dietRecord.getMealDate() != null
+                ? dietRecord.getMealDate()
+                : (dietRecord.getDate() != null
                 ? dietRecord.getDate()
-                : (dietRecord.getCreatedAt() == null ? null : dietRecord.getCreatedAt().toLocalDate());
+                : (dietRecord.getCreatedAt() == null ? null : dietRecord.getCreatedAt().toLocalDate()));
 
         return DietRecordResponse.builder()
                 .id(dietRecord.getId())

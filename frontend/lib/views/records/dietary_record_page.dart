@@ -11,6 +11,7 @@ import '../../widgets/dog_avatar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../config/api_config.dart';
+import '../../services/diet_service.dart';
 
 class DietaryRecordPage extends StatefulWidget {
   // 定義 DietaryRecordPage 類別，繼承自 StatefulWidget
@@ -28,6 +29,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   DateTime _selectedDate = DateTime.now(); // 執行相對應的邏輯計算或設定屬性參數
   bool _showOverlay = false; // 宣告類別成員或方法內部的區域變數
   DateTime? _rippleDate; // 執行相對應的邏輯計算或設定屬性參數
+  bool _isLoadingRecords = false;
+  List<dynamic> _dietRecords = [];
 
   final List<DateTime> _pathDates = List.generate(
     100,
@@ -67,6 +70,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
     // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _loadAvatar();
+    _loadDietRecords();
     _scrollController.addListener(() {
       // 執行相對應的邏輯計算或設定屬性參數
       if (_scrollController.offset > 200 && !_showBackToToday) {
@@ -78,6 +82,99 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       } // 程式碼區塊或元件結構結束
     }); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
+
+  Future<void> _loadDietRecords() async {
+    setState(() => _isLoadingRecords = true);
+    try {
+      final records = await DietService().getMyDietRecords();
+      if (mounted) {
+        setState(() => _dietRecords = records);
+      }
+    } catch (e) {
+      debugPrint('載入飲食紀錄狀態失敗: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingRecords = false);
+      }
+    }
+  }
+
+  DateTime? _recordDate(dynamic record) {
+    if (record == null) return null;
+    final value = record['date'] ?? record['mealDate'] ?? record['createdAt'];
+    if (value == null) return null;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (_) {
+        return null;
+      }
+    }
+    if (value is List && value.length >= 3) {
+      try {
+        return DateTime(
+          int.parse(value[0].toString()),
+          int.parse(value[1].toString()),
+          int.parse(value[2].toString()),
+        );
+      } catch (_) {
+        return null;
+      }
+    }
+    if (value is Map) {
+      try {
+        return DateTime(
+          int.parse((value['year'] ?? value['yearValue']).toString()),
+          int.parse((value['month'] ?? value['monthValue']).toString()),
+          int.parse((value['day'] ?? value['dayOfMonth']).toString()),
+        );
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  List<dynamic> _recordsForDate(DateTime date) {
+    return _dietRecords.where((record) {
+      final recordDate = _recordDate(record);
+      return recordDate != null &&
+          recordDate.year == date.year &&
+          recordDate.month == date.month &&
+          recordDate.day == date.day;
+    }).toList();
+  }
+
+  String _elfRecordMessage() {
+    if (_isLoadingRecords) return '正在看看\n飲食紀錄...';
+
+    final records = _recordsForDate(_selectedDate);
+    final today = DateTime.now();
+    final isToday = _selectedDate.year == today.year &&
+        _selectedDate.month == today.month &&
+        _selectedDate.day == today.day;
+
+    if (records.isEmpty) {
+      return isToday ? '今天還沒記錄\n好餓喔...' : '這天還沒記錄\n可以補一下喔';
+    }
+
+    final mealTypes = records
+        .map((record) => (record['mealType'] ?? '').toString().toUpperCase())
+        .toSet();
+    final missingMeals = <String>[
+      if (!mealTypes.contains('BREAKFAST')) '早餐',
+      if (!mealTypes.contains('LUNCH')) '午餐',
+      if (!mealTypes.contains('DINNER')) '晚餐',
+    ];
+
+    if (missingMeals.isEmpty) {
+      return '三餐都有記錄\n好棒！';
+    }
+    if (records.length >= 3) {
+      return '已記錄 ${records.length} 筆\n繼續保持！';
+    }
+    return '已記錄 ${records.length} 筆\n還差${missingMeals.first}';
+  }
 
   void _selectDate() async {
     // 執行相對應的邏輯計算或設定屬性參數
@@ -424,7 +521,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                     builder: (context) =>
                         ManualRecordPage(initialDate: _selectedDate),
                   ), // 執行相對應的邏輯計算或設定屬性參數
-                ); // 程式碼區塊或元件結構結束
+                ).then((_) => _loadDietRecords()); // 程式碼區塊或元件結構結束
               }, // 程式碼區塊或元件結構結束
               child: Container(
                 // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
@@ -481,8 +578,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                         ),
                       ],
                     ), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角防偽陰影樣式
-                    child: const Text(
-                      '今天還沒記錄\n好餓喔...',
+                    child: Text(
+                      _elfRecordMessage(),
                       style: TextStyle(
                         fontSize: 10,
                         color: AppColors.textPrimary,

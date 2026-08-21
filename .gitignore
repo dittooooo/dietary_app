@@ -1,7 +1,8 @@
+.env
+**/.env
 __pycache__/
 *.py[cod]
 
-.env
 *.env
 !.env.example
 
@@ -23,5 +24,4 @@ start_backends.*
 # Ignored test directory
 test/
 test
-
 

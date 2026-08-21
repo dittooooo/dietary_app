@@ -14,7 +14,9 @@ import '../superkey/generic_admin_page.dart'; // 引入通用管理頁面
 import '../home/home_page.dart';
 import 'edit_profile_page.dart';
 import 'login_page.dart';
+import 'settings_page.dart';
 import '../../services/auth_service.dart';
+import '../../utils/friendly_error_message.dart';
 
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
@@ -147,14 +149,18 @@ class _ProfilePageState extends State<ProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('頭像上傳成功！')));
             _loadUserData(); // 重新載入最新資料
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('頭像上傳失敗：${uploadResult['message']}')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+            );
           }
         }
       }
     } catch (e) {
       debugPrint('選取圖片或上傳失敗: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('選取或上傳圖片失敗: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+        );
       }
     }
   }
@@ -277,48 +283,96 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 20),
 
-            // 2. 修改個人檔案按鈕 (一般使用者才顯示)
+            // 2. 修改個人檔案與設定按鈕 (一般使用者才顯示)
             if (!_isAdmin)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 2.925,
-                        offset: const Offset(0, 1.17),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      if (_fullUserData != null) {
-                        final updated = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EditProfilePage(
-                              initialData: {
-                                ..._fullUserData!,
-                                'email': _email,
-                              },
-                            ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.25),
+                            blurRadius: 2.925,
+                            offset: const Offset(0, 1.17),
                           ),
-                        );
-                        if (updated == true) _loadUserData();
-                      }
-                    },
-                    icon: const Icon(Icons.edit, color: Colors.black, size: 18),
-                    label: const Text('修改個人檔案', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.background,
-                      foregroundColor: AppColors.textPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                        ],
+                      ),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          if (_fullUserData != null) {
+                            final updated = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditProfilePage(
+                                  initialData: {
+                                    ..._fullUserData!,
+                                    'email': _email,
+                                  },
+                                ),
+                              ),
+                            );
+                            if (updated == true) _loadUserData();
+                          }
+                        },
+                        icon: const Icon(
+                          Icons.edit,
+                          color: Colors.black,
+                          size: 18,
+                        ),
+                        label: const Text(
+                          '修改個人檔案',
+                          style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.background,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 10,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Material(
+                      color: AppColors.background,
+                      shape: const CircleBorder(),
+                      elevation: 2.925,
+                      shadowColor: Colors.black.withOpacity(0.25),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsPage(),
+                            ),
+                          );
+                        },
+                        customBorder: const CircleBorder(),
+                        child: const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Icon(
+                            Icons.settings,
+                            color: AppColors.textPrimary,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
