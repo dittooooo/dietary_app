@@ -58,13 +58,13 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
             ), // 執行相對應的邏輯計算或設定屬性參數
           ); // 程式碼區塊或元件結構結束
         } else { // 程式碼區塊或元件結構結束
-          // 顯示後端回傳的錯誤欄位
+          // 顯示固定欄位提示，避免原始後端錯誤裸露在畫面上
           setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-            _emailError = result['email']; // 執行相對應的邏輯計算或設定屬性參數
-            _passwordError = result['error'] ?? result['password']; // 執行相對應的邏輯計算或設定屬性參數
+            _emailError = result['email'] != null ? '請確認帳號格式或內容' : null; // 執行相對應的邏輯計算或設定屬性參數
+            _passwordError = result['error'] != null || result['password'] != null ? '請確認密碼是否正確' : null; // 執行相對應的邏輯計算或設定屬性參數
           }); // 程式碼區塊或元件結構結束
           ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-            SnackBar(content: Text(result['message'] ?? result['error'] ?? '登入失敗')) // 建立文字顯示元件（Text）
+            const SnackBar(content: Text('登入失敗，請確認帳號密碼後再試。')) // 建立文字顯示元件（Text）
           ); // 程式碼區塊或元件結構結束
         } // 程式碼區塊或元件結構結束
       } // 程式碼區塊或元件結構結束

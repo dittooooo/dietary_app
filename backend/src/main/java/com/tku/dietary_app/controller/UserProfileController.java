@@ -4,12 +4,15 @@ import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
 import com.tku.dietary_app.dto.OnboardingRequest;
+import com.tku.dietary_app.dto.ProblemFeedbackRequest;
+import com.tku.dietary_app.dto.ProblemFeedbackResponse;
 import com.tku.dietary_app.dto.UserProfileResponse;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.exception.UnauthorizedException;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.DietRecordService;
+import com.tku.dietary_app.service.ProblemFeedbackService;
 import com.tku.dietary_app.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class UserProfileController {
     private final UserProfileService userProfileService;
     private final UserRepository userRepository;
     private final DietRecordService dietRecordService;
+    private final ProblemFeedbackService problemFeedbackService;
 
     @GetMapping("/diet-records")
     public ResponseEntity<ApiResponse<?>> getMyDietRecords(Authentication authentication) {
@@ -67,6 +71,16 @@ public class UserProfileController {
                         userProfileService.getUserProfile(user)
                                 .orElseThrow(() -> new ResourceNotFoundException("尚未完成 onboarding"))
                 )
+        ));
+    }
+
+    @PostMapping("/problem-feedback")
+    public ResponseEntity<ApiResponse<?>> createProblemFeedback(Authentication authentication,
+                                                                @Valid @RequestBody ProblemFeedbackRequest request) {
+        User user = requireAuthenticatedUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(
+                "問題回饋已送出",
+                ProblemFeedbackResponse.fromEntity(problemFeedbackService.create(user, request))
         ));
     }
 

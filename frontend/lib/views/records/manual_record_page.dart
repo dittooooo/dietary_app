@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/diet_service.dart';
+import '../../utils/friendly_error_message.dart';
 import 'elf_feeding_page.dart';
 import 'simple_camera_page.dart';
 
@@ -175,7 +176,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('選取圖片失敗: $e')),
+            const SnackBar(content: Text(FriendlyErrorMessage.upload)),
           );
         }
       }
@@ -284,7 +285,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('儲存時發生錯誤: $e')),
+          const SnackBar(content: Text(FriendlyErrorMessage.dietRecord)),
         );
       }
     } finally {

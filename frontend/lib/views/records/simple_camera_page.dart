@@ -2,6 +2,7 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'package:camera/camera.dart'; // 匯入 camera.dart 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../utils/friendly_error_message.dart';
 
 class SimpleCameraPage extends StatefulWidget { // 定義 SimpleCameraPage 類別，繼承自 StatefulWidget
   const SimpleCameraPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
@@ -80,7 +81,7 @@ class _SimpleCameraPageState extends State<SimpleCameraPage> with SingleTickerPr
     } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
         setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-          _errorMessage = '初始化相機失敗: $e'; // 執行相對應的邏輯計算或設定屬性參數
+          _errorMessage = FriendlyErrorMessage.camera; // 執行相對應的邏輯計算或設定屬性參數
           _isInitializing = false; // 執行相對應的邏輯計算或設定屬性參數
         }); // 程式碼區塊或元件結構結束
       } // 程式碼區塊或元件結構結束
@@ -212,7 +213,7 @@ class _SimpleCameraPageState extends State<SimpleCameraPage> with SingleTickerPr
     } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
         ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-          SnackBar(content: Text('拍攝失敗: $e')), // 建立文字顯示元件（Text）
+          const SnackBar(content: Text(FriendlyErrorMessage.camera)), // 建立文字顯示元件（Text）
         ); // 程式碼區塊或元件結構結束
       } // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束

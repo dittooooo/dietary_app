@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,10 +66,8 @@ public class BodyStatusService {
     }
 
     private DailySettlementResult settleOneDate(UserProfile profile, LocalDate recordDate) {
-        LocalDateTime startAt = recordDate.atStartOfDay();
-        LocalDateTime endAt = recordDate.plusDays(1).atStartOfDay();
         DietRecordRepository.DailyNutritionSummary summary =
-                dietRecordRepository.summarizeByUserAndCreatedAtRange(profile.getUser().getId(), startAt, endAt);
+                dietRecordRepository.summarizeByUserAndRecordDate(profile.getUser().getId(), recordDate);
 
         long recordCount = summary == null || summary.getRecordCount() == null ? 0L : summary.getRecordCount();
         double totalCalories = summary == null || summary.getTotalCalories() == null ? 0.0 : summary.getTotalCalories();

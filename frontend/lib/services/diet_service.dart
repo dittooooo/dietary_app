@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import '../core/api_client.dart';
+import '../utils/friendly_error_message.dart';
 import '../utils/profile_value_mapper.dart';
 
 class DietService {
@@ -59,9 +60,11 @@ class DietService {
     return SharedPreferences.getInstance();
   }
 
-  String _errorMessage(String action, int statusCode, String body) {
-    final detail = body.trim().isEmpty ? '無伺服器回應內容' : body;
-    return '$action失敗 ($statusCode): $detail';
+  String _errorMessage(String action, int _statusCode, String _body) {
+    if (action.toLowerCase().contains('companion')) {
+      return FriendlyErrorMessage.companion;
+    }
+    return FriendlyErrorMessage.dietRecord;
   }
 
   Map<String, dynamic> _decodeObject(String body) {
@@ -188,7 +191,7 @@ class DietService {
   }) async {
     final token = await _token();
     if (token == null) {
-      return {'success': false, 'message': 'Please sign in again.'};
+      return {'success': false, 'message': '請重新登入。'};
     }
 
     Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
@@ -252,7 +255,7 @@ class DietService {
         ),
       };
     } catch (e) {
-      return {'success': false, 'message': 'Create diet record failed: $e'};
+      return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
     }
   }
 
@@ -263,7 +266,7 @@ class DietService {
   ) async {
     final token = await _token();
     if (token == null) {
-      return {'success': false, 'message': 'Please sign in again.'};
+      return {'success': false, 'message': '請重新登入。'};
     }
 
     try {
@@ -288,7 +291,7 @@ class DietService {
         ),
       };
     } catch (e) {
-      return {'success': false, 'message': 'Upload diet photo failed: $e'};
+      return {'success': false, 'message': FriendlyErrorMessage.upload};
     }
   }
 
@@ -319,7 +322,7 @@ class DietService {
   }) async {
     final token = await _token();
     if (token == null) {
-      return {'success': false, 'message': 'Please sign in again.'};
+      return {'success': false, 'message': '請重新登入。'};
     }
 
     final parsedNutrition = _parseNutrition(nutrition);
@@ -377,7 +380,7 @@ class DietService {
         ),
       };
     } catch (e) {
-      return {'success': false, 'message': 'Update diet record failed: $e'};
+      return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
     }
   }
 
@@ -400,7 +403,7 @@ class DietService {
       if (response.statusCode != 200) {
         return {
           'success': false,
-          'message': _errorMessage('飲食分析', response.statusCode, response.body),
+          'message': FriendlyErrorMessage.companion,
         };
       }
 
@@ -415,7 +418,7 @@ class DietService {
         ),
       };
     } catch (e) {
-      return {'success': false, 'message': '飲食分析失敗: $e'};
+      return {'success': false, 'message': FriendlyErrorMessage.companion};
     }
   }
 
@@ -538,13 +541,12 @@ class DietService {
   Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
     final normalizedPrompt = userPrompt.trim();
     if (normalizedPrompt.isEmpty) {
-      return {'success': false, 'message': 'User prompt cannot be empty.'};
+      return {'success': false, 'message': '請先輸入想和精靈說的內容。'};
     }
 
     final token = await _token();
     final candidateUrls = ApiConfig.companionCandidateBaseUrls;
 
-    Object? lastError;
     for (final baseUrl in candidateUrls) {
       try {
         final response = await _client.post(
@@ -570,16 +572,15 @@ class DietService {
         // 若 Http Status 非 200 但能連通，保留錯誤訊息
         return {
           'success': false,
-          'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
+          'message': FriendlyErrorMessage.companion,
         };
       } catch (e) {
-        lastError = e;
         // 連線拒絕 (SocketException) 或逾時，自動切換至下一個候選 URL (如 10.0.2.2 或 127.0.0.1)
         continue;
       }
     }
 
-    return {'success': false, 'message': 'Send companion prompt failed: $lastError'};
+    return {'success': false, 'message': FriendlyErrorMessage.companion};
   }
 }
 

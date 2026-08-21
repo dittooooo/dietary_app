@@ -8,6 +8,7 @@ import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart 元件庫或套件
 import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart 元件庫或套件
+import '../../utils/friendly_error_message.dart';
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../widgets/dog_avatar.dart';
 import '../records/elf_feeding_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
@@ -366,7 +367,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   
                   const SizedBox(height: 20),
                   
-                  // 飲食營養素匯總與圓餅圖
+                  // 飲食營養素匯總
                   Container(
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
@@ -377,7 +378,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       children: [
                         _buildSummaryRow('總熱量攝取', '${calories.toStringAsFixed(0)} kcal', Icons.local_fire_department, AppColors.danger),
                         const Divider(height: 16, thickness: 0.5),
-                        MacronutrientPieChart(
+                        MacronutrientValuesDisplay(
                           protein: protein,
                           fat: fat,
                           carbs: carbs,
@@ -617,7 +618,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           } else {
             _messages.add({
               'isElf': true,
-              'text': res['message'] ?? '讀取精靈回覆失敗，請稍後再試。',
+              'text': FriendlyErrorMessage.companionReply(res['message']),
             });
           }
         });
@@ -632,7 +633,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           }
           _messages.add({
             'isElf': true,
-            'text': '連線發生錯誤: $e',
+            'text': FriendlyErrorMessage.companionReply(e),
           });
         });
         _scrollToBottom(); // 新增：發生異常後滑到底部
@@ -1461,12 +1462,12 @@ class _NutrientInfo extends StatelessWidget { // 定義 _NutrientInfo 類別，�
 } // 程式碼區塊或元件結構結束
 
 
-class MacronutrientPieChart extends StatelessWidget {
+class MacronutrientValuesDisplay extends StatelessWidget {
   final double protein;
   final double fat;
   final double carbs;
 
-  const MacronutrientPieChart({
+  const MacronutrientValuesDisplay({
     super.key,
     required this.protein,
     required this.fat,
@@ -1488,97 +1489,74 @@ class MacronutrientPieChart extends StatelessWidget {
       );
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        SizedBox(
-          width: 70,
-          height: 70,
-          child: CustomPaint(
-            painter: PieChartPainter(
-              protein: protein,
-              fat: fat,
-              carbs: carbs,
-            ),
-          ),
-        ),
-        const SizedBox(width: 24),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+        Row(
           children: [
-            _buildLegendItem('脂肪', fat, total, const Color(0xFFEF5350)),
-            const SizedBox(height: 6),
-            _buildLegendItem('碳水化合物', carbs, total, const Color(0xFF29B6F6)),
-            const SizedBox(height: 6),
-            _buildLegendItem('蛋白質', protein, total, const Color(0xFFFFA726)),
+            Expanded(
+              child: _buildValueItem('蛋白質', protein, total, 'g'),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildValueItem('脂肪', fat, total, 'g'),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildValueItem('碳水', carbs, total, 'g'),
+            ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildLegendItem(String label, double val, double total, Color color) {
-    final pct = (val / total * 100).toStringAsFixed(0);
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+        const SizedBox(height: 8),
+        Text(
+          '三大營養素合計 ${total.toStringAsFixed(0)} g',
+          style: TextStyle(
+            fontSize: 11,
+            color: AppColors.textPrimary.withOpacity(0.65),
+            fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(width: 6),
-        Text(
-          '$label: ${val.toStringAsFixed(0)}g ($pct%)',
-          style: const TextStyle(fontSize: 11, color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-        ),
       ],
     );
   }
-}
 
-class PieChartPainter extends CustomPainter {
-  final double protein;
-  final double fat;
-  final double carbs;
-
-  PieChartPainter({
-    required this.protein,
-    required this.fat,
-    required this.carbs,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final total = protein + fat + carbs;
-    if (total == 0) return;
-
-    final paint = Paint()..style = PaintingStyle.fill;
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    
-    double startAngle = -3.1415926 / 2; // Start from top
-    
-    // Draw Fat
-    final fatSweep = (fat / total) * 2 * 3.1415926;
-    paint.color = const Color(0xFFEF5350);
-    canvas.drawArc(rect, startAngle, fatSweep, true, paint);
-    startAngle += fatSweep;
-
-    // Draw Carbs
-    final carbsSweep = (carbs / total) * 2 * 3.1415926;
-    paint.color = const Color(0xFF29B6F6);
-    canvas.drawArc(rect, startAngle, carbsSweep, true, paint);
-    startAngle += carbsSweep;
-
-    // Draw Protein
-    final proteinSweep = (protein / total) * 2 * 3.1415926;
-    paint.color = const Color(0xFFFFA726);
-    canvas.drawArc(rect, startAngle, proteinSweep, true, paint);
+  Widget _buildValueItem(String label, double val, double total, String unit) {
+    final pct = (val / total * 100).toStringAsFixed(0);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.background.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            val.toStringAsFixed(0),
+            style: const TextStyle(
+              fontSize: 18,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            '$unit / $pct%',
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textPrimary.withOpacity(0.65),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

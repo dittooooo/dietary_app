@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/api_client.dart';
+import '../utils/friendly_error_message.dart';
 import '../utils/profile_value_mapper.dart';
 
 class AuthService {
@@ -219,6 +220,36 @@ class AuthService {
       return {'success': false, ...data};
     } catch (e) {
       return {'success': false, 'message': '上傳頭像失敗: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> submitProblemFeedback(String content) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
+    final trimmedContent = content.trim();
+
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '請重新登入。'};
+    }
+    if (trimmedContent.isEmpty) {
+      return {'success': false, 'message': '請輸入問題內容。'};
+    }
+
+    try {
+      final response = await _client.post(
+        '/user/problem-feedback',
+        {'content': trimmedContent},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      final data = _decodeBody(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, ...data};
+      }
+
+      return {'success': false, 'message': FriendlyErrorMessage.generic};
+    } catch (e) {
+      return {'success': false, 'message': FriendlyErrorMessage.generic};
     }
   }
 

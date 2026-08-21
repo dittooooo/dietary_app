@@ -32,8 +32,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   final DogStateController _dogController = DogStateController.instance;
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
 
-  double _progress = 0.0;
-  String _statusText = '正在準備資料...';
+  String _statusText = '正在確認資料...';
 
   @override
   void initState() {
@@ -166,11 +165,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
       setState(() => _statusText = '正在載入 App...');
     }
 
-    for (int i = 0; i <= 100; i++) {
-      await Future.delayed(const Duration(milliseconds: 15));
-      if (!mounted) return;
-      setState(() => _progress = i / 100.0);
-    }
+    await Future.delayed(const Duration(milliseconds: 1500));
   }
 
   @override
@@ -209,14 +204,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
                   _statusText,
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                LinearProgressIndicator(
-                  value: _progress,
-                  backgroundColor: AppColors.surface,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.primary),
-                  minHeight: 10,
                 ),
               ],
             ),

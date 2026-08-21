@@ -4,6 +4,34 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 
 final Set<String> _registeredViewTypes = <String>{};
+const String _modelViewerLoadingStyleId = 'model-viewer-loading-style';
+const String _modelViewerLoadingClass = 'model-viewer-loading';
+
+const String _modelViewerLoadingCss = '''
+.$_modelViewerLoadingClass {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+.$_modelViewerLoadingClass.is-hidden {
+  opacity: 0;
+}
+.${_modelViewerLoadingClass}__spinner {
+  width: 42px;
+  height: 42px;
+  border: 4px solid rgba(238, 238, 238, 0.92);
+  border-top-color: #202808;
+  border-radius: 50%;
+  animation: modelViewerSpin 900ms linear infinite;
+}
+@keyframes modelViewerSpin {
+  to { transform: rotate(360deg); }
+}
+''';
 
 Widget createWebModelView({
   required String colorScheme,
@@ -17,6 +45,7 @@ Widget createWebModelView({
   String instanceId = 'default',
 }) {
   _ensureModelViewerScriptLoaded();
+  _ensureModelViewerLoadingStyles();
 
   final safeId = instanceId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
   final viewType = 'model-viewer-custom-$safeId';
@@ -29,6 +58,8 @@ Widget createWebModelView({
       ..setAttribute('shadow-softness', '0.5')
       ..setAttribute('environment-image', 'neutral')
       ..setAttribute('exposure', '1.0')
+      ..setAttribute('loading', 'eager')
+      ..setAttribute('reveal', 'auto')
       ..setAttribute('interaction-prompt', 'none')
       ..style.width = '100%'
       ..style.height = '100%'
@@ -76,6 +107,8 @@ Widget createWebModelView({
     } else {
       element.removeAttribute('autoplay');
     }
+
+    _ensureModelViewerLoadingIndicator(element);
   }
 
   final existingElement = html.document.getElementById(elementId);
@@ -100,6 +133,58 @@ Widget createWebModelView({
     key: ValueKey('web_mascot_3d_viewer_${safeId}_${src}_$scale'),
     viewType: viewType,
   );
+}
+
+void _ensureModelViewerLoadingIndicator(html.Element element) {
+  if (element.querySelector('.$_modelViewerLoadingClass') == null) {
+    final spinner = html.DivElement()
+      ..className = '${_modelViewerLoadingClass}__spinner';
+    final loading = html.DivElement()
+      ..className = _modelViewerLoadingClass
+      ..setAttribute('slot', 'progress-bar');
+    loading.append(spinner);
+    element.append(loading);
+  }
+
+  void hideLoading(html.Event _) {
+    element.querySelector('.$_modelViewerLoadingClass')?.classes.add('is-hidden');
+  }
+
+  void showOrHideLoading(html.Event event) {
+    final loading = element.querySelector('.$_modelViewerLoadingClass');
+    if (loading == null) return;
+
+    final detail = event is html.CustomEvent ? event.detail : null;
+    final totalProgress = detail?.totalProgress;
+    if (totalProgress != null && totalProgress >= 1) {
+      loading.classes.add('is-hidden');
+    } else {
+      loading.classes.remove('is-hidden');
+    }
+  }
+
+  if (element.dataset['loadingIndicatorReady'] == 'true') return;
+  element.dataset['loadingIndicatorReady'] = 'true';
+  element.addEventListener('load', hideLoading);
+  element.addEventListener('error', hideLoading);
+  element.addEventListener('progress', showOrHideLoading);
+
+  try {
+    if ((element as dynamic).loaded == true) {
+      element.querySelector('.$_modelViewerLoadingClass')?.classes.add('is-hidden');
+    }
+  } catch (_) {
+    // The model-viewer element may not be upgraded yet on first creation.
+  }
+}
+
+void _ensureModelViewerLoadingStyles() {
+  if (html.document.getElementById(_modelViewerLoadingStyleId) != null) return;
+
+  final style = html.StyleElement()
+    ..id = _modelViewerLoadingStyleId
+    ..text = _modelViewerLoadingCss;
+  html.document.head?.append(style);
 }
 
 void _ensureModelViewerScriptLoaded() {

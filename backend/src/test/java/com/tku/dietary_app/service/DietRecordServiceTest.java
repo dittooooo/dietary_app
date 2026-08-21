@@ -7,7 +7,9 @@ import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,10 +22,12 @@ class DietRecordServiceTest {
     private final UserRepository userRepository = mock(UserRepository.class);
     private final DietaryAgentService dietaryAgentService = mock(DietaryAgentService.class);
     private final ImageStorageService imageStorageService = mock(ImageStorageService.class);
+    private final Clock clock = Clock.system(ZoneId.of("Asia/Taipei"));
     private final DietRecordService service = new DietRecordService(
             dietRecordRepository,
             userRepository,
             dietaryAgentService,
+            clock,
             imageStorageService
     );
 

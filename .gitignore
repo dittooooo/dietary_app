@@ -1,7 +1,8 @@
+.env
+**/.env
 __pycache__/
 *.py[cod]
 
-.env
 *.env
 !.env.example
 
@@ -19,4 +20,3 @@ graphRag/workspace/src/nutrition_agent_v2/test_area/output/
 start_backends.bat
 start_backends.ps1
 start_backends.*
-

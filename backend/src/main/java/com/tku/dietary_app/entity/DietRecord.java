@@ -42,6 +42,9 @@ public class DietRecord {
     @Column(name = "record_date")
     private LocalDate date;
 
+    @Column(name = "meal_date", nullable = false)
+    private LocalDate mealDate;
+
     @Column(nullable = true)
     private String description;
 
@@ -63,8 +66,21 @@ public class DietRecord {
         if (date == null) {
             date = LocalDate.now();
         }
+        if (mealDate == null) {
+            mealDate = date;
+        }
         if (amount == null) {
             amount = 1;
+        }
+    }
+
+    @PreUpdate
+    private void onUpdate() {
+        if (date == null && mealDate != null) {
+            date = mealDate;
+        }
+        if (mealDate == null && date != null) {
+            mealDate = date;
         }
     }
 }
