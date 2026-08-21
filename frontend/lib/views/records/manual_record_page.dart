@@ -14,6 +14,7 @@ class _ManualRecordItem {
   String mealType;
   XFile? selectedImage;
   Uint8List? imageBytes;
+  bool isExpanded;
 
   _ManualRecordItem({
     required this.nameController,
@@ -22,6 +23,7 @@ class _ManualRecordItem {
     required this.mealType,
     this.selectedImage,
     this.imageBytes,
+    this.isExpanded = true,
   });
 }
 
@@ -37,12 +39,19 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   final List<_ManualRecordItem> _items = [];
   final List<String> _mealOptions = ['早餐', '午餐', '晚餐', '其他'];
   final ImagePicker _picker = ImagePicker();
+  final ScrollController _scrollController = ScrollController();
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     _addNewItem();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   String _getAutoMealType() {
@@ -59,6 +68,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         portionController: TextEditingController(text: '1'),
         selectedDate: widget.initialDate ?? DateTime.now(),
         mealType: _getAutoMealType(),
+        isExpanded: true,
       ));
     });
   }
@@ -139,13 +149,13 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.textPrimary),
-              title: const Text('拍照', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: const Icon(Icons.camera_alt, color: AppColors.primary),
+              title: const Text('相機拍照', style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(context, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.textPrimary),
-              title: const Text('從相簿選取', style: TextStyle(fontWeight: FontWeight.bold)),
+              leading: const Icon(Icons.photo_library, color: AppColors.primary),
+              title: const Text('相簿選擇', style: TextStyle(fontWeight: FontWeight.bold)),
               onTap: () => Navigator.pop(context, ImageSource.gallery),
             ),
           ],
@@ -153,49 +163,44 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       ),
     );
 
-    if (source != null) {
-      try {
-        XFile? image;
-        if (source == ImageSource.camera) {
-          image = await Navigator.push<XFile>(
-            context,
-            MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
-          );
-        } else {
-          image = await _picker.pickImage(source: ImageSource.gallery);
-        }
+    if (source == null) return;
 
-        if (image != null) {
-          final bytes = await image.readAsBytes();
-          setState(() {
-            _items[index].selectedImage = image;
-            _items[index].imageBytes = bytes;
-          });
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('選取圖片失敗: $e')),
-          );
-        }
+    if (source == ImageSource.camera) {
+      if (!mounted) return;
+      final XFile? photo = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
+      );
+      if (photo != null) {
+        final bytes = await photo.readAsBytes();
+        setState(() {
+          _items[index].selectedImage = photo;
+          _items[index].imageBytes = bytes;
+        });
+      }
+    } else {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _items[index].selectedImage = image;
+          _items[index].imageBytes = bytes;
+        });
       }
     }
   }
 
   Future<void> _submit() async {
-    final validItems = _items.where((it) => it.nameController.text.trim().isNotEmpty).toList();
+    final validItems = _items.where((item) => item.nameController.text.trim().isNotEmpty).toList();
 
     if (validItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('請至少在一項紀錄卡片中輸入餐點內容')),
+        const SnackBar(content: Text('請至少輸入一項餐點名稱！')),
       );
       return;
     }
 
     setState(() => _isSaving = true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('正在寫入 ${validItems.length} 筆飲食紀錄...')),
-    );
 
     List<Map<String, String>> elfItems = [];
     List<String> failedMessages = [];
@@ -212,8 +217,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           cleanP = pVal == pVal.toInt() ? pVal.toInt().toString() : pVal.toString();
         }
         final amountText = '$cleanP 份';
-
-        debugPrint('正在新增第 ${i + 1} 筆紀錄: $name ($amountText, ${item.mealType}, ${item.selectedDate})');
 
         final result = await DietService().createDietRecord(
           dishName: name,
@@ -251,18 +254,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           });
         } else {
           final msg = result['message'] ?? '寫入資料庫失敗';
-          debugPrint('第 ${i + 1} 筆紀錄 ($name) 寫入失敗: $msg');
           failedMessages.add('$name ($msg)');
         }
       }
 
       if (mounted) {
         if (failedMessages.isNotEmpty) {
-          debugPrint('飲食紀錄部分或全部寫入失敗: ${failedMessages.join("；")}');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('新增飲食紀錄失敗，請檢查連線或稍後再試'),
-              duration: Duration(seconds: 3),
+            SnackBar(
+              content: Text('新增飲食紀錄失敗：${failedMessages.join("；")}'),
+              duration: const Duration(seconds: 4),
             ),
           );
         } else if (elfItems.isNotEmpty) {
@@ -308,73 +309,88 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 手動紀錄標題下方提示 (字體放大)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 14),
-                child: Text(
-                  '提示：每欄請記錄單一餐點',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+      body: RawScrollbar(
+        controller: _scrollController,
+        thumbColor: Colors.grey.shade600,
+        thumbVisibility: true,
+        thickness: 6.0,
+        radius: const Radius.circular(3),
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          padding: const EdgeInsets.only(left: 20, top: 20, right: 14, bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 手動紀錄標題下方提示 (字體放大)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: 14),
+                  child: Text(
+                    '提示：每欄請記錄單一餐點',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  ),
                 ),
               ),
-            ),
 
-            // 卡片 Grid 清單
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _items.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 20),
-              itemBuilder: (context, index) => _buildRecordCard(_items[index], index),
-            ),
-
-            const SizedBox(height: 25),
-
-            // 新增一項內容按鈕 (增加一張紀錄 Grid 卡片)
-            Center(
-              child: TextButton.icon(
-                onPressed: _addNewItem,
-                icon: const Icon(Icons.add_circle_outline, color: AppColors.secondary),
-                label: const Text('新增一項內容', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold, fontSize: 16)),
+              // 卡片 Grid 清單
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _items.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) => _buildRecordCard(_items[index], index),
               ),
-            ),
 
-            const SizedBox(height: 30),
+              const SizedBox(height: 25),
 
-            // 完成紀錄並餵食按鈕
-            SizedBox(
-              width: double.infinity,
-              height: 55,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  elevation: 2,
+              // 新增一項內容按鈕 (增加一張紀錄 Grid 卡片)
+              Center(
+                child: TextButton.icon(
+                  onPressed: _addNewItem,
+                  icon: const Icon(Icons.add_circle_outline, color: AppColors.secondary),
+                  label: const Text('新增一項內容', style: TextStyle(color: AppColors.secondary, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text('完成紀錄並餵食', style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 30),
+
+              // 完成紀錄並餵食按鈕
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: _isSaving ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    elevation: 2,
+                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                        )
+                      : const Text(
+                          '完成紀錄並餵食',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildRecordCard(_ManualRecordItem item, int index) {
+    final bool isExpanded = item.isExpanded;
+    final String dishName = item.nameController.text.trim();
+    final String portionStr = item.portionController.text.trim().isEmpty ? '1' : item.portionController.text.trim();
+    final String summaryText = dishName.isEmpty ? '' : '$dishName (${item.mealType} • $portionStr份)';
+
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
@@ -390,49 +406,96 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 卡片標題 + 刪除按鈕
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '紀錄 #${index + 1}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: AppColors.textPrimary,
+          // === 卡片 Header (點擊可展開/收合) ===
+          InkWell(
+            onTap: () {
+              setState(() {
+                item.isExpanded = !item.isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  // 展開 / 收合 箭頭 (放最左側)
+                  Icon(
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: AppColors.primary,
+                    size: 24,
                   ),
-                ),
+                  const SizedBox(width: 8),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '紀錄 #${index + 1}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 收合時顯示摘要資訊
+                  if (!isExpanded) ...[
+                    Expanded(
+                      child: Text(
+                        summaryText.isEmpty ? '點擊展開編輯' : summaryText,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: summaryText.isEmpty ? Colors.grey : AppColors.textPrimary,
+                          fontWeight: summaryText.isEmpty ? FontWeight.normal : FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ] else
+                    const Spacer(),
+
+                  // 刪除按鈕 (最右側)
+                  if (_items.length > 1)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: AppColors.danger, size: 22),
+                      onPressed: () => _removeItem(index),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                ],
               ),
-              if (_items.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline, color: AppColors.danger, size: 22),
-                  onPressed: () => _removeItem(index),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-            ],
+            ),
           ),
 
-          const SizedBox(height: 12),
+          // === 卡片內容區塊 (展開時顯示) ===
+          if (isExpanded) ...[
+            const Divider(height: 1, color: AppColors.surface),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 1. 照片選擇區
+                  _buildPhotoSection(item, index),
 
-          // 1. 照片選擇區
-          _buildPhotoSection(item, index),
+                  const SizedBox(height: 12),
 
-          const SizedBox(height: 12),
+                  // 2. 日期與時段選擇
+                  _buildSelectionSection(item, index),
 
-          // 2. 日期與時段選擇
-          _buildSelectionSection(item, index),
+                  const SizedBox(height: 12),
 
-          const SizedBox(height: 12),
-
-          // 3. 飲食內容與份數
-          _buildDishAndPortionField(item, index),
+                  // 3. 飲食內容與份數
+                  _buildDishAndPortionField(item, index),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

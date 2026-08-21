@@ -2,6 +2,7 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'package:flutter/services.dart';
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
@@ -103,8 +104,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
-
-  static bool _hasShownSummaryDialogThisRun = false;
 
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
@@ -269,8 +268,16 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   }
 
   void _checkAndShowDietSummaryDialog() async {
-    if (_hasShownSummaryDialogThisRun) return;
-    _hasShownSummaryDialogThisRun = true;
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now();
+    final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    
+    // 檢查今天是否已經顯示過飲食總結彈窗（每天僅第一次開啟 app 時跳出）
+    final lastShownDate = prefs.getString('last_shown_summary_date');
+    if (lastShownDate == todayStr) {
+      debugPrint('今日 ($todayStr) 已顯示過飲食總結彈窗，不再重複跳出。');
+      return;
+    }
 
     try {
       final records = await DietService().getMyDietRecords();
@@ -300,11 +307,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         }
       }
 
+      // 若為新用戶或完全沒有歷史紀錄，不跳出昨日總結彈窗
+      if (records.isEmpty) {
+        debugPrint('無任何飲食記錄（新用戶），不跳出昨日總結彈窗。');
+        await prefs.setString('last_shown_summary_date', todayStr);
+        return;
+      }
+
       if (!mounted) return;
       debugPrint('=============================================');
       debugPrint('準備跳出昨日飲食總結彈窗！ Dishes: $yesterdayDishes');
       debugPrint('=============================================');
       
+      // 紀錄今日已跳出飲食總結彈窗
+      await prefs.setString('last_shown_summary_date', todayStr);
+
       Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
         _showDietSummaryDialog(
@@ -338,6 +355,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     FocusManager.instance.primaryFocus?.unfocus();
     FocusScope.of(context).unfocus();
 
+    final double pCal = protein * 4;
+    final double fCal = fat * 9;
+    final double cCal = carbs * 4;
+    final double macroTotalCal = pCal + fCal + cCal;
+
+    int carbsPercent = 0;
+    int proteinPercent = 0;
+    int fatPercent = 0;
+
+    if (macroTotalCal > 0) {
+      carbsPercent = ((cCal / macroTotalCal) * 100).round();
+      proteinPercent = ((pCal / macroTotalCal) * 100).round();
+      fatPercent = 100 - carbsPercent - proteinPercent;
+    }
+
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -349,89 +381,98 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
           backgroundColor: AppColors.background,
           elevation: 10,
           child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 標題與日期
-                  Text(
-                    '$dateStr 飲食總結報告',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 標題與日期
+                Text(
+                  '$dateStr 飲食總結報告',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                
+                const SizedBox(height: 10),
+                
+                // 小精靈 (巨大化 3.2 Scale, 完整無裁剪 270px)
+                Center(
+                  child: SizedBox(
+                    width: 320,
+                    height: 270,
+                    child: DogAvatar(
+                      controller: DogStateController.instance,
+                      scale: 3.2,
+                      instanceId: 'yesterday-summary-dialog-dog',
                     ),
                   ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // 飲食營養素匯總與圓餅圖
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildSummaryRow('總熱量攝取', '${calories.toStringAsFixed(0)} kcal', Icons.local_fire_department, AppColors.danger),
-                        const Divider(height: 16, thickness: 0.5),
-                        MacronutrientPieChart(
-                          protein: protein,
-                          fat: fat,
-                          carbs: carbs,
-                        ),
-                      ],
-                    ),
+                ),
+
+                const SizedBox(height: 0),
+
+                // 1. 昨日熱量弧形表 (三區間: 偏低 / 適量 / 偏高)
+                _buildCalorieArcGaugeCard(calories.round()),
+
+                const SizedBox(height: 8),
+
+                // 2. 昨日三大營養素比例柱狀圖
+                _buildMacronutrientBarChartCard(
+                  carbsPercent: carbsPercent,
+                  proteinPercent: proteinPercent,
+                  fatPercent: fatPercent,
+                  todayCarbs: carbs,
+                  todayProtein: protein,
+                  todayFat: fat,
+                ),
+
+                const SizedBox(height: 8),
+                
+                // 精靈評語
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(color: AppColors.primary.withOpacity(0.15)),
                   ),
-                  const SizedBox(height: 16),
-                  
-                  // 精靈評語
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12.0),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.15)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            comment,
-                            style: TextStyle(
-                              fontSize: 13.0,
-                              color: AppColors.textPrimary.withOpacity(0.85),
-                              height: 1.35,
-                            ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          comment,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.textPrimary.withOpacity(0.85),
+                            height: 1.3,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  
-                  // 按鈕區
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.background,
-                      minimumSize: const Size(double.infinity, 48),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
                       ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      '太棒了，我知道了！',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+                
+                // 按鈕區
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
+                    minimumSize: const Size(double.infinity, 44),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    '太棒了，我知道了！',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -1118,22 +1159,38 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     return now;
   }
 
-  /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者自行修正餐期、餐點名稱與數量
+  /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者針對每個餐點卡片獨立點擊展開/收合修改餐點名稱、日期、餐別與份量
   void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords, {String userPrompt = ''}) {
-    // 1. 深拷貝為本地可變狀態，確保使用者修改不影響全域原數據
-    final List<Map<String, dynamic>> editableRecords = mealRecords.map((rec) {
-      final items = (rec['meal_items'] as List<dynamic>? ?? []).map((item) {
-        return {
+    final DateTime defaultDate = _parseDateFromPrompt(userPrompt);
+    final ScrollController draftScrollController = ScrollController();
+
+    // 1. 將所有解析到的餐點攤平為單一獨立的卡片數據結構
+    final List<Map<String, dynamic>> flatCards = [];
+    for (var rec in mealRecords) {
+      final period = rec['meal_period']?.toString() ?? '早餐';
+      final items = (rec['meal_items'] as List<dynamic>? ?? []);
+      for (var item in items) {
+        flatCards.add({
           'name': item['name']?.toString() ?? '',
           'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
-          'unit': item['unit']?.toString() ?? '',
-        };
-      }).toList();
-      return {
-        'meal_period': rec['meal_period']?.toString() ?? '早餐',
-        'meal_items': items,
-      };
-    }).toList();
+          'unit': (item['unit']?.toString() ?? '').isEmpty ? '份' : item['unit']?.toString(),
+          'meal_period': period,
+          'date': defaultDate,
+          'is_expanded': flatCards.isEmpty, // 第一張預設展開，其餘預設收合
+        });
+      }
+    }
+
+    if (flatCards.isEmpty) {
+      flatCards.add({
+        'name': '',
+        'quantity': 1,
+        'unit': '份',
+        'meal_period': '早餐',
+        'date': defaultDate,
+        'is_expanded': true,
+      });
+    }
 
     const List<String> mealPeriodOptions = ['早餐', '午餐', '晚餐', '其他'];
 
@@ -1142,10 +1199,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       barrierDismissible: false,
       builder: (ctx) {
         bool isSaving = false;
-        DateTime selectedDate = _parseDateFromPrompt(userPrompt);
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
+              titlePadding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+              contentPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+              actionsPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -1164,209 +1224,379 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   ),
                 ],
               ),
-              content: SingleChildScrollView(
-                child: Column(
+              content: SizedBox(
+                width: MediaQuery.of(ctx).size.width,
+                child: RawScrollbar(
+                  controller: draftScrollController,
+                  thumbColor: Colors.grey.shade600,
+                  thumbVisibility: true,
+                  thickness: 6.0,
+                  radius: const Radius.circular(3),
+                  child: SingleChildScrollView(
+                    controller: draftScrollController,
+                    padding: const EdgeInsets.only(right: 6),
+                    child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 精簡頂部提示說明
                     const Text(
                       '請核對或修改以下草稿內容：',
                       style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 12),
 
-                    // 1. 紀錄日期選擇器 (可點擊選擇)
-                    InkWell(
-                      onTap: isSaving
-                          ? null
-                          : () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: selectedDate,
-                                firstDate: DateTime(2023),
-                                lastDate: DateTime.now().add(const Duration(days: 365)),
-                              );
-                              if (picked != null) {
-                                setDialogState(() {
-                                  selectedDate = picked;
-                                });
-                              }
-                            },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
-                            const SizedBox(width: 8),
-                            Text(
-                              '紀錄日期：${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
-                            ),
-                            const Spacer(),
-                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 2. 草稿紀錄卡片 (餐點名稱為主體)
-                    ...editableRecords.asMap().entries.map((recEntry) {
-                      final recIndex = recEntry.key;
-                      final record = recEntry.value;
-                      final currentPeriod = record['meal_period'].toString();
-                      final items = record['meal_items'] as List<Map<String, dynamic>>;
+                    // 每個餐點獨立成可點擊展開/收合的折疊卡片
+                    ...flatCards.asMap().entries.map((cardEntry) {
+                      final cardIdx = cardEntry.key;
+                      final card = cardEntry.value;
+                      final cardQty = card['quantity'] as int;
+                      final cardUnit = card['unit'].toString();
+                      final cardDate = card['date'] as DateTime;
+                      final currentPeriod = card['meal_period'].toString();
+                      final bool isExpanded = card['is_expanded'] as bool? ?? (cardIdx == 0);
+                      final String dishDisplayName = card['name'].toString().trim().isEmpty
+                          ? '餐點 ${cardIdx + 1}'
+                          : card['name'].toString().trim();
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: AppColors.border),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ...items.asMap().entries.map((itemEntry) {
-                              final itemIndex = itemEntry.key;
-                              final item = itemEntry.value;
-                              final currentQty = item['quantity'] as int;
-                              final unitStr = item['unit'].toString();
-
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // (A) 餐點名稱 (主體 - 醒目淺色背景輸入框)
-                                  TextFormField(
-                                    initialValue: item['name'].toString(),
-                                    enabled: !isSaving,
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                    decoration: InputDecoration(
-                                      labelText: '餐點名稱',
-                                      filled: true,
-                                      fillColor: AppColors.background,
-                                      isDense: true,
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+                            // === 卡片 Header (可點擊切換 展開 / 收合) ===
+                            InkWell(
+                              onTap: () {
+                                setDialogState(() {
+                                  flatCards[cardIdx]['is_expanded'] = !isExpanded;
+                                });
+                              },
+                              borderRadius: BorderRadius.circular(16),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                child: Row(
+                                  children: [
+                                    // 展開 / 收合 箭頭 (放最左側)
+                                    Icon(
+                                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                      color: AppColors.primary,
+                                      size: 24,
                                     ),
-                                    onChanged: (val) {
-                                      editableRecords[recIndex]['meal_items'][itemIndex]['name'] = val;
-                                    },
-                                  ),
-                                  const SizedBox(height: 10),
+                                    const SizedBox(width: 8),
 
-                                  // (B) 餐別與數量列
-                                  Row(
-                                    children: [
-                                      // 餐別選擇
-                                      Expanded(
-                                        flex: 5,
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.background,
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: AppColors.border),
-                                          ),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              value: mealPeriodOptions.contains(currentPeriod) ? currentPeriod : '早餐',
-                                              isExpanded: true,
-                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                              onChanged: isSaving
-                                                  ? null
-                                                  : (newPeriod) {
-                                                      if (newPeriod != null) {
-                                                        setDialogState(() {
-                                                          editableRecords[recIndex]['meal_period'] = newPeriod;
-                                                        });
-                                                      }
-                                                    },
-                                              items: mealPeriodOptions.map((period) {
-                                                return DropdownMenuItem<String>(
-                                                  value: period,
-                                                  child: Text('餐別: $period'),
-                                                );
-                                              }).toList(),
-                                            ),
-                                          ),
-                                        ),
+                                    // 餐點標籤 Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(20),
                                       ),
-                                      const SizedBox(width: 10),
-
-                                      // 數量加減器 [- 1 +] 份
-                                      Row(
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          InkWell(
-                                            onTap: (isSaving || currentQty <= 1)
-                                                ? null
-                                                : () {
-                                                    setDialogState(() {
-                                                      editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty - 1;
-                                                    });
-                                                  },
-                                            borderRadius: BorderRadius.circular(6),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: BoxDecoration(
-                                                color: (currentQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                                            child: Text(
-                                              '$currentQty',
-                                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: isSaving
-                                                ? null
-                                                : () {
-                                                    setDialogState(() {
-                                                      editableRecords[recIndex]['meal_items'][itemIndex]['quantity'] = currentQty + 1;
-                                                    });
-                                                  },
-                                            borderRadius: BorderRadius.circular(6),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: BoxDecoration(
-                                                color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: const Icon(Icons.add, size: 16, color: AppColors.primary),
-                                            ),
-                                          ),
+                                          const Icon(Icons.restaurant, size: 14, color: AppColors.primary),
                                           const SizedBox(width: 4),
                                           Text(
-                                            unitStr,
-                                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                            dishDisplayName,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                                    ),
+                                    const SizedBox(width: 8),
+
+                                    // 收合狀態時顯示摘要文字 (例如: (早餐 • 1瓶))
+                                    if (!isExpanded) ...[
+                                      Expanded(
+                                        child: Text(
+                                          '($currentPeriod • $cardQty$cardUnit)',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ] else
+                                      const Spacer(),
+
+                                    // 刪除卡片按鈕 (最右側)
+                                    if (flatCards.length > 1)
+                                      InkWell(
+                                        onTap: isSaving
+                                            ? null
+                                            : () {
+                                                setDialogState(() {
+                                                  flatCards.removeAt(cardIdx);
+                                                });
+                                              },
+                                        child: const Padding(
+                                          padding: EdgeInsets.symmetric(horizontal: 4.0),
+                                          child: Icon(Icons.delete_outline, size: 22, color: AppColors.danger),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // === 卡片展開詳細內容 ===
+                            if (isExpanded) ...[
+                              const Divider(height: 1, color: AppColors.border),
+                              Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // 1. 餐點名稱
+                                    const Text(
+                                      '餐點名稱',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    TextFormField(
+                                      initialValue: card['name'].toString(),
+                                      enabled: !isSaving,
+                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                      decoration: InputDecoration(
+                                        hintText: '請輸入餐點名稱',
+                                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.normal),
+                                        filled: true,
+                                        fillColor: AppColors.background,
+                                        isDense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+                                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
+                                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                                      ),
+                                      onChanged: (val) {
+                                        setDialogState(() {
+                                          flatCards[cardIdx]['name'] = val;
+                                        });
+                                      },
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // 2. 紀錄日期
+                                    const Text(
+                                      '紀錄日期',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    InkWell(
+                                      onTap: isSaving
+                                          ? null
+                                          : () async {
+                                              final picked = await showDatePicker(
+                                                context: context,
+                                                initialDate: cardDate,
+                                                firstDate: DateTime(2023),
+                                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                                              );
+                                              if (picked != null) {
+                                                setDialogState(() {
+                                                  flatCards[cardIdx]['date'] = picked;
+                                                });
+                                              }
+                                            },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.background,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(color: AppColors.border),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              '${cardDate.year}-${cardDate.month.toString().padLeft(2, '0')}-${cardDate.day.toString().padLeft(2, '0')}',
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
+                                            ),
+                                            const Spacer(),
+                                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+
+                                    // 3. 餐別與份量 (雙欄)
+                                    Row(
+                                      children: [
+                                        // (A) 餐別選擇
+                                        Expanded(
+                                          flex: 5,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                '餐別',
+                                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.background,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  border: Border.all(color: AppColors.border),
+                                                ),
+                                                child: DropdownButtonHideUnderline(
+                                                  child: DropdownButton<String>(
+                                                    value: mealPeriodOptions.contains(currentPeriod) ? currentPeriod : '早餐',
+                                                    isExpanded: true,
+                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                                    onChanged: isSaving
+                                                        ? null
+                                                        : (newPeriod) {
+                                                            if (newPeriod != null) {
+                                                              setDialogState(() {
+                                                                flatCards[cardIdx]['meal_period'] = newPeriod;
+                                                              });
+                                                            }
+                                                          },
+                                                    items: mealPeriodOptions.map((period) {
+                                                      return DropdownMenuItem<String>(
+                                                        value: period,
+                                                        child: Text(period),
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+
+                                        // (B) 份量調節
+                                        Expanded(
+                                          flex: 6,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                '份量',
+                                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.background,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  border: Border.all(color: AppColors.border),
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    InkWell(
+                                                      onTap: (isSaving || cardQty <= 1)
+                                                          ? null
+                                                          : () {
+                                                              setDialogState(() {
+                                                                flatCards[cardIdx]['quantity'] = cardQty - 1;
+                                                              });
+                                                            },
+                                                      borderRadius: BorderRadius.circular(6),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(4),
+                                                        decoration: BoxDecoration(
+                                                          color: (cardQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '$cardQty',
+                                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: isSaving
+                                                          ? null
+                                                          : () {
+                                                              setDialogState(() {
+                                                                flatCards[cardIdx]['quantity'] = cardQty + 1;
+                                                              });
+                                                            },
+                                                      borderRadius: BorderRadius.circular(6),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(4),
+                                                        decoration: BoxDecoration(
+                                                          color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      cardUnit,
+                                                      style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       );
                     }).toList(),
+
+                    // 新增餐點卡片按鈕
+                    Center(
+                      child: OutlinedButton.icon(
+                        onPressed: isSaving
+                            ? null
+                            : () {
+                                setDialogState(() {
+                                  flatCards.add({
+                                    'name': '',
+                                    'quantity': 1,
+                                    'unit': '份',
+                                    'meal_period': '早餐',
+                                    'date': defaultDate,
+                                    'is_expanded': true,
+                                  });
+                                });
+                              },
+                        icon: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                        label: const Text('新增餐點卡片', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
+              ),
+              ),
               ),
               actions: [
                 TextButton(
@@ -1391,21 +1621,23 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       : () async {
                           setDialogState(() => isSaving = true);
                           try {
-                            for (var record in editableRecords) {
-                              final mealPeriod = record['meal_period']?.toString() ?? '早餐';
-                              final items = record['meal_items'] as List<Map<String, dynamic>>;
-                              for (var item in items) {
-                                final name = item['name']?.toString().trim() ?? '';
-                                final qty = item['quantity']?.toString() ?? '1';
-                                final unit = item['unit']?.toString() ?? '';
-                                if (name.isNotEmpty) {
-                                  await DietService().createDietRecord(
-                                    dishName: name,
-                                    mealType: mealPeriod,
-                                    amount: '$qty $unit'.trim(),
-                                    description: '陪伴精靈解析並經使用者核對修正',
-                                    mealDate: selectedDate,
-                                  );
+                            for (var card in flatCards) {
+                              final name = card['name']?.toString().trim() ?? '';
+                              final period = card['meal_period']?.toString() ?? '早餐';
+                              final qty = card['quantity']?.toString() ?? '1';
+                              final unit = card['unit']?.toString() ?? '';
+                              final cardDate = card['date'] as DateTime? ?? defaultDate;
+
+                              if (name.isNotEmpty) {
+                                final res = await DietService().createDietRecord(
+                                  dishName: name,
+                                  mealType: period,
+                                  amount: '$qty $unit'.trim(),
+                                  description: '陪伴精靈解析並經使用者核對修正',
+                                  mealDate: cardDate,
+                                );
+                                if (res['success'] != true) {
+                                  throw Exception(res['message'] ?? '寫入資料庫失敗');
                                 }
                               }
                             }
@@ -1424,6 +1656,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                           } catch (e) {
                             setDialogState(() => isSaving = false);
                             debugPrint('儲存飲食草稿失敗: $e');
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('儲存失敗：${e.toString().replaceAll('Exception: ', '')}'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
                           }
                         },
                   child: isSaving
@@ -1441,6 +1681,270 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       },
     );
   }
+
+  Widget _buildCalorieArcGaugeCard(int currentCalories) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "昨日熱量",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
+
+          const SizedBox(height: 6),
+
+          Center(
+            child: SizedBox(
+              width: 190,
+              height: 95,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  CustomPaint(
+                    size: const Size(190, 95),
+                    painter: CalorieGaugeArcPainter(currentCalories: currentCalories.toDouble()),
+                  ),
+                  Positioned(
+                    bottom: 6,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("約", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
+                        Text(
+                          currentCalories.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},'),
+                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary, height: 1.1),
+                        ),
+                        const Text("kcal", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildGaugeZoneLabel("偏低", "< 1,700 kcal", const Color(0xFF7C83FD)),
+              _buildGaugeZoneLabel("適量", "1,700 - 2,000 kcal", const Color(0xFF52C41A)),
+              _buildGaugeZoneLabel("偏高", "> 2,000 kcal", const Color(0xFFFF7A45)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGaugeZoneLabel(String zoneTitle, String rangeStr, Color color) {
+    return Column(
+      children: [
+        Text(
+          zoneTitle,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          rangeStr,
+          style: const TextStyle(fontSize: 9, color: Colors.black54, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacronutrientBarChartCard({
+    required int carbsPercent,
+    required int proteinPercent,
+    required int fatPercent,
+    required double todayCarbs,
+    required double todayProtein,
+    required double todayFat,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "昨日三大營養素比例",
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
+
+          const SizedBox(height: 8),
+
+          SizedBox(
+            height: 125,
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildDashedGridLine("100%"),
+                    _buildDashedGridLine("75%"),
+                    _buildDashedGridLine("50%"),
+                    _buildDashedGridLine("25%"),
+                    _buildDashedGridLine("0%"),
+                  ],
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.only(left: 40, right: 10, bottom: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSingleBarItem("碳水化合物", carbsPercent, todayCarbs, const Color(0xFF7C83FD)),
+                      _buildSingleBarItem("蛋白質", proteinPercent, todayProtein, const Color(0xFFFF7A45)),
+                      _buildSingleBarItem("脂肪", fatPercent, todayFat, const Color(0xFFFFB800)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+      ],
+    );
+  }
+
+  Widget _buildDashedGridLine(String label) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 34,
+          child: Text(label, style: const TextStyle(fontSize: 9, color: Colors.black45, fontWeight: FontWeight.w500)),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Colors.black.withOpacity(0.06),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleBarItem(String label, int pct, double grams, Color color) {
+    const double maxBarHeight = 65.0;
+    final double barHeight = (pct / 100.0 * maxBarHeight).clamp(4.0, maxBarHeight);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          "$pct%",
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 2),
+
+        Container(
+          width: 38,
+          height: barHeight,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.25), blurRadius: 3, offset: const Offset(0, 1)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+
+        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const SizedBox(height: 1),
+        Text("約 ${grams.round()} g", style: const TextStyle(fontSize: 9, color: Colors.black54, fontWeight: FontWeight.w500)),
+      ],
+    );
+  }
+}
+
+class CalorieGaugeArcPainter extends CustomPainter {
+  final double currentCalories;
+  CalorieGaugeArcPainter({required this.currentCalories});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height - 10);
+    final radius = size.width / 2 - 20;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    const strokeWidth = 22.0;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    const double startAngle = math.pi;
+    const double totalAngle = math.pi;
+
+    final double seg1Angle = totalAngle * 0.38;
+    final double seg2Angle = totalAngle * 0.34;
+    final double seg3Angle = totalAngle * 0.28;
+
+    paint.color = const Color(0xFF7C83FD);
+    canvas.drawArc(rect, startAngle, seg1Angle, false, paint);
+
+    paint.color = const Color(0xFF52C41A);
+    canvas.drawArc(rect, startAngle + seg1Angle, seg2Angle, false, paint);
+
+    paint.color = const Color(0xFFFF7A45);
+    canvas.drawArc(rect, startAngle + seg1Angle + seg2Angle, seg3Angle, false, paint);
+
+    double progressRatio;
+    if (currentCalories < 1700) {
+      progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
+    } else if (currentCalories <= 2000) {
+      progressRatio = 0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
+    } else {
+      progressRatio = 0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
+    }
+
+    final double knobAngle = startAngle + progressRatio * totalAngle;
+    final double knobX = center.dx + radius * math.cos(knobAngle);
+    final double knobY = center.dy + radius * math.sin(knobAngle);
+
+    canvas.drawCircle(Offset(knobX, knobY), 11, Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
+
+    Color dotColor;
+    if (currentCalories < 1700) {
+      dotColor = const Color(0xFF7C83FD);
+    } else if (currentCalories <= 2000) {
+      dotColor = const Color(0xFF52C41A);
+    } else {
+      dotColor = const Color(0xFFFF7A45);
+    }
+    canvas.drawCircle(Offset(knobX, knobY), 4.5, Paint()..color = dotColor);
+  }
+
+  @override
+  bool shouldRepaint(covariant CalorieGaugeArcPainter oldDelegate) =>
+      oldDelegate.currentCalories != currentCalories;
 }
 
 class _NutrientInfo extends StatelessWidget { // 定義 _NutrientInfo 類別，繼承自 StatelessWidget

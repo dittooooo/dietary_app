@@ -715,7 +715,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildTodayStats() { // 定義用於重複使用的 UI 封裝建構方法
+  Widget _buildTodayStats() {
     double todayCal = 0.0;
     double todayProtein = 0.0;
     double todayFat = 0.0;
@@ -736,63 +736,349 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       } catch (_) {}
     }
     int current = todayCal.round();
-    int target = 2000; // 宣告類別成員或方法內部的區域變數
-    double progress = (current / target).clamp(0.0, 1.0); // 宣告類別成員或方法內部的區域變數
-    Color progressColor = progress >= 1.0 ? AppColors.danger : (progress >= 0.8 ? Colors.orange : Colors.green); // 設定顏色數值（Color）
 
-    final double totalGrams = todayProtein + todayFat + todayCarbs;
-    int fatPercent = 0;
+    // 依據三大營養素提供之卡路里計算熱量比例 (1g 蛋白質=4kcal, 1g 碳水=4kcal, 1g 脂肪=9kcal)
+    final double pCal = todayProtein * 4;
+    final double fCal = todayFat * 9;
+    final double cCal = todayCarbs * 4;
+    final double macroTotalCal = pCal + fCal + cCal;
+
     int carbsPercent = 0;
     int proteinPercent = 0;
-    if (totalGrams > 0) {
-      fatPercent = ((todayFat / totalGrams) * 100).round();
-      carbsPercent = ((todayCarbs / totalGrams) * 100).round();
-      proteinPercent = 100 - fatPercent - carbsPercent;
+    int fatPercent = 0;
+
+    if (macroTotalCal > 0) {
+      carbsPercent = ((cCal / macroTotalCal) * 100).round();
+      proteinPercent = ((pCal / macroTotalCal) * 100).round();
+      fatPercent = 100 - carbsPercent - proteinPercent;
     }
 
-    return Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-      crossAxisAlignment: CrossAxisAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
-      children: [ // 執行相對應的邏輯計算或設定屬性參數
-        Align(alignment: Alignment.centerLeft, child: const Text("總結數據", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold))), // 建立文字顯示元件（Text）
-        const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text("卡路里", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), Text("今日攝取: $current / $target", style: const TextStyle(fontSize: 12))]), // 建立水平排列元件（Row），橫向排列多個子元件
-        const SizedBox(height: 8), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-        LayoutBuilder(builder: (context, constraints) { // 執行相對應的邏輯計算或設定屬性參數
-          final double fullWidth = constraints.maxWidth; // 宣告類別成員或方法內部的區域變數
-          final double progressWidth = fullWidth * progress; // 宣告類別成員或方法內部的區域變數
-          return Container(height: 35, width: fullWidth, decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(10)), // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-            child: Stack(children: [if (progressWidth > 0) Container(width: progressWidth, height: 35, decoration: BoxDecoration(color: progressColor, borderRadius: BorderRadius.circular(8)), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: CustomPaint(painter: DiagonalLinesPainter(color: Colors.white.withOpacity(0.25)))))])); // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-        }), // 執行相對應的邏輯計算或設定屬性參數
-        const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-        Align(alignment: Alignment.centerLeft, child: const Text("三大營養素", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))), // 建立文字顯示元件（Text）
-        const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          SizedBox(
-            width: 170, 
-            height: 170, 
-            child: CustomPaint(
-              painter: NutrientPiePainter(
-                fat: todayFat, 
-                protein: todayProtein, 
-                carbs: todayCarbs
-              )
-            )
-          ), 
-          const SizedBox(width: 15), 
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start, 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. 卡路里熱量弧形表 (三區間: 偏低 / 適量 / 偏高)
+        _buildCalorieArcGaugeCard(current),
+
+        const SizedBox(height: 20),
+
+        // 2. 三大營養素柱狀圖
+        _buildMacronutrientBarChartCard(
+          carbsPercent: carbsPercent,
+          proteinPercent: proteinPercent,
+          fatPercent: fatPercent,
+          todayCarbs: todayCarbs,
+          todayProtein: todayProtein,
+          todayFat: todayFat,
+        ),
+      ],
+    );
+  }
+
+  // --- 卡路里弧形表元件 ---
+  Widget _buildCalorieArcGaugeCard(int currentCalories) {
+    String statusText;
+    Color statusColor;
+    IconData statusIcon;
+
+    if (currentCalories < 1700) {
+      statusText = "熱量攝取偏低，建議多補充熱量！";
+      statusColor = const Color(0xFF7C83FD);
+      statusIcon = Icons.info_outline;
+    } else if (currentCalories <= 2000) {
+      statusText = "熱量攝取適中，繼續保持！";
+      statusColor = const Color(0xFF52C41A);
+      statusIcon = Icons.check_circle_outline;
+    } else {
+      statusText = "熱量攝取偏高，請注意控制！";
+      statusColor = const Color(0xFFFF7A45);
+      statusIcon = Icons.warning_amber_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 標題
+          const Text(
+            "今日熱量",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
+
+          const SizedBox(height: 15),
+
+          // 弧形半圓表儀表板
+          Center(
+            child: SizedBox(
+              width: 260,
+              height: 135,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  CustomPaint(
+                    size: const Size(260, 135),
+                    painter: CalorieGaugeArcPainter(currentCalories: currentCalories.toDouble()),
+                  ),
+                  Positioned(
+                    bottom: 12,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("約", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                        Text(
+                          currentCalories.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},'),
+                          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textPrimary, height: 1.1),
+                        ),
+                        const Text("kcal", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // 偏低、適量、偏高 三區間說明欄
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNutrientLegendItem("脂肪", "$fatPercent%", const Color(0xFFEF5350)), 
-              const SizedBox(height: 12), 
-              _buildNutrientLegendItem("碳水", "$carbsPercent%", const Color(0xFF42A5F5)), 
-              const SizedBox(height: 12), 
-              _buildNutrientLegendItem("蛋白質", "$proteinPercent%", const Color(0xFFFFA726))
-            ]
-          )
-        ]), // 建立水平排列元件（Row），橫向排列多個子元件
-        const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-      ], // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+              _buildGaugeZoneLabel("偏低", "< 1,700 kcal", const Color(0xFF7C83FD)),
+              _buildGaugeZoneLabel("適量", "1,700 - 2,000 kcal", const Color(0xFF52C41A)),
+              _buildGaugeZoneLabel("偏高", "> 2,000 kcal", const Color(0xFFFF7A45)),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // 底部建議狀態膠囊
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+            decoration: BoxDecoration(
+              color: statusColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: statusColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(statusIcon, color: statusColor, size: 18),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    statusText,
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: statusColor),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGaugeZoneLabel(String zoneTitle, String rangeStr, Color color) {
+    return Column(
+      children: [
+        Text(
+          zoneTitle,
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          rangeStr,
+          style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500),
+        ),
+      ],
+    );
+  }
+
+  // --- 三大營養素柱狀圖元件 ---
+  Widget _buildMacronutrientBarChartCard({
+    required int carbsPercent,
+    required int proteinPercent,
+    required int fatPercent,
+    required double todayCarbs,
+    required double todayProtein,
+    required double todayFat,
+  }) {
+    String adviceText;
+    if (proteinPercent < 20) {
+      adviceText = "蛋白質攝取稍少，可以適量增加優質蛋白質來源，如雞胸肉、豆腐、魚類等。";
+    } else if (carbsPercent > 60) {
+      adviceText = "碳水化合物比例較高，建議適量減少精緻澱粉攝取。";
+    } else if (fatPercent > 35) {
+      adviceText = "脂肪攝取比例稍高，建議選擇清蒸或煎烤烹調方式。";
+    } else {
+      adviceText = "三大營養素比例非常均衡，請繼續保持優良飲食習慣！";
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "今日三大營養素比例",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 圖例顏色標籤
+          Row(
+            children: [
+              _buildLegendDot(const Color(0xFF7C83FD), "碳水化合物"),
+              const SizedBox(width: 14),
+              _buildLegendDot(const Color(0xFFFF7A45), "蛋白質"),
+              const SizedBox(width: 14),
+              _buildLegendDot(const Color(0xFFFFB800), "脂肪"),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // 柱狀圖與 Y 軸刻度區域
+          SizedBox(
+            height: 190,
+            child: Stack(
+              children: [
+                // 背景 100%, 75%, 50%, 25%, 0% 網格虛線
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildDashedGridLine("100%"),
+                    _buildDashedGridLine("75%"),
+                    _buildDashedGridLine("50%"),
+                    _buildDashedGridLine("25%"),
+                    _buildDashedGridLine("0%"),
+                  ],
+                ),
+
+                // 三支柱狀圖
+                Padding(
+                  padding: const EdgeInsets.only(left: 45, right: 15, bottom: 25),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSingleBarItem("碳水化合物", carbsPercent, todayCarbs, const Color(0xFF7C83FD)),
+                      _buildSingleBarItem("蛋白質", proteinPercent, todayProtein, const Color(0xFFFF7A45)),
+                      _buildSingleBarItem("脂肪", fatPercent, todayFat, const Color(0xFFFFB800)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // 底部建議提示框 (帶黃色電燈泡)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.amber.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    adviceText,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, fontWeight: FontWeight.w500, height: 1.4),
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 18),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+      ],
+    );
+  }
+
+  Widget _buildDashedGridLine(String label) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 38,
+          child: Text(label, style: const TextStyle(fontSize: 10, color: Colors.black45, fontWeight: FontWeight.w500)),
+        ),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Colors.black.withOpacity(0.06),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSingleBarItem(String label, int pct, double grams, Color color) {
+    const double maxBarHeight = 110.0;
+    final double barHeight = (pct / 100.0 * maxBarHeight).clamp(6.0, maxBarHeight);
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // 柱狀圖頂部百分比數字
+        Text(
+          "$pct%",
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+        ),
+        const SizedBox(height: 4),
+
+        // 圓角柱體
+        Container(
+          width: 52,
+          height: barHeight,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+            boxShadow: [
+              BoxShadow(color: color.withOpacity(0.25), blurRadius: 4, offset: const Offset(0, 2)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+
+        // 底部營養素名稱與公克數
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        const SizedBox(height: 1),
+        Text("約 ${grams.round()} g", style: const TextStyle(fontSize: 11, color: Colors.black54, fontWeight: FontWeight.w500)),
+      ],
+    );
   } // 程式碼區塊或元件結構結束
 
   Widget _buildNutrientLegendItem(String label, String value, Color color) { // 定義用於重複使用的 UI 封裝建構方法
@@ -1069,7 +1355,78 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     if (m.contains('DINNER') || m.contains('晚')) return Colors.blue;
     return Colors.grey;
   }
-} // 程式碼區塊或元件結構結束
+}
+
+class CalorieGaugeArcPainter extends CustomPainter {
+  final double currentCalories;
+  CalorieGaugeArcPainter({required this.currentCalories});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height - 10);
+    final radius = size.width / 2 - 20;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    const strokeWidth = 22.0;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.butt;
+
+    // 半圓弧度從 math.pi 到 0
+    const double startAngle = math.pi;
+    const double totalAngle = math.pi;
+
+    // 偏低 38%, 適量 34%, 偏高 28%
+    final double seg1Angle = totalAngle * 0.38;
+    final double seg2Angle = totalAngle * 0.34;
+    final double seg3Angle = totalAngle * 0.28;
+
+    // 1. 偏低區間 (藍紫色)
+    paint.color = const Color(0xFF7C83FD);
+    canvas.drawArc(rect, startAngle, seg1Angle, false, paint);
+
+    // 2. 適量區間 (綠色)
+    paint.color = const Color(0xFF52C41A);
+    canvas.drawArc(rect, startAngle + seg1Angle, seg2Angle, false, paint);
+
+    // 3. 偏高區間 (橘紅色)
+    paint.color = const Color(0xFFFF7A45);
+    canvas.drawArc(rect, startAngle + seg1Angle + seg2Angle, seg3Angle, false, paint);
+
+    // 計算指針角度
+    double progressRatio;
+    if (currentCalories < 1700) {
+      progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
+    } else if (currentCalories <= 2000) {
+      progressRatio = 0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
+    } else {
+      progressRatio = 0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
+    }
+
+    final double knobAngle = startAngle + progressRatio * totalAngle;
+    final double knobX = center.dx + radius * math.cos(knobAngle);
+    final double knobY = center.dy + radius * math.sin(knobAngle);
+
+    // 繪製圓形指針與微陰影
+    canvas.drawCircle(Offset(knobX, knobY), 11, Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
+
+    Color dotColor;
+    if (currentCalories < 1700) {
+      dotColor = const Color(0xFF7C83FD);
+    } else if (currentCalories <= 2000) {
+      dotColor = const Color(0xFF52C41A);
+    } else {
+      dotColor = const Color(0xFFFF7A45);
+    }
+    canvas.drawCircle(Offset(knobX, knobY), 4.5, Paint()..color = dotColor);
+  }
+
+  @override
+  bool shouldRepaint(covariant CalorieGaugeArcPainter oldDelegate) =>
+      oldDelegate.currentCalories != currentCalories;
+}
 
 class DiagonalLinesPainter extends CustomPainter { // 定義 DiagonalLinesPainter 類別，繼承自 CustomPainter
   final Color color; DiagonalLinesPainter({required this.color}); // 宣告類別成員或方法內部的區域變數

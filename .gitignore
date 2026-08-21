@@ -20,3 +20,8 @@ start_backends.bat
 start_backends.ps1
 start_backends.*
 
+# Ignored test directory
+test/
+test
+
+

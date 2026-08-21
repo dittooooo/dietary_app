@@ -91,9 +91,12 @@ class _RegisterPageState extends State<RegisterPage> { // 定義 _RegisterPageSt
 
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
         if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
-          // 儲存 Email 到本地
-          final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
-          await prefs.setString('user_email', _emailController.text.trim()); // 執行相對應的邏輯計算或設定屬性參數
+          // 儲存 Email 到本地並標記新註冊用戶今日不跳出昨日總結
+          final prefs = await SharedPreferences.getInstance();
+          final today = DateTime.now();
+          final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+          await prefs.setString('user_email', _emailController.text.trim());
+          await prefs.setString('last_shown_summary_date', todayStr);
           
           Navigator.pushReplacement( // 導航路由跳轉：開啟並推入新頁面
             context, // 執行相對應的邏輯計算或設定屬性參數
