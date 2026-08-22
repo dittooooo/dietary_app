@@ -253,6 +253,31 @@ class AuthService {
     }
   }
 
+  Future<List<dynamic>> listMyProblemFeedback() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
+
+    if (token == null || token.isEmpty) {
+      return [];
+    }
+
+    try {
+      final response = await _client.get(
+        '/user/problem-feedback',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      final data = _decodeBody(response.body);
+      final feedbackList = data['data'];
+
+      if (response.statusCode == 200 && feedbackList is List) {
+        return feedbackList;
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(accessTokenKey);

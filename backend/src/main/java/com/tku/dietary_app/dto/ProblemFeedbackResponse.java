@@ -17,6 +17,8 @@ public class ProblemFeedbackResponse {
     private Long userId;
     private String userName;
     private String content;
+    private String adminReply;
+    private LocalDateTime repliedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -26,6 +28,8 @@ public class ProblemFeedbackResponse {
                 .userId(feedback.getUser() == null ? null : feedback.getUser().getId())
                 .userName(feedback.getUserName())
                 .content(feedback.getContent())
+                .adminReply(feedback.getAdminReply())
+                .repliedAt(feedback.getRepliedAt())
                 .createdAt(feedback.getCreatedAt())
                 .updatedAt(feedback.getUpdatedAt())
                 .build();

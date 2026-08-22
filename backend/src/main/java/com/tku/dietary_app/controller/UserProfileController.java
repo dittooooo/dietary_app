@@ -84,6 +84,16 @@ public class UserProfileController {
         ));
     }
 
+    @GetMapping("/problem-feedback")
+    public ResponseEntity<ApiResponse<?>> listMyProblemFeedback(Authentication authentication) {
+        User user = requireAuthenticatedUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(
+                problemFeedbackService.getByUser(user).stream()
+                        .map(ProblemFeedbackResponse::fromEntity)
+                        .toList()
+        ));
+    }
+
     private User requireAuthenticatedUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new UnauthorizedException("未登入");

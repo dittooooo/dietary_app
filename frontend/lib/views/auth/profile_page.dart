@@ -10,6 +10,7 @@ import 'dart:typed_data'; // 處理圖片數據
 import '../../config/api_config.dart';
 import '../../color/app_colors.dart';
 import '../superkey/admin_user_list_page.dart'; 
+import '../superkey/admin_problem_feedback_page.dart';
 import '../superkey/generic_admin_page.dart'; // 引入通用管理頁面
 import '../home/home_page.dart';
 import 'edit_profile_page.dart';
@@ -399,6 +400,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const GenericAdminListPage(title: '飲食紀錄管理'),
+                        ),
+                      );
+                    }),
+                    _buildAdminButton('問題回饋管理', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminProblemFeedbackPage(),
                         ),
                       );
                     }),

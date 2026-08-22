@@ -4,8 +4,11 @@ import com.tku.dietary_app.dto.AdminUserRequest;
 import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
+import com.tku.dietary_app.dto.ProblemFeedbackReplyRequest;
+import com.tku.dietary_app.dto.ProblemFeedbackResponse;
 import com.tku.dietary_app.service.AdminService;
 import com.tku.dietary_app.service.DietRecordService;
+import com.tku.dietary_app.service.ProblemFeedbackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -31,6 +34,7 @@ public class AdminController {
 
     private final AdminService adminService;
     private final DietRecordService dietRecordService;
+    private final ProblemFeedbackService problemFeedbackService;
 
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<?>> listUsers(@RequestParam(required = false) String keyword) {
@@ -104,6 +108,24 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "照片上傳成功",
                 dietRecordService.savePhotoByAdmin(id, file)
+        ));
+    }
+
+    @GetMapping("/problem-feedback")
+    public ResponseEntity<ApiResponse<?>> listProblemFeedback() {
+        return ResponseEntity.ok(ApiResponse.success(
+                problemFeedbackService.getAll().stream()
+                        .map(ProblemFeedbackResponse::fromEntity)
+                        .toList()
+        ));
+    }
+
+    @PutMapping("/problem-feedback/{id}/reply")
+    public ResponseEntity<ApiResponse<?>> replyProblemFeedback(@PathVariable Long id,
+                                                               @Valid @RequestBody ProblemFeedbackReplyRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                "回覆已送出",
+                ProblemFeedbackResponse.fromEntity(problemFeedbackService.reply(id, request))
         ));
     }
 }

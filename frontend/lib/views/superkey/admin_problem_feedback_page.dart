@@ -1,0 +1,264 @@
+import 'package:flutter/material.dart';
+
+import '../../color/app_colors.dart';
+import '../../services/admin_service.dart';
+
+class AdminProblemFeedbackPage extends StatefulWidget {
+  const AdminProblemFeedbackPage({super.key});
+
+  @override
+  State<AdminProblemFeedbackPage> createState() => _AdminProblemFeedbackPageState();
+}
+
+class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
+  bool _isLoading = true;
+  List<dynamic> _feedbackList = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFeedback();
+  }
+
+  Future<void> _loadFeedback() async {
+    setState(() => _isLoading = true);
+    final list = await AdminService().listProblemFeedback();
+    if (!mounted) return;
+    setState(() {
+      _feedbackList = list;
+      _isLoading = false;
+    });
+  }
+
+  String _formatDate(dynamic value) {
+    final text = value?.toString() ?? '';
+    if (text.length >= 16) {
+      return text.substring(0, 16).replaceFirst('T', ' ');
+    }
+    return text;
+  }
+
+  Future<void> _openReplyDialog(Map feedback) async {
+    final id = int.tryParse('${feedback['id'] ?? ''}');
+    if (id == null) return;
+
+    final reply = await showDialog<String>(
+      context: context,
+      builder: (context) => _ReplyDialog(
+        initialReply: feedback['adminReply']?.toString() ?? '',
+      ),
+    );
+
+    if (reply == null) {
+      return;
+    }
+
+    final result = await AdminService().replyProblemFeedback(id, reply);
+    if (!mounted) return;
+    if (result['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('已回覆使用者')),
+      );
+      await _loadFeedback();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message']?.toString() ?? '回覆失敗')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text(
+          '問題回饋管理',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadFeedback,
+        color: AppColors.secondary,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: AppColors.secondary),
+              )
+            : _feedbackList.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(24),
+                    children: const [
+                      SizedBox(height: 120),
+                      Center(child: Text('目前沒有使用者送出的問題。')),
+                    ],
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _feedbackList.length,
+                    itemBuilder: (context, index) {
+                      final raw = _feedbackList[index];
+                      final feedback = raw is Map ? raw : <String, dynamic>{};
+                      return _buildFeedbackCard(feedback);
+                    },
+                  ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackCard(Map feedback) {
+    final adminReply = feedback['adminReply']?.toString() ?? '';
+    final hasReply = adminReply.trim().isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: hasReply ? AppColors.sage : AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasReply ? Icons.check_circle_outline : Icons.pending_actions,
+                color: hasReply ? AppColors.success : AppColors.secondary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  feedback['userName']?.toString() ?? '使用者',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              Text(
+                hasReply ? '已回覆' : '待回覆',
+                style: TextStyle(
+                  color: hasReply ? AppColors.success : AppColors.secondary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '送出時間 ${_formatDate(feedback['createdAt'])}',
+            style: TextStyle(
+              color: AppColors.textPrimary.withOpacity(0.55),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Text('使用者問題', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(feedback['content']?.toString() ?? ''),
+          const SizedBox(height: 14),
+          const Text('目前回覆', style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(hasReply ? adminReply : '尚未回覆'),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _openReplyDialog(feedback),
+              icon: Icon(hasReply ? Icons.edit_note : Icons.reply),
+              label: Text(hasReply ? '修改回覆' : '回覆使用者'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.background,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReplyDialog extends StatefulWidget {
+  final String initialReply;
+
+  const _ReplyDialog({required this.initialReply});
+
+  @override
+  State<_ReplyDialog> createState() => _ReplyDialogState();
+}
+
+class _ReplyDialogState extends State<_ReplyDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialReply);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final reply = _controller.text.trim();
+    if (reply.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('請先輸入回覆內容')),
+      );
+      return;
+    }
+    Navigator.pop(context, reply);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.background,
+      title: const Text('回覆使用者'),
+      content: TextField(
+        controller: _controller,
+        maxLength: 2000,
+        minLines: 5,
+        maxLines: 8,
+        decoration: const InputDecoration(
+          hintText: '輸入要給使用者看的回覆',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.background,
+          ),
+          onPressed: _submit,
+          child: const Text('送出回覆'),
+        ),
+      ],
+    );
+  }
+}
