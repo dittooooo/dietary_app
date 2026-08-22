@@ -79,9 +79,11 @@ async function handleCompanionAsk(req, res) {
       intent_category: openAiResult.screening.intent_category,
       question_type: openAiResult.screening.question_type,
       confidence: openAiResult.screening.confidence,
-      dish_info_list: openAiResult.screening.dish_info_list
+      meal_items: openAiResult.screening.meal_items
+
     }, null, 2));
-    console.log("💖 情緒分析 (Emotion):", JSON.stringify(openAiResult.emotion, null, 2));
+    console.log(" 提煉與翻譯後餐點 (Dish Info):", JSON.stringify(openAiResult.screening.dish_info_list, null, 2));
+    console.log(" 情緒分析 (Emotion):", JSON.stringify(openAiResult.emotion, null, 2));
     console.log("");
   } catch (error) {
     console.error("OpenAI flow failed:", error.message);
@@ -93,12 +95,12 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
-  // 3. 根據預檢結果決定是否呼叫飲食助理服務，並合成陪伴精靈回覆
+  // 3. 根據預檢與分流結果決定是否呼叫飲食助理服務，並合成陪伴精靈回覆
   try {
     let dietaryAgentResponse = null;
     let dietaryAgentError = null;
 
-    // 若預檢判定需要呼叫後端飲食助理
+    // 若預檢與分流判定需要呼叫後端飲食助理 (分流 C 且包含具體食物)
     if (openAiResult.dietary_agent_request) {
       console.log("------------------ [Dietary Agent 飲食後端服務] ------------------");
       console.log("🚀 發送請求 Payload:", JSON.stringify(openAiResult.dietary_agent_request, null, 2));
@@ -115,10 +117,12 @@ async function handleCompanionAsk(req, res) {
         dietaryAgentError = error.message;
       }
       console.log("");
+    } else {
+      console.log("ℹ️ [分流判定] 跳過 Java Dietary Agent 與翻譯外掛（非諮詢類、飲食紀錄或無食物訊息）\n");
     }
 
-    console.log("------------------ [LLM 階段 2：陪伴式回覆重組] ------------------");
-    // 呼叫重組邏輯，生成最終親切的對話文字
+    console.log("------------------ [LLM 階段 3：陪伴式回覆生成] ------------------");
+    // 呼叫 Stage 3 重組邏輯，生成最終親切對話文字 (100% Persona 靈魂集中注入)
     const companionReply = await getCompanionReply({
       userPrompt: user_prompt,
       screening: openAiResult.screening,
@@ -133,12 +137,12 @@ async function handleCompanionAsk(req, res) {
     console.log(`[Companion Agent] 📤 已成功回應前端 (Intent: ${openAiResult.screening.intent_category || "general_chat"})`);
     console.log("======================================================================\n");
 
-    // 回傳精簡且平鋪的對話結果給客戶端
+    // 回傳符合 v6 標準合約的對話結果給客戶端 (包含一維 meal_items)
     return res.json({
       success: true,
       companion_reply: companionReply,
       intent_category: openAiResult.screening.intent_category || "general_chat",
-      meal_records: openAiResult.screening.meal_records || [],
+      meal_items: openAiResult.screening.meal_items || [],
       dietary_agent_error: dietaryAgentError
     });
   } catch (error) {

@@ -42,51 +42,72 @@ function buildDietaryAgentRequest(screening, message) {
     return null;
   }
 
+  // 將物件格式 { "餐點名": 份數 } 轉為 Java 後端 DietaryAskRequest 所需的 Array 格式 [ { dish_name: "餐點名", amount: 份數 } ]
+  const formattedDishInfoList = Object.entries(dish_info_list).map(([dishName, amount]) => ({
+    dish_name: dishName,
+    amount: (typeof amount === "number" && amount > 0) ? amount : 1
+  }));
+
   // 回傳格式化後的請求 Payload
   return {
     question,
     question_type,
-    dish_info_list
+    dish_info_list: formattedDishInfoList
   };
 }
 
 /**
  * 執行 OpenAI 分析流程
- * 呼叫 LLM 進行意圖篩選與情緒分析，並根據結果建立 Dietary Agent 的請求參數
+ * 呼叫 LLM 進行意圖篩選與情緒分析，並依據三路分流機制建立 Dietary Agent 請求參數：
+ * - 分流 A (閒聊/非飲食) / 分流 B (飲食紀錄)：不安插翻譯與 Java 請求
+ * - 分流 C (飲食諮詢)：包含具體食物才進行翻譯與 Java 請求；無食物時自動跳過
  * @param {string} userPrompt - 使用者原始輸入訊息
- * @returns {Promise<Object>} 包含意圖篩選、情緒分析與飲食助理請求 Payload 的物件
+ * @returns {Promise<Object>} 包含意圖預檢 (screening)、情緒分析 (emotion) 與飲食助理請求 Payload 的物件
  */
 async function runOpenAIFlow(userPrompt) {
-  // 呼叫 OpenAI 進行分析
+  // 1. 呼叫 OpenAI 進行 Stage 1 JSON 分析
   const result = await runLLMAnalysis(userPrompt);
+  const { screening, emotion } = result;
 
-  // 僅在飲食諮詢 (dish_advice) 意圖時才進行食物名稱翻譯，飲食紀錄 (meal_record) 保持原始輸入名稱
+  // 2. 三路分流機制處理
+  // 分流 A：閒聊/非飲食 (should_handle === false 或 intent_category === "general_chat")
+  // 分流 B：飲食紀錄 (intent_category === "meal_record")
+  if (!screening.should_handle || screening.intent_category === "general_chat" || screening.intent_category === "meal_record") {
+    return {
+      screening,
+      emotion,
+      dietary_agent_request: null
+    };
+  }
+
+  // 分流 C：飲食諮詢 (intent_category === "dish_advice")
+  // 檢查是否包含具體食物資訊 (dish_info_list 非空)
   if (
-    result.screening.intent_category === "dish_advice" &&
-    result.screening.dish_info_list &&
-    Object.keys(result.screening.dish_info_list).length > 0
+    screening.intent_category === "dish_advice" &&
+    screening.dish_info_list &&
+    Object.keys(screening.dish_info_list).length > 0
   ) {
     try {
-      // 逐一翻譯每個原始餐點名稱，將翻譯出的多個原料組合回單一字串，並保留對應之份數 (amount)
+      // 條件觸發：逐一翻譯每個原始餐點名稱為資料庫標準名，並保持對應之數量
       const translatedDishInfoList = {};
-      for (const [dishName, amount] of Object.entries(result.screening.dish_info_list)) {
+      for (const [dishName, amount] of Object.entries(screening.dish_info_list)) {
         const translatedIngredients = await translateDishes([dishName]);
-        const combined = translatedIngredients.join("");
-        translatedDishInfoList[combined] = amount;
+        const combined = Array.isArray(translatedIngredients) ? translatedIngredients.join("") : "";
+        const finalDishName = combined.trim() ? combined : dishName;
+        translatedDishInfoList[finalDishName] = amount;
       }
-      result.screening.dish_info_list = translatedDishInfoList;
+      screening.dish_info_list = translatedDishInfoList;
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }
   }
 
-  // 根據分析出的意圖決定是否建立傳送給 Dietary Agent 的請求 payload
-  const dietaryAgentRequest = buildDietaryAgentRequest(result.screening, userPrompt);
+  // 建立傳送給 Dietary Agent 的請求 payload (若無食物資訊則會回傳 null)
+  const dietaryAgentRequest = buildDietaryAgentRequest(screening, userPrompt);
 
-  // 回傳整合後的結果
   return {
-    screening: result.screening,
-    emotion: result.emotion,
+    screening,
+    emotion,
     dietary_agent_request: dietaryAgentRequest
   };
 }
@@ -135,7 +156,6 @@ async function callDietaryAgent(requestBody, authHeader) {
 /**
  * 產生陪伴精靈的最終回覆
  * 整合意圖、情緒以及飲食助理的回應，透過 LLM 生成溫馨、同理心且在地化的回覆。
- * 若意圖判定不需處理、或缺少必要資訊，則直接回傳預設防呆對話。
  * @param {Object} params - 參數物件，包含篩選結果、情緒分析、飲食助理回應與原始問題等
  * @returns {Promise<string>} 最終要呈現給使用者的對話文字
  */
@@ -143,24 +163,14 @@ async function getCompanionReply({
   screening,
   emotion,
   dietaryAgentResponse,
-  dietaryAgentRequest,
   userPrompt,
   dietaryAgentError
 }) {
-  // 【早退機制 (Early Exit) 目的】：
-  // 1. 當第一階段的 AI 分析判定不需處理 (!should_handle)，或飲食主題但資訊不足（如無餐點名稱）時，
-  //    第一階段 API 的 tools (early_reply 欄位) 就會由 AI 預先生成溫馨的拒絕/閒聊引導或補問文字。
-  // 2. 這時後端直接將 early_reply 回傳給前端，完全省下第二次 Chat Completions API 的調用，極大降低延遲。
-  if (screening.early_reply) {
-    return screening.early_reply;
-  }
-
-  // 飲食紀錄意圖處理 (方案 A 跨餐期草稿預覽回覆)
-  if (screening.intent_category === "meal_record") {
-    if (Array.isArray(screening.meal_records) && screening.meal_records.length > 0) {
-      const summaryList = screening.meal_records.map(rec => {
-        const itemsStr = (rec.meal_items || []).map(i => `${i.quantity}${i.unit}${i.name}`).join('與');
-        return `${rec.meal_period}的「${itemsStr}」`;
+  // 飲食紀錄意圖處理 (分流 B 極速草稿文字組裝)
+  if (screening?.intent_category === "meal_record") {
+    if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
+      const summaryList = screening.meal_items.map(item => {
+        return `${item.meal_period || "即時"}的「${item.quantity}${item.unit}${item.name}」`;
       }).join('，以及');
 
       return `幫你整理好${summaryList}草稿囉！請在下方確認一下內容是否正確，按下確認就可以幫你存起來囉！✨`;
@@ -169,40 +179,20 @@ async function getCompanionReply({
     }
   }
 
-  // 情況 C：資訊完整且已完成 Dietary Agent 呼叫，進入第二階段 LLM 生成最終陪伴式回覆
+  // 進入 Stage 3 LLM 生成對話回覆 (100% 集中注入 Persona 靈魂，動態應答各種情境與異常)
   let finalReply = "";
   try {
-    // 呼叫 OpenAI Chat Completions API 來生成並包裝最終的溫馨對話回覆
     finalReply = await runLLMReply({
       userPrompt,
       screening,
       emotion,
       dietaryAgentResponse,
-      dietaryAgentRequest,
       dietaryAgentError
     });
   } catch (error) {
-    // 當 LLM 回覆生成失敗時，進入容錯防呆與降級處理機制 (Fallback 保底)
+    // 當 LLM 回覆生成崩潰或連線失敗時 (OpenAI API 保底)
     console.error("Failed to generate companion response with LLM:", error.message);
-    // 能走到這步代表預檢與餐點資料皆齊全，只需處理對話生成失敗
-    const empathyPrefix = emotion.needs_empathy
-      ? "我知道你現在可能有點在意這餐怎麼吃，先別太有壓力，我陪你一起看。\n"
-      : "我先幫你整理目前可用的資訊。\n";
-
-    // 優先使用飲食助理傳回的 conclusion 段落
-    const recommendation = dietaryAgentResponse?.conclusion || "目前還拿不到完整分析結果，稍後再試一次會比較穩。";
-
-    // 拼接成備用回覆
-    finalReply = `${empathyPrefix}${recommendation}`;
-
-    // 數值免責聲明保底：如果使用者提問或回傳資料中含有熱量、克數等數值關鍵字，強制在結尾附加免責聲明
-    const hasNutrients = Array.isArray(dietaryAgentResponse?.dish_nutrition) &&
-      dietaryAgentResponse.dish_nutrition.some(d => Array.isArray(d.nutrients) && d.nutrients.length > 0);
-    const mentionsNumbers = /熱量|卡路里|卡|克|g|kcal|蛋白質|脂肪|碳水化合物/i.test(userPrompt);
-
-    if (hasNutrients || mentionsNumbers) {
-      finalReply += "\n\n關於數值類提問，本精靈只可提供參考數值";
-    }
+    finalReply = "AI 功能目前發生異常，請稍後再試。";
   }
 
   return finalReply;

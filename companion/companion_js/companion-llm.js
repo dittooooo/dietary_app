@@ -86,7 +86,7 @@ function collectToolArgsByName(functionCalls) {
  * 這會引導後續的 Node.js 程式走入 should_handle: false 的 off-topic 攔截流程，對使用者回傳親切的閒聊防呆提示。
  */
 function sanitizeScreening(raw) {
-  // 容錯防呆：如果 OpenAI 沒有觸發意圖工具調用，預設為不需處理的閒聊分類，並給予預設早退回覆
+  // 容錯防呆：如果 OpenAI 沒有觸發意圖工具調用，預設為不需處理的閒聊分類
   if (!raw) {
     return {
       should_handle: false,
@@ -94,38 +94,31 @@ function sanitizeScreening(raw) {
       question_type: undefined,
       confidence: 0,
       dish_info_list: {},
-      meal_records: [],
-      early_reply: "這個問題比較不是飲食助理的處理範圍。如果你願意，我還是可以幫你回到餐點選擇、熱量方向，或日常飲食建議來一起看。"
+      meal_items: []
     };
   }
 
   const result = { ...raw };
-  if (!Array.isArray(result.meal_records)) {
-    result.meal_records = [];
+  if (!Array.isArray(result.meal_items)) {
+    result.meal_items = [];
   }
 
-  // ── 自動衍生位（Single Source of Truth）：從 meal_records 提煉所有食物名稱與份數，生成 dish_info_list 物件 ──
+  // ── 自動衍生欄位（Single Source of Truth）：從一維 meal_items 提煉所有食物名稱與份數，生成 dish_info_list 物件 ──
   const dishInfoList = {};
-  for (const rec of result.meal_records) {
-    if (Array.isArray(rec.meal_items)) {
-      for (const item of rec.meal_items) {
-        if (item.name) {
-          const amount = (typeof item.quantity === "number" && item.quantity > 0) ? item.quantity : 1;
-          dishInfoList[item.name] = amount;
-        }
-      }
+  for (const item of result.meal_items) {
+    if (item && item.name) {
+      const amount = (typeof item.quantity === "number" && item.quantity > 0) ? item.quantity : 1;
+      dishInfoList[item.name] = amount;
     }
   }
   result.dish_info_list = dishInfoList;
   delete result.dishes;
 
-  if (typeof result.early_reply !== "string") {
-    result.early_reply = "";
-  }
-
-  // 強制規則防護：如果意圖不是飲食建議，則不應出現 question_type 欄位
+  // 強制規則防護：如果意圖不是飲食建議，則 question_type 強制歸類為 "not_applicable"
   if (result.intent_category !== "dish_advice") {
-    delete result.question_type;
+    result.question_type = "not_applicable";
+  } else if (!result.question_type) {
+    result.question_type = "unknown";
   }
 
   return result;
@@ -181,36 +174,47 @@ const ANALYSIS_SYSTEM_PROMPT = `
 【screen_user_request 的規則】
 1. should_handle (是否處理)：
    - 當訊息與飲食建議、餐點選擇、日常飲食計畫、餐點紀錄、熱量/卡路里、營養成分等飲食/健康管理直接相關時，設為 true。
-   - 當訊息為敏感的醫療諮詢、疾病診斷、藥物使用（例如：「頭痛要吃什麼藥」、「胃痛吃什麼胃藥」）、非飲食相關的閒聊（例如：天氣、純問候），設為 false。
+   - 當訊息為敏感的醫療諮詢、疾病診斷、藥物使用（例如：「頭痛要吃什麼藥」）、非飲食相關的閒聊（例如：天氣、純問候），設為 false。
 2. intent_category (意圖分類)：
    - "dish_advice"：使用者在尋求飲食建議、推薦，或詢問某特定食物是否適合食用（例如：「我想吃炸雞，適合嗎？」、「今天晚餐推薦吃什麼？」）。若問句中同時包含「記錄已吃食物」與「尋求建議」，應優先歸類於 "dish_advice"。
    - "meal_record"：使用者「純粹」在記錄自己吃了什麼，沒有提出疑問或尋求任何飲食建議（例如：「我今天中午吃了一碗拉麵」）。
-   - "general_chat"：非飲食主題的純閒聊、問候，或任何醫療/診斷/藥物問題（例如：「感冒發燒要看醫生嗎？」）。
-3. question_type (問題類型) —— （注意：僅當 intent_category 為 "dish_advice" 時才可包含此欄位）：
-   - "single_dish"：針對單一特定餐點或食物進行詢問（例如：「我吃炸雞排適合嗎？」）。
-   - "dish_comparison"：比較兩樣或多樣餐點/食物（例如：「炸雞排跟拉麵哪個熱量低？」），或是詢問一天內多餐搭配（例如：「中午吃了炸雞，晚上還可以吃拉麵嗎？」）。
-   - "unknown"：其他意圖不明或未明確提及任何食物名稱的飲食諮詢。
-   - 注意：如果 intent_category 不是 "dish_advice"（即為 "meal_record" 或 "general_chat"），請勿在輸出的參數中包含 "question_type" 欄位。
-4. meal_records (依餐期分組之紀錄陣列)：
-   - 擷取或推算使用者此段訊息對應的一至多個餐期紀錄組合。
-   - 每個物件包含 "meal_period"（"早餐"、"中餐"、"晚餐"、"其他"）與 "meal_items" 陣列。
-   - 若使用者在單一句子中提及多個餐期（例如「上午吃了茶葉蛋，下午喝了豆漿」），請將其拆解為多個餐期物件：
-     [
-       {"meal_period": "早餐", "meal_items": [{"name": "茶葉蛋", "quantity": 1, "unit": "顆"}]},
-       {"meal_period": "其他", "meal_items": [{"name": "豆漿", "quantity": 1, "unit": "杯"}]}
-     ]
-   - 若使用者沒有明確提及餐期（例如「我剛才吃了...」），請根據輸入訊息中附帶的「當前系統時間」進行推算：
-     * 05:00 - 10:30 推算為 "早餐"
-     * 10:30 - 14:00 推算為 "中餐"
-     * 14:00 - 17:00 推算為 "其他"
-     * 17:00 - 21:00 推算為 "晚餐"
-     * 21:00 - 05:00 推算為 "其他"
-   - 若為非飲食相關問句，meal_records 必須傳回空陣列 []。
-5. early_reply (早退回覆)：
-   - 以溫馨、充滿同理心的台灣繁體中文（Traditional Chinese, Taiwan）生成一段對話式回覆，並融入 analyze_emotion 偵測到的語氣。
-   - 當 should_handle 為 false 時：生成一段溫暖的回應，婉轉說明自己是飲食助理，並引導使用者回到餐點選擇、飲食計畫或熱量管理的範圍。
-   - 當 should_handle 為 true，但 meal_records 為空陣列 [] 或 question_type 為 "unknown" 時：以親切的語氣提示使用者，詢問他們具體想問哪樣食物，或者是否想針對單一食物或比較多樣食物來做諮詢。
-   - 當上述條件都不滿足（即 should_handle 為 true，且 meal_records 不為空，且 question_type 為 single_dish 或 dish_comparison 或 intent_category 為 meal_record）時：直接設定為空字串 ""。
+   - "general_chat"：非飲食主題的純閒聊、問候，或任何醫療/診斷/藥物問題。
+3. question_type (問題類型) —— （無論哪種意圖均為必填常駐欄位）：
+   - "single_dish"：問句中僅提及「單一」特定餐點或食物進行詢問（例如：「我吃炸雞排適合嗎？」）。
+   - "dish_comparison"：問句中提及「兩樣或多樣」餐點/食物（包含比較熱量、抉擇/二選一猶豫「在想要吃 A 還是 B」、或是多餐搭配）。只要提及兩樣（含）以上的食物品項，一律歸為此類！
+   - "unknown"：意圖為 "dish_advice" 但問句中「完全未提及任何具體食物名稱」的飲食諮詢（例如：「今天晚餐推薦吃什麼？」、「我這樣吃會太胖嗎？」）。【強烈禁令】：只要問句中有出現具體食物名稱，絕不可以設為 "unknown"！
+   - "not_applicable"：非飲食諮詢意圖（即意圖為 "meal_record" 或 "general_chat"）時，question_type 一律填入此值！
+4. meal_items (一維餐點明細陣列)：
+   - 將訊息中所提及的每一個食物/飲料品項，抽取為一維扁平物件陣列。每個物件必須包含 "name"、"quantity"、"unit" 與推算之 "meal_period"（"早餐"、"中餐"、"晚餐"、"其他"）。
+   - 【餐期推算規則與強烈禁令】：
+     * 若問句中已有明確時間詞（如「上午吃了...」、「晚餐想吃...」），優先採納該時間詞所對應之餐期。
+     * 若問句中未明確提及餐期時間詞，請務必依據傳入之 24 小時制當前系統時間推算：
+       - 05:00 - 10:30 推算為 "早餐"
+       - 10:30 - 14:00 推算為 "中餐"
+       - 14:00 - 17:00 推算為 "其他"
+       - 17:00 - 21:00 推算為 "晚餐"
+       - 21:00 - 05:00 推算為 "其他"
+     * 只要含有食物或飲料品項，必須完整擷取。絕不可傳回空陣列。僅非飲食主題問句才傳回空陣列 []。
+   - 【Few-shot 範例 1：單一餐點諮詢 (single_dish)】
+     - 使用者輸入：「我今天晚餐想吃一碗紅燒牛肉麵，請問這樣會不會太油或熱量太高？」
+     - 期待 meal_items 輸出：
+       [
+         {"name": "紅燒牛肉麵", "quantity": 1, "unit": "碗", "meal_period": "晚餐"}
+       ]
+   - 【Few-shot 範例 2：餐點比較諮詢 (dish_comparison)】
+     - 使用者輸入：「午餐想吃便當，主食選烤雞腿便當跟滷排骨便當，哪一個比較推薦？」
+     - 期待 meal_items 輸出：
+       [
+         {"name": "烤雞腿便當", "quantity": 1, "unit": "個", "meal_period": "中餐"},
+         {"name": "滷排骨便當", "quantity": 1, "unit": "個", "meal_period": "中餐"}
+       ]
+   - 【Few-shot 範例 3：跨餐期紀錄 (meal_record)】
+     - 使用者輸入：「幫我記一下飲食，我上午吃了一份鮪魚蛋吐司，中午吃了一盒舒肥雞胸肉沙拉。」
+     - 期待 meal_items 輸出：
+       [
+         {"name": "鮪魚蛋吐司", "quantity": 1, "unit": "份", "meal_period": "早餐"},
+         {"name": "舒肥雞胸肉沙拉", "quantity": 1, "unit": "盒", "meal_period": "中餐"}
+       ]
 `;
 
 // 定義提供給 OpenAI Function Calling 的工具清單 (包含意圖篩選與情緒分析工具的參數規格描述)
@@ -219,7 +223,7 @@ const tools = [
     type: "function",
     function: {
       name: "screen_user_request",
-      description: "Screen the user request to classify question type, intent, and extract mentioned dishes.",
+      description: "Screen the user request to classify question type, intent, and extract mentioned dishes into a 1D flat array.",
       parameters: {
         type: "object",
         properties: {
@@ -233,51 +237,37 @@ const tools = [
           },
           question_type: {
             type: "string",
-            enum: ["single_dish", "dish_comparison", "unknown"]
+            enum: ["single_dish", "dish_comparison", "unknown", "not_applicable"],
+            description: "飲食諮詢時依餐點數量選 single_dish / dish_comparison / unknown；非飲食諮詢 (meal_record 或 general_chat) 一律選 not_applicable。"
           },
           confidence: {
             type: "number"
           },
-          meal_records: {
+          meal_items: {
             type: "array",
-            description: "依餐期分組之飲食紀錄列表。可包含一至多個餐期的紀錄組合（例如早餐一組、其他一組）。若為非飲食問句，請傳回空陣列 []。",
+            description: "一維餐點明細陣列。無論是記錄或諮詢，只要訊息中含有具體食物名稱，均必須完整擷取至此列表中，絕不可傳回空陣列。僅非飲食主題問句（如天氣）才傳回空陣列 []。",
             items: {
               type: "object",
               properties: {
+                name: { type: "string", description: "食物或飲料名稱，例如：蛋餅" },
+                quantity: { type: "number", description: "數量，例如：1 (若未提及則設為 1)" },
+                unit: { type: "string", description: "單位，例如：份、碗、個 (若未提及則設為 '份' 或 '個' 等合理預設值)" },
                 meal_period: {
                   type: "string",
                   enum: ["早餐", "中餐", "晚餐", "其他"],
-                  description: "該筆紀錄對應的餐期。"
-                },
-                meal_items: {
-                  type: "array",
-                  description: "該餐期內含的食物明細、數量與單位。",
-                  items: {
-                    type: "object",
-                    properties: {
-                      name: { type: "string", description: "食物或飲料名稱，例如：蛋餅" },
-                      quantity: { type: "number", description: "數量，例如：1 (若未提及則設為 1)" },
-                      unit: { type: "string", description: "單位，例如：份、杯、個 (若未提及則設為 '份' 或 '個' 等合理預設值)" }
-                    },
-                    required: ["name", "quantity", "unit"]
-                  }
+                  description: "該餐點對應或推算之餐期。"
                 }
               },
-              required: ["meal_period", "meal_items"]
+              required: ["name", "quantity", "unit", "meal_period"]
             }
-          },
-          early_reply: {
-            type: "string",
-            description: "If should_handle is false, OR if should_handle is true but meal_records is empty or question_type is 'unknown', generate a warm, Taiwanese Traditional Chinese dialog response to guide or reply to the user. Otherwise, set it to an empty string \"\"."
           }
         },
         required: [
           "should_handle",
           "intent_category",
-          // "question_type", <-- 從此處移除，改為條件式必填
+          "question_type",
           "confidence",
-          "meal_records",
-          "early_reply"
+          "meal_items"
         ],
         additionalProperties: false
       }
@@ -337,10 +327,20 @@ const tools = [
  * @returns {Promise<Object>} 包含意圖預檢 (screening) 與情緒分析 (emotion) 結果的物件
  */
 async function runOpenAIFlow(userPrompt) {
-  // 取得台灣當前本地時間
-  const localTimeStr = new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" });
+  // 取得台灣當前本地時間 (強制使用標準 24 小時制，方便 LLM 進行時間區間對比)
+  const now = new Date();
+  const localTimeStr = now.toLocaleString("zh-TW", {
+    timeZone: "Asia/Taipei",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 
-  // 組合成富含時間上下文的提示輸入
+  // 組合成富含 24 小時制時間上下文的提示輸入
   const promptWithTime = `當前系統時間: ${localTimeStr}\n使用者輸入: "${userPrompt}"`;
 
   const response = await createOpenAIResponse(
@@ -387,28 +387,46 @@ async function runOpenAIFlow(userPrompt) {
 
 /**
  * 用於第二階段「最終回覆生成」的 System Prompt (REPLY_SYSTEM_PROMPT)
- * 指導 LLM 將意圖分析、同理心需求與 Dietary Agent 後端的營養分析結果，重組並潤飾為溫馨、台灣繁體中文的口語對話回覆。
+ * 指導 LLM 作為小精靈本尊對話生成器 (100% 集中注入 Persona 靈魂)，將意圖分析、情緒同理與營養數據重組為溫馨口語對話。
  */
 const REPLY_SYSTEM_PROMPT = `
 你是一位溫暖、支持性強且專業的飲食陪伴助理，名稱為「飲食精靈」（Companion Agent）。
-你的任務是將「Dietary Agent」（飲食助理後端）回傳的結構化分析數據與營養建議，重新整理並潤飾成一段親切、自然且富含同理心的台灣繁體中文對話回覆。
+你是系統中唯一的對話發聲管道 (Single Point of Persona)。
+你的任務是根據輸入的「意圖篩選結果 (screening)」、「情緒與同理心設定 (emotion)」以及「Dietary Agent 後端數據」，生成一段親切、自然、口語化且富含同理心的台灣繁體中文對話。
 
-請嚴格遵守以下重組規則：
-1. 語氣與同理心（Tone & Empathy）：
-   - 結合第一階段情緒分析的結果。如果情緒分析指出 "needs_empathy" 為 true（代表使用者可能有罪惡感、焦慮、壓力或挫折感），請在回覆開頭或過程中，融入一句溫暖、關懷的話語，主動幫使用者排解對餐點選擇的心理負擔或罪惡感。
-   - 回覆必須自然、口語化且親切，避免僵硬的機器人語氣或只是機械式地照抄 JSON 列表。
-2. 內容整合（Context Integration）：
-   - 將 Dietary Agent 提供的專業營養學建議（如熱量預警、食物替換方案、三大營養素比例分析等）轉化為通俗易懂的對話句子。
-   - 不能漏失 Dietary Agent 的關鍵核心建議，但應將其融入溫馨的聊天情境中。
-3. 數值範圍化與概估規則（Numerical Range & Estimation Rule）：
-   - 嚴禁精確單一數字：當回答涉及營養數值（如熱量大卡、三大營養素等）時，【嚴禁直接給予精確的單一數字】（例如 380 大卡、564 大卡）。
-   - 以 50 為單位的範圍區間：請將數值轉換為【以 50 大卡為間隔的範圍區間】。
-     - 範例：380 大卡 應轉為「350～400 大卡」；564 大卡 應轉為「550～600 大卡」。
-   - 多元的概估詞彙：不限於特定字眼，請靈活搭配各種自然親切的概估同義詞（例如：「大約」、「約」、「大概」、「預估」、「落在...左右」、「約莫」、「大約在...之間」等）。
-4. 免責聲明規則（Disclaimer Rule）：
-   - 如果使用者的提問涉及到具體數值（如熱量、蛋白質、脂肪、碳水化合物、營養成分克數等），你必須在回覆的「最末尾」獨立換行加上這句完全一模一樣的聲明：「關於數值類提問，本精靈只可提供參考數值」。
-5. 輸出格式：僅返回最終的對話文字，請勿用 JSON 格式包裝，亦避免不必要的 markdown 程式碼區塊。
+請嚴格遵循以下 Persona 靈魂與對話生成規範：
+
+【1. Persona 性格與口吻】
+- 稱呼自己為「本精靈」或「小芽」。
+- 語氣必須極具同理心、溫暖且鼓勵性強，適度使用親切的繁體中文標點與溫馨顏文字（如 ✨, 🌱, 💕, 😋）。
+- 嚴禁冷漠機械式的清單列舉或機器人口吻。
+
+【2. 4 大對話情境處理規則】
+- 情境 A：【非飲食相關 (screening.should_handle === false 或 intent_category === "general_chat")】
+  * 溫柔同理使用者的心情，婉轉說明自己是飲食健康陪伴助理，並親切引導使用者回到餐點選擇、日常飲食或熱量管理的範圍。
+- 情境 B：【飲食紀錄確認 (intent_category === "meal_record")】
+  * 以熱情、讚賞的語氣肯定使用者主動紀錄飲食的好習慣，並簡短溫馨地說明已幫忙整理好草稿供點擊確認。
+- 情境 C：【飲食諮詢但無具體食物 (intent_category === "dish_advice" 且 meal_items 為空陣列或 question_type === "unknown")】
+  * 以親切關懷的語氣提示使用者，說明自己很想幫忙給予建議，但需要使用者再多告訴你具體想吃或想比較的餐點名稱。
+- 情境 D：【正常飲食諮詢建議 (intent_category === "dish_advice" 且含具體食物數據與建議)】
+  * 將 Dietary Agent 提供的專業營養數據，轉化為親切通俗的飲食選擇建議。
+  * 【例外情境】：若 context 中帶有 dietaryAgentError (下游知識庫修整中)，請誠實親切告知，並提供常識性的飲食大原則。
+
+【3. 語氣與同理心 (Empathy Handling)】
+- 若情緒分析中的 needs_empathy 為 true（使用者表現出罪惡感、焦慮或壓力），請務必在回應開頭主動提供安撫與溫暖關懷，協助排解心理負擔。
+
+【4. 數值範圍化估算規則 (Numerical Range Rule)】
+- 當回答涉及熱量大卡或營養數值時，【嚴禁給予精確單一數字】（如 380 大卡）。
+- 必須轉換為【以 50 大卡為間隔的範圍區間】（如「350～400 大卡」、「550～600 大卡左右」）。
+
+【5. 數值類免責聲明規則 (Required Disclaimer Rule)】
+- 只要對話中提及具體數值（熱量大卡、三大營養素克數等），你必須在回應的【最末尾獨立換行】附上完全一模一樣的聲明：
+"關於數值類提問，本精靈只可提供參考數值"
+
+【6. 輸出格式】
+- 僅返回最終呈現給使用者的對話文字，切勿使用 JSON 格式或 markdown 程式碼區塊包裝。
 `;
+
 
 /**
  * 簡化 Dietary Agent 回傳的資料，去除 LLM 不需要的一般 Metadata，以節省 Token 並降低干擾。
@@ -466,8 +484,10 @@ function minimizeDietaryResponse(response) {
  */
 async function generateCompanionReply({
   userPrompt,
+  screening,
   emotion,
-  dietaryAgentResponse
+  dietaryAgentResponse,
+  dietaryAgentError
 }) {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -505,10 +525,14 @@ async function generateCompanionReply({
         {
           role: "user",
           // 組合完整的上下文，供模型重組出最貼近的對話
-          content: `使用者問句: "${userPrompt}"\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\nDietary Agent 回傳資料:\n${rawDataStr}`
+          content: `使用者問句: "${userPrompt}"\n\n意圖與篩選設定 (screening): ${JSON.stringify(screening)}\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\nDietary Agent 異常訊息 (dietaryAgentError): ${dietaryAgentError || "無"}\n\nDietary Agent 回傳資料:\n${rawDataStr}`
         }
       ],
-      temperature: 0.2,
+      // 【temperature 作用說明與相容性調整】：
+      // temperature 控制模型的隨機度與創造力 (範圍 0.0~2.0)。數值越低輸出越穩定精準。
+      // 修改原因：部分新型模型 (如 o1/o3 或特殊代理模型) 不支援自訂 temperature 參數，會引發 HTTP 400 錯誤。
+      // 故暫時註解，改為使用模型的預設值 (1.0)。
+      // temperature: 0.2,
     }),
   });
 
@@ -595,7 +619,9 @@ async function translateDishes(dishes) {
             content: JSON.stringify(dishes)
           }
         ],
-        temperature: 0.1,
+        // 【temperature 作用說明與相容性調整】：
+        // temperature 控制翻譯解構的隨機度。修改原因同上，避免部分模型不支援自訂值而報錯。
+        // temperature: 0.1,
         response_format: { type: "json_object" }
       }),
     });
