@@ -140,7 +140,7 @@ graphRag/workspace/data/disease_and_biomarker/chronic_disease_rules_v2.json
 常用指令：
 
 ```bash
-python knowledge_agent_importer.py --clear
+python knowledge_agent_importer.py --clear --mapping-path ..\\data\\recipe_and_nutrition\\food_and_nutrition_mapping.json
 ```
 
 測試少量食譜：
@@ -148,6 +148,23 @@ python knowledge_agent_importer.py --clear
 ```bash
 python knowledge_agent_importer.py --clear --limit-recipes 10
 ```
+
+預設會保留所有 Nutrition 與 FoodItem，並跳過沒有對應 FoodItem 的食材列；如果希望遇到缺失 mapping 時直接中止，可以加上：
+
+```bash
+python knowledge_agent_importer.py --strict-mapping
+```
+
+之後只要匯入另一份 recipe mapping JSON，或一個包含多個 JSON mapping 的資料夾，可以使用同一套一對一映射邏輯：
+
+```bash
+python append_recipe_mapping.py --mapping-path path\\to\\recipes.json
+python append_recipe_mapping.py --mapping-path path\\to\\recipes_json
+```
+
+資料夾模式會依檔名排序讀取其中所有 `.json` 檔，並合併成同一批食譜匯入；重複執行不會重複建立 Dish、Ingredient 或關係。匯入前可加 `--dry-run` 檢查筆數、缺少的 FoodItem 與重複 recipe ID。
+
+Recipe importer 會依 `Ingredient.matched_food_id` 先刪除舊的 `MAPS_TO`，再建立唯一的 `Ingredient -> FoodItem` 映射。對同一原始名稱但不同整合編號的資料，會使用 `原始名稱 [整合編號]` 作為內部 Ingredient key，避免一個 Ingredient 對到多個 FoodItem。
 
 ### normalizer.py
 

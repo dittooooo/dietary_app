@@ -143,18 +143,19 @@ agent = NutritionAgent()
 
 `agent.py` 呼叫 `dish_matcher.py` 的 `DishMatcher.match_dishes(dish_candidates)`。
 
-這一步會先用 `candidate_variants()` 產生候選變體，例如：
+這一步會在 `DishMatcher` 初始化時從 Neo4j 讀取所有 `Dish` 與 `FoodItem` 名稱，建立可重複使用的 Python `BM25Okapi` index。KG 更新後可以呼叫 `refresh_bm25_index()` 重建 index。
 
-- 去除空白與標點。
-- 把「豚」轉成「豬」。
-- 產生最多 8 字的連續子字串，提高命中圖譜節點機率。
+每次請求會依序執行：
 
-接著 `DishMatcher.match_dishes()` 執行一段 Neo4j Cypher，同時查：
+1. 對標準化後的名稱做 exact lookup。
+2. Exact 找不到時，用 BM25 取得 Top-K 候選。
+3. 用 token overlap 計算 0 到 99 的非 exact `match_score`，並保留 100 給 exact match。
+4. 依 threshold 與候選分數差距判斷 `match` 或 `no_match`。
+
+BM25 index 同時包含：
 
 - `(:Dish)`：料理節點。
 - `(:FoodItem)`：食物項目節點。
-
-查詢會依名稱完全相同、互相包含、長度差距、特定料理語境等規則計算 `match_score`。每個使用者輸入會選出一個最佳配對。
 
 配對後會決定 `retrieval_strategy`：
 

@@ -1,0 +1,21 @@
+case_id,input_name,expected_label,expected_dish_name,expected_dish_id,acceptable_dish_names,review_status,source,notes
+dish_001,雞肉飯,exact,雞肉飯,,雞肉飯,approved,manual_starter,請確認資料庫中的標準 Dish 名稱與 ID
+dish_002,嘉義雞肉飯,alias,雞肉飯,,雞肉飯,approved,manual_starter,常見地區／別名案例
+dish_003,火雞肉飯,exact,火雞肉飯,,火雞肉飯,approved,manual_starter,請確認是否與雞肉飯分成不同標準料理
+dish_004,香煎雞腿排,same_dish_variant,雞腿排,,雞腿排,approved,manual_starter,料理名稱增加烹調方式
+dish_005,雞腿便當,ambiguous,,,雞腿便當|雞腿飯,approved,manual_starter,便當內容與份量可能因店家不同
+dish_006,蛋炒飯,exact,蛋炒飯,,蛋炒飯,approved,manual_starter,常見完整料理名稱
+dish_007,麻辣燙,exact,麻辣燙,,麻辣燙,approved,manual_starter,請確認與麻辣鍋及麻辣乾麵分開
+dish_008,老闆特製海陸便當,unknown_restaurant_dish,,, ,approved,manual_starter,名稱不足以推導實際食材與食譜
+dish_009,招牌秘製套餐,no_match,,, ,approved,manual_starter,不應強制匹配到其他料理
+dish_010,蔥油餅,exact,蔥油餅,,蔥油餅,approved,manual_starter,常見完整料理名稱
+dish_011,蘑菇海鮮濃湯,exact,蘑菇海鮮濃湯,,蘑菇海鮮濃湯,approved,neo4j_seed,新增湯品 exact match
+dish_012,冬瓜牛肉湯,exact,冬瓜牛肉湯,,冬瓜牛肉湯,approved,neo4j_seed,新增湯品 exact match
+dish_013,人蔘雞湯,exact,人蔘雞湯,,人蔘雞湯,approved,neo4j_seed,新增湯品 exact match
+dish_014,味增湯,exact,味增湯,,味增湯,approved,neo4j_seed,新增湯品 exact match
+dish_015,清燉牛肉湯,exact,清燉牛肉湯,,清燉牛肉湯,approved,neo4j_seed,新增湯品 exact match
+dish_016,冬陰湯,exact,冬陰湯,,冬陰湯,approved,neo4j_seed,新增湯品 exact match
+dish_017,冰手沖咖啡,exact,冰手沖咖啡,,冰手沖咖啡,approved,neo4j_seed,新增飲品 exact match
+dish_018,手標泰式奶茶,exact,手標泰式奶茶,,手標泰式奶茶,approved,neo4j_seed,新增飲品 exact match
+dish_019,神秘莓果氣泡飲,no_match,,, ,approved,manual_added,目前 Neo4j 中不存在的飲品名稱
+dish_020,未收錄南洋氣泡飲,no_match,,, ,approved,manual_added,目前 Neo4j 中不存在的飲品名稱
