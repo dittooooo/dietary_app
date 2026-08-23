@@ -26,8 +26,8 @@ def default_health_condition() -> HealthCondition:
 # 提供本機測試用的近一周飲食紀錄樣本。
 def default_weekly_diet_records() -> List[DietRecord]:
     return [
-        DietRecord(date="2026-05-18", meal="lunch", dish_name="雞腿便當", note="外食"),
-        DietRecord(date="2026-05-19", meal="dinner", dish_name="牛肉麵", note="湯喝一半"),
-        DietRecord(date="2026-05-20", meal="lunch", dish_name="滷味", note="加醬"),
+        DietRecord(date="2026-05-18", record=[{"meal_type": "lunch", "dish_name": "雞腿便當", "note": "外食"}]),
+        DietRecord(date="2026-05-19", record=[{"meal_type": "dinner", "dish_name": "牛肉麵", "note": "湯喝一半"}]),
+        DietRecord(date="2026-05-20", record=[{"meal_type": "lunch", "dish_name": "滷味", "note": "加醬"}]),
     ]
 

@@ -25,6 +25,7 @@ def load_env_files() -> None:
     env_paths = [
         Path(__file__).resolve().parents[2] / ".env",
         Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parents[4] / ".env",
     ]
     placeholder_values = {"", "dummy-key"}
 

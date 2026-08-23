@@ -82,7 +82,7 @@ Required for a real `/ask` request:
 
 ```env
 OPENAI_API_KEY=sk-...
-NEO4J_URI=bolt://host.docker.internal:7687
+NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=...
 ```
@@ -100,12 +100,41 @@ NUTRITION_AGENT_DISH_MATCH_THRESHOLD=60
 NUTRITION_AGENT_GRAPH_QUERY_LIMIT=1000
 ```
 
-## Local Run
+## Development Setup
+
+This service runs with Python 3.12 and a project-local virtual environment. The `.venv` folder is created separately on each developer's machine and must not be committed.
+
+### First-time setup
+
+Install Python 3.12, then run these commands in PowerShell from the `graphRag\workspace` directory:
 
 ```powershell
-cd C:\_AlwaysUndone\dietary_app\graphRag\docker
-docker compose up -d --build
+cd C:\path\to\dietary_app\graphRag\workspace
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r src\nutritionist_agent\requirements.txt
 ```
+
+If `py -3.12` reports that no suitable runtime was found, use the installed Python 3.12 executable directly:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" -m venv .venv
+```
+
+Create or copy the project's root `.env` file and configure the developer's own Neo4j and OpenAI credentials. Do not commit `.env`.
+
+### Start the service
+
+Open a new PowerShell window, or continue in the existing one, then run:
+
+```powershell
+cd C:\path\to\dietary_app\graphRag\workspace
+.\.venv\Scripts\Activate.ps1
+python -m uvicorn src.nutritionist_agent.app:app --host 0.0.0.0 --port 8000
+```
+
+The `(.venv)` prefix should appear in the PowerShell prompt. If the environment has not been created yet, complete the first-time setup first.
 
 Health check:
 

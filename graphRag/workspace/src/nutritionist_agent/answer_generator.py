@@ -349,7 +349,9 @@ class AnswerGenerator:
 
         patterns: Counter[str] = Counter()
         for record in weekly_diet_records:
-            text = f"{record.dish_name or ''} {record.note or ''}"
+            text = " ".join(
+                f"{item.dish_name or ''} {item.note or ''}" for item in record.record
+            )
             # 用簡單關鍵字統計近期飲食型態，讓 LLM 能溫和提醒偏油、偏鹹、偏甜等趨勢。
             if any(token in text for token in ("炸", "煎", "油", "雞排", "薯條", "鹽酥", "奶油", "起司")):
                 patterns["oily"] += 1

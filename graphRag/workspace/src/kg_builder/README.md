@@ -1,7 +1,7 @@
 ```
-cd C:\_AlwaysUndone\dietary_app\graphRag\docker
-docker compose up -d
-docker compose exec graphrag-dev python -m uvicorn src.kg_builder.app:app --host 0.0.0.0 --port 8000
+cd C:\_AlwaysUndone\dietary_app\graphRag\workspace
+python -m pip install -r src\kg_builder\requirements.txt
+python -m uvicorn src.kg_builder.app:app --host 0.0.0.0 --port 8000
 ```
 
 如果成功，終端會停在 Uvicorn 執行畫面。另開一個 PowerShell 測試：

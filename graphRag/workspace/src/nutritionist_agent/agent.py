@@ -21,8 +21,6 @@ from .nutrition_calculator import NutritionCalculator
 from .retriever import GraphRetriever
 from .text_to_cypher import (
     create_text_to_cypher_translator,
-    extract_dish_candidates,
-    infer_question_type,
     normalize_request_payload,
 )
 from .cypher_guard import validate_nutrition_rows
@@ -47,11 +45,15 @@ class NutritionAgent:
         self.nutrition_calculator = NutritionCalculator()
         self.answer_generator = AnswerGenerator()
 
-    # 關閉 Neo4j 連線資源，通常用於服務關閉或測試清理。
+    ###
+    #  關閉 Neo4j 連線資源，通常用於服務關閉或測試清理。
+    ###
     def close(self) -> None:
         self.retriever.close()
 
-    # 查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不產生 LLM 飲食建議。
+    ###
+    #  查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不產生 LLM 飲食建議。
+    ###
     def get_dish_nutrition(self, request: DishNutritionRequest) -> DishNutritionResponse:
         # 這支 API 只接受純料理名稱；先 trim 避免空白字串進入圖譜查詢。
         dish_name = request.dish_name.strip()
@@ -71,11 +73,11 @@ class NutritionAgent:
             user_profile=user_profile,
             health_condition=health_condition,
             weekly_diet_records=weekly_records,
-            dish_names=[dish_name],
+            dish_info_list=[{"dish_name": dish_name, "amount": 1}],
         )
 
         # 沿用 /ask 的候選抽取與圖譜配對邏輯，確保同一個料理名稱在兩支 API 中查到一致結果。
-        dish_candidates = extract_dish_candidates(full_payload)
+        dish_candidates = [dish_name]
         logger.info("[NutritionAgent] nutrition_lookup_candidates=%s", dish_candidates)
         match_results = self.dish_matcher.match_dishes(dish_candidates)
         logger.info("[NutritionAgent] nutrition_lookup_match=%s", match_results)
@@ -87,8 +89,7 @@ class NutritionAgent:
             user_profile=user_profile,
             health_condition=health_condition,
             weekly_diet_records=weekly_records,
-            dish_names=[dish_name],
-            dish_candidates=dish_candidates,
+            dish_info_list=[{"dish_name": dish_name, "amount": 1}],
             dish_match_results=match_results,
         )
         translated = self.translator.translate_template(full_payload)
@@ -115,8 +116,7 @@ class NutritionAgent:
                 user_profile=user_profile,
                 health_condition=health_condition,
                 weekly_diet_records=weekly_records,
-                dish_names=missing_candidates,
-                dish_candidates=missing_candidates,
+                dish_info_list=[{"dish_name": name, "amount": 1} for name in missing_candidates],
                 dish_match_results=fallback_results,
             )
             fallback_rows = self._retrieve_template_nutrition_rows(fallback_payload)
@@ -139,13 +139,19 @@ class NutritionAgent:
             dish_nutrition=self._empty_single_dish_nutrition(dish_name, dish_candidates, match_results)
         )
 
+    ###
     # 執行完整問答生命週期，從 request 轉成圖譜資料，再產生飲食建議。
+    ###
     def ask(self, request: NutritionAgentRequest) -> NutritionAgentResponse:
+        logger.info("[NutritionAgent] start ask request=%s", request)
+        
         # 請求中的個人資料都允許省略；缺少時用空模型，避免後續流程一直處理 None。
         user_profile = request.user_profile or UserProfile()
         health_condition = request.health_condition or HealthCondition()
         weekly_records = request.weekly_diet_records or []
-        effective_question_type = infer_question_type(request.question, request.question_type)
+        effective_question_type = request.question_type
+        dish_info_list = [item.model_dump() for item in request.dish_info_list]
+        dish_candidates = [item["dish_name"] for item in dish_info_list]
 
         # 第一次 payload 只放原始輸入，先用來抽出料理候選名稱。
         full_payload = normalize_request_payload(
@@ -154,27 +160,15 @@ class NutritionAgent:
             user_profile=user_profile,
             health_condition=health_condition,
             weekly_diet_records=weekly_records,
-            dish_names=request.dish_names,
+            dish_info_list=dish_info_list,
         )
-
-        dish_candidates = extract_dish_candidates(full_payload)
         logger.info("[NutritionAgent] dish_candidates=%s", dish_candidates)
 
         # 先把使用者輸入的料理名稱對齊圖譜中的 Dish 或 FoodItem，決定後續檢索策略。
         match_results = self.dish_matcher.match_dishes(dish_candidates)
         logger.info("[NutritionAgent] dish_match=%s", match_results)
 
-        # 第二次 payload 帶入候選料理與配對結果，讓 Cypher 產生器可以查正確的圖譜節點。
-        full_payload = normalize_request_payload(
-            question=request.question,
-            question_type=effective_question_type,
-            user_profile=user_profile,
-            health_condition=health_condition,
-            weekly_diet_records=weekly_records,
-            dish_names=request.dish_names,
-            dish_candidates=dish_candidates,
-            dish_match_results=match_results,
-        )
+        full_payload["dish_match_results"] = match_results
         translated = self.translator.translate(full_payload)
         cypher = translated["cypher"]
         question_type = translated.get("question_type", effective_question_type)  # type: ignore[assignment]
@@ -201,8 +195,7 @@ class NutritionAgent:
                 user_profile=user_profile,
                 health_condition=health_condition,
                 weekly_diet_records=weekly_records,
-                dish_names=missing_candidates,
-                dish_candidates=missing_candidates,
+                dish_info_list=[{"dish_name": name, "amount": 1} for name in missing_candidates],
                 dish_match_results=fallback_results,
             )
             fallback_rows = self._retrieve_nutrition_rows(fallback_payload)
@@ -241,7 +234,9 @@ class NutritionAgent:
             conclusion=answer_payload.get("conclusion", ""),
         )
 
+    ###
     # 找出候選料理中沒有從 Neo4j 查到任何營養資料的項目。
+    ###
     def _retrieve_nutrition_rows(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         translated = self.translator.translate(payload)
         return self._retrieve_translated_nutrition_rows(payload, translated)
