@@ -169,7 +169,7 @@ class LangChainTextToCypherTranslator:
         return {
             "question": payload.get("question"),
             "question_type": payload.get("question_type") or "single_dish",
-            "dish_names": payload.get("dish_names") or [],
+            "dish_info_list": payload.get("dish_info_list") or [],
             "dish_match_results": payload.get("dish_match_results") or [],
             "health_condition": payload.get("health_condition") or {},
         }
@@ -228,26 +228,24 @@ def normalize_request_payload(
     user_profile: UserProfile,
     health_condition: HealthCondition,
     weekly_diet_records: List[DietRecord],
-    dish_names: Optional[List[str]] = None,
-    dish_candidates: Optional[List[str]] = None,
+    dish_info_list: Optional[List[Dict[str, Any]]] = None,
     dish_match_results: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     return {
         "question": question,
         "question_type": question_type,
-        "dish_names": dish_names or [],
+        "dish_info_list": dish_info_list or [],
         "user_profile": user_profile.model_dump(),
         "health_condition": health_condition.model_dump(),
         "weekly_diet_records_summary": summarize_weekly_records_for_retrieval(weekly_diet_records),
-        "dish_candidates": dish_candidates or [],
         "dish_match_results": dish_match_results or [],
     }
 
 
 # 將近一周飲食紀錄壓縮成檢索與回答需要的摘要，避免 payload 太長。
 def summarize_weekly_records_for_retrieval(records: List[DietRecord]) -> Dict[str, Any]:
-    dish_names = [record.dish_name for record in records if record.dish_name]
-    notes = [record.note for record in records if record.note]
+    dish_names = [item.dish_name for record in records for item in record.record if item.dish_name]
+    notes = [item.note for record in records for item in record.record if item.note]
     return {
         "record_count": len(records),
         "recent_dish_names": dish_names[:10],

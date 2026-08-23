@@ -25,6 +25,7 @@ def load_env_files() -> None:
     env_paths = [
         Path(__file__).resolve().parents[2] / ".env",
         Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parents[4] / ".env",
     ]
     placeholder_values = {"", "dummy-key"}
 
@@ -54,6 +55,8 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
 
 DEFAULT_TOP_N_ROWS = int(os.getenv("NUTRITION_AGENT_TOP_N_ROWS", "80"))
 DISH_MATCH_THRESHOLD = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_THRESHOLD", "60"))
+DISH_BM25_TOP_K = int(os.getenv("NUTRITION_AGENT_DISH_BM25_TOP_K", "20"))
+DISH_MATCH_MIN_MARGIN = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_MIN_MARGIN", "5"))
 GRAPH_QUERY_LIMIT = int(os.getenv("NUTRITION_AGENT_GRAPH_QUERY_LIMIT", "1000"))
 CYPHER_MODE = os.getenv("NUTRITION_AGENT_CYPHER_MODE", "langchain").lower()
 CYPHER_FALLBACK = os.getenv("NUTRITION_AGENT_CYPHER_FALLBACK", "template").lower()
