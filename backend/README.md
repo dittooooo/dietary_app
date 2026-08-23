@@ -75,6 +75,7 @@ permitAll()
 ### 資料庫設定的帳號密碼
 詳細內容看 application.properties
 ```
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=dietary_app;encrypt=true;trustServerCertificate=true
 spring.datasource.username=sa
 spring.datasource.password=TkuProject
 ```
