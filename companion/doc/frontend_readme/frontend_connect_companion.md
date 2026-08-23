@@ -1,4 +1,4 @@
-# 前端與陪伴精靈 API 對接規格說明書 (fromendConnectcompanion.md)
+# 前端與陪伴精靈 API 對接規格說明書 (frontendConnectcompanion.md)
 
 本文件專為前端開發人員編寫，詳細說明前端（Flutter / Web / App）如何與 **Companion Agent（陪伴精靈後端服務）** 進行 API 對接、發送使用者訊息、解析回傳資料以及各端口（Endpoints）的配置規範。
 
@@ -42,7 +42,8 @@ Authorization: Bearer <JWT_TOKEN>
 
 ## 📤 三、 後端回傳哪些資料？ (Response Specifications)
 
-後端經過意圖分析與對話重組後，會回傳極簡化的 **HTTP status 200** JSON 資料（僅保留 5 個前端 UI 繪製與狀態感知關鍵欄位，已剔除所有後端內部偵錯欄位）。
+後端經過意圖分析與對話重組後，會回傳極簡化的 **HTTP status 200** JSON 資料（包含 5 個前端 UI 繪製、意圖分類與狀態感知關鍵欄位）。
+在 **Companion Agent (v6)** 版本中，飲食草稿採用高效能一維陣列 **`meal_items`**（包含 `meal_period` 欄位），以確保 LLM 解析與輸出穩定度。
 
 ### 1. 回傳資料範例 (Success 200 OK)
 
@@ -52,13 +53,18 @@ Authorization: Bearer <JWT_TOKEN>
   "success": true,
   "companion_reply": "幫你整理好早餐的「2個蛋餅與1杯無糖豆漿」草稿囉！蛋餅提供了優質碳水與蛋白質，無糖豆漿更是極佳的植物蛋白來源。整體熱量適中，是相當均衡的早餐選擇喔！✨",
   "intent_category": "meal_record",
-  "meal_records": [
+  "meal_items": [
     {
-      "meal_period": "早餐",
-      "meal_items": [
-        { "name": "蛋餅", "quantity": 2, "unit": "個" },
-        { "name": "無糖豆漿", "quantity": 1, "unit": "杯" }
-      ]
+      "name": "蛋餅",
+      "quantity": 2,
+      "unit": "個",
+      "meal_period": "早餐"
+    },
+    {
+      "name": "無糖豆漿",
+      "quantity": 1,
+      "unit": "杯",
+      "meal_period": "早餐"
     }
   ],
   "dietary_agent_error": null
@@ -71,7 +77,7 @@ Authorization: Bearer <JWT_TOKEN>
   "success": true,
   "companion_reply": "大麥克套餐的熱量大約落在 800~1000 大卡之間，若想控制熱量，建議將飲料替換為無糖綠茶或黑咖啡喔！",
   "intent_category": "dish_advice",
-  "meal_records": [],
+  "meal_items": [],
   "dietary_agent_error": null
 }
 ```
@@ -82,27 +88,29 @@ Authorization: Bearer <JWT_TOKEN>
   "success": true,
   "companion_reply": "我知道你想了解這道餐點，但我目前暫時連不上專業營養數據庫，稍後再試試看喔！",
   "intent_category": "dish_advice",
-  "meal_records": [],
+  "meal_items": [],
   "dietary_agent_error": "Dietary Agent API connection refused (503)"
 }
 ```
 
 ---
 
-## 🧩 四、 前端核心 5 大欄位處理指南 (Frontend Handling Guide)
+## 🧩 四、 前端核心 5 大欄位與資料轉化處理指南 (Frontend Handling Guide)
 
 | 欄位名稱 | 型別 | 預設/正常值 | 說明與前端 UI 處理建議 |
 | :--- | :--- | :--- | :--- |
 | **`success`** | `Boolean` | `true` | 代表 Companion Agent 後端處理成功與否。 |
 | **`companion_reply`** | `String` | 對話文字 | **【聊天氣泡內容】** 精靈經過溫馨重組後的對話，**直接顯示於聊天氣泡中**。 |
 | **`intent_category`** | `String` | `"general"` 等 | **【UI 邏輯切換】** 意圖分類：`meal_record` (紀錄飲食), `dish_advice` (諮詢建議), `general` (閒聊)。 |
-| **`meal_records`** | `Array` | `[]` | **【草稿卡片數據】** 飲食紀錄草稿陣列。僅當 `intent_category == "meal_record"` 時會有內容。 |
+| **`meal_items`** | `Array` | `[]` | **【後端一維草稿數據】** Companion Agent 回傳的一維飲食項目陣列 `[{ name, quantity, unit, meal_period }]`。僅當 `intent_category == "meal_record"` 時會有內容。 |
 | **`dietary_agent_error`** | `String?` | `null` | **【微服務降級標記】** 若 Dietary Agent 正常則為 `null`；若 Dietary Agent 異常掛掉則傳回錯誤訊息，前端可據此顯示提示或進行紀錄。 |
 
-### 飲食紀錄草稿卡片 (Draft Card) 的前端處理流程：
-1. 當 `intent_category == "meal_record"` 且 `meal_records` 不為空時：
-2. 前端畫出「草稿預覽卡片」（一餐期一張卡片），顯示餐期（早餐/午餐/晚餐/其他）、餐點名稱、數量與單位。
-3. 使用者確認無誤點擊「確認儲存」後，由前端直接發送儲存請求至後端持久化 API：`POST /dietary-record/save`。
+### 💡 飲食紀錄草稿 (meal_items -> meal_records) 前端處理流程：
+1. Companion Agent 後端傳回一維陣列 `meal_items`（含 `meal_period`）。
+2. 前端 `DietService` 在接收到 Response 後，自動將 `meal_items` 按 `meal_period` 進行 `Group By` 轉化，組裝出 2D 巢狀陣列 `meal_records`（`[{ meal_period, meal_items: [...] }]`）。
+3. 當 `intent_category == "meal_record"` 且轉化後的 `meal_records` 不為空時：
+4. 前端 `home_view.dart` 自動彈出「草稿預覽卡片」對話視窗 (`_showMealRecordDraftDialog`)，按餐期（早餐/午餐/晚餐/其他）展示卡片與項目。
+5. 使用者確認無誤點擊「確認儲存」後，由前端發送儲存請求至後端持久化 API：`POST /dietary-record/save`。
 
 ---
 
@@ -168,7 +176,7 @@ Future<void> sendUserPromptToCompanion(String userPrompt, String? authToken) asy
       bool success = data['success'] ?? false;
       String replyText = data['companion_reply'] ?? '';
       String intent = data['intent_category'] ?? 'general';
-      List<dynamic> mealRecords = data['meal_records'] ?? [];
+      List<dynamic> rawMealItems = data['meal_items'] ?? [];
       String? dietaryAgentError = data['dietary_agent_error'];
 
       if (success) {
@@ -180,9 +188,31 @@ Future<void> sendUserPromptToCompanion(String userPrompt, String? authToken) asy
           print('警告：飲食助理降級運行 ($dietaryAgentError)');
         }
 
-        // 3. 若為飲食紀錄意圖且包含草稿，彈出確認卡片 UI
-        if (intent == 'meal_record' && mealRecords.isNotEmpty) {
-          // TODO: 觸發前端彈出飲食草稿確認卡片 (Draft Card)
+        // 3. 按 meal_period 進行 Group By 轉化成 UI 彈窗相容之 meal_records 結構
+        if (intent == 'meal_record' && rawMealItems.isNotEmpty) {
+          final Map<String, List<Map<String, dynamic>>> groupedMap = {};
+          for (var item in rawMealItems) {
+            if (item is Map) {
+              final period = item['meal_period']?.toString().trim() ?? '其他';
+              if (!groupedMap.containsKey(period)) {
+                groupedMap[period] = [];
+              }
+              groupedMap[period]!.add({
+                'name': item['name']?.toString() ?? '',
+                'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+                'unit': item['unit']?.toString() ?? '',
+              });
+            }
+          }
+
+          final List<Map<String, dynamic>> mealRecords = groupedMap.entries.map((entry) {
+            return {
+              'meal_period': entry.key,
+              'meal_items': entry.value,
+            };
+          }).toList();
+
+          // TODO: 觸發前端彈出飲食草稿確認卡片 UI (_showMealRecordDraftDialog)
         }
       }
     } else {
@@ -262,58 +292,83 @@ class ApiConfig {
 ---
 
 ### 3. `lib/services/diet_service.dart` (業務邏輯服務層)
-**修改目的**：新增與 Companion Agent 後端 Port 3000 發送對話的端點方法。
+**修改目的**：
+1. 新增與 Companion Agent 後端 Port 3000 發送對話的端點方法。
+2. 接收 Companion Agent (v6) 回傳之 `meal_items` 一維陣列，並按 `meal_period` 自動進行 `Group By` 轉化，組裝為前端 UI 彈窗相容之 `meal_records` 兩層巢狀陣列。
 
 **修改內容**：
-1. 匯入 `api_config.dart`：
-   ```dart
-   import '../config/api_config.dart';
-   ```
-2. 在 `sendCompanionUserPrompt` 方法中將對話 API 連線位址切換為 Port 3000：
-   ```dart
-   Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
-     final normalizedPrompt = userPrompt.trim();
-     if (normalizedPrompt.isEmpty) {
-       return {'success': false, 'message': 'User prompt cannot be empty.'};
-     }
+在 `sendCompanionUserPrompt` 方法中進行一維陣列解析與資料型態轉化：
 
-     final token = await _token();
-     try {
-       // 使用 ApiConfig.companionBaseUrl 組裝 Port 3000 的完整 URL
-       final response = await _client.post(
-         '${ApiConfig.companionBaseUrl}/companion/ask',
-         {'user_prompt': normalizedPrompt},
-         headers: {
-           if (token != null) 'Authorization': 'Bearer $token',
-         },
-       );
+```dart
+Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
+  final normalizedPrompt = userPrompt.trim();
+  if (normalizedPrompt.isEmpty) {
+    return {'success': false, 'message': 'User prompt cannot be empty.'};
+  }
 
-       if (response.statusCode == 200) {
-         final data = jsonDecode(response.body);
-         return {
-           'success': data['success'] ?? true,
-           'companion_reply': data['companion_reply'] ?? '',
-           'intent_category': data['intent_category'] ?? 'general_chat',
-           'meal_records': data['meal_records'] ?? [],
-           'dietary_agent_error': data['dietary_agent_error'],
-           'data': data,
-         };
-       }
+  final token = await _token();
+  try {
+    final response = await _client.post(
+      '${ApiConfig.companionBaseUrl}/companion/ask',
+      {'user_prompt': normalizedPrompt},
+      headers: {
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+    );
 
-       return {
-         'success': false,
-         'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
-       };
-     } catch (e) {
-       return {'success': false, 'message': 'Send companion prompt failed: $e'};
-     }
-   }
-   ```
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> rawMealItems = data['meal_items'] ?? [];
+
+      // 1. 將 Companion 一維平坦陣列 (1D) 按餐期 (meal_period) 自動進行 Group By 轉換
+      final Map<String, List<Map<String, dynamic>>> groupedMap = {};
+      for (var item in rawMealItems) {
+        if (item is Map) {
+          final period = item['meal_period']?.toString().trim() ?? '其他';
+          if (!groupedMap.containsKey(period)) {
+            groupedMap[period] = [];
+          }
+          groupedMap[period]!.add({
+            'name': item['name']?.toString() ?? '',
+            'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+            'unit': item['unit']?.toString() ?? '',
+          });
+        }
+      }
+
+      // 2. 組裝成前端 UI 彈窗現行相容的 meal_records 兩層巢狀陣列
+      final List<Map<String, dynamic>> mealRecords = groupedMap.entries.map((entry) {
+        return {
+          'meal_period': entry.key,
+          'meal_items': entry.value,
+        };
+      }).toList();
+
+      return {
+        'success': data['success'] ?? true,
+        'companion_reply': data['companion_reply'] ?? '',
+        'intent_category': data['intent_category'] ?? 'general_chat',
+        'meal_items': rawMealItems,        // 保留原汁原味的一維陣列
+        'meal_records': mealRecords,      // 前端 UI 現行彈窗立即可用之分組陣列
+        'dietary_agent_error': data['dietary_agent_error'],
+        'data': data,
+      };
+    }
+
+    return {
+      'success': false,
+      'message': _errorMessage('Send companion prompt', response.statusCode, response.body),
+    };
+  } catch (e) {
+    return {'success': false, 'message': 'Send companion prompt failed: $e'};
+  }
+}
+```
 
 ---
 
 ### 4. `lib/views/home/home_view.dart` (首頁對話 UI 畫面)
-**修改目的**：將首頁對話輸入框點擊傳送後的處理邏輯，由舊有的單純週分析切換為呼叫 `DietService().sendCompanionUserPrompt(text)`，並即時渲染精靈回覆。
+**修改目的**：將首頁對話輸入框點擊傳送後的處理邏輯，由舊有的單純週分析切換為呼叫 `DietService().sendCompanionUserPrompt(text)`，並即時渲染精靈回覆與自動觸發飲食草稿彈窗。
 
 **修改內容**：
 在對話傳送處更新連線與 UI 狀態處理邏輯：
@@ -335,7 +390,7 @@ DietService().sendCompanionUserPrompt(text).then((res) {
       _messages.removeLast();
     }
     
-    // 提取陪伴精靈回應文字 companion_reply 並渲染至聊天氣泡
+    // 1. 提取陪伴精靈回應文字 companion_reply 並渲染至聊天氣泡
     final reply = res['companion_reply'] ?? (res['data'] is Map ? res['data']['companion_reply'] : null);
     if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
       _messages.add({
@@ -349,6 +404,15 @@ DietService().sendCompanionUserPrompt(text).then((res) {
       });
     }
   });
+
+  // 2. 判斷意圖若為 meal_record 且含草稿，自動觸發飲食紀錄確認彈窗
+  final intent = res['intent_category'] ?? '';
+  final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
+
+  if (intent == 'meal_record' && mealRecords.isNotEmpty) {
+    _showMealRecordDraftDialog(context, mealRecords, userPrompt: text);
+  }
+
   _scrollToBottom();
 }).catchError((e) {
   _showDogResponseThenIdle();
@@ -363,6 +427,4 @@ DietService().sendCompanionUserPrompt(text).then((res) {
 ```
 
 ---
-*文件更新時間：2026-08-10 (已同步更新前端全套 4 大修改檔案紀錄與精簡版 API 頂層 Response 解析邏輯)*
-
-
+*文件更新時間：2026-08-23 17:53 (已同步對照 frontend_adjust.md 更新 Companion Agent (v6) 一維陣列 meal_items 結構與 DietService 轉化 meal_records 相容邏輯)*

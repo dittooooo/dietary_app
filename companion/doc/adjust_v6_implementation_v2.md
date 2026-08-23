@@ -256,5 +256,88 @@ const REPLY_SYSTEM_PROMPT = `
 4. **滑動視窗控制 (Sliding Window Context)**：
    - 採用限制長度的滑動視窗（如僅保留最後 3 輪對話），精準控制 Token 消耗與延遲，避免記憶無限膨脹。
 
+### 3. 多輪對話核心挑戰與解決方案藍圖 (Multi-turn Key Challenges & Solutions)
+
+為了確保多輪對話系統的穩定性與高品質互動體驗，本專案針對實作「對話歷史紀錄」時的 5 大核心潛在困難點進行深度評估，並提出對應的架構解決方案：
+
+#### 【困難點 1】話題延續與切換辨識 (Topic Continuation vs. Topic Shift)
+- **潛在問題**：Agent 需精準判斷使用者最新輸入是「回答小芽上一輪句尾鉤子（如：『熱豆花好了』）」還是「開啟無關新話題（如：『今天工作好累』）」。若判斷錯誤，會產生語意脫節或離題回應。
+- **解決方案**：
+  1. **Stage 1 LLM 新增 `topic_relation` 判定與語意補全**：
+     - **關鍵參數 `last_agent_hook`**：小芽上一輪對話最後拋出的引導問句（例如：「你今晚想吃熱豆花還是蔬菜湯？」）。帶入 Stage 1 作為上下文判定基準。
+     - **`topic_relation` 4 大 Enum 值說明與範例**：
+       * `reply_to_hook` **(直接回答上句問句)**：使用者直接回答了 `last_agent_hook`（例如上輪問吃什麼，答：「熱豆花好了！」）。Stage 1 會自動將省略句補全為完整意圖（如「點心選擇熱豆花」）。
+       * `topic_continuation` **(同一話題延伸與比較)**：未直接回答問句，但針對原話題做條件修改或延伸比較（例如原聊雞胸肉，輸入：「那如果換成炸雞腿呢？」）。
+       * `topic_shift_diet` **(切換至新飲食話題)**：完全忽視舊話題，拋出新的飲食諮詢或紀錄（例如原聊下雨熱湯，突然傳：「幫我記一下剛才吃了洋洋洋芋片」）。舊話題自動歸檔。
+       * `topic_shift_general` **(切換至非飲食閒聊/心情)**：切換至生活閒聊或情緒傾訴（例如：「老闆突然叫我加班到 11 點...」）。系統轉入高同理撫慰模式。
+  2. **時間差超時機制 (Idle Timeout Heuristic)**：
+     - 設定時間閾值（如 30 分鐘）。若前後兩輪對話間隔超過 30 分鐘，即使使用者回應簡短文字，系統亦強制將 `topic_relation` 判定為 `new_topic_session`，防止過期歷史干擾。
+
+#### 【困難點 2】話題邊界與結束時機 (Topic Closure & Boundaries)
+- **潛在問題**：何時標記話題已完成？若話題不閉合，歷史記憶會無限膨脹，或將過往的餐點誤認為當前餐點。
+- **解決方案**：
+  1. **三種話題結束機制 (Closure Triggers)**：
+     - **目標完成**：飲食紀錄已產出草稿並獲確認，或飲食諮詢完成選擇（使用者：「那我就吃這個」），小芽給予結尾安撫後標記 `resolved`。
+     - **新話題覆蓋**：使用者未回答舊話題，直接拋出全新事件時，舊話題自動凍結歸檔 (`archived`)。
+     - **超時自然閉合**：閒置超過指定時間自動劃定話題結束。
+  2. **輕量化對話狀態機 (`TopicState`)**：
+     - 維護含有 `topic_id`, `status` ("in_progress" | "resolved"), `last_agent_hook` 的 Session 結構，讓 Stage 1 能以極低 Token 成本維護話題生命週期。
+
+#### 【困難點 3】情緒標籤的過期污染與動態轉折 (Stale Emotion Leakage & Emotional Trajectory)
+- **潛在問題**：若前一輪使用者極度罪惡或焦慮（如「暴飲暴食了」），到了下一輪使用者心情已轉好（如「明天要去跑步」），若小芽仍被舊情緒標籤綁架，會顯得過度同理或像機器覆讀機。
+- **解決方案**：
+  - **單輪即時評估 + 情緒轉折追蹤 (Emotion Trajectory Tracking)**：
+  - Stage 1 Emotion 模組維持「單輪即時評估」主軸，同時輸出 `emotion_trend`（如 `guilt -> encouraged`）。
+  - Stage 2 提示詞嚴格要求以「最新即時情緒」為準，並對正向情緒轉折給予讚賞與回應。
+
+#### 【困難點 4】後端 Java API 查詢參數的上下文消歧義 (Disambiguation for Backend API)
+- **潛在問題**：第一輪使用者提及「鹹酥雞」，第二輪說「那換成湯意麵呢？」。若直接拿第二輪字面傳給 Java `DietaryAgent` API，API 無法得知是「與鹹酥雞比較」還是「獨立查詢湯意麵」。
+- **解決方案**：
+  - Stage 1 `screen_user_request` 升級多輪上下文消歧義能力：自動識別 `current_meal_items` (湯意麵) 與 `referenced_meal_items` (鹹酥雞)，組合出明確的對比或查詢 Payload 傳遞給下游 Java API。
+
+#### 【困難點 5】問句鉤子（Engaging Hook）迴圈與審問感 (Hook Overuse & Interrogation Avoidance)
+- **潛在問題**：單輪 ESC 要求的「句尾拋出開放式問句」，若在多輪對話中每一輪都強制使用，使用者連答幾輪後會產生「被追問/被審問」的煩躁感。
+- **解決方案**：
+  - **依對話輪數動態調控句尾鉤子 (Dynamic Hook Strategy)**：
+    - **第 1 輪 (新話題引導)**：拋出選擇題或開放式問句（探索與接球）。
+    - **第 2 輪 (深化與延伸)**：給予同理與輕關懷，搭配隨性延伸問句。
+    - **第 3 輪+ (話題收尾)**：轉換為溫暖祝福或肯定讚賞（溫馨結尾，不強制提問），自然引導話題閉合。
+
 ---
-*本說明書完成於 2026 年 8 月 22 日，作為 Companion Agent v6.1 重構與後續研發之標準指引。*
+*本說明書更新於 2026 年 8 月 23 日，作為 Companion Agent v6.1 重構與多輪對話機制研發之標準指引。*
+
+
+## 📌 七、 為了整體輸出品質進行之細微調整 (Fine-tuning & Optimization Enhancements)
+
+本區塊記錄為了大幅提升 Companion Agent 回覆集中度、權威性與減少 Token 雜訊，針對 `companion-llm.js` 進行之專項細微調整與條列式變更說明。
+
+### 1. 調整項目概覽與目標
+- **痛點說明**：Stage 2 LLM 生成對話時，因傳入之 `dietaryAgentResponse` 包含過多重複的子欄位（如 `dish_advice` 陣列）與細節，導致注意力分散，未能以 Java 後端 Nutritionist Agent 產出的 `conclusion` 結論作為主骨幹。
+- **重構目標**：
+  1. 精簡 `minimizeDietaryResponse()` 函數：將 `conclusion` 置於 JSON 最頂層，移除重複干擾的 `dish_advice` 陣列，並保留完整的 `dish_nutrition` 餐點營養數據（包含 Calories, Protein, Sodium 等）。
+  2. 升級 `REPLY_SYSTEM_PROMPT` 的 `Input Parameters Context` 與步驟 2：明確將 `conclusion` 標註為【最高權限核心依據】，強制對話重組以此為骨幹。
+  3. 更新 Few-Shot 範例 D：展示如何平滑潤飾 `conclusion` 為小精靈口語。
+
+### 2. 程式碼修改細節條列 (Detailed Code Modifications)
+
+修改目標檔案：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js)
+
+#### 變更 1：`minimizeDietaryResponse()` 資料過濾函數重構
+- **修改位置**：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L493)
+- **修改內容**：
+  - 將 `conclusion` 置於回傳 JSON 物件最頂層 (`minimized.conclusion`)。
+  - 移除 `dish_advice` 陣列 mapped 邏輯（避免與 `conclusion` 重疊干擾）。
+  - 保留完整的 `dish_nutrition` 餐點營養數據（保留名稱、所有營養素項目如 Calories, Protein, Sodium、數值與單位）。
+
+#### 變更 2：`REPLY_SYSTEM_PROMPT` 之 `Input Parameters Context` 權重升級
+- **修改位置**：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L418)
+- **修改內容**：
+  - 明確將 `dietaryAgentResponse.conclusion` 定義為 **【最高權限核心依據】**。
+
+#### 變更 3：`REPLY_SYSTEM_PROMPT` 之【步驟 2】與 Few-Shot 範例 D 強化
+- **修改位置**：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L432)
+- **修改內容**：
+  - 【步驟 2】強制要求口語化潤飾時必須 100% 採納 `conclusion` 建議骨幹。
+  - Few-Shot 範例 D 加入 `conclusion` 範例數據與期待輸出。
+
+
