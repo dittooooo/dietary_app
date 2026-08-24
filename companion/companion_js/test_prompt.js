@@ -21,32 +21,28 @@ const { runOpenAIFlow } = require("./companion-agent-services");
 async function runTests() {
   const testCases = [
     {
-      name: "Dish Advice Comparison (Should have question_type)",
-      prompt: "我今天中午吃炸雞了，晚上還能吃拉麵嗎？我有點焦慮。"
+      name: "1. Single Dish Advice (single_dish)",
+      prompt: "我今天晚餐想吃一碗紅燒牛肉麵，請問這樣會不會太油或熱量太高？"
     },
     {
-      name: "Meal Record - Single Meal",
-      prompt: "我今天中午吃了一碗牛肉拉麵"
+      name: "2. Dish Comparison (dish_comparison)",
+      prompt: "去滷味攤不知道要點乾意麵還是切汁米血跟豆干，這兩個哪一個熱量比較低？"
     },
     {
-      name: "Meal Record - Multi Meals (Cross Meal Periods)",
-      prompt: "我上午吃了一顆茶葉蛋，下午喝了一杯豆漿"
+      name: "3. Cross Meal Advice (dish_comparison)",
+      prompt: "我中午吃了麥當勞的大麥克套餐，那晚餐吃鹽水雞搭配蔬菜是不是比較合適？"
     },
     {
-      name: "General Chat (Should NOT have question_type)",
-      prompt: "今天天氣真好，陪我聊聊！"
+      name: "4. Meal Record - Single Meal",
+      prompt: "幫我記錄一下，我今天早上吃了一顆茶葉蛋和一杯無糖高纖豆漿。"
     },
     {
-      name: "Medical Out-of-Scope (Should NOT have question_type)",
-      prompt: "這個降血糖藥我應該怎麼服用？請幫我診斷。"
+      name: "5. Meal Record - Cross Meal Periods",
+      prompt: "幫我記一下飲食，我上午吃了一份鮪魚蛋吐司，中午吃了一盒舒肥雞胸肉沙拉。"
     },
     {
-      name: "Dish Translation 1 - Milk Tea and Beef Burger (Should translate dishes)",
-      prompt: "我今天喝了波霸鮮奶茶搭配起司瀑布超厚牛肉堡"
-    },
-    {
-      name: "Dish Translation 2 - Fancy Teas (Should translate and compare dishes)",
-      prompt: "我想喝翡翠厚乳跟水玉冷露，哪一個糖分低？"
+      name: "6. General Chat / Off-topic (should_handle: false)",
+      prompt: "今天台北天氣好冷喔，你覺得我下午應該去哪裡散步比較好？"
     }
   ];
 
