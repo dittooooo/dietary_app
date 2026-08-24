@@ -105,7 +105,7 @@ public class DietRecordController {
         if (requestBody instanceof List<?> list) {
             List<DietRecordRequest> requests = new ArrayList<>();
             for (Object item : list) {
-                requests.add(parseSingleRequest((Map<?, ?>) item));
+                requests.addAll(parseSingleRequestWithSplit((Map<?, ?>) item));
             }
             return requests;
         }
@@ -115,23 +115,54 @@ public class DietRecordController {
             if (dishInfoList instanceof List<?> list) {
                 List<DietRecordRequest> requests = new ArrayList<>();
                 for (Object item : list) {
-                    requests.add(parseSingleRequest((Map<?, ?>) item));
+                    requests.addAll(parseSingleRequestWithSplit((Map<?, ?>) item));
                 }
                 return requests;
             }
-            return List.of(parseSingleRequest(map));
+            return parseSingleRequestWithSplit(map);
         }
 
         throw new IllegalArgumentException("請提供正確的飲食紀錄資料格式");
     }
 
-    private DietRecordRequest parseSingleRequest(Map<?, ?> item) {
+    private List<DietRecordRequest> parseSingleRequestWithSplit(Map<?, ?> item) {
+        if (item == null) {
+            throw new IllegalArgumentException("飲食紀錄資料不可為空");
+        }
+
+        String rawDishName = readText(item, "dish_name", "dishName");
+        if (rawDishName == null || rawDishName.isBlank()) {
+            return List.of(parseSingleRequest(item, null));
+        }
+
+        String[] dishNames = rawDishName.split("[,，]");
+        List<DietRecordRequest> requests = new ArrayList<>();
+
+        for (String name : dishNames) {
+            String trimmedName = name.trim();
+            if (!trimmedName.isEmpty()) {
+                requests.add(parseSingleRequest(item, trimmedName));
+            }
+        }
+
+        if (requests.isEmpty()) {
+            return List.of(parseSingleRequest(item, null));
+        }
+
+        return requests;
+    }
+
+    private DietRecordRequest parseSingleRequest(Map<?, ?> item, String overrideDishName) {
         if (item == null) {
             throw new IllegalArgumentException("飲食紀錄資料不可為空");
         }
 
         DietRecordRequest request = new DietRecordRequest();
-        request.setDishName(readText(item, "dish_name", "dishName"));
+        if (overrideDishName != null) {
+            request.setDishName(overrideDishName);
+        } else {
+            request.setDishName(readText(item, "dish_name", "dishName"));
+        }
         request.setCalories(readDouble(item, "calories"));
         request.setProtein(readDouble(item, "protein"));
         request.setFat(readDouble(item, "fat"));
