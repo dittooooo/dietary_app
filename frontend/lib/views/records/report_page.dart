@@ -1758,16 +1758,6 @@ class _DietRecordTileState extends State<DietRecordTile> {
                   _buildNutritionRow("脂肪", "${widget.fat.toStringAsFixed(1)}g", Colors.redAccent),
                   const SizedBox(height: 8),
                   _buildNutritionRow("碳水化合物", "${widget.carbs.toStringAsFixed(1)}g", Colors.lightBlue),
-                  if (widget.record['description'] != null &&
-                      widget.record['description'].toString().trim().isNotEmpty &&
-                      widget.record['description'].toString().trim() != '手動輸入飲食紀錄' &&
-                      !widget.record['description'].toString().contains('份')) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      "備註: ${widget.record['description']}",
-                      style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
-                    ),
-                  ]
                 ],
               ),
             ),

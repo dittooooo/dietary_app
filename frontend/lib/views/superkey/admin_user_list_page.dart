@@ -349,7 +349,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                   'age': int.tryParse(ageController.text),
                   'height': double.tryParse(heightController.text),
                   'weight': double.tryParse(weightController.text),
-                  'petType': '狗兒', // 預設小精靈
+                  'petType': '米粒(Mili)', // 預設小精靈
                   'dietGoal': selectedGoals.join(', '),
                   'specialDisease': selectedDiseases.join(', '),
                 };

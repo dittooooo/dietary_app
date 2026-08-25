@@ -127,7 +127,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   Set<String> _goals = {}; // 保存：目標集 (對應 backend: dietGoal)
   
   // 新增小精靈選擇相關變數
-  final List<String> _petOptions = ['狗兒', '狗兒', '狗兒']; // 宣告類別成員或方法內部的區域變數
+  final List<String> _petOptions = ['米粒(Mili)', '米粒(Mili)', '米粒(Mili)']; // 宣告類別成員或方法內部的區域變數
   int _selectedPetIndex = 0; // 宣告類別成員或方法內部的區域變數
   bool _isSubmitting = false; // 宣告類別成員或方法內部的區域變數
   final AuthService _authService = AuthService();
@@ -482,33 +482,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
                 );
               },
             ),
-          // 1. 全局唯一的小精靈進度條，在轉場最後 20% 的階段平滑淡入，消除時間差與重影
-          Center(
-            child: AnimatedBuilder(
-              animation: Listenable.merge([
-                _peelController,
-                _pacmanController,
-              ]),
-              builder: (context, child) {
-                final opacityVal = _isAnimatingPage ? 0.0 : 1.0;
-                return Opacity(
-                  opacity: opacityVal,
-                  child: IgnorePointer(
-                    child: SizedBox(
-                      width: 76,
-                      height: 76,
-                      child: CustomPaint(
-                        painter: SinglePagePacmanProgressPainter(
-                          pageIndex: _currentPage,
-                          mouthProgress: _pacmanController.value,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+
 
           AnimatedBuilder( // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
             // 動畫建構器
@@ -1307,8 +1281,8 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     // 3. 繪製活頁孔位與圈環 (位於頂部，製造筆記本感)
     _drawBinderRings(canvas, paperOrigin, paperW); // 調用子函數繪製
 
-    // 4. 繪製頁面進度 UI 已移至各子分頁中繪製，以便能隨著撕紙翻頁動畫一起翻動
-    // _drawPacManProgress(canvas, paperOrigin, paperW); // 已停用全域繪製
+    // 4. 繪製小精靈吃豆豆頁面進度條
+    _drawPacManProgress(canvas, paperOrigin, paperW);
 
     // 5. 原先繪製右下角山丘與小人佔位符已改為 Flutter 樹中的真實 3D 寵物模型
   } // 程式碼區塊或元件結構結束

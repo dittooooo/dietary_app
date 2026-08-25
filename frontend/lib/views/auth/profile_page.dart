@@ -102,6 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // 根據小精靈名稱獲取對應圖標
   IconData _getPetIcon(String? petType) {
     switch (petType) {
+      case '米粒(Mili)':
       case '狗兒':
       case '奶油皮丘': return Icons.pets;
       case '薄荷兔兔': return Icons.eco;
@@ -113,6 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String? petType) {
     switch (petType) {
+      case '米粒(Mili)':
       case '狗兒':
       case '奶油皮丘': return const Color.fromARGB(255, 181, 181, 60); // Muted orange (retro)
       case '薄荷兔兔': return const Color.fromARGB(255, 110, 215, 154); // Muted sage (retro)
@@ -464,7 +466,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                             ),
                             const Text(
-                              '狗兒',
+                              '米粒(Mili)',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

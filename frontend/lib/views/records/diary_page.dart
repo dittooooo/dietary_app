@@ -25,7 +25,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   final Set<String> _expandedMeals = {}; // 宣告類別成員或方法內部的區域變數
   String? _swipedMeal; // 執行相對應的邏輯計算或設定屬性參數
   double _dragExtent = 0.0; // 宣告類別成員或方法內部的區域變數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   String? _jwtToken; // JWT Token 儲存變數
 
@@ -44,7 +44,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
     if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
         _jwtToken = prefs.getString('jwt_token'); // 讀取 JWT Token
         _avatarUrl = prefs.getString('user_avatar_url');

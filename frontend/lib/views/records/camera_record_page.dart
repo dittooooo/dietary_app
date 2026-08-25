@@ -21,7 +21,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
   Future<void>? _initializeControllerFuture; // 定義非同步方法（Future），執行耗時操作
   RecordStage _currentStage = RecordStage.shooting; // 執行相對應的邏輯計算或設定屬性參數
   XFile? _capturedImage; // 執行相對應的邏輯計算或設定屬性參數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
   // 動畫相關
@@ -80,7 +80,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
     if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束

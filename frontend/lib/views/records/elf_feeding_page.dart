@@ -31,7 +31,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
   late Animation<double> _elfScale; // 宣告類別成員或方法內部的區域變數
   late Animation<Offset> _elfMove; // 宣告類別成員或方法內部的區域變數
   bool _isEaten = false; // 宣告類別成員或方法內部的區域變數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   final DogStateController _dogController = DogStateController.instance;
 
@@ -86,7 +86,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
       // 執行相對應的邏輯計算或設定屬性參數
       setState(() {
         // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
         _dogController.setBodyTypeFromBackend(
           prefs.getString('dog_body_type') ?? prefs.getString('user_diet_goal'),
         );

@@ -32,7 +32,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   late bool _isChatOpen; // 宣告類別成員或方法內部的區域變數
   late double _chatPanelX;  // 宣告類別成員或方法內部的區域變數
   String _userNickname = '使用者'; // 宣告類別成員或方法內部的區域變數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
   List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
@@ -75,7 +75,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
       _userNickname = prefs.getString('user_nickname') ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
-      _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+      _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
       _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
         {
@@ -96,7 +96,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       await prefs.setString('user_diet_goal', g); // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
         _userNickname = userData['nickname'] ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = g; // 執行相對應的邏輯計算或設定屬性參數
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
@@ -337,6 +337,136 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     } catch (e) {
       debugPrint('取得昨日飲食總結失敗: $e');
     }
+  }
+
+  Future<void> _triggerYesterdaySummary() async {
+    try {
+      final records = await DietService().getMyDietRecords();
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      
+      double totalCalories = 0;
+      double totalProtein = 0;
+      double totalFat = 0;
+      double totalCarbs = 0;
+      List<String> yesterdayDishes = [];
+
+      for (var record in records) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) continue;
+        if (rDate.year == yesterday.year &&
+            rDate.month == yesterday.month &&
+            rDate.day == yesterday.day) {
+          totalCalories += _getCaloriesFromRecord(record);
+          final dishName = record['dishName'];
+          if (dishName != null && dishName.toString().isNotEmpty) {
+            yesterdayDishes.add(dishName.toString());
+          }
+        }
+      }
+
+      if (!mounted) return;
+      _showDietSummaryDialog(
+        date: yesterday,
+        calories: totalCalories,
+        protein: totalProtein,
+        fat: totalFat,
+        carbs: totalCarbs,
+        dishes: yesterdayDishes,
+      );
+    } catch (e) {
+      debugPrint('觸發昨日飲食總結失敗: $e');
+      if (mounted) {
+        _showDietSummaryDialog(
+          date: DateTime.now().subtract(const Duration(days: 1)),
+          calories: 0,
+          protein: 0,
+          fat: 0,
+          carbs: 0,
+          dishes: [],
+        );
+      }
+    }
+  }
+
+  void _showBodyStatusDialog() {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    FocusManager.instance.primaryFocus?.unfocus();
+    FocusScope.of(context).unfocus();
+
+    // 觸發 3D 小精靈動態表演動畫
+    _dogController.setState(DogAnimationState.response);
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) _dogController.setState(DogAnimationState.idle);
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24.0),
+          ),
+          backgroundColor: AppColors.background,
+          elevation: 10,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 標題
+                const Text(
+                  '小精靈的體態發生了變化......',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // 小精靈 3D 動畫展示 (巨大化 3.2 Scale, 270px)
+                Center(
+                  child: SizedBox(
+                    width: 320,
+                    height: 270,
+                    child: DogAvatar(
+                      controller: _dogController,
+                      scale: 3.2,
+                      instanceId: 'body-status-dialog-dog',
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 關閉按鈕 (1fe8ba9 風格)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      '太棒了，我知道了！',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showDietSummaryDialog({
@@ -724,7 +854,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                       mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
                 children: [ // 執行相對應的邏輯計算或設定屬性參數
                   GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
-                    onTap: () => _toggleChat(true), // 執行相對應的邏輯計算或設定屬性參數
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _toggleChat(true), // 單擊：開啟對話對話框
+                    onDoubleTap: () => _triggerYesterdaySummary(), // 雙擊：跳出昨日總結報告彈窗 (1fe8ba9)
+                    onLongPress: () => _showBodyStatusDialog(), // 長按：跳出小精靈體態動畫彈窗 (1fe8ba9 風格)
                     child: Hero( // 建立跨頁面過渡動畫元件（Hero），點擊時呈現放大或縮小移動特效
                       tag: 'elf', // 執行相對應的邏輯計算或設定屬性參數
                               child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
@@ -744,10 +877,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                                   borderRadius: BorderRadius.circular(elfSize / 2), // 設定容器的圓角弧度半徑大小
                                   child: Padding( // 建立間距容器（Padding），用於設定內部邊距
                                     padding: EdgeInsets.all(isKeyboardVisible ? 15.0 : 25.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                                    child: DogAvatar(
-                                      controller: _dogController,
-                                      scale: isKeyboardVisible ? 1.0 : 1.5,
-                                      instanceId: 'home-main-dog',
+                                    child: AbsorbPointer(
+                                      child: DogAvatar(
+                                        controller: _dogController,
+                                        scale: isKeyboardVisible ? 1.0 : 1.5,
+                                        instanceId: 'home-main-dog',
+                                      ),
                                     ),
                                   ), // 執行相對應的邏輯計算或設定屬性參數
                                 ), // 執行相對應的邏輯計算或設定屬性參數
