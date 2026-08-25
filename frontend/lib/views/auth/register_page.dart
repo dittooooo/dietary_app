@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'success_transition_page.dart'; // 匯入 success_transition_page.dart 元件庫或套件
-import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
-import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
+// import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
+// import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
-import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
+// import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 

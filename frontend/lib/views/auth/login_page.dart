@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'register_page.dart'; // 引入註冊頁面
 import 'success_transition_page.dart'; // 引入跳轉頁面
-import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
-import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
+// import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
+// import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
-import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
+// import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 
@@ -29,12 +29,13 @@ class _LoginPageState extends State<LoginPage> { // 定義 _LoginPageState 類�
 Future<void> _login() async { // 定義非同步方法（Future），執行耗時操作
     setState(() => _isLoading = true); // 更新狀態數據並通知 UI 重新渲染畫面
     
-    try { // 執行相對應的邏輯計算或設定屬性參數
+    try {
+      await AuthService().clearSession();
       // 呼叫 Service 執行登入
-      final result = await AuthService().login( // 宣告類別成員或方法內部的區域變數
-        _emailController.text,  // 執行相對應的邏輯計算或設定屬性參數
-        _passwordController.text // 執行相對應的邏輯計算或設定屬性參數
-      ); // 程式碼區塊或元件結構結束
+      final result = await AuthService().login(
+        _emailController.text.trim(),  
+        _passwordController.text.trim(),
+      );
       
       if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
         if (result['success'] == true) { // 執行相對應的邏輯計算或設定屬性參數
@@ -68,9 +69,12 @@ Future<void> _login() async { // 定義非同步方法（Future），執行耗�
           ); // 程式碼區塊或元件結構結束
         } // 程式碼區塊或元件結構結束
       } // 程式碼區塊或元件結構結束
-    } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('連線失敗，請檢查網路'))); // 建立文字顯示元件（Text）
+    } catch (e) {
+      debugPrint('Login exception: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('無法連線至伺服器，請確認網路連線或稍後再試。')),
+        );
       } // 程式碼區塊或元件結構結束
     } finally { // 執行相對應的邏輯計算或設定屬性參數
       if (mounted) setState(() => _isLoading = false); // 更新狀態數據並通知 UI 重新渲染畫面

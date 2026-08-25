@@ -1,9 +1,9 @@
-import 'dart:convert';
+// import 'dart:convert';
 import 'dart:ui';
 import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart'; // 引入相簿套件
 import 'dart:typed_data'; // 處理圖片數據
@@ -99,7 +99,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 根據小精靈名稱獲取對應圖標
+  // 根據小精靈名稱獲取對應圖標 (未被使用，先註解)
+  /*
   IconData _getPetIcon(String? petType) {
     switch (petType) {
       case '米粒(Mili)':
@@ -110,8 +111,10 @@ class _ProfilePageState extends State<ProfilePage> {
       default: return Icons.help_outline;
     }
   }
+  */
 
-  // 根據小精靈名稱獲取對應顏色
+  // 根據小精靈名稱獲取對應顏色 (未被使用，先註解)
+  /*
   Color _getPetColor(String? petType) {
     switch (petType) {
       case '米粒(Mili)':
@@ -122,6 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
       default: return const Color.fromARGB(255, 66, 92, 65);
     }
   }
+  */
 
   // 選擇圖片與上傳頭像功能
   Future<void> _pickImage() async {
@@ -286,42 +290,43 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 20),
 
-            // 2. 修改個人檔案與設定按鈕 (一般使用者才顯示)
-            if (!_isAdmin)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
-                            blurRadius: 2.925,
-                            offset: const Offset(0, 1.17),
+            // 2. 修改個人檔案與設定按鈕
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 2.925,
+                          offset: const Offset(0, 1.17),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final initialDataToPass = _fullUserData ?? {
+                          'nickname': _nickname,
+                          'email': _email,
+                        };
+                        final updated = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfilePage(
+                              initialData: {
+                                ...initialDataToPass,
+                                'email': _email,
+                              },
+                            ),
                           ),
-                        ],
-                      ),
-                      child: ElevatedButton.icon(
-                        onPressed: () async {
-                          if (_fullUserData != null) {
-                            final updated = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditProfilePage(
-                                  initialData: {
-                                    ..._fullUserData!,
-                                    'email': _email,
-                                  },
-                                ),
-                              ),
-                            );
-                            if (updated == true) _loadUserData();
-                          }
-                        },
+                        );
+                        if (updated == true) _loadUserData();
+                      },
                         icon: const Icon(
                           Icons.edit,
                           color: Colors.black,

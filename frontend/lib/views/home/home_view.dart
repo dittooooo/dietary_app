@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
-import '../../services/admin_service.dart'; // 匯入 admin_service.dart 元件庫或套件
+// import '../../services/admin_service.dart'; // 匯入 admin_service.dart 元件庫或套件
 import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart 元件庫或套件
 import '../../utils/friendly_error_message.dart';
@@ -33,7 +33,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   late double _chatPanelX;  // 宣告類別成員或方法內部的區域變數
   String _userNickname = '使用者'; // 宣告類別成員或方法內部的區域變數
   String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
-  String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
+  // String _dietGoal = '養生'; // 未使用，先註解
   
   List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
 
@@ -76,7 +76,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
       _userNickname = prefs.getString('user_nickname') ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
       _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
-      _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
+      // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
         {
           'isElf': true, 
@@ -97,7 +97,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
         _userNickname = userData['nickname'] ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
         _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
-        _dietGoal = g; // 執行相對應的邏輯計算或設定屬性參數
+        // _dietGoal = g; // 未使用，先註解
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
           _messages[0]['text'] = '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'; // 執行相對應的邏輯計算或設定屬性參數
@@ -611,6 +611,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     );
   }
 
+  /*
   Widget _buildSummaryRow(String label, String value, IconData icon, Color iconColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -663,6 +664,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       ],
     );
   }
+  */
 
   // 根據小精靈名稱獲取對應圖標
   Future<void> _syncBodyStatus(SharedPreferences prefs) async {
@@ -677,6 +679,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     }
   }
 
+  /*
   IconData _getPetIcon(String petType) { // 顯示預設的圖示元件（Icon）
     switch (petType) { // 執行相對應的邏輯計算或設定屬性參數
       case '奶油皮丘': return Icons.pets; // 回傳建構完成的元件或方法計算結果
@@ -700,6 +703,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     } // 程式碼區塊或元件結構結束
     return path; // 回傳建構完成的元件或方法計算結果
   } // 程式碼區塊或元件結構結束
+  */
 
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String petType) { // 設定顏色數值（Color）
@@ -1957,6 +1961,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     );
   }
 
+  /*
   Widget _buildLegendDot(Color color, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1967,6 +1972,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       ],
     );
   }
+  */
 
   Widget _buildDashedGridLine(String label) {
     return Row(

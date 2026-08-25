@@ -1081,9 +1081,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     );
   } // 程式碼區塊或元件結構結束
 
+  /*
   Widget _buildNutrientLegendItem(String label, String value, Color color) { // 定義用於重複使用的 UI 封裝建構方法
     return Row(children: [Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 8), Text("$label $value", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]); // 建立水平排列元件（Row），橫向排列多個子元件
   } // 程式碼區塊或元件結構結束
+  */
 
   Widget _buildTrendChart() { // 定義用於重複使用的 UI 封裝建構方法
     List<double> data = _viewType == 1 ? _weeklyData : _monthlyData; // 執行相對應的邏輯計算或設定屬性參數

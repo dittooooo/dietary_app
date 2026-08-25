@@ -1,12 +1,12 @@
 import 'dart:math';  // 匯入 dart:math 元件庫或套件
 import 'package:flutter/material.dart';  // 匯入 material.dart 元件庫或套件
 import 'package:flutter/services.dart'; // 匯入 services.dart 元件庫或套件
-import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
+// import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
 import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
-import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
+// import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
 import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
-import 'login_page.dart'; // 匯入 login_page.dart 元件庫或套件
+import 'login_page.dart';
 import '../../color/app_colors.dart'; // 匯入 api_config.dart 元件庫或套件
 import 'model_viewer_web_stub.dart'
     if (dart.library.html) 'model_viewer_web_impl.dart';
@@ -130,7 +130,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
   final List<String> _petOptions = ['米粒(Mili)', '米粒(Mili)', '米粒(Mili)']; // 宣告類別成員或方法內部的區域變數
   int _selectedPetIndex = 0; // 宣告類別成員或方法內部的區域變數
   bool _isSubmitting = false; // 宣告類別成員或方法內部的區域變數
-  final AuthService _authService = AuthService();
+  // final AuthService _authService = AuthService(); // 未使用，先註解
 
   final List<String> _diseaseOptions = [
     '高血壓',
@@ -185,7 +185,38 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     _ageController = TextEditingController(text: _age);
     _heightController = TextEditingController(text: _height);
     _weightController = TextEditingController(text: _weight);
-  } // 程式碼區塊或元件結構結束
+    _checkAdminRedirect();
+  }
+
+  Future<void> _checkAdminRedirect() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedRole = prefs.getString('user_role');
+    final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
+    final bool isAdmin = cachedRole == 'ROLE_ADMIN' ||
+        cachedRole == 'ADMIN' ||
+        cachedEmail == 'admin@gmail.com';
+    if (isAdmin && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomePage()),
+      );
+    }
+  }
+
+  Future<void> _logoutToLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(AuthService.accessTokenKey);
+    await prefs.remove(AuthService.refreshTokenKey);
+    await prefs.remove(AuthService.needsOnboardingKey);
+    await prefs.remove('user_role');
+    await prefs.remove('user_email');
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    }
+  }
 
   @override // 標記此方法為覆寫父類別之方法
   void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
@@ -397,7 +428,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     // 建立畫面 UI
     final double topPadding = MediaQuery.of(context).padding.top;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
-    final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+    // final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0; // 未使用，先註解
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(), // 點擊畫面空白處自動收回鍵盤
       child: Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
@@ -407,6 +438,43 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
         child: Stack( // 建立層疊佈局元件（Stack），可將多個子元件重疊顯示
         // 疊層佈局
         children: [ // 執行相對應的邏輯計算或設定屬性參數
+          Positioned(
+            top: topPadding + 10,
+            right: 20,
+            child: GestureDetector(
+              onTap: _logoutToLogin,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.primary),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.logout, size: 16, color: AppColors.primary),
+                    SizedBox(width: 4),
+                    Text(
+                      '返回登入',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           AnimatedBuilder( // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
             // 監聽進度與動畫以平滑移動小精靈
             animation: Listenable.merge([ // 執行相對應的邏輯計算或設定屬性參數
@@ -1096,6 +1164,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
+  /*
   Widget _buildSideNavButton(String direction, VoidCallback onTap) { // 定義用於重複使用的 UI 封裝建構方法
     // 側邊導航組件
     return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
@@ -1125,6 +1194,7 @@ class _InitialInfoPageState extends State<InitialInfoPage> // 定義 _InitialInf
       ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
+  */
 
   Widget _buildHandDrawnTextField( // 建立文字輸入框元件（TextField）
     String hint, // 宣告類別成員或方法內部的區域變數
@@ -1453,7 +1523,8 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     canvas.drawPath(pacPath, pacStroke); // 描邊
   } // 程式碼區塊或元件結構結束
 
-  // 繪製山丘與打招呼的小人 (裝飾性內容)
+  // 繪製山丘與打招呼的小人 (裝飾性內容，未被使用先註解)
+  /*
   void _drawHillAndFigure(Canvas canvas, Offset origin, double w, double h) { // 執行相對應的邏輯計算或設定屬性參數
     // 子函數邏輯
     // 將中心點 Y 座標從 h - 70 上移至 h - 160，避免被底部「下一頁」按鈕擋住
@@ -1526,6 +1597,7 @@ class HandDrawnNotebookPainter extends CustomPainter { // 定義 HandDrawnNotebo
     helloText.layout(); // 文字排版
     helloText.paint(canvas, headPos.translate(15, -5)); // 在小人右手邊繪製文字
   } // 程式碼區塊或元件結構結束
+  */
 
   @override // 標記此方法為覆寫父類別之方法
   bool shouldRepaint(HandDrawnNotebookPainter oldDelegate) { // 宣告類別成員或方法內部的區域變數

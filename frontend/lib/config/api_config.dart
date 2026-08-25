@@ -15,9 +15,8 @@ class ApiConfig {
     }
 
     if (Platform.isAndroid) {
-      // Android emulator reaches the host machine via 10.0.2.2.
-      // Since adb reverse tcp:8080 tcp:8080 is configured, we use localhost.
-      return 'http://localhost:8080/api';
+      // Use 127.0.0.1 to avoid Dart IPv6 [::1] resolution failure with adb reverse
+      return 'http://127.0.0.1:8080/api';
     }
 
     return 'http://localhost:8080/api';

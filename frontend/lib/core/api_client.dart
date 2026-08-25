@@ -118,7 +118,9 @@ class ApiClient {
       ...?headers,
     };
 
-    await _attachLatestAccessToken(resolvedHeaders);
+    if (!_isPublicEndpoint(path)) {
+      await _attachLatestAccessToken(resolvedHeaders);
+    }
 
     var response = await send(resolvedHeaders);
     _logResponse(path, response);
@@ -130,7 +132,9 @@ class ApiClient {
           if (contentType != null) 'Content-Type': contentType,
           ...?headers,
         };
-        await _attachLatestAccessToken(resolvedHeaders);
+        if (!_isPublicEndpoint(path)) {
+          await _attachLatestAccessToken(resolvedHeaders);
+        }
         response = await send(resolvedHeaders);
         _logResponse('$path (retried)', response);
       }
@@ -138,6 +142,11 @@ class ApiClient {
 
     _checkResponse(response);
     return response;
+  }
+
+  bool _isPublicEndpoint(String path) {
+    const publicPaths = <String>{'/login', '/register', '/refresh'};
+    return publicPaths.contains(path);
   }
 
   Future<void> _attachLatestAccessToken(Map<String, String> headers) async {

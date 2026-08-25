@@ -70,6 +70,16 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
       final token = prefs.getString(AuthService.accessTokenKey);
       final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
       final cachedNickname = prefs.getString('user_nickname');
+      final cachedRole = prefs.getString('user_role');
+      final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
+
+      final bool isAdmin = cachedRole == 'ROLE_ADMIN' ||
+          cachedRole == 'ADMIN' ||
+          cachedEmail == 'admin@gmail.com';
+      if (isAdmin) {
+        await prefs.setBool(AuthService.needsOnboardingKey, false);
+        return true;
+      }
 
       if (token == null || token.isEmpty) return false;
 

@@ -31,8 +31,8 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
   late Animation<double> _elfScale; // 宣告類別成員或方法內部的區域變數
   late Animation<Offset> _elfMove; // 宣告類別成員或方法內部的區域變數
   bool _isEaten = false; // 宣告類別成員或方法內部的區域變數
-  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
-  String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
+  // String _petType = '米粒(Mili)'; // 未使用，先註解
+  // String _dietGoal = '養生'; // 未使用，先註解
   final DogStateController _dogController = DogStateController.instance;
 
   @override // 標記此方法為覆寫父類別之方法
@@ -86,16 +86,16 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
       // 執行相對應的邏輯計算或設定屬性參數
       setState(() {
         // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
+        // _petType = '米粒(Mili)'; // 未使用，先註解
         _dogController.setBodyTypeFromBackend(
           prefs.getString('dog_body_type') ?? prefs.getString('user_diet_goal'),
         );
-        _dietGoal =
-            prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
+        // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
+  /*
   String _getPetImagePath(String petType, String dietGoal) {
     // 宣告類別成員或方法內部的區域變數
     String path = 'assets/images/shiba_normal.png'; // 宣告類別成員或方法內部的區域變數
@@ -114,6 +114,7 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
     } // 程式碼區塊或元件結構結束
     return path; // 回傳建構完成的元件或方法計算結果
   } // 程式碼區塊或元件結構結束
+  */
 
   void _goToDiary() {
     // 執行相對應的邏輯計算或設定屬性參數
