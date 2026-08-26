@@ -627,7 +627,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
         _messages.add({
           'isElf': true,
-          'text': '正在為您載入個人與週飲食紀錄，進行智能評估中...',
+          'text': '米粒正在思考中....',
         });
       });
       _scrollToBottom(); // 新增：載入中提示滑到底部
@@ -635,9 +635,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       DietService().sendCompanionUserPrompt(text).then((res) {
         _showDogResponseThenIdle();
         setState(() {
-          if (_messages.isNotEmpty &&
-              (_messages.last['text'] == '正在思考中...' ||
-               _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
+          if (_messages.isNotEmpty && _messages.last['text'] == '米粒正在思考中....') {
             _messages.removeLast();
           }
 
@@ -667,9 +665,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }).catchError((e) {
         _showDogResponseThenIdle();
         setState(() {
-          if (_messages.isNotEmpty &&
-              (_messages.last['text'] == '正在思考中...' ||
-               _messages.last['text'] == '正在為您載入個人與週飲食紀錄，進行智能評估中...')) {
+          if (_messages.isNotEmpty && _messages.last['text'] == '米粒正在思考中....') {
             _messages.removeLast();
           }
           _messages.add({
