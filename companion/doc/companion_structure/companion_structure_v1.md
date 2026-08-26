@@ -32,8 +32,10 @@ graph TD
                                           v
 +-----------------------------------------------------------------------------------+
 |                        【第 1 次 API】runLLMAnalysis                              |
-|   - 意圖分類 (should_handle, intent_category, question_type)                       |
-|   - 情緒診斷 (analyze_emotion, needs_empathy)                                     |
+|   - 意圖分類 (screen_user_request):                                               |
+|     should_handle, intent_category, question_type, confidence                     |
+|   - 情緒診斷 (analyze_emotion):                                                   |
+|     primary_emotion, psychological_context, companion_tone, evidence              |
 |   - 食物/份數/單位/餐期一維陣列抽取 (meal_items)                                    |
 |   * 特色：純冷靜結構化 JSON，無 Persona，不生成自然語言對話                           |
 |   * 附註：dish_info_list 為 Node.js 後端收到 meal_items 後自動提煉之衍生字典        |
@@ -103,7 +105,7 @@ graph TD
 
 | 執行順序 | 函數名稱 | 觸發條件 | 核心目的與職責 | 使用 API 與模式 | Input 輸入 | 核心 Output (產出物) |
 | :---: | :--- | :--- | :--- | :--- | :--- | :--- |
-| **第 1 次** | `runLLMAnalysis`<br/>(`runOpenAIFlow`) | 每次發問<br/>**必定執行** | **【冷靜 JSON 抽取與診斷器】**<br/>1. 判斷是否為飲食問題 (`should_handle`)<br/>2. 分類意圖 (`dish_advice`/`meal_record`/`general_chat`)<br/>3. 一維抽取食物、份數、單位與推算餐期 (`meal_items`)<br/>4. 診斷情緒與同理需求 (`analyze_emotion`)<br/>* 絕不安插 Persona 或生成對話 * | OpenAI Responses API<br/>(`/v1/responses`)<br/>Parallel Tool Calling | `user_prompt`<br/>+ 台灣 24h 系統時間 | 1. `screening` JSON (含 `meal_items`, `dish_info_list`)<br/>2. `emotion` JSON (含 `needs_empathy`) |
+| **第 1 次** | `runLLMAnalysis`<br/>(`runOpenAIFlow`) | 每次發問<br/>**必定執行** | **【冷靜 JSON 抽取與診斷器】**<br/>1. 判斷是否為飲食問題 (`should_handle`)<br/>2. 分類意圖 (`dish_advice`/`meal_record`/`general_chat`)<br/>3. 一維抽取食物、份數、單位與推算餐期 (`meal_items`)<br/>4. 診斷情緒與脈絡 (`analyze_emotion`)<br/>* 絕不安插 Persona 或生成對話 * | OpenAI Responses API<br/>(`/v1/responses`)<br/>Parallel Tool Calling | `user_prompt`<br/>+ 台灣 24h 系統時間 | 1. `screening` JSON (含 `meal_items`, `dish_info_list`)<br/>2. `emotion` JSON (含 `primary_emotion`, `psychological_context`, `companion_tone`, `evidence`) |
 | **第 2 次** | `translateDishes` | **條件式執行**：<br/>飲食諮詢且含花俏餐點名 | **【華麗餐點標準化翻譯外掛】**<br/>將花俏商品名（如「起司瀑布超厚牛肉堡」）轉譯為資料庫標準名（如「牛肉漢堡」），提升 Java 命中率 | OpenAI Chat Completions<br/>(`/v1/chat/completions`) | 花俏餐點名稱陣列<br/>(如 `["起司瀑布牛肉堡"]`) | 翻譯後標準餐點字典<br/>`translatedDishInfoList`<br/>(如 `{"牛肉漢堡": 1}`) |
 | **(轉接)** | *(Java Dietary Agent)* | **條件式執行**：<br/>`should_handle: true`<br/>且含具體食物 | **【專業熱量與營養計算】**<br/>(向 Java 後端發送 POST 請求，計算熱量與三大營養素) | HTTP POST 傳輸<br/>(非 OpenAI API) | `question`, `question_type`, `dish_info_list` | 專業營養與建議 JSON<br/>`dietaryAgentResponse` |
 | **第 3 次** | `runLLMReply`<br/>(`generateCompanionReply`) | 幾乎每次發問<br/>*(由三路分流集中處理)* | **【小精靈本尊對話生成器】**<br/>100% 集中注入 Persona 靈魂！統一生成閒聊同理引導、紀錄確認讚賞與 50 大卡區間化營養建議 | OpenAI Chat Completions<br/>(`/v1/chat/completions`) | `userPrompt`<br/>+ `screening`<br/>+ `emotion`<br/>+ 簡化營養數據 | 最終給使用者的對話文字<br/>`companion_reply` (string) |
@@ -195,10 +197,14 @@ sequenceDiagram
   1. `screen_user_request` (意圖與一維餐點擷取)：
      * `should_handle` (boolean)：判定是否為飲食相關議題（非飲食閒聊或敏感醫療設為 `false`）。
      * `intent_category` (enum)：`dish_advice` (飲食諮詢), `meal_record` (飲食紀錄), `general_chat` (一般閒聊)。
-     * `question_type` (enum)：`single_dish` (單一餐點), `dish_comparison` (餐點比較), `unknown` (未提及具體餐點)。
+     * `question_type` (enum)：`single_dish` (單一餐點), `dish_comparison` (餐點比較), `unknown` (未提及具體餐點), `not_applicable` (非飲食諮詢時填入)。
+     * `confidence` (number)：意圖分類信心分數。
      * `meal_items` (array)：採用一維物件陣列 `[{ name, quantity, unit, meal_period }]`，依據系統時間或問句時間詞自動推算餐期（`早餐`、`中餐`、`晚餐`、`其他`）。
-  2. `analyze_emotion` (情緒診斷)：
-     * 擷取使用者主情緒 (`primary_emotion`)、正負向 (`valence`)、緊急度 (`urgency`)、同理心需求 (`needs_empathy`) 與建議語調 (`companion_tone`)。
+  2. `analyze_emotion` (情緒診斷與脈絡分析)：
+     * `primary_emotion` (enum)：主情緒標籤 (`neutral`, `joy`, `anxiety`, `guilt`, `stress`, `frustration`, `fatigue`)。
+     * `psychological_context` (enum)：情緒與情境脈絡分類 (`work_overtime_stress`, `diet_relapse_guilt`, `weather_or_mood`, `social_dining`, `routine_craving`, `other_general_chat`)。
+     * `companion_tone` (enum)：建議陪伴語態 (`comforting`, `encouraging`, `playful`, `neutral`)。
+     * `evidence` (array)：擷取自使用者原話的情感與脈絡關鍵字詞陣列（如 `["下雨", "鞋子濕"]`）。
 * **資料提煉 (`sanitizeScreening`)**：
   * 從 `meal_items` 自動提煉內部字典 `dish_info_list: { "炸雞": 2, "拉麵": 1 }`。
 
