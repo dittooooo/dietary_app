@@ -4,7 +4,9 @@ import com.tku.dietary_app.dto.AuthResponse;
 import com.tku.dietary_app.dto.LoginRequest;
 import com.tku.dietary_app.dto.RegisterRequest;
 import com.tku.dietary_app.entity.User;
+import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.UnauthorizedException;
+import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -23,6 +25,7 @@ import java.util.Base64;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final UserProfileRepository userProfileRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -84,6 +87,17 @@ public class AuthService {
         user.setRefreshTokenHash(null);
         user.setRefreshTokenExpiresAt(null);
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAccount(String email) {
+        User user = userRepository.findByEmail(email.trim().toLowerCase())
+                .orElseThrow(() -> new UnauthorizedException("登入狀態無效"));
+
+        userProfileRepository.findByUser(user)
+                .ifPresent(userProfileRepository::delete);
+
+        userRepository.delete(user);
     }
 
     private AuthResponse issueTokens(User user, String message, boolean needsOnboarding) {

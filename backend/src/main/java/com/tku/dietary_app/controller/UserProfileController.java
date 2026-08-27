@@ -11,6 +11,7 @@ import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.exception.UnauthorizedException;
 import com.tku.dietary_app.repository.UserRepository;
+import com.tku.dietary_app.service.AuthService;
 import com.tku.dietary_app.service.DietRecordService;
 import com.tku.dietary_app.service.ProblemFeedbackService;
 import com.tku.dietary_app.service.UserProfileService;
@@ -18,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +34,7 @@ public class UserProfileController {
     private final UserRepository userRepository;
     private final DietRecordService dietRecordService;
     private final ProblemFeedbackService problemFeedbackService;
+    private final AuthService authService;
 
     @GetMapping("/diet-records")
     public ResponseEntity<ApiResponse<?>> getMyDietRecords(Authentication authentication) {
@@ -92,6 +95,15 @@ public class UserProfileController {
                         .map(ProblemFeedbackResponse::fromEntity)
                         .toList()
         ));
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<ApiResponse<Void>> deleteMyAccount(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new UnauthorizedException("未登入");
+        }
+        authService.deleteAccount(authentication.getPrincipal().toString());
+        return ResponseEntity.ok(ApiResponse.success("帳號已註销", null));
     }
 
     private User requireAuthenticatedUser(Authentication authentication) {
