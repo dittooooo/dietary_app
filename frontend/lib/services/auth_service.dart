@@ -185,8 +185,9 @@ class AuthService {
 
   Future<bool> isAdmin() async {
     final prefs = await SharedPreferences.getInstance();
-    final role = prefs.getString('user_role');
-    return role == 'ROLE_ADMIN';
+    final role = prefs.getString('user_role')?.trim().toUpperCase();
+    final email = prefs.getString('user_email')?.trim().toLowerCase();
+    return role == 'ROLE_ADMIN' || role == 'ADMIN' || email == 'admin@gmail.com';
   }
 
   Future<Map<String, dynamic>> uploadAvatar(
@@ -250,6 +251,37 @@ class AuthService {
       return {'success': false, 'message': FriendlyErrorMessage.generic};
     } catch (e) {
       return {'success': false, 'message': FriendlyErrorMessage.generic};
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadProblemFeedbackPhoto(
+    int feedbackId,
+    List<int> fileBytes,
+    String filename,
+  ) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
+
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '請重新登入。'};
+    }
+
+    try {
+      final response = await _client.multipart(
+        '/user/problem-feedback/$feedbackId/photo',
+        fileBytes,
+        filename,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      final data = _decodeBody(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'data': data['data'] ?? data};
+      }
+
+      return {'success': false, 'message': FriendlyErrorMessage.upload};
+    } catch (_) {
+      return {'success': false, 'message': FriendlyErrorMessage.upload};
     }
   }
 

@@ -41,6 +41,10 @@ public class User {
     @Column(nullable = false)
     private Boolean hasCompletedOnboarding = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
     @Column(name = "refresh_token_hash")
     private String refreshTokenHash;
 

@@ -53,6 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String email = jwtUtil.validateAccessToken(token);
             User user = userRepository.findByEmail(email).orElseThrow();
+            if (Boolean.FALSE.equals(user.getEnabled())) {
+                throw new IllegalStateException("user disabled");
+            }
             String role = normalizeRole(user.getRole());
 
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

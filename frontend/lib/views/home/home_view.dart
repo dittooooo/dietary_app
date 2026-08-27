@@ -11,6 +11,7 @@ import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart'; // 匯入 diet_service.dart 元件庫或套件
 import '../../utils/friendly_error_message.dart';
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
 import '../records/elf_feeding_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
 
@@ -23,6 +24,17 @@ class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 St
 } // 程式碼區塊或元件結構結束
 
 class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 定義 _HomeViewState 類別，繼承自 State
+  static bool _hasCheckedBodyTransitionOnStartup = false;
+  static const Set<String> _dietRecordRelatedIntents = {
+    'daily_diet_report',
+    'diet_analysis',
+    'diet_record',
+    'diet_record_query',
+    'diet_question',
+    'record_query',
+    'weekly_analysis',
+  };
+
   final TextEditingController _inputController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
   final ScrollController _chatScrollController = ScrollController(); // 新增：對話滾動控制器
   final AuthService _authService = AuthService(); // 宣告類別成員或方法內部的區域變數
@@ -56,9 +68,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
     
     // 檢查並顯示飲食總結報告彈窗，並於初始化/Hot Restart時強制收起鍵盤
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       SystemChannels.textInput.invokeMethod('TextInput.hide');
       FocusManager.instance.primaryFocus?.unfocus();
+      await _checkAndShowBodyTransitionOnStartup();
+      if (!mounted) return;
       _checkAndShowDietSummaryDialog();
     });
   } // 程式碼區塊或元件結構結束
@@ -266,6 +280,119 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }
     }
     return 0.0;
+  }
+
+  bool _isSameDate(DateTime date, DateTime targetDate) {
+    return date.year == targetDate.year &&
+        date.month == targetDate.month &&
+        date.day == targetDate.day;
+  }
+
+  DateTime _dietReportDateForPrompt(String prompt) {
+    final normalizedPrompt = prompt.trim().toLowerCase();
+    final today = DateTime.now();
+    if (normalizedPrompt.contains('前天')) {
+      return today.subtract(const Duration(days: 2));
+    }
+    if (normalizedPrompt.contains('昨天') || normalizedPrompt.contains('昨日')) {
+      return today.subtract(const Duration(days: 1));
+    }
+    return today;
+  }
+
+  bool _shouldShowDietReportForPrompt(String prompt, String intent) {
+    final normalizedPrompt = prompt.trim().toLowerCase();
+    final normalizedIntent = intent.trim().toLowerCase();
+
+    final asksAboutDate = normalizedPrompt.contains('今天') ||
+        normalizedPrompt.contains('今日') ||
+        normalizedPrompt.contains('當天') ||
+        normalizedPrompt.contains('這天') ||
+        normalizedPrompt.contains('昨天') ||
+        normalizedPrompt.contains('昨日') ||
+        normalizedPrompt.contains('前天');
+    final intentNeedsDietRecord =
+        _dietRecordRelatedIntents.contains(normalizedIntent) ||
+            normalizedIntent.contains('record') ||
+            normalizedIntent.contains('analysis');
+    if (!asksAboutDate && !intentNeedsDietRecord) return false;
+
+    return normalizedPrompt.contains('吃') ||
+        normalizedPrompt.contains('飲食') ||
+        normalizedPrompt.contains('餐') ||
+        normalizedPrompt.contains('紀錄') ||
+        normalizedPrompt.contains('記錄') ||
+        normalizedPrompt.contains('熱量') ||
+        normalizedPrompt.contains('卡路里') ||
+        normalizedPrompt.contains('蛋白質') ||
+        normalizedPrompt.contains('脂肪') ||
+        normalizedPrompt.contains('碳水') ||
+        normalizedPrompt.contains('營養') ||
+        normalizedPrompt.contains('夠不夠') ||
+        normalizedPrompt.contains('過量') ||
+        intentNeedsDietRecord;
+  }
+
+  Map<String, dynamic> _buildDietSummaryForDate(
+    List<dynamic> records,
+    DateTime targetDate,
+  ) {
+    double totalCalories = 0;
+    double totalProtein = 0;
+    double totalFat = 0;
+    double totalCarbs = 0;
+    final List<String> dishes = [];
+
+    for (final record in records) {
+      final rDate = _getRecordDate(record);
+      if (rDate == null || !_isSameDate(rDate, targetDate)) continue;
+
+      totalCalories += _getCaloriesFromRecord(record);
+      totalProtein += _getNutrientFromRecord(record, r'(?:蛋白質|protein)');
+      totalFat += _getNutrientFromRecord(record, r'(?:脂肪|fat)');
+      totalCarbs += _getNutrientFromRecord(
+        record,
+        r'(?:碳水化合物|碳水|carbohydrate|carbs)',
+      );
+
+      final dishName = record['dishName'];
+      if (dishName != null && dishName.toString().isNotEmpty) {
+        dishes.add(dishName.toString());
+      }
+    }
+
+    return {
+      'calories': totalCalories,
+      'protein': totalProtein,
+      'fat': totalFat,
+      'carbs': totalCarbs,
+      'dishes': dishes,
+    };
+  }
+
+  Future<void> _showDietReportFromCompanion(String prompt) async {
+    try {
+      final records = await DietService().getMyDietRecords();
+      final reportDate = _dietReportDateForPrompt(prompt);
+      final isToday = _isSameDate(reportDate, DateTime.now());
+      final dateLabel = isToday ? '今天' : '${reportDate.month}/${reportDate.day}';
+      final summary = _buildDietSummaryForDate(records, reportDate);
+
+      if (!mounted) return;
+      _showDietSummaryDialog(
+        date: reportDate,
+        calories: summary['calories'] as double,
+        protein: summary['protein'] as double,
+        fat: summary['fat'] as double,
+        carbs: summary['carbs'] as double,
+        dishes: List<String>.from(summary['dishes'] as List),
+        emptyComment: '$dateLabel還沒有記錄任何飲食。先新增餐點後，我就能幫您一起看營養狀況。',
+        filledCommentBuilder: (dishes, calories) =>
+            '$dateLabel記錄了：${dishes.join('、')}。目前總熱量為 ${calories.toStringAsFixed(0)} kcal。',
+      );
+    } catch (e) {
+      debugPrint('觸發飲食紀錄報告失敗: $e');
+    }
   }
 
   void _checkAndShowDietSummaryDialog() async {
@@ -476,11 +603,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     required double fat,
     required double carbs,
     required List<String> dishes,
+    String? emptyComment,
+    String Function(List<String> dishes, double calories)? filledCommentBuilder,
   }) {
     final String dateStr = '${date.month}/${date.day}';
     final String comment = dishes.isEmpty
-        ? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
-        : '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
+        ? emptyComment ?? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
+        : filledCommentBuilder?.call(dishes, calories) ??
+            '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
 
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     FocusManager.instance.primaryFocus?.unfocus();
@@ -679,6 +809,52 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     }
   }
 
+  Future<void> _checkAndShowBodyTransitionOnStartup() async {
+    if (_hasCheckedBodyTransitionOnStartup) return;
+
+    try {
+      if (await _authService.isAdmin()) {
+        debugPrint('管理者帳號略過首頁每日結算。');
+        return;
+      }
+
+      _hasCheckedBodyTransitionOnStartup = true;
+      final settlement = await _bodyStatusApi.settleDailyScores()
+          .timeout(const Duration(seconds: 8));
+      final oldBodyType = DogStateController.parseBodyType(settlement.oldBodyType);
+      final newBodyType = DogStateController.parseBodyType(settlement.newBodyType);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('dog_body_type', settlement.bodyType);
+
+      if (!settlement.bodyTypeChanged || oldBodyType == newBodyType) {
+        _dogController.setBodyType(newBodyType);
+        _dogController.setState(DogAnimationState.idle);
+        return;
+      }
+
+      if (!mounted) return;
+      _dogController.setBodyType(oldBodyType);
+      _dogController.setState(DogAnimationState.idle);
+      await showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return BodyTransitionAnimationDialog(
+            oldBodyType: oldBodyType,
+            newBodyType: newBodyType,
+          );
+        },
+      );
+
+      if (!mounted) return;
+      _dogController.setBodyType(newBodyType);
+      _dogController.setState(DogAnimationState.idle);
+    } catch (e) {
+      debugPrint('首頁啟動體態變化檢查失敗: $e');
+    }
+  }
+
   /*
   IconData _getPetIcon(String petType) { // 顯示預設的圖示元件（Icon）
     switch (petType) { // 執行相對應的邏輯計算或設定屬性參數
@@ -789,6 +965,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
             if (intent == 'meal_record' && mealRecords.isNotEmpty) {
               _showMealRecordDraftDialog(context, mealRecords, userPrompt: text);
+            } else if (_shouldShowDietReportForPrompt(text, intent.toString())) {
+              Future.microtask(() => _showDietReportFromCompanion(text));
             }
           } else {
             _messages.add({
@@ -1926,34 +2104,78 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
 
           const SizedBox(height: 8),
 
-          SizedBox(
-            height: 125,
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Column(
+            children: [
+              SizedBox(
+                height: 84,
+                child: Stack(
                   children: [
-                    _buildDashedGridLine("100%"),
-                    _buildDashedGridLine("75%"),
-                    _buildDashedGridLine("50%"),
-                    _buildDashedGridLine("25%"),
-                    _buildDashedGridLine("0%"),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildDashedGridLine("100%"),
+                        _buildDashedGridLine("75%"),
+                        _buildDashedGridLine("50%"),
+                        _buildDashedGridLine("25%"),
+                        _buildDashedGridLine("0%"),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 40, right: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          _buildSingleBarItem(carbsPercent, const Color(0xFF7C83FD)),
+                          _buildSingleBarItem(proteinPercent, const Color(0xFFFF7A45)),
+                          _buildSingleBarItem(fatPercent, const Color(0xFFFFB800)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.only(left: 40, right: 10, bottom: 20),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildSingleBarItem("碳水化合物", carbsPercent, todayCarbs, const Color(0xFF7C83FD)),
-                      _buildSingleBarItem("蛋白質", proteinPercent, todayProtein, const Color(0xFFFF7A45)),
-                      _buildSingleBarItem("脂肪", fatPercent, todayFat, const Color(0xFFFFB800)),
-                    ],
-                  ),
+              ),
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(left: 40, right: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMacroLabelItem("碳水化合物", todayCarbs),
+                    _buildMacroLabelItem("蛋白質", todayProtein),
+                    _buildMacroLabelItem("脂肪", todayFat),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacroLabelItem(String label, double grams) {
+    return SizedBox(
+      width: 62,
+      child: Column(
+        children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 1),
+          Text(
+            "約 ${grams.round()} g",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 9,
+              color: Colors.black54,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -1991,36 +2213,44 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     );
   }
 
-  Widget _buildSingleBarItem(String label, int pct, double grams, Color color) {
-    const double maxBarHeight = 65.0;
-    final double barHeight = (pct / 100.0 * maxBarHeight).clamp(4.0, maxBarHeight);
+  Widget _buildSingleBarItem(int pct, Color color) {
+    const double plotHeight = 84.0;
+    final double barHeight = (pct / 100.0 * plotHeight).clamp(4.0, plotHeight);
+    final double labelBottom = (barHeight + 3).clamp(4.0, plotHeight - 14);
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Text(
-          "$pct%",
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-        ),
-        const SizedBox(height: 2),
-
-        Container(
-          width: 38,
-          height: barHeight,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            boxShadow: [
-              BoxShadow(color: color.withOpacity(0.25), blurRadius: 3, offset: const Offset(0, 1)),
-            ],
+    return SizedBox(
+      width: 62,
+      height: plotHeight,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            bottom: 0,
+            child: Container(
+              width: 38,
+              height: barHeight,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                boxShadow: [
+                  BoxShadow(color: color.withOpacity(0.25), blurRadius: 3, offset: const Offset(0, 1)),
+                ],
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        const SizedBox(height: 1),
-        Text("約 ${grams.round()} g", style: const TextStyle(fontSize: 9, color: Colors.black54, fontWeight: FontWeight.w500)),
-      ],
+          Positioned(
+            bottom: labelBottom,
+            child: Text(
+              "$pct%",
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

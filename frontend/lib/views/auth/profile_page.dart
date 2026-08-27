@@ -11,6 +11,7 @@ import '../../config/api_config.dart';
 import '../../color/app_colors.dart';
 import '../superkey/admin_user_list_page.dart'; 
 import '../superkey/admin_problem_feedback_page.dart';
+import '../superkey/admin_test_tools_page.dart';
 import '../superkey/generic_admin_page.dart'; // 引入通用管理頁面
 import '../home/home_page.dart';
 import 'edit_profile_page.dart';
@@ -415,6 +416,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => const AdminProblemFeedbackPage(),
+                        ),
+                      );
+                    }),
+                    _buildAdminButton('測試工具', () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminTestToolsPage(),
                         ),
                       );
                     }),

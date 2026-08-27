@@ -4,6 +4,8 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 
 final Set<String> _registeredViewTypes = <String>{};
+final Map<String, VoidCallback?> _modelLoadedCallbacks =
+    <String, VoidCallback?>{};
 const String _modelViewerLoadingStyleId = 'model-viewer-loading-style';
 const String _modelViewerLoadingClass = 'model-viewer-loading';
 
@@ -43,6 +45,7 @@ Widget createWebModelView({
   String? animationName,
   bool autoPlay = true,
   String instanceId = 'default',
+  VoidCallback? onModelLoaded,
 }) {
   _ensureModelViewerScriptLoaded();
   _ensureModelViewerLoadingStyles();
@@ -50,6 +53,7 @@ Widget createWebModelView({
   final safeId = instanceId.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
   final viewType = 'model-viewer-custom-$safeId';
   final elementId = 'model-viewer-pet-$safeId';
+  _modelLoadedCallbacks[elementId] = onModelLoaded;
 
   void applyAttributes(html.Element element) {
     element
@@ -67,7 +71,12 @@ Widget createWebModelView({
       ..style.outline = 'none'
       ..style.backgroundColor = 'transparent';
 
-    final resolvedSrc = src?.isNotEmpty == true ? src! : 'assets/images/dog_rigged.glb';
+    final resolvedSrc =
+        src?.isNotEmpty == true ? src! : 'assets/images/dog_rigged.glb';
+    element.dataset['currentModelSrc'] = resolvedSrc;
+    if (element.dataset['loadedModelSrc'] != resolvedSrc) {
+      element.dataset['loadedModelSrc'] = '';
+    }
     element.setAttribute('src', resolvedSrc);
 
     if (autoSpin) {
@@ -146,8 +155,22 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
     element.append(loading);
   }
 
+  void notifyModelLoaded() {
+    final currentSrc = element.dataset['currentModelSrc'] ?? '';
+    if (currentSrc.isEmpty || element.dataset['loadedModelSrc'] == currentSrc) {
+      return;
+    }
+
+    element.dataset['loadedModelSrc'] = currentSrc;
+    _modelLoadedCallbacks[element.id]?.call();
+  }
+
   void hideLoading(html.Event _) {
-    element.querySelector('.$_modelViewerLoadingClass')?.classes.add('is-hidden');
+    element
+        .querySelector('.$_modelViewerLoadingClass')
+        ?.classes
+        .add('is-hidden');
+    notifyModelLoaded();
   }
 
   void showOrHideLoading(html.Event event) {
@@ -158,6 +181,7 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
     final totalProgress = detail?.totalProgress;
     if (totalProgress != null && totalProgress >= 1) {
       loading.classes.add('is-hidden');
+      notifyModelLoaded();
     } else {
       loading.classes.remove('is-hidden');
     }
@@ -171,7 +195,11 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
 
   try {
     if ((element as dynamic).loaded == true) {
-      element.querySelector('.$_modelViewerLoadingClass')?.classes.add('is-hidden');
+      element
+          .querySelector('.$_modelViewerLoadingClass')
+          ?.classes
+          .add('is-hidden');
+      notifyModelLoaded();
     }
   } catch (_) {
     // The model-viewer element may not be upgraded yet on first creation.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../color/app_colors.dart';
+import '../../config/api_config.dart';
 import '../../services/admin_service.dart';
 
 class AdminProblemFeedbackPage extends StatefulWidget {
@@ -67,6 +68,62 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     }
   }
 
+  String _resolveImageUrl(String photoUrl) {
+    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+      return photoUrl;
+    }
+    return '${ApiConfig.serverBaseUrl}$photoUrl';
+  }
+
+  Future<void> _openPhotoDialog(String photoUrl) async {
+    final imageUrl = _resolveImageUrl(photoUrl);
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: AppColors.background,
+        insetPadding: const EdgeInsets.all(18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 6),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '使用者上傳圖片',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.68,
+                maxWidth: MediaQuery.of(context).size.width * 0.9,
+              ),
+              child: InteractiveViewer(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('圖片載入失敗'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +176,9 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
 
   Widget _buildFeedbackCard(Map feedback) {
     final adminReply = feedback['adminReply']?.toString() ?? '';
+    final photoUrl = feedback['photoUrl']?.toString() ?? '';
     final hasReply = adminReply.trim().isNotEmpty;
+    final hasPhoto = photoUrl.trim().isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -169,6 +228,21 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
           const Text('使用者問題', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(feedback['content']?.toString() ?? ''),
+          if (hasPhoto) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _openPhotoDialog(photoUrl),
+              icon: const Icon(Icons.image_search_outlined),
+              label: const Text('查看圖片'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                side: const BorderSide(color: AppColors.secondary),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           const Text('目前回覆', style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),

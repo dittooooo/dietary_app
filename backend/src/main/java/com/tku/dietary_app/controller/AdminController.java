@@ -6,6 +6,7 @@ import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
 import com.tku.dietary_app.dto.ProblemFeedbackReplyRequest;
 import com.tku.dietary_app.dto.ProblemFeedbackResponse;
+import com.tku.dietary_app.dto.UserProfileResponse;
 import com.tku.dietary_app.service.AdminService;
 import com.tku.dietary_app.service.DietRecordService;
 import com.tku.dietary_app.service.ProblemFeedbackService;
@@ -26,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -39,30 +42,54 @@ public class AdminController {
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<?>> listUsers(@RequestParam(required = false) String keyword) {
         if (keyword != null) {
-            return ResponseEntity.ok(ApiResponse.success(adminService.searchUsers(keyword)));
+            return ResponseEntity.ok(ApiResponse.success(
+                    adminService.searchUsers(keyword).stream()
+                            .map(UserProfileResponse::fromEntity)
+                            .toList()
+            ));
         }
-        return ResponseEntity.ok(ApiResponse.success(adminService.getAllUsers()));
+        return ResponseEntity.ok(ApiResponse.success(
+                adminService.getAllUsers().stream()
+                        .map(UserProfileResponse::fromEntity)
+                        .toList()
+        ));
     }
 
     @GetMapping("/users/{id}")
     public ResponseEntity<ApiResponse<?>> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(adminService.getUserById(id)));
+        return ResponseEntity.ok(ApiResponse.success(UserProfileResponse.fromEntity(adminService.getUserById(id))));
     }
 
     @PostMapping("/users")
     public ResponseEntity<ApiResponse<?>> addUser(@Valid @RequestBody AdminUserRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("使用者建立成功", adminService.createUser(request)));
+        return ResponseEntity.ok(ApiResponse.success(
+                "使用者建立成功",
+                UserProfileResponse.fromEntity(adminService.createUser(request))
+        ));
     }
 
     @PutMapping("/users/{id}")
     public ResponseEntity<ApiResponse<?>> editUser(@PathVariable Long id, @Valid @RequestBody AdminUserRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("使用者更新成功", adminService.updateUser(id, request)));
+        return ResponseEntity.ok(ApiResponse.success(
+                "使用者更新成功",
+                UserProfileResponse.fromEntity(adminService.updateUser(id, request))
+        ));
     }
 
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<ApiResponse<Void>> removeUser(@PathVariable Long id) {
-        adminService.deleteUser(id);
-        return ResponseEntity.ok(ApiResponse.success("使用者刪除成功", null));
+    @PutMapping("/users/{id}/status")
+    public ResponseEntity<ApiResponse<?>> updateUserStatus(@PathVariable Long id,
+                                                           @RequestBody Map<String, Boolean> request,
+                                                           Principal principal) {
+        Boolean requestedEnabled = request.get("enabled");
+        if (requestedEnabled == null) {
+            throw new IllegalArgumentException("缺少 enabled 狀態");
+        }
+
+        boolean enabled = Boolean.TRUE.equals(requestedEnabled);
+        return ResponseEntity.ok(ApiResponse.success(
+                enabled ? "使用者已啟用" : "使用者已禁用",
+                UserProfileResponse.fromEntity(adminService.setUserEnabled(id, enabled, principal.getName()))
+        ));
     }
 
     @GetMapping("/diet-records")

@@ -10,6 +10,7 @@ import '../../controllers/dog_state_controller.dart';
 import '../../models/body_status_models.dart';
 import '../../services/auth_service.dart';
 import '../../services/body_status_api_service.dart';
+import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
 import '../home/home_page.dart';
 import 'initial_info_page.dart';
@@ -43,13 +44,16 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   Future<void> _runTransition() async {
     final alreadyOnboarded = await _checkOnboarding();
     SettlementResponse? settlement;
+    final isAdmin = await AuthService().isAdmin();
 
-    if (alreadyOnboarded) {
+    if (alreadyOnboarded && !isAdmin) {
       settlement = await _settleDailyScores();
       if (settlement != null) {
         await _saveBodyStatus(settlement.bodyType);
         await _playBodyTypeChangeIfNeeded(settlement);
       }
+    } else if (isAdmin && mounted) {
+      setState(() => _statusText = '正在載入管理者模式...');
     }
 
     await _animateProgress();
@@ -156,13 +160,21 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
 
     _dogController.setBodyType(oldType);
-    _dogController.setState(DogAnimationState.response);
-    await Future.delayed(const Duration(milliseconds: 1800));
+    _dogController.setState(DogAnimationState.idle);
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return BodyTransitionAnimationDialog(
+          oldBodyType: oldType,
+          newBodyType: newType,
+        );
+      },
+    );
     if (!mounted) return;
 
     _dogController.setBodyType(newType);
     _dogController.setState(DogAnimationState.idle);
-    await Future.delayed(const Duration(milliseconds: 600));
   }
 
   Future<void> _saveBodyStatus(String bodyType) async {

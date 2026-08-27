@@ -123,51 +123,33 @@ class AdminService {
     }
   }
 
-  Future<Map<String, dynamic>> deleteUser(int id) async {
+  Future<Map<String, dynamic>> updateUserStatus(int id, bool enabled) async {
     final token = await _token();
     if (token == null) {
       return {'success': false, 'message': '請重新登入'};
     }
 
     try {
-      // 1. 自動先清理該使用者的飲食紀錄關聯
-      final records = await listDietRecords(userId: id);
-      for (final rec in records) {
-        final recId = rec['id'];
-        if (recId != null) {
-          final int? rId = recId is int ? recId : int.tryParse(recId.toString());
-          if (rId != null) {
-            await deleteDietRecord(rId);
-          }
-        }
-      }
-
-      // 2. 執行刪除使用者請求
-      final response = await _client.delete(
-        '/admin/users/$id',
+      final response = await _client.put(
+        '/admin/users/$id/status',
+        {'enabled': enabled},
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return {'success': true};
-      }
-
       final data = _decodeMap(response.body);
-      final rawMsg = (data['message'] ?? data['error'] ?? '').toString();
-      
-      String userFriendlyMsg = '刪除失敗 (HTTP ${response.statusCode})';
-      if (rawMsg.contains('violates foreign key constraint') || rawMsg.contains('diet_records') || rawMsg.contains('could not execute statement')) {
-        userFriendlyMsg = '刪除失敗：該使用者仍有關聯資料約束，無法直刪除。';
-      } else if (rawMsg.isNotEmpty) {
-        userFriendlyMsg = rawMsg;
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data['data'] ?? data};
       }
 
-      return {'success': false, 'message': userFriendlyMsg};
+      return {
+        'success': false,
+        ...data,
+        'message': data['message'] ?? data['error'] ?? '更新狀態失敗 (${response.statusCode})',
+      };
     } catch (e) {
-      return {'success': false, 'message': '刪除請求失敗，請稍後再試'};
+      return {'success': false, 'message': '更新使用者狀態失敗，請稍後再試'};
     }
   }
-
 
   Future<List<dynamic>> listRestaurants({String? name}) async {
     return [];
