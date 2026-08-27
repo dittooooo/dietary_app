@@ -559,11 +559,37 @@ class DietService {
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
+          final List<dynamic> rawMealItems = data['meal_items'] ?? [];
+
+          // 1. 將 Companion 一維平坦陣列 (1D) 按餐期 (meal_period) 自動進行 Group By 轉換
+          final Map<String, List<Map<String, dynamic>>> groupedMap = {};
+          for (var item in rawMealItems) {
+            if (item is Map) {
+              final period = item['meal_period']?.toString().trim() ?? '其他';
+              if (!groupedMap.containsKey(period)) {
+                groupedMap[period] = [];
+              }
+              groupedMap[period]!.add({
+                'name': item['name']?.toString() ?? '',
+                'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+                'unit': item['unit']?.toString() ?? '',
+              });
+            }
+          }
+
+          // 2. 組裝成前端 UI 彈窗現行相容的 meal_records 兩層巢狀陣列
+          final List<Map<String, dynamic>> mealRecords = groupedMap.entries.map((entry) {
+            return {
+              'meal_period': entry.key,
+              'meal_items': entry.value,
+            };
+          }).toList();
+
           return {
             'success': data['success'] ?? true,
             'companion_reply': data['companion_reply'] ?? '',
             'intent_category': data['intent_category'] ?? 'general',
-            'meal_records': data['meal_records'] ?? [],
+            'meal_records': mealRecords,      // ✅ 前端 UI 現行彈窗立即可用之分組陣列
             'dietary_agent_error': data['dietary_agent_error'],
             'data': data,
           };

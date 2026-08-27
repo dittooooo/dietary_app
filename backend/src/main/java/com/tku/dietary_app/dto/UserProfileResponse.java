@@ -24,6 +24,7 @@ public class UserProfileResponse {
     private Boolean hasCompletedOnboarding;
     private String nickname;
     private String gender;
+    private LocalDate birthDate;
     private Integer age;
     private Double height;
     private Double weight;
@@ -51,6 +52,7 @@ public class UserProfileResponse {
                 .hasCompletedOnboarding(profile.getUser() == null ? null : profile.getUser().getHasCompletedOnboarding())
                 .nickname(profile.getNickname())
                 .gender(profile.getGender())
+                .birthDate(profile.getBirthDate())
                 .age(AgeCalculator.calculateAge(profile.getBirthDate(), profile.getAge()))
                 .height(profile.getHeight())
                 .weight(profile.getWeight())

@@ -340,4 +340,47 @@ const REPLY_SYSTEM_PROMPT = `
   - 【步驟 2】強制要求口語化潤飾時必須 100% 採納 `conclusion` 建議骨幹。
   - Few-Shot 範例 D 加入 `conclusion` 範例數據與期待輸出。
 
+### 3. 對話擬真度與同理接話語法微調（基於語用學與人機互動理論）
+
+- **痛點說明**：
+  測試中發現 Stage 2 LLM 生成開頭時，常出現如 `「剛買好一份豬肉蛋餅當午餐，想確認營養夠不夠，這份心意很細心耶..」` 的句型。此類開頭帶有強烈的「鸚鵡式重述」與「機械生硬誇獎」，缺乏真實人類對話的自然感。
+- **學術理論支持與病因分析**：
+  1. **違反語用學合作原則（Grice's Cooperative Principle - Maxim of Quantity）**：
+     AI 在回答前重新朗誦並摘要使用者的問句（Parrot Echoing），傳遞了冗餘重複的資訊，違反了對話的簡潔性原則（Maxim of Quantity），讓對話顯得像機械式客服確認流程。
+  2. **社交距離與過度稱讚不適理論（Social Distance & Over-praising Discomfort in HCI）**：
+     對於日常簡單的飲食選擇（如買蛋餅問營養），硬套 `「這很細心耶 / 這份心意...」` 等不符台灣繁體中文口語習慣的高度客套詞，引發「對話恐怖谷效應（Uncanny Valley of Conversational AI）」，讓使用者感受出人工營造的誇獎痕跡。
+  3. **羅傑斯以人為中心之同理心理論（Person-Centered Empathy Standard）**：
+     真正的同理建立在「情感與需求的自然共鳴」，而非結構化的句型填空（重述 $\to$ 硬套讚美標籤 $\to$ 給建議）。
+- **優化目標與 Prompt 修改條列**：
+  - **變更 A：簡化【步驟 1】過度微觀的條件，並融入多元情境接話策略**
+    - 修改位置：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L428)
+    - 內容：移除原先對 `psychological_context` 分支（如 `work_overtime_stress` 等）的硬性條款，改為高層次的情感共鳴指導，並注入「多元情境接話策略」，以正面引導增強回應的自然度與豐富度。
+  - **變更 B：更新 Few-Shot 範例 D 之開頭語氣**
+    - 修改位置：[`companion-llm.js`](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/companion_js/companion-llm.js#L479)
+    - 內容：修飾 Few-Shot 範例開頭，提供在地、多元且自然的人類口語接話範本，讓模型透過 In-Context Learning 自發模仿優質對話風格。
+
+- **建議 Prompt 修改對比與建議範本 (Proposed Prompt Change)**：
+
+  *原版【步驟 1】 Prompt：*
+  ```markdown
+  【步驟 1：同理與共鳴 (探索與安慰階段)】
+  - 開頭第一句精準同理並重述 emotion.evidence 中的關鍵字與心情，絕不可出現冷漠拒絕或格式化警告。
+  - 參考 emotion.psychological_context 與 emotion.primary_emotion：
+    * 若為 work_overtime_stress 或 diet_relapse_guilt，首句必須給予安撫與包容，消除罪惡感。
+    * 若為 weather_or_mood 或 other_general_chat，精準共鳴使用者描述的感受。
+  ```
+
+  *建議修改後之【步驟 1】 Prompt (簡化條件 + 多元接話策略)：*
+  ```markdown
+  【步驟 1：同理與共鳴 (情感與多元接話階段)】
+  - 第一句請參考 emotion 資訊，精準共鳴使用者描述的感受、心情或當下情境。語氣保持親切包容，絕不可出現批判、冷漠拒絕或格式化警告。
+  - 請根據語境靈活採用【多元情境接話策略】，避免套用僵硬公式或客套詞，讓回應更自然且多樣：
+    1. **美食/生活情境共鳴**（例：*「午餐吃豬肉蛋餅很讚耶！」*、*「這天氣來碗熱湯最棒了！」*）
+    2. **健康意圖肯定**（例：*「會注意到營養均衡很棒耶！」*）
+    3. **直奔主題與親切回應**（例：*「豬肉蛋餅主要提供蛋白質與碳水...」*）
+  ```
+
+
+
+
 

@@ -138,6 +138,19 @@ public class AdminService {
         return profile;
     }
 
+    @Transactional
+    public void deleteUser(Long id) {
+        UserProfile profile = userProfileRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到要刪除的使用者資料 (ID: " + id + ")"));
+
+        User user = profile.getUser();
+        userProfileRepository.delete(profile);
+
+        if (user != null) {
+            userRepository.delete(user);
+        }
+    }
+
     private String normalizeRole(String role) {
         if (role == null || role.isBlank()) {
             return "ROLE_USER";
