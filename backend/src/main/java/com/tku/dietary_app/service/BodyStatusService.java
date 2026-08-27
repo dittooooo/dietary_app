@@ -37,6 +37,10 @@ public class BodyStatusService {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料，無法進行每日結算"));
         ensureMetrics(profile);
 
+        if (isAdminProfile(profile)) {
+            return SettlementResponse.fromResults(profile, bodyMetricsService.calculateRecommendedProtein(profile), List.of());
+        }
+
         LocalDate yesterday = LocalDate.now(taipeiClock).minusDays(1);
         LocalDate startDate = determineFirstUnsettledDate(profile, yesterday);
         List<DailySettlementResult> results = new ArrayList<>();
@@ -136,6 +140,11 @@ public class BodyStatusService {
         if (profile.getBmr() == null || profile.getTdee() == null || profile.getRecommendedCalories() == null) {
             bodyMetricsService.recalculateAndApply(profile);
         }
+    }
+
+    private boolean isAdminProfile(UserProfile profile) {
+        String role = profile.getUser() == null ? "" : profile.getUser().getRole();
+        return role != null && ("ROLE_ADMIN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role));
     }
 
     private String normalizeBodyType(String bodyType) {

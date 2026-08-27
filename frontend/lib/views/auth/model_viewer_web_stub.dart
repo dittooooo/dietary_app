@@ -57,6 +57,44 @@ const String _modelViewerLoadingJs = '''
 })();
 ''';
 
+const String _modelViewerLoadedCallbackJs = '''
+(() => {
+  if (window.__modelLoadedBridgeReady) return;
+  window.__modelLoadedBridgeReady = true;
+
+  const notifyLoaded = () => {
+    if (window.__modelLoadedBridgeNotified) return;
+    window.__modelLoadedBridgeNotified = true;
+    if (window.ModelLoaded && window.ModelLoaded.postMessage) {
+      window.ModelLoaded.postMessage('loaded');
+    }
+  };
+
+  const attachModelListeners = () => {
+    const model = document.querySelector('model-viewer');
+    if (!model) return false;
+
+    model.addEventListener('load', notifyLoaded);
+    model.addEventListener('error', notifyLoaded);
+    model.addEventListener('progress', (event) => {
+      if (event.detail && event.detail.totalProgress >= 1) {
+        notifyLoaded();
+      }
+    });
+
+    if (model.loaded) notifyLoaded();
+    return true;
+  };
+
+  if (!attachModelListeners()) {
+    const timer = setInterval(() => {
+      if (attachModelListeners()) clearInterval(timer);
+    }, 100);
+    setTimeout(() => clearInterval(timer), 10000);
+  }
+})();
+''';
+
 Widget createWebModelView({
   required String colorScheme,
   required bool autoSpin,
@@ -67,6 +105,7 @@ Widget createWebModelView({
   String? animationName,
   bool autoPlay = true,
   String instanceId = 'default',
+  VoidCallback? onModelLoaded,
 }) {
   final String resolvedSrc = (src != null && !src.startsWith('data:'))
       ? src
@@ -85,6 +124,7 @@ Widget createWebModelView({
     fieldOfView: '${fovDeg.toInt()}deg',
     animationName: animationName,
     autoPlay: autoPlay,
+    onModelLoaded: onModelLoaded,
   );
 }
 
@@ -96,6 +136,7 @@ class _MobileModelViewerAnimationSwitcher extends StatefulWidget {
   final String fieldOfView;
   final String? animationName;
   final bool autoPlay;
+  final VoidCallback? onModelLoaded;
 
   const _MobileModelViewerAnimationSwitcher({
     super.key,
@@ -106,6 +147,7 @@ class _MobileModelViewerAnimationSwitcher extends StatefulWidget {
     required this.fieldOfView,
     required this.animationName,
     required this.autoPlay,
+    required this.onModelLoaded,
   });
 
   @override
@@ -128,7 +170,26 @@ class _MobileModelViewerAnimationSwitcherState
 
   void _handleWebViewCreated(WebViewController controller) {
     _controller = controller;
+    _installModelLoadedBridge();
     _applyAnimation();
+  }
+
+  void _installModelLoadedBridge() {
+    final controller = _controller;
+    if (controller == null) return;
+
+    controller.addJavaScriptChannel(
+      'ModelLoaded',
+      onMessageReceived: (_) {
+        if (!mounted) return;
+        widget.onModelLoaded?.call();
+      },
+    ).then((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        if (!mounted || _controller == null) return;
+        _controller!.runJavaScript(_modelViewerLoadedCallbackJs);
+      });
+    });
   }
 
   void _applyAnimation() {

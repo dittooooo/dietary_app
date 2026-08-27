@@ -21,12 +21,12 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
   Future<void>? _initializeControllerFuture; // 定義非同步方法（Future），執行耗時操作
   RecordStage _currentStage = RecordStage.shooting; // 執行相對應的邏輯計算或設定屬性參數
   XFile? _capturedImage; // 執行相對應的邏輯計算或設定屬性參數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
+  String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
   
   // 動畫相關
   late AnimationController _elfAnimController; // 宣告類別成員或方法內部的區域變數
-  late Animation<Offset> _elfPosition; // 宣告類別成員或方法內部的區域變數
+  // late Animation<Offset> _elfPosition; // 未使用，先註解
   late AnimationController _scanningController; // 宣告類別成員或方法內部的區域變數
   late AnimationController _hoverController; // 宣告類別成員或方法內部的區域變數
   late Animation<double> _hoverScaleAnimation; // 宣告類別成員或方法內部的區域變數
@@ -49,10 +49,12 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
       duration: const Duration(milliseconds: 1500), // 建立編譯期常數，優化 Flutter 渲染效能
     ); // 程式碼區塊或元件結構結束
     
+    /*
     _elfPosition = Tween<Offset>( // 執行相對應的邏輯計算或設定屬性參數
       begin: const Offset(0.5, 0.0), // 從右側偏外一點點進來，更平穩，且防出界
       end: const Offset(0.0, 0.0), // 建立編譯期常數，優化 Flutter 渲染效能
     ).animate(CurvedAnimation(parent: _elfAnimController, curve: Curves.elasticOut)); // 執行相對應的邏輯計算或設定屬性參數
+    */
 
     _scanningController = AnimationController( // 執行相對應的邏輯計算或設定屬性參數
       vsync: this, // 執行相對應的邏輯計算或設定屬性參數
@@ -80,7 +82,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
     if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
+        _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
         _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
       }); // 程式碼區塊或元件結構結束
     } // 程式碼區塊或元件結構結束
@@ -385,7 +387,7 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
     else if (_currentStage == RecordStage.recognizing) msg = "${moodPrefix}聞...好香\n好像是茶葉蛋"; // 執行相對應的邏輯計算或設定屬性參數
     else msg = "${moodPrefix}這份子不錯，補充蛋白質"; // 執行相對應的邏輯計算或設定屬性參數
 
-    final screenHeight = MediaQuery.of(context).size.height; // 宣告類別成員或方法內部的區域變數
+    // final screenHeight = MediaQuery.of(context).size.height; // 未使用，先註解
     final bottomOffset = _currentStage == RecordStage.result ? 140.0 : 120.0; // 挪下來一點
 
     return Positioned( // 建立絕對定位元件（Positioned），用於精確設定子元件在 Stack 中的位置

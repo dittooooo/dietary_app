@@ -14,7 +14,6 @@ class AdminUserListPage extends StatefulWidget { // 定義 AdminUserListPage 類
 
 class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _AdminUserListPageState 類別，繼承自 State
   final TextEditingController _searchController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
-  bool _isDeleteMode = false; // 宣告類別成員或方法內部的區域變數
   bool _isLoading = false;
 
   List<dynamic> _users = []; // 儲存後端獲取的使用者列表
@@ -44,14 +43,14 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
       backgroundColor: AppColors.surface, // 設定顏色數值（Color）
       appBar: AppBar( // 設定頂部的導航欄（AppBar）
-        title: Text(_isDeleteMode ? '請點擊欲刪除的對象' : '使用者管理清單', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-        backgroundColor: _isDeleteMode ? AppColors.danger.withOpacity(0.1) : AppColors.background, // 設定顏色數值（Color）
+        title: const Text('使用者管理清單', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+        backgroundColor: AppColors.background, // 設定顏色數值（Color）
         elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
         iconTheme: const IconThemeData(color: AppColors.textPrimary), // 設定顏色數值（Color）
         actions: [ // 執行相對應的邏輯計算或設定屬性參數
           IconButton( // 建立點擊圖示按鈕（IconButton）
-            icon: Icon(_isDeleteMode ? Icons.close : Icons.delete), // 顯示預設的圖示元件（Icon）
-            onPressed: () => setState(() => _isDeleteMode = !_isDeleteMode), // 更新狀態數據並通知 UI 重新渲染畫面
+            icon: const Icon(Icons.refresh), // 顯示預設的圖示元件（Icon）
+            onPressed: _fetchUsers, // 更新狀態數據並通知 UI 重新渲染畫面
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -86,6 +85,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                         final int profileId = userProfile['id'] ?? 0;
                         final String email = (userProfile['email'] ?? userObj['email'] ?? '').toString();
                         final String displayName = userProfile['nickname'] ?? (email.isNotEmpty ? email.split('@')[0] : '使用者');
+                        final bool isEnabled = userProfile['enabled'] != false && userObj['enabled'] != false;
                         
                         return Card( // 回傳建構完成的元件或方法計算結果
                           color: AppColors.background, // 設定顏色數值（Color）
@@ -101,33 +101,52 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                               displayName, // 執行相對應的邏輯計算或設定屬性參數
                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
                             ), // 執行相對應的邏輯計算或設定屬性參數
-                            subtitle: Text(email.isNotEmpty ? email : '無電子郵件', style: const TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.secondary), // 設定顏色數值（Color）
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(email.isNotEmpty ? email : '無電子郵件', style: const TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
+                                const SizedBox(height: 4),
+                                Text(
+                                  isEnabled ? '狀態：啟用中' : '狀態：已禁用',
+                                  style: TextStyle(
+                                    color: isEnabled ? AppColors.primary : AppColors.danger,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Switch(
+                              value: isEnabled,
+                              activeColor: AppColors.primary,
+                              inactiveThumbColor: AppColors.danger,
+                              onChanged: (value) => _showStatusConfirmDialog(
+                                profileId,
+                                displayName,
+                                value,
+                              ),
+                            ),
                             onTap: () { // 執行相對應的邏輯計算或設定屬性參數
-                              if (_isDeleteMode) { // 執行相對應的邏輯計算或設定屬性參數
-                                _showDeleteConfirmDialog(profileId, displayName); // 執行相對應的邏輯計算或設定屬性參數
-                              } else { // 程式碼區塊或元件結構結束
-                                // 跳轉至使用者詳情頁，並將目標與疾病統一轉換為中文顯示
-                                final String goalText = ProfileValueMapper.dietGoalsToDisplaySet(userProfile['dietGoal']).join(', ');
-                                final String healthText = ProfileValueMapper.healthConditionsToDisplaySet(userProfile['healthConditions']).join(', ');
+                              // 跳轉至使用者詳情頁，並將目標與疾病統一轉換為中文顯示
+                              final String goalText = ProfileValueMapper.dietGoalsToDisplaySet(userProfile['dietGoal']).join(', ');
+                              final String healthText = ProfileValueMapper.healthConditionsToDisplaySet(userProfile['healthConditions']).join(', ');
 
-                                final Map<String, String> mappedDetail = {
-                                  'id': "#$profileId",
-                                  'name': displayName,
-                                  'email': email,
-                                  'gender': userProfile['gender'] ?? '未填',
-                                  'height': "${userProfile['height'] ?? '未填'}",
-                                  'weight': "${userProfile['weight'] ?? '未填'}",
-                                  'goal': goalText.isNotEmpty ? goalText : '養成健康飲食習慣',
-                                  'healthConditions': healthText.isNotEmpty ? healthText : '無疾病',
-                                };
-                                Navigator.push( // 導航路由跳轉：開啟並推入新頁面
-                                  context, // 執行相對應的邏輯計算或設定屬性參數
-                                  MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                                    builder: (context) => UserDetailPage(userData: mappedDetail), // 執行相對應的邏輯計算或設定屬性參數
-                                  ), // 執行相對應的邏輯計算或設定屬性參數
-                                ); // 程式碼區塊或元件結構結束
-                              } // 程式碼區塊或元件結構結束
+                              final Map<String, String> mappedDetail = {
+                                'id': "#$profileId",
+                                'name': displayName,
+                                'email': email,
+                                'gender': userProfile['gender'] ?? '未填',
+                                'height': "${userProfile['height'] ?? '未填'}",
+                                'weight': "${userProfile['weight'] ?? '未填'}",
+                                'goal': goalText.isNotEmpty ? goalText : '養成健康飲食習慣',
+                                'healthConditions': healthText.isNotEmpty ? healthText : '無疾病',
+                                'status': isEnabled ? '啟用中' : '已禁用',
+                              };
+                              Navigator.push( // 導航路由跳轉：開啟並推入新頁面
+                                context, // 執行相對應的邏輯計算或設定屬性參數
+                                MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
+                                  builder: (context) => UserDetailPage(userData: mappedDetail), // 執行相對應的邏輯計算或設定屬性參數
+                                ), // 執行相對應的邏輯計算或設定屬性參數
+                              ); // 程式碼區塊或元件結構結束
                             }, // 程式碼區塊或元件結構結束
                           ), // 執行相對應的邏輯計算或設定屬性參數
                         ); // 程式碼區塊或元件結構結束
@@ -147,14 +166,19 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  void _showDeleteConfirmDialog(int userId, String name) { // 執行相對應的邏輯計算或設定屬性參數
+  void _showStatusConfirmDialog(int userId, String name, bool enabled) { // 執行相對應的邏輯計算或設定屬性參數
     showDialog( // 執行相對應的邏輯計算或設定屬性參數
       context: context, // 執行相對應的邏輯計算或設定屬性參數
       builder: (BuildContext context) { // 執行相對應的邏輯計算或設定屬性參數
         return AlertDialog( // 回傳建構完成的元件或方法計算結果
           backgroundColor: AppColors.background, // 設定顏色數值（Color）
-          title: const Text('確認刪除', style: TextStyle(color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
-          content: Text('您確定要刪除使用者「$name」嗎？\\n此動作將會從資料庫中物理刪除該帳號及其關聯資料。', style: const TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
+          title: Text(enabled ? '確認啟用' : '確認禁用', style: const TextStyle(color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+          content: Text(
+            enabled
+                ? '確定要啟用使用者「$name」嗎？啟用後該帳號可以重新登入。'
+                : '確定要禁用使用者「$name」嗎？禁用後該帳號將無法登入，既有登入狀態也會失效。',
+            style: const TextStyle(color: Colors.black54),
+          ), // 建立文字顯示元件（Text）
           actions: [ // 執行相對應的邏輯計算或設定屬性參數
             TextButton( // 執行相對應的邏輯計算或設定屬性參數
               onPressed: () => Navigator.of(context).pop(), // 執行相對應的邏輯計算或設定屬性參數
@@ -163,27 +187,32 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
             TextButton( // 執行相對應的邏輯計算或設定屬性參數
               onPressed: () async { // 執行相對應的邏輯計算或設定屬性參數
                 Navigator.of(context).pop(); // 關閉對話框
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(enabled ? '正在啟用使用者...' : '正在禁用使用者...')),
+                );
                 
-                final res = await AdminService().deleteUser(userId);
+                final res = await AdminService().updateUserStatus(userId, enabled);
                 
                 if (mounted) {
                   if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已成功刪除使用者：$name')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(enabled ? '已啟用使用者：$name' : '已禁用使用者：$name')),
+                    );
                     _fetchUsers(); // 重新整理清單
                   } else {
-                    String msg = (res['message'] ?? '刪除失敗').toString();
-                    if (msg.contains('violates foreign key constraint') ||
-                        msg.contains('could not execute statement') ||
-                        msg.contains('diet_records')) {
-                      msg = '刪除失敗：該使用者仍有關聯約束，無法直接刪除。';
-                    }
+                    String msg = (res['message'] ?? '狀態更新失敗').toString();
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                   }
                 }
 
               }, // 程式碼區塊或元件結構結束
-              child: const Text('確認刪除', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
+              child: Text(
+                enabled ? '確認啟用' : '確認禁用',
+                style: TextStyle(
+                  color: enabled ? AppColors.primary : AppColors.danger,
+                  fontWeight: FontWeight.bold,
+                ),
+              ), // 建立文字顯示元件（Text）
             ), // 執行相對應的邏輯計算或設定屬性參數
           ], // 執行相對應的邏輯計算或設定屬性參數
         ); // 程式碼區塊或元件結構結束
@@ -349,7 +378,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                   'age': int.tryParse(ageController.text),
                   'height': double.tryParse(heightController.text),
                   'weight': double.tryParse(weightController.text),
-                  'petType': '狗兒', // 預設小精靈
+                  'petType': '米粒(Mili)', // 預設小精靈
                   'dietGoal': selectedGoals.join(', '),
                   'specialDisease': selectedDiseases.join(', '),
                 };

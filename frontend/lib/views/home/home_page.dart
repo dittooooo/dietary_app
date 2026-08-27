@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
+import '../auth/edit_profile_page.dart'; // 匯入 edit_profile_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../records/dietary_record_page.dart'; // 匯入 dietary_record_page.dart 元件庫或套件
 import 'home_view.dart'; // 匯入 home_view.dart 元件庫或套件
@@ -18,8 +19,8 @@ class HomePage extends StatefulWidget { // 定義 HomePage 類別，繼承自 St
 class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別，繼承自 State
   late int _selectedIndex; // 宣告類別成員或方法內部的區域變數
   late List<Widget> _pages; // 宣告類別成員或方法內部的區域變數
-  bool _isAdmin = false; // 宣告類別成員或方法內部的區域變數
-  bool _isRoleChecked = false; // 宣告類別成員或方法內部的區域變數
+  // bool _isAdmin = false;
+  bool _isRoleChecked = false;
 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
@@ -65,7 +66,7 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
   void _applyUserConfig() {
     if (mounted) {
       setState(() {
-        _isAdmin = false;
+        // _isAdmin = false;
         _pages = [
           HomeView(initialOpenChat: widget.showChat),
           const DietaryRecordPage(),
@@ -77,18 +78,97 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
   }
 
   void _applyAdminConfig() {
-    setState(() {
-      _isAdmin = true;
-      _selectedIndex = 0;
-      _pages = [
-        const ProfilePage(returnIndex: 0),
-      ];
-      _isRoleChecked = true;
+    if (mounted) {
+      setState(() {
+        // _isAdmin = true;
+        _pages = [
+          HomeView(initialOpenChat: widget.showChat),
+          const DietaryRecordPage(),
+          const ProfilePage(),
+        ];
+        _isRoleChecked = true;
+      });
+      _showAdminMandatoryProfileDialog();
+    }
+  }
+
+  Future<void> _showAdminMandatoryProfileDialog() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final profileResult = await AuthService().getUserProfile();
+      final profileData = (profileResult['success'] == true && profileResult['data'] != null)
+          ? Map<String, dynamic>.from(profileResult['data'])
+          : <String, dynamic>{};
+
+      // 若資料庫已有完整個人資訊紀錄，登入直接進入預設首頁，不跳彈窗
+      final hasHeight = profileData['height'] != null && (double.tryParse(profileData['height'].toString()) ?? 0) > 0;
+      final hasWeight = profileData['weight'] != null && (double.tryParse(profileData['weight'].toString()) ?? 0) > 0;
+      final hasGender = profileData['gender'] != null && profileData['gender'].toString().trim().isNotEmpty;
+      
+      if (hasHeight && hasWeight && hasGender) {
+        if (mounted) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      final editKey = GlobalKey<State<EditProfilePage>>();
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+        builder: (ctx) => Stack(
+          children: [
+            GestureDetector(
+              onTap: () {
+                final state = editKey.currentState;
+                if (state != null) {
+                  (state as dynamic).triggerValidationError('請輸入完整訊息');
+                }
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                color: Colors.black.withOpacity(0.54),
+              ),
+            ),
+            Center(
+              child: Dialog(
+                insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: MediaQuery.of(ctx).size.height * 0.85,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: EditProfilePage(
+                      key: editKey,
+                      initialData: profileData,
+                      isMandatoryAdmin: true,
+                      onSaveSuccess: () {
+                        Navigator.of(ctx, rootNavigator: true).pop(true);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      if (mounted) {
+        setState(() {
+          _selectedIndex = 0;
+        });
+      }
     });
-  } // 程式碼區塊或元件結構結束
+  }
 
   void _onItemTapped(int index) { // 執行相對應的邏輯計算或設定屬性參數
-    if (_isAdmin) return; // 管理員無法切換分頁
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
       _selectedIndex = index; // 執行相對應的邏輯計算或設定屬性參數
     }); // 程式碼區塊或元件結構結束
@@ -109,75 +189,41 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
         index: _selectedIndex, // 執行相對應的邏輯計算或設定屬性參數
         children: _pages, // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
-      bottomNavigationBar: _isAdmin // 執行相對應的邏輯計算或設定屬性參數
-          ? Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-              height: 90, // 執行相對應的邏輯計算或設定屬性參數
-              decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                color: AppColors.background, // 設定顏色數值（Color）
-                border: Border(top: BorderSide(color: AppColors.border.withOpacity(0.5), width: 0.5)), // 設定顏色數值（Color）
-                boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
-                  BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                    color: Colors.black.withOpacity(0.15), // 設定顏色數值（Color）
-                    blurRadius: 3.9, // 執行相對應的邏輯計算或設定屬性參數
-                    offset: const Offset(0, -1.17), // 建立編譯期常數，優化 Flutter 渲染效能
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-              child: const SafeArea( // 建立編譯期常數，優化 Flutter 渲染效能
-                child: Center( // 建立置中對齊元件（Center），將子元件居中顯示
-                  child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                    mainAxisAlignment: MainAxisAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
-                    children: [ // 執行相對應的邏輯計算或設定屬性參數
-                      Icon(Icons.account_circle, color: AppColors.primary), // 設定顏色數值（Color）
-                      SizedBox(height: 4), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                      Text( // 建立文字顯示元件（Text）
-                        '個人首頁', // 執行相對應的邏輯計算或設定屬性參數
-                        style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                          color: AppColors.primary, // 設定顏色數值（Color）
-                          fontWeight: FontWeight.bold, // 執行相對應的邏輯計算或設定屬性參數
-                          fontSize: 12, // 執行相對應的邏輯計算或設定屬性參數
-                        ), // 執行相對應的邏輯計算或設定屬性參數
-                      ), // 執行相對應的邏輯計算或設定屬性參數
-                    ], // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ) // 執行相對應的邏輯計算或設定屬性參數
-          : Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-              decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
-                  BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                    color: Colors.black.withOpacity(0.15), // 設定顏色數值（Color）
-                    blurRadius: 3.9, // 執行相對應的邏輯計算或設定屬性參數
-                    offset: const Offset(0, -1.17), // 建立編譯期常數，優化 Flutter 渲染效能
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-              child: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
-                currentIndex: _selectedIndex, // 執行相對應的邏輯計算或設定屬性參數
-                onTap: _onItemTapped, // 執行相對應的邏輯計算或設定屬性參數
-                selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
-                unselectedItemColor: AppColors.textPrimary.withOpacity(0.4), // 設定顏色數值（Color）
-                backgroundColor: AppColors.background, // 設定顏色數值（Color）
-                type: BottomNavigationBarType.fixed, // 執行相對應的邏輯計算或設定屬性參數
-                selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                unselectedLabelStyle: const TextStyle(fontSize: 12), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                items: const [ // 建立編譯期常數，優化 Flutter 渲染效能
-                  BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
-                    icon: Icon(Icons.home), // 顯示預設的圖示元件（Icon）
-                    label: '首頁', // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                  BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
-                    icon: Icon(Icons.edit_note), // 顯示預設的圖示元件（Icon）
-                    label: '飲食紀錄', // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                  BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
-                    icon: Icon(Icons.account_circle), // 顯示預設的圖示元件（Icon）
-                    label: '個人首頁', // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
+      bottomNavigationBar: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
+        decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+          boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
+            BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+              color: Colors.black.withOpacity(0.15), // 設定顏色數值（Color）
+              blurRadius: 3.9, // 執行相對應的邏輯計算或設定屬性參數
+              offset: const Offset(0, -1.17), // 建立編譯期常數，優化 Flutter 渲染效能
             ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+        child: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
+          currentIndex: _selectedIndex, // 執行相對應的邏輯計算或設定屬性參數
+          onTap: _onItemTapped, // 執行相對應的邏輯計算或設定屬性參數
+          selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
+          unselectedItemColor: AppColors.textPrimary.withOpacity(0.4), // 設定顏色數值（Color）
+          backgroundColor: AppColors.background, // 設定顏色數值（Color）
+          type: BottomNavigationBarType.fixed, // 執行相對應的邏輯計算或設定屬性參數
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+          unselectedLabelStyle: const TextStyle(fontSize: 12), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+          items: const [ // 建立編譯期常數，優化 Flutter 渲染效能
+            BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
+              icon: Icon(Icons.home), // 顯示預設的圖示元件（Icon）
+              label: '首頁', // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
+              icon: Icon(Icons.edit_note), // 顯示預設的圖示元件（Icon）
+              label: '飲食紀錄', // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+            BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
+              icon: Icon(Icons.account_circle), // 顯示預設的圖示元件（Icon）
+              label: '個人首頁', // 執行相對應的邏輯計算或設定屬性參數
+            ), // 執行相對應的邏輯計算或設定屬性參數
+          ], // 執行相對應的邏輯計算或設定屬性參數
+        ), // 執行相對應的邏輯計算或設定屬性參數
+      ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 } // 程式碼區塊或元件結構結束

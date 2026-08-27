@@ -2,7 +2,7 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import 'package:image_picker/image_picker.dart'; // 匯入相簿套件
-import 'dart:typed_data'; // 處理圖片
+// import 'dart:typed_data'; // 處理圖片
 import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
@@ -25,8 +25,8 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   final Set<String> _expandedMeals = {}; // 宣告類別成員或方法內部的區域變數
   String? _swipedMeal; // 執行相對應的邏輯計算或設定屬性參數
   double _dragExtent = 0.0; // 宣告類別成員或方法內部的區域變數
-  String _petType = '狗兒'; // 宣告類別成員或方法內部的區域變數
-  String _dietGoal = '養生'; // 宣告類別成員或方法內部的區域變數
+  // String _petType = '米粒(Mili)'; // 未使用，先註解
+  // String _dietGoal = '養生'; // 未使用，先註解
   String? _jwtToken; // JWT Token 儲存變數
 
   List<dynamic> _allRecords = []; // 從後端獲取的所有紀錄
@@ -44,8 +44,8 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
     if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _petType = '狗兒'; // 執行相對應的邏輯計算或設定屬性參數
-        _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 執行相對應的邏輯計算或設定屬性參數
+        // _petType = '米粒(Mili)'; // 未使用，先註解
+        // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
         _jwtToken = prefs.getString('jwt_token'); // 讀取 JWT Token
         _avatarUrl = prefs.getString('user_avatar_url');
       }); // 程式碼區塊或結構結束

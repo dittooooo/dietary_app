@@ -51,6 +51,8 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail().trim().toLowerCase())
                 .orElseThrow(() -> new BadCredentialsException("帳號或密碼錯誤"));
 
+        ensureUserEnabled(user);
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("帳號或密碼錯誤");
         }
@@ -69,6 +71,8 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("refresh token 無效"));
+
+        ensureUserEnabled(user);
 
         if (user.getRefreshTokenHash() == null
                 || user.getRefreshTokenExpiresAt() == null
@@ -119,6 +123,12 @@ public class AuthService {
                 .refreshTokenExpiresInSeconds(jwtUtil.getRefreshTokenExpirationSeconds())
                 .needsOnboarding(needsOnboarding)
                 .build();
+    }
+
+    private void ensureUserEnabled(User user) {
+        if (Boolean.FALSE.equals(user.getEnabled())) {
+            throw new UnauthorizedException("帳號已被禁用，請聯絡管理者");
+        }
     }
 
     private String hashRefreshToken(String refreshToken) {

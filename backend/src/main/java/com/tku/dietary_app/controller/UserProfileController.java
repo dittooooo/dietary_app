@@ -21,10 +21,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/user")
@@ -94,6 +99,17 @@ public class UserProfileController {
                 problemFeedbackService.getByUser(user).stream()
                         .map(ProblemFeedbackResponse::fromEntity)
                         .toList()
+        ));
+    }
+
+    @PostMapping("/problem-feedback/{id}/photo")
+    public ResponseEntity<ApiResponse<?>> uploadProblemFeedbackPhoto(Authentication authentication,
+                                                                     @PathVariable Long id,
+                                                                     @RequestParam("file") MultipartFile file) throws IOException {
+        User user = requireAuthenticatedUser(authentication);
+        return ResponseEntity.ok(ApiResponse.success(
+                "照片上傳成功",
+                ProblemFeedbackResponse.fromEntity(problemFeedbackService.savePhoto(id, user, file))
         ));
     }
 

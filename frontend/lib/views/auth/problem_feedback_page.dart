@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/auth_service.dart';
@@ -16,6 +19,8 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
   bool _isSubmitting = false;
   bool _isLoadingFeedback = true;
   List<dynamic> _feedbackList = [];
+  XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
 
   @override
   void initState() {
@@ -52,20 +57,79 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     final result = await AuthService().submitProblemFeedback(content);
 
     if (!mounted) return;
-    setState(() => _isSubmitting = false);
 
     if (result['success'] == true) {
+      var uploadedPhoto = true;
+      final feedbackData = result['data'];
+      final feedbackId = feedbackData is Map
+          ? int.tryParse('${feedbackData['id'] ?? ''}')
+          : null;
+      if (_selectedImageBytes != null && _selectedImage != null) {
+        if (feedbackId == null) {
+          uploadedPhoto = false;
+        } else {
+          final photoResult = await AuthService().uploadProblemFeedbackPhoto(
+            feedbackId,
+            _selectedImageBytes!,
+            _selectedImage!.name,
+          );
+          uploadedPhoto = photoResult['success'] == true;
+        }
+      }
+
       _contentController.clear();
+      _clearSelectedImage();
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
       FocusScope.of(context).unfocus();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('問題回饋已送出，管理員回覆後會顯示在下方')),
+        SnackBar(
+          content: Text(
+            uploadedPhoto
+                ? '問題回饋已送出，管理員回覆後會顯示在下方'
+                : '問題已送出，但照片上傳失敗，請稍後再試',
+          ),
+        ),
       );
       await _loadFeedback();
     } else {
+      setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(FriendlyErrorMessage.generic)),
       );
     }
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final picker = ImagePicker();
+      final image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 85,
+      );
+      if (image == null) return;
+
+      final bytes = await image.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _selectedImage = image;
+        _selectedImageBytes = bytes;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+      );
+    }
+  }
+
+  void _clearSelectedImage() {
+    setState(() {
+      _selectedImage = null;
+      _selectedImageBytes = null;
+    });
   }
 
   String _formatDate(dynamic value) {
@@ -169,6 +233,48 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _isSubmitting ? null : _pickImage,
+            icon: const Icon(Icons.image_outlined),
+            label: Text(_selectedImage == null ? '上傳問題截圖' : '更換問題截圖'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: const BorderSide(color: AppColors.secondary),
+              minimumSize: const Size(double.infinity, 46),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          if (_selectedImage != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.55),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.photo_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _selectedImage!.name,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: _isSubmitting ? null : _clearSelectedImage,
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _isSubmitting ? null : _submit,
@@ -249,6 +355,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
   Widget _buildFeedbackCard(dynamic item) {
     final feedback = item is Map ? item : <String, dynamic>{};
     final content = feedback['content']?.toString() ?? '';
+    final photoUrl = feedback['photoUrl']?.toString() ?? '';
     final adminReply = feedback['adminReply']?.toString() ?? '';
     final hasReply = adminReply.trim().isNotEmpty;
 
@@ -299,6 +406,16 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
           ),
           const SizedBox(height: 6),
           Text(content),
+          if (photoUrl.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: const [
+                Icon(Icons.image_outlined, size: 16),
+                SizedBox(width: 6),
+                Text('已附上問題截圖'),
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           const Text(
             '管理員回覆',

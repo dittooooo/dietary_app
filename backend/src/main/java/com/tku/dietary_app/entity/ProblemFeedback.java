@@ -42,6 +42,9 @@ public class ProblemFeedback {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "photo_url")
+    private String photoUrl;
+
     @Column(name = "admin_reply", columnDefinition = "TEXT")
     private String adminReply;
 

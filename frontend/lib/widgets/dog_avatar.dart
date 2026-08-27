@@ -14,6 +14,7 @@ class DogAvatar extends StatelessWidget {
   final Offset contentOffset;
   final double? bodyTypeScaleOverride;
   final Offset? bodyTypeOffsetOverride;
+  final VoidCallback? onModelLoaded;
 
   DogAvatar({
     super.key,
@@ -25,6 +26,7 @@ class DogAvatar extends StatelessWidget {
     this.contentOffset = Offset.zero,
     this.bodyTypeScaleOverride,
     this.bodyTypeOffsetOverride,
+    this.onModelLoaded,
     required this.instanceId,
   }) : controller = controller ?? DogStateController.instance;
 
@@ -80,6 +82,7 @@ class DogAvatar extends StatelessWidget {
                     animationName: controller.animationName,
                     autoPlay: true,
                     instanceId: instanceId,
+                    onModelLoaded: onModelLoaded,
                   ),
                 ),
               ),

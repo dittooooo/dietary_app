@@ -1081,9 +1081,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     );
   } // 程式碼區塊或元件結構結束
 
+  /*
   Widget _buildNutrientLegendItem(String label, String value, Color color) { // 定義用於重複使用的 UI 封裝建構方法
     return Row(children: [Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 8), Text("$label $value", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]); // 建立水平排列元件（Row），橫向排列多個子元件
   } // 程式碼區塊或元件結構結束
+  */
 
   Widget _buildTrendChart() { // 定義用於重複使用的 UI 封裝建構方法
     List<double> data = _viewType == 1 ? _weeklyData : _monthlyData; // 執行相對應的邏輯計算或設定屬性參數
@@ -1758,16 +1760,6 @@ class _DietRecordTileState extends State<DietRecordTile> {
                   _buildNutritionRow("脂肪", "${widget.fat.toStringAsFixed(1)}g", Colors.redAccent),
                   const SizedBox(height: 8),
                   _buildNutritionRow("碳水化合物", "${widget.carbs.toStringAsFixed(1)}g", Colors.lightBlue),
-                  if (widget.record['description'] != null &&
-                      widget.record['description'].toString().trim().isNotEmpty &&
-                      widget.record['description'].toString().trim() != '手動輸入飲食紀錄' &&
-                      !widget.record['description'].toString().contains('份')) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      "備註: ${widget.record['description']}",
-                      style: const TextStyle(fontSize: 13, color: Colors.grey, fontStyle: FontStyle.italic),
-                    ),
-                  ]
                 ],
               ),
             ),

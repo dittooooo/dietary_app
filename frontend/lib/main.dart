@@ -37,7 +37,7 @@ void main() async {
     if (isAdmin) {
       initialScreen = const HomePage();
     } else if (needsOnboarding) {
-      initialScreen = const InitialInfoPage();
+      initialScreen = const LoginPage();
     } else {
       // 本地有 Token 且已完成 Onboarding，預設保持登入直接進入首頁 (HomePage)
       initialScreen = const HomePage();

@@ -49,6 +49,10 @@ class UserDetailPage extends StatelessWidget {
               '電子郵件 (帳號)',
               userData['email']!,
             ), // 建立並顯示使用者電子信箱的唯讀輸入框欄位
+            _buildDetailField(
+              '帳號狀態',
+              userData['status'] ?? '啟用中',
+            ), // 建立並顯示使用者帳號狀態
             _buildDetailField('性別', userData['gender']!), // 建立並顯示使用者性別的唯讀輸入框欄位
             _buildDetailField(
               '身高 (cm)',

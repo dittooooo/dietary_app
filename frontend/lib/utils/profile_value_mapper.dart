@@ -2,7 +2,7 @@ class ProfileValueMapper {
   static const String defaultDietGoalApi = 'MAINTAIN';
   static const String defaultDietGoalDisplay = '養生';
   static const String defaultPetTypeApi = 'DOG';
-  static const String defaultPetTypeDisplay = '狗兒';
+  static const String defaultPetTypeDisplay = '米粒(Mili)';
 
   static String dietGoalToApi(String? value) {
     final normalized = (value ?? '').trim();

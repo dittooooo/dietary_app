@@ -20,6 +20,7 @@ public class UserProfileResponse {
     private Long userId;
     private String email;
     private String role;
+    private Boolean enabled;
     private Boolean hasCompletedOnboarding;
     private String nickname;
     private String gender;
@@ -47,6 +48,7 @@ public class UserProfileResponse {
                 .userId(profile.getUser() == null ? null : profile.getUser().getId())
                 .email(profile.getUser() == null ? null : profile.getUser().getEmail())
                 .role(profile.getUser() == null ? null : profile.getUser().getRole())
+                .enabled(profile.getUser() == null ? null : profile.getUser().getEnabled())
                 .hasCompletedOnboarding(profile.getUser() == null ? null : profile.getUser().getHasCompletedOnboarding())
                 .nickname(profile.getNickname())
                 .gender(profile.getGender())

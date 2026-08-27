@@ -22,8 +22,8 @@ class _ManualRecordItem {
     required this.portionController,
     required this.selectedDate,
     required this.mealType,
-    this.selectedImage,
-    this.imageBytes,
+    // this.selectedImage,
+    // this.imageBytes,
     this.isExpanded = true,
   });
 }

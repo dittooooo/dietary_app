@@ -38,11 +38,21 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   ); // 宣告類別成員或方法內部的區域變數
   String? _avatarUrl;
 
+  String? _resolveAvatarUrl(dynamic avatarPath) {
+    final path = avatarPath?.toString().trim();
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+
+    final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+    return '$serverBase$path';
+  }
+
   Future<void> _loadAvatar() async {
     final prefs = await SharedPreferences.getInstance();
+    final cachedAvatarUrl = _resolveAvatarUrl(prefs.getString('user_avatar_url'));
     if (mounted) {
       setState(() {
-        _avatarUrl = prefs.getString('user_avatar_url');
+        _avatarUrl = cachedAvatarUrl;
       });
     }
     final result = await AuthService().getUserProfile();
@@ -50,11 +60,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       final userData = result['data'];
       final avatarPath =
           userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
-      if (avatarPath != null && avatarPath.isNotEmpty) {
-        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
-        final fullUrl = avatarPath.startsWith('http')
-            ? avatarPath
-            : '$serverBase$avatarPath';
+      final fullUrl = _resolveAvatarUrl(avatarPath);
+      if (fullUrl != null) {
         if (mounted) {
           setState(() {
             _avatarUrl = fullUrl;
