@@ -15,6 +15,7 @@ import com.tku.dietary_app.service.AdminService;
 import com.tku.dietary_app.service.DietRecordService;
 import com.tku.dietary_app.service.DietaryAgentService;
 import com.tku.dietary_app.service.ImageStorageService;
+import com.tku.dietary_app.service.ProblemFeedbackService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,9 @@ class ApiSecurityAndExceptionTest {
 
     @MockitoBean
     private AdminService adminService;
+
+    @MockitoBean
+    private ProblemFeedbackService problemFeedbackService;
 
     @MockitoBean
     private DietRecordService dietRecordService;
@@ -108,19 +112,22 @@ class ApiSecurityAndExceptionTest {
 
     @Test
     void adminDietRecordRejectsInvalidMealType() throws Exception {
-        mockMvc.perform(post("/api/admin/diet-records")
+        User loginUser = User.builder().id(1L).email("admin@example.com").password("encoded").build();
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietRecordService.create(eq(1L), any())).thenThrow(new IllegalArgumentException("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
+
+        mockMvc.perform(post("/api/diet-records")
                         .with(authentication(authToken("admin@example.com", "ROLE_ADMIN")))
-                        .param("userId", "1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
                                   "dishName": "Chicken Box",
-                                  "mealType": "SNACK",
+                                  "mealType": "INVALID_MEAL_TYPE",
                                   "calories": 500
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mealType").exists());
+                .andExpect(jsonPath("$.error").value("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
     }
 
     @Test
