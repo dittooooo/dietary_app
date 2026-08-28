@@ -64,14 +64,24 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
+  // 安全解析與清洗前端傳入的 temp_story 歷史紀錄 (防 Prompt 注入、防爆 Token)
+  const rawTempStory = Array.isArray(req.body.temp_story) ? req.body.temp_story : [];
+  const sanitizedTempStory = rawTempStory
+    .filter(item => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string')
+    .map(item => ({
+      role: item.role,
+      content: item.content.trim().substring(0, 300) // 限制每筆最大 300 字
+    }))
+    .slice(-3); // 限制最多保留最近 3 則
+
   console.log("\n======================================================================");
-  console.log(`[Companion Agent] 📥 收到使用者提問: "${user_prompt}"`);
+  console.log(`[Companion Agent] 📥 收到使用者提問: "${user_prompt}" | 帶入歷史筆數: ${sanitizedTempStory.length}`);
   console.log("======================================================================\n");
 
   // 2. 執行第一階段 OpenAI 意圖及情緒分析流程
   let openAiResult;
   try {
-    openAiResult = await runOpenAIFlow(user_prompt);
+    openAiResult = await runOpenAIFlow(user_prompt, sanitizedTempStory);
 
     console.log("------------------ [LLM 階段 1：意圖與情緒分析] ------------------");
     console.log("🎯 意圖預檢 (Screening):", JSON.stringify({
@@ -129,7 +139,8 @@ async function handleCompanionAsk(req, res) {
       emotion: openAiResult.emotion,
       dietaryAgentResponse,
       dietaryAgentRequest: openAiResult.dietary_agent_request,
-      dietaryAgentError
+      dietaryAgentError,
+      tempStory: sanitizedTempStory
     });
     console.log(`💬 生成最終對話: "${companionReply.substring(0, 80)}${companionReply.length > 80 ? "..." : ""}"\n`);
 

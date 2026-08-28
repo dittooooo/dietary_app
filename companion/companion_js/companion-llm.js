@@ -319,9 +319,10 @@ const tools = [
  * 執行第一階段的意圖篩選與情緒分析流程
  * 透過呼叫 OpenAI Response API 並行調用 screen_user_request 與 analyze_emotion 兩個 Function。
  * @param {string} userPrompt - 使用者原始輸入訊息
+ * @param {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
  * @returns {Promise<Object>} 包含意圖預檢 (screening) 與情緒分析 (emotion) 結果的物件
  */
-async function runOpenAIFlow(userPrompt) {
+async function runOpenAIFlow(userPrompt, tempStory = []) {
   // 取得台灣當前本地時間 (強制使用標準 24 小時制，方便 LLM 進行時間區間對比)
   const now = new Date();
   const localTimeStr = now.toLocaleString("zh-TW", {
@@ -335,8 +336,13 @@ async function runOpenAIFlow(userPrompt) {
     second: "2-digit"
   });
 
-  // 組合成富含 24 小時制時間上下文的提示輸入
-  const promptWithTime = `當前系統時間: ${localTimeStr}\n使用者輸入: "${userPrompt}"`;
+  // 格式化對話歷史供 Prompt 上下文使用 (解決省略句與比較指涉問題)
+  const historyText = Array.isArray(tempStory) && tempStory.length > 0
+    ? tempStory.map(m => `${m.role === 'user' ? '使用者' : '米粒'}: ${m.content}`).join('\n')
+    : "無歷史對話";
+
+  // 組合成富含 24 小時制時間與歷史對話上下文的提示輸入
+  const promptWithTime = `【歷史對話紀錄】:\n${historyText}\n\n當前系統時間: ${localTimeStr}\n使用者最新輸入: "${userPrompt}"`;
 
   const response = await createOpenAIResponse(
     {
@@ -535,6 +541,7 @@ function minimizeDietaryResponse(response) {
  *   - {Object} dietaryAgentResponse - Dietary Agent API 回傳的營養與建議數據
  *   - {Object} dietaryAgentRequest - 傳送給 Dietary Agent 的 Payload
  *   - {string} dietaryAgentError - 下游服務 API 呼叫的錯誤訊息 (如有)
+ *   - {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
  * @returns {Promise<string>} LLM 重組潤飾後的對話文字
  */
 async function generateCompanionReply({
@@ -542,7 +549,8 @@ async function generateCompanionReply({
   screening,
   emotion,
   dietaryAgentResponse,
-  dietaryAgentError
+  dietaryAgentError,
+  tempStory = []
 }) {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -555,6 +563,14 @@ async function generateCompanionReply({
   const rawDataStr = dietaryAgentResponse
     ? JSON.stringify(minimizeDietaryResponse(dietaryAgentResponse), null, 2)
     : "無資料";
+
+  // 將前置對話歷史轉換為符合 OpenAI Chat Completions 標準的 messages 格式
+  const formattedHistory = Array.isArray(tempStory)
+    ? tempStory.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.content
+      }))
+    : [];
 
   // 呼叫 OpenAI 官方標準的 Chat Completions API
   // 【API 差異備忘說明】：
@@ -577,6 +593,7 @@ async function generateCompanionReply({
           // 帶入重組引導的系統 Prompt 規則 (包含數值免責聲明)
           content: REPLY_SYSTEM_PROMPT
         },
+        ...formattedHistory,
         {
           role: "user",
           // 組合完整的上下文，供模型重組出最貼近的對話

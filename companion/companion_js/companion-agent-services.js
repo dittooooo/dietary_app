@@ -62,11 +62,12 @@ function buildDietaryAgentRequest(screening, message) {
  * - 分流 A (閒聊/非飲食) / 分流 B (飲食紀錄)：不安插翻譯與 Java 請求
  * - 分流 C (飲食諮詢)：包含具體食物才進行翻譯與 Java 請求；無食物時自動跳過
  * @param {string} userPrompt - 使用者原始輸入訊息
+ * @param {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
  * @returns {Promise<Object>} 包含意圖預檢 (screening)、情緒分析 (emotion) 與飲食助理請求 Payload 的物件
  */
-async function runOpenAIFlow(userPrompt) {
-  // 1. 呼叫 OpenAI 進行 Stage 1 JSON 分析
-  const result = await runLLMAnalysis(userPrompt);
+async function runOpenAIFlow(userPrompt, tempStory = []) {
+  // 1. 呼叫 OpenAI 進行 Stage 1 JSON 分析 (帶入歷史對話)
+  const result = await runLLMAnalysis(userPrompt, tempStory);
   const { screening, emotion } = result;
 
   // 2. 三路分流機制處理
@@ -156,7 +157,7 @@ async function callDietaryAgent(requestBody, authHeader) {
 /**
  * 產生陪伴精靈的最終回覆
  * 整合意圖、情緒以及飲食助理的回應，透過 LLM 生成溫馨、同理心且在地化的回覆。
- * @param {Object} params - 參數物件，包含篩選結果、情緒分析、飲食助理回應與原始問題等
+ * @param {Object} params - 參數物件，包含篩選結果、情緒分析、飲食助理回應、原始問題與歷史紀錄等
  * @returns {Promise<string>} 最終要呈現給使用者的對話文字
  */
 async function getCompanionReply({
@@ -164,7 +165,8 @@ async function getCompanionReply({
   emotion,
   dietaryAgentResponse,
   userPrompt,
-  dietaryAgentError
+  dietaryAgentError,
+  tempStory = []
 }) {
   // 飲食紀錄意圖處理 (分流 B 極速草稿文字組裝)
   if (screening?.intent_category === "meal_record") {
@@ -187,7 +189,8 @@ async function getCompanionReply({
       screening,
       emotion,
       dietaryAgentResponse,
-      dietaryAgentError
+      dietaryAgentError,
+      tempStory
     });
   } catch (error) {
     // 當 LLM 回覆生成崩潰或連線失敗時 (OpenAI API 保底)
