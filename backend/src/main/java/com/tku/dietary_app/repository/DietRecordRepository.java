@@ -22,6 +22,8 @@ public interface DietRecordRepository extends JpaRepository<DietRecord, Long> {
 
     List<DietRecord> findByUserIdOrderByDateDescCreatedAtDescIdDesc(Long userId);
 
+    void deleteByUserId(Long userId);
+
     List<DietRecord> findByUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtDescIdDesc(Long userId, LocalDateTime createdAt);
 
     @Query("""

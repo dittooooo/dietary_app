@@ -6,6 +6,8 @@ import com.tku.dietary_app.dto.RegisterRequest;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.UnauthorizedException;
+import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.ProblemFeedbackRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final DietRecordRepository dietRecordRepository;
+    private final ProblemFeedbackRepository problemFeedbackRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -93,6 +97,9 @@ public class AuthService {
     public void deleteAccount(String email) {
         User user = userRepository.findByEmail(email.trim().toLowerCase())
                 .orElseThrow(() -> new UnauthorizedException("登入狀態無效"));
+
+        dietRecordRepository.deleteByUserId(user.getId());
+        problemFeedbackRepository.deleteByUserId(user.getId());
 
         userProfileRepository.findByUser(user)
                 .ifPresent(userProfileRepository::delete);
