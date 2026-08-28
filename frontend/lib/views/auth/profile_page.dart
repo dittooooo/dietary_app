@@ -12,7 +12,6 @@ import '../../color/app_colors.dart';
 import '../superkey/admin_user_list_page.dart'; 
 import '../superkey/admin_problem_feedback_page.dart';
 import '../superkey/admin_test_tools_page.dart';
-import '../superkey/generic_admin_page.dart'; // 引入通用管理頁面
 import '../home/home_page.dart';
 import 'edit_profile_page.dart';
 import 'login_page.dart';
@@ -54,8 +53,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     setState(() {
       _email = cachedEmail;
-      _nickname = cachedNickname == '載入中...' ? (isCachedAdmin ? '系統管理員' : cachedNickname) : cachedNickname;
       _isAdmin = isCachedAdmin;
+      if (isCachedAdmin && (cachedNickname == 'aaa' || cachedNickname == '載入中...' || cachedNickname == '使用者' || cachedNickname == '管理員')) {
+        _nickname = '系統管理員';
+      } else {
+        _nickname = cachedNickname;
+      }
     });
 
     // 2. 向後端請求最新資料 (後端為主，更新快取)
@@ -69,17 +72,24 @@ class _ProfilePageState extends State<ProfilePage> {
           final bodyValue = _fullUserData?['dogBodyType'] ?? _fullUserData?['bodyType'] ?? _fullUserData?['mascotBodyType'] ?? _fullUserData?['avatarBodyType'] ?? _fullUserData?['dietGoal'] ?? _fullUserData?['diet_goal'];
           _dogController.setBodyTypeFromBackend(bodyValue);
           _dogController.setState(DogAnimationState.idle);
-          _nickname = _fullUserData?['nickname'] ?? _nickname;
-          
+
           final String? role = _fullUserData?['user']?['role'] ?? _fullUserData?['role'];
           _isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || _email.trim().toLowerCase() == 'admin@gmail.com';
+
+          final fetchedNickname = _fullUserData?['nickname']?.toString().trim();
+          if (_isAdmin && (fetchedNickname == null || fetchedNickname.isEmpty || fetchedNickname == 'aaa' || fetchedNickname == '使用者')) {
+            _nickname = '系統管理員';
+          } else if (fetchedNickname != null && fetchedNickname.isNotEmpty) {
+            _nickname = fetchedNickname;
+          }
         });
+        prefs.setString('user_nickname', _nickname);
       } else {
         // 如果後端回傳 404 (管理者尚未建立 user_profile 紀錄)，依然確保 _isAdmin 依據 email / role 保持為 true！
         if (isCachedAdmin || _email.trim().toLowerCase() == 'admin@gmail.com') {
           setState(() {
             _isAdmin = true;
-            if (_nickname == '載入中...') _nickname = '系統管理員';
+            if (_nickname == '載入中...' || _nickname == 'aaa') _nickname = '系統管理員';
           });
         } else if (_nickname == '載入中...') {
           setState(() => _nickname = '連線失敗');
@@ -157,6 +167,9 @@ class _ProfilePageState extends State<ProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('頭像上傳成功！')));
             _loadUserData(); // 重新載入最新資料
           } else {
+            setState(() {
+              _imageBytes = null; // 上傳失敗時清空記憶體預覽，確保 UI 與伺服器狀態一致
+            });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text(FriendlyErrorMessage.upload)),
             );
@@ -403,14 +416,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     }),
-                    _buildAdminButton('飲食紀錄管理', () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GenericAdminListPage(title: '飲食紀錄管理'),
-                        ),
-                      );
-                    }),
                     _buildAdminButton('問題回饋管理', () {
                       Navigator.push(
                         context,
@@ -513,28 +518,6 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
     ),
-      bottomNavigationBar: (ModalRoute.of(context)?.canPop ?? false)
-          ? BottomNavigationBar(
-              currentIndex: 3,
-              selectedItemColor: AppColors.primary,
-              unselectedItemColor: AppColors.textPrimary.withOpacity(0.4),
-              backgroundColor: AppColors.background,
-              type: BottomNavigationBarType.fixed,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-              unselectedLabelStyle: const TextStyle(fontSize: 12),
-              onTap: (index) => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)),
-                (route) => false,
-              ),
-              items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),
-                BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),
-                BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: '飲食報告'),
-                BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
-              ],
-            )
-          : null,
     );
   }
 

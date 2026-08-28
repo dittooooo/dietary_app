@@ -22,35 +22,34 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final token = prefs.getString(AuthService.accessTokenKey);
-  final needsOnboarding =
-      prefs.getBool(AuthService.needsOnboardingKey) ?? false;
 
   Widget initialScreen = const LoginPage();
 
   if (token != null && token.isNotEmpty) {
-    final role = prefs.getString('user_role');
-    final email = prefs.getString('user_email');
-    final bool isAdmin = role == 'ROLE_ADMIN' ||
-        role == 'ADMIN' ||
-        (email != null && email.trim().toLowerCase() == 'admin@gmail.com');
+    try {
+      final result = await AuthService().getUserProfile();
+      if (result['success'] == true) {
+        final data = result['data'];
+        final String? userRole = data?['user']?['role'] ?? data?['role'] ?? prefs.getString('user_role');
+        final String? userEmail = (data?['email'] ?? data?['user']?['email'] ?? prefs.getString('user_email'))?.toString().trim().toLowerCase();
+        final bool isAdmin = userRole == 'ROLE_ADMIN' || userRole == 'ADMIN' || userEmail == 'admin@gmail.com';
 
-    if (isAdmin) {
-      initialScreen = const HomePage();
-    } else if (needsOnboarding) {
-      initialScreen = const LoginPage();
-    } else {
-      // 本地有 Token 且已完成 Onboarding，預設保持登入直接進入首頁 (HomePage)
-      initialScreen = const HomePage();
-      try {
-        final result = await AuthService().getUserProfile();
-        if (result['message'] != null &&
-            result['message'].toString().contains('onboarding')) {
-          initialScreen = const InitialInfoPage();
+        if (isAdmin) {
+          initialScreen = const HomePage();
+        } else {
+          initialScreen = const HomePage();
         }
-      } catch (_) {
-        // 發生網路波動或伺服器連線問題時，依然保持登入狀態
+      } else {
+        // 後端驗證失敗（例如資料庫已重置/Token失效），自動清除本機快取並導回登入頁
+        await prefs.clear();
+        initialScreen = const LoginPage();
       }
+    } catch (_) {
+      // 連線異常或 Token 無效時，導回登入頁面
+      initialScreen = const LoginPage();
     }
+  } else {
+    initialScreen = const LoginPage();
   }
 
   runApp(MyApp(initialScreen: initialScreen));

@@ -82,6 +82,10 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
       builder: (context) => Dialog(
         backgroundColor: AppColors.background,
         insetPadding: const EdgeInsets.all(18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -102,18 +106,24 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
                 ],
               ),
             ),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.68,
-                maxWidth: MediaQuery.of(context).size.width * 0.9,
-              ),
-              child: InteractiveViewer(
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('圖片載入失敗'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.60,
+                    maxWidth: MediaQuery.of(context).size.width * 0.85,
+                  ),
+                  child: InteractiveViewer(
+                    child: Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Text('圖片載入失敗'),
+                      ),
+                    ),
                   ),
                 ),
               ),

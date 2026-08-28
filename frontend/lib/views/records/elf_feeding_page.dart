@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart'
     show kIsWeb; // 匯入 foundation.dart 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import '../home/home_page.dart';
+import 'diary_page.dart';
+import '../../core/api_client.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
@@ -12,12 +14,13 @@ class ElfFeedingPage extends StatefulWidget {
   // 定義 ElfFeedingPage 類別，繼承自 StatefulWidget
   final String imagePath; // 宣告類別成員或方法內部的區域變數
   final List<Map<String, dynamic>> items; // 宣告類別成員或方法內部的區域變數
+  final DateTime? recordDate;
 
   const ElfFeedingPage({
-    // 建立編譯期常數，優化 Flutter 渲染效能
-    super.key, // 執行相對應的邏輯計算或設定屬性參數
-    required this.imagePath, // 執行相對應的邏輯計算或設定屬性參數
-    required this.items, // 執行相對應的邏輯計算或設定屬性參數
+    super.key,
+    required this.imagePath,
+    required this.items,
+    this.recordDate,
   }); // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -117,15 +120,19 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
   */
 
   void _goToDiary() {
-    // 執行相對應的邏輯計算或設定屬性參數
+    final targetDate = widget.recordDate ?? DateTime.now();
     Navigator.pushAndRemoveUntil(
-      // 導航路由跳轉：開啟並推入新頁面
-      context, // 執行相對應的邏輯計算或設定屬性參數
+      context,
       MaterialPageRoute(
-        builder: (context) => const HomePage(initialIndex: 1),
-      ), // 建立編譯期常數，優化 Flutter 渲染效能
-      (route) => false, // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+        builder: (context) => HomePage(initialIndex: 1),
+      ),
+      (route) => false,
+    );
+    ApiClient.navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (context) => DiaryPage(date: targetDate),
+      ),
+    );
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法

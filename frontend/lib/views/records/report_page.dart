@@ -3,6 +3,7 @@ import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
 import 'dart:convert'; // 匯入 json 處理套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
+import '../home/home_page.dart';
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart';
@@ -487,6 +488,21 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
           child: Stack(
             alignment: Alignment.center,
             children: [
+              Positioned(
+                left: 0,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => HomePage(initialIndex: 1),
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.arrow_back_ios, size: 28, color: AppColors.textPrimary),
+                ),
+              ),
               const Text(
                 '飲食報告',
                 style: TextStyle(
@@ -514,7 +530,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   Widget _buildProfileAvatar(BuildContext context) { // 定義用於重複使用的 UI 封裝建構方法
     return GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
-      onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const ProfilePage(returnIndex: 1)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
+      onTap: () => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: 3)), (route) => false),
       child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
         decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 2.925, offset: const Offset(0, 1.56))]), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
         child: CircleAvatar(

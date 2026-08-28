@@ -509,9 +509,10 @@ class _CameraRecordPageState extends State<CameraRecordPage> with TickerProvider
                   Navigator.push( // 導航路由跳轉：開啟並推入新頁面
                     context, // 執行相對應的邏輯計算或設定屬性參數
                     MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                      builder: (context) => ElfFeedingPage( // 執行相對應的邏輯計算或設定屬性參數
-                        imagePath: _capturedImage!.path, // 執行相對應的邏輯計算或設定屬性參數
-                        items: _detectedItems, // 執行相對應的邏輯計算或設定屬性參數
+                      builder: (context) => ElfFeedingPage(
+                        imagePath: _capturedImage!.path,
+                        items: _detectedItems,
+                        recordDate: DateTime.now(),
                       ), // 執行相對應的邏輯計算或設定屬性參數
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ); // 程式碼區塊或元件結構結束

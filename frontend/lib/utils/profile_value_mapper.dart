@@ -166,12 +166,10 @@ class ProfileValueMapper {
   }
 
   static Set<String> dietGoalsToDisplaySet(dynamic value) {
-    final values = _coerceToList(value)
+    return _coerceToList(value)
         .map(dietGoalToDisplay)
         .where((item) => item.isNotEmpty)
         .toSet();
-
-    return values.isEmpty ? {defaultDietGoalDisplay} : values;
   }
 
   static String firstDietGoalToApi(Iterable<String> values) {

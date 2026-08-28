@@ -125,11 +125,6 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
       final hasGender = profileData['gender'] != null && profileData['gender'].toString().trim().isNotEmpty;
       
       if (hasHeight && hasWeight && hasGender) {
-        if (mounted) {
-          setState(() {
-            _selectedIndex = 0;
-          });
-        }
         return;
       }
 

@@ -87,10 +87,17 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   Future<void> _loadHomeData() async { // 定義非同步方法（Future），執行耗時操作
     // 1. 先從本地快取讀取 (前端輔助，速度快)
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
+    final cachedRole = prefs.getString('user_role');
+    final cachedEmail = prefs.getString('user_email') ?? '';
+    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN' || cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
+    String nick = prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
+    if (isCachedAdmin && (nick == 'aaa' || nick == '使用者')) {
+      nick = '系統管理員';
+    }
+
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-      _userNickname = prefs.getString('user_nickname') ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
+      _userNickname = nick; // 執行相對應的邏輯計算或設定屬性參數
       _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
-      // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
         {
           'isElf': true, 
@@ -108,15 +115,27 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       final userData = result['data']; // 宣告類別成員或方法內部的區域變數
       final String g = userData['dietGoal'] ?? userData['diet_goal'] ?? '養生'; // 宣告類別成員或方法內部的區域變數
       await prefs.setString('user_diet_goal', g); // 執行相對應的邏輯計算或設定屬性參數
+
+      final String? userRole = userData['user']?['role'] ?? userData['role'] ?? cachedRole;
+      final String userEmail = userData['email'] ?? userData['user']?['email'] ?? cachedEmail;
+      final bool isUserAdmin = userRole == 'ROLE_ADMIN' || userRole == 'ADMIN' || userEmail.trim().toLowerCase() == 'admin@gmail.com';
+      
+      String fetchedNick = userData['nickname'] ?? '';
+      if (isUserAdmin && (fetchedNick.isEmpty || fetchedNick == 'aaa' || fetchedNick == '使用者')) {
+        fetchedNick = '系統管理員';
+      } else if (fetchedNick.isEmpty) {
+        fetchedNick = _userNickname;
+      }
+
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _userNickname = userData['nickname'] ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
+        _userNickname = fetchedNick; // 執行相對應的邏輯計算或設定屬性參數
         _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
-        // _dietGoal = g; // 未使用，先註解
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
           _messages[0]['text'] = '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'; // 執行相對應的邏輯計算或設定屬性參數
         } // 程式碼區塊或元件結構結束
       }); // 程式碼區塊或元件結構結束
+      prefs.setString('user_nickname', _userNickname);
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -1034,8 +1053,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                   GestureDetector( // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
                     behavior: HitTestBehavior.opaque,
                     onTap: () => _toggleChat(true), // 單擊：開啟對話對話框
-                    onDoubleTap: () => _triggerYesterdaySummary(), // 雙擊：跳出昨日總結報告彈窗 (1fe8ba9)
-                    onLongPress: () => _showBodyStatusDialog(), // 長按：跳出小精靈體態動畫彈窗 (1fe8ba9 風格)
                     child: Hero( // 建立跨頁面過渡動畫元件（Hero），點擊時呈現放大或縮小移動特效
                       tag: 'elf', // 執行相對應的邏輯計算或設定屬性參數
                               child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
@@ -1353,9 +1370,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                 Navigator.push( // 導航路由跳轉：開啟並推入新頁面
                   context, // 執行相對應的邏輯計算或設定屬性參數
                   MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                    builder: (context) => ElfFeedingPage( // 執行相對應的邏輯計算或設定屬性參數
-                      imagePath: "",  // 執行相對應的邏輯計算或設定屬性參數
-                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}], // 執行相對應的邏輯計算或設定屬性參數
+                    builder: (context) => ElfFeedingPage(
+                      imagePath: "",
+                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}],
+                      recordDate: DateTime.now(),
                     ), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                 ); // 程式碼區塊或元件結構結束
@@ -1427,11 +1445,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
             onPressed: () { // 執行相對應的邏輯計算或設定屬性參數
               Navigator.push( // 導航路由跳轉：開啟並推入新頁面
                 context, // 執行相對應的邏輯計算或設定屬性參數
-                MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                  builder: (context) => const ElfFeedingPage( // 建立編譯期常數，優化 Flutter 渲染效能
-                    imagePath: "", // 這裡可以用預設圖片
-                    items: [{'name': '薯條', 'portion': '大份', 'calories': '380 kcal'}], // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
+                MaterialPageRoute(
+                  builder: (context) => ElfFeedingPage(
+                    imagePath: "",
+                    items: const [{'name': '薯條', 'portion': '大份', 'calories': '380 kcal'}],
+                    recordDate: DateTime.now(),
+                  ),
                 ), // 執行相對應的邏輯計算或設定屬性參數
               ); // 程式碼區塊或元件結構結束
             }, // 程式碼區塊或元件結構結束

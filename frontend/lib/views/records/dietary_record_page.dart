@@ -424,10 +424,12 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 GestureDetector(
                   // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
-                  onTap: () => Navigator.of(context).push(
+                  onTap: () => Navigator.pushAndRemoveUntil(
+                    context,
                     MaterialPageRoute(
-                      builder: (context) => const ProfilePage(returnIndex: 1),
+                      builder: (context) => HomePage(initialIndex: 3),
                     ),
+                    (route) => false,
                   ), // 建立編譯期常數，優化 Flutter 渲染效能
                   child: Container(
                     // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式

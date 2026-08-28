@@ -178,6 +178,35 @@ class AuthService {
     return normalized;
   }
 
+  Future<Map<String, dynamic>> deleteAccount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(accessTokenKey);
+
+    if (token == null || token.isEmpty) {
+      return {'success': false, 'message': '未登入'};
+    }
+
+    try {
+      final response = await _client.delete(
+        '/user/account',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      final data = _decodeBody(response.body);
+
+      if (response.statusCode == 200) {
+        await _clearSession(prefs);
+        return {
+          'success': true,
+          'message': data['message'] ?? '帳號已註銷',
+        };
+      }
+
+      return {'success': false, 'message': data['message'] ?? '註銷失敗'};
+    } catch (e) {
+      return {'success': false, 'message': '連線失敗：$e'};
+    }
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await _clearSession(prefs);
@@ -402,6 +431,9 @@ class AuthService {
     final nickname = userData['nickname']?.toString();
     final petType = userData['petType']?.toString();
     final gender = userData['gender']?.toString();
+    final birthDate = userData['birthDate']?.toString() ??
+        userData['birth_date']?.toString() ??
+        userData['birthday']?.toString();
     final role = userData['user']?['role']?.toString() ??
         userData['role']?.toString();
     final dietGoal = userData['dietGoal']?.toString() ??
@@ -411,11 +443,15 @@ class AuthService {
     final weight = _asDouble(userData['weight']);
     final healthConditions = userData['healthConditions'];
 
+    final isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || (email != null && email.trim().toLowerCase() == 'admin@gmail.com');
     if (email != null && email.isNotEmpty) {
       await prefs.setString('user_email', email);
     }
-    if (nickname != null) {
-      await prefs.setString('user_nickname', nickname);
+    if (nickname != null && nickname.isNotEmpty) {
+      final finalNick = (isAdmin && (nickname == 'aaa' || nickname == '使用者')) ? '系統管理員' : nickname;
+      await prefs.setString('user_nickname', finalNick);
+    } else if (isAdmin) {
+      await prefs.setString('user_nickname', '系統管理員');
     }
     if (petType != null) {
       await prefs.setString(
@@ -426,6 +462,9 @@ class AuthService {
     }
     if (gender != null) {
       await prefs.setString('user_gender', gender);
+    }
+    if (birthDate != null && birthDate.isNotEmpty) {
+      await prefs.setString('user_birth_date', birthDate);
     }
     if (role != null) {
       await prefs.setString('user_role', role);

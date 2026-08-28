@@ -319,14 +319,55 @@ class DietService {
     dynamic amount = 1,
     String nutrition = '',
     DateTime? mealDate,
+    bool refetchNutrition = true,
   }) async {
     final token = await _token();
     if (token == null) {
       return {'success': false, 'message': '請重新登入。'};
     }
 
-    final parsedNutrition = _parseNutrition(nutrition);
     final int intAmount = _parseAmount(amount);
+    final double amountFactor = intAmount > 0 ? intAmount.toDouble() : 1.0;
+    Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
+
+    if (refetchNutrition) {
+      final fetchedNut = await fetchDishNutrition(dishName);
+      if (fetchedNut['calories'] != null ||
+          fetchedNut['protein'] != null ||
+          fetchedNut['fat'] != null ||
+          fetchedNut['carbohydrates'] != null) {
+        parsedNutrition = {
+          'calories': fetchedNut['calories'] != null
+              ? fetchedNut['calories']! * amountFactor
+              : null,
+          'protein': fetchedNut['protein'] != null
+              ? fetchedNut['protein']! * amountFactor
+              : null,
+          'fat': fetchedNut['fat'] != null
+              ? fetchedNut['fat']! * amountFactor
+              : null,
+          'carbohydrates': fetchedNut['carbohydrates'] != null
+              ? fetchedNut['carbohydrates']! * amountFactor
+              : null,
+        };
+      }
+    }
+
+    final List<String> parts = [];
+    if (parsedNutrition['calories'] != null) {
+      parts.add('熱量: ${parsedNutrition['calories']!.toStringAsFixed(1)} kcal');
+    }
+    if (parsedNutrition['protein'] != null) {
+      parts.add('蛋白質: ${parsedNutrition['protein']!.toStringAsFixed(1)} g');
+    }
+    if (parsedNutrition['fat'] != null) {
+      parts.add('脂肪: ${parsedNutrition['fat']!.toStringAsFixed(1)} g');
+    }
+    if (parsedNutrition['carbohydrates'] != null) {
+      parts.add('碳水化合物: ${parsedNutrition['carbohydrates']!.toStringAsFixed(1)} g');
+    }
+    final String updatedNutritionStr =
+        parts.isNotEmpty ? parts.join(', ') : nutrition;
 
     String apiMealType = _mealTypeForApi(mealType);
     String apiDescription = description;
@@ -343,7 +384,7 @@ class DietService {
           'mealType': apiMealType,
           'description': apiDescription,
           'amount': intAmount,
-          'nutrition': nutrition,
+          'nutrition': updatedNutritionStr,
           'calories': parsedNutrition['calories'],
           'protein': parsedNutrition['protein'],
           'fat': parsedNutrition['fat'],

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
@@ -11,6 +12,14 @@ import '../views/auth/login_page.dart';
 class ApiClient {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+
+  MediaType _resolveMediaType(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.png')) return MediaType('image', 'png');
+    if (lower.endsWith('.webp')) return MediaType('image', 'webp');
+    if (lower.endsWith('.gif')) return MediaType('image', 'gif');
+    return MediaType('image', 'jpeg');
+  }
 
   Uri _resolveUrl(String path) {
     if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -85,7 +94,12 @@ class ApiClient {
         final request = http.MultipartRequest('POST', url);
         request.headers.addAll(resolvedHeaders);
         request.files.add(
-          http.MultipartFile.fromBytes('file', fileBytes, filename: filename),
+          http.MultipartFile.fromBytes(
+            'file',
+            fileBytes,
+            filename: filename,
+            contentType: _resolveMediaType(filename),
+          ),
         );
         final streamedResponse = await request.send();
         return http.Response.fromStream(streamedResponse);

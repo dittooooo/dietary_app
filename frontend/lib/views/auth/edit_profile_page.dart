@@ -9,6 +9,7 @@ import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套�
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
 import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper
+import 'login_page.dart';
 
 class EditProfilePage extends StatefulWidget { // 定義 EditProfilePage 類別，繼承自 StatefulWidget
   final Map<String, dynamic> initialData; // 宣告類別成員或方法內部的區域變數
@@ -62,26 +63,71 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
   ];
   final List<String> _goalOptions = ['減脂', '增肌', '養生']; // 宣告類別成員或方法內部的區域變數
 
+  bool get _isUserAdmin {
+    final role = widget.initialData['user']?['role'] ?? widget.initialData['role'];
+    final email = _emailController.text.trim().toLowerCase();
+    return widget.isMandatoryAdmin ||
+        role == 'ROLE_ADMIN' ||
+        role == 'ADMIN' ||
+        email == 'admin@gmail.com';
+  }
+
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _authService = AuthService(); // 執行相對應的邏輯計算或設定屬性參數
-    final data = widget.initialData; // 宣告類別成員或方法內部的區域變數
+    _nameController = TextEditingController();
+    _emailController = TextEditingController();
+    _yearController = TextEditingController();
+    _monthController = TextEditingController();
+    _dayController = TextEditingController();
+    _heightController = TextEditingController();
+    _weightController = TextEditingController();
+
+    _populateFieldsFromData(widget.initialData);
+    _fetchProfileFromBackend();
+  }
+
+  Future<void> _fetchProfileFromBackend() async {
+    try {
+      final result = await _authService.getUserProfile();
+      if (mounted && result['success'] == true && result['data'] != null) {
+        final data = Map<String, dynamic>.from(result['data']);
+        setState(() {
+          _populateFieldsFromData(data);
+        });
+      }
+    } catch (_) {}
+  }
+
+  void _populateFieldsFromData(Map<String, dynamic> data) {
+    if (data.isEmpty) {
+      if (_emailController.text.isEmpty) _loadUserEmail();
+      return;
+    }
     
-    // 暱稱：唯讀，若未設定則預設顯示 '管理者'
+    // 暱稱：若未設定則預設顯示 '系統管理員' 或空
     final initialName = (data['nickname'] != null && data['nickname'].toString().trim().isNotEmpty)
         ? data['nickname'].toString().trim()
-        : (widget.isMandatoryAdmin ? '管理者' : '');
-    _nameController = TextEditingController(text: initialName);
+        : (_isUserAdmin ? '系統管理員' : '');
+    if (initialName.isNotEmpty || _nameController.text.isEmpty) {
+      _nameController.text = initialName;
+    }
 
     // 帳號：動態取得 Email (唯讀)
-    final initialEmail = data['email']?.toString().trim() ?? '';
-    _emailController = TextEditingController(text: initialEmail);
+    final initialEmail = data['email']?.toString().trim() ?? data['user']?['email']?.toString().trim() ?? '';
+    if (initialEmail.isNotEmpty || _emailController.text.isEmpty) {
+      _emailController.text = initialEmail;
+    }
     _loadUserEmail();
 
     // 載入個人資訊 (若 DB 有紀錄則自動填入現有資料)
     final gStr = data['gender']?.toString().toUpperCase() ?? '';
-    _gender = gStr == 'FEMALE' ? '女' : (gStr == 'MALE' ? '男' : '');
+    if (gStr == 'FEMALE') {
+      _gender = '女';
+    } else if (gStr == 'MALE') {
+      _gender = '男';
+    }
 
     // 相容後端所有生日格式 (List JSON, ISO YYYY-MM-DD, 斜線 YYYY/MM/DD, 點號 YYYY.MM.DD, 無分隔符 8 位數, 帶時間 T, 及年齡 age 備用)
     String yearStr = '';
@@ -121,28 +167,26 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       dayStr = '01';
     }
 
-    _yearController = TextEditingController(text: yearStr);
-    _monthController = TextEditingController(text: monthStr);
-    _dayController = TextEditingController(text: dayStr);
+    if (yearStr.isNotEmpty) _yearController.text = yearStr;
+    if (monthStr.isNotEmpty) _monthController.text = monthStr;
+    if (dayStr.isNotEmpty) _dayController.text = dayStr;
 
     final hVal = data['height'];
-    final initialHeight = (hVal != null && (double.tryParse(hVal.toString()) ?? 0) > 0) ? hVal.toString() : '';
-    _heightController = TextEditingController(text: initialHeight);
+    if (hVal != null && (double.tryParse(hVal.toString()) ?? 0) > 0) {
+      _heightController.text = hVal.toString();
+    }
 
     final wVal = data['weight'];
-    final initialWeight = (wVal != null && (double.tryParse(wVal.toString()) ?? 0) > 0) ? wVal.toString() : '';
-    _weightController = TextEditingController(text: initialWeight);
+    if (wVal != null && (double.tryParse(wVal.toString()) ?? 0) > 0) {
+      _weightController.text = wVal.toString();
+    }
 
     if (data['healthConditions'] != null && data['healthConditions'].toString().isNotEmpty) {
       _diseases = ProfileValueMapper.healthConditionsToDisplaySet(data['healthConditions']);
-    } else {
-      _diseases = {};
     }
 
     if (data['dietGoal'] != null && data['dietGoal'].toString().isNotEmpty) {
       _goals = ProfileValueMapper.dietGoalsToDisplaySet(data['dietGoal']);
-    } else {
-      _goals = {};
     }
   }
 
@@ -248,7 +292,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
 
     try {
       final body = {
-        'nickname': _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : '管理者',
+        'nickname': _nameController.text.trim(),
         'gender': ProfileValueMapper.genderToApi(_gender),
         'birthDate': formattedBirthDate,
         'age': ageVal,
@@ -311,7 +355,10 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
         title: const Text('確定要註銷帳號嗎？'), // 建立文字顯示元件（Text）
         content: const Text('這將會永久刪除您的所有資料，且無法復原。'), // 建立文字顯示元件（Text）
         actions: [ // 執行相對應的邏輯計算或設定屬性參數
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消', style: TextStyle(color: AppColors.textSecondary))), // 導航路由返回：關閉當前頁面並返回上一頁
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+          ), // 導航路由返回：關閉當前頁面並返回上一頁
           TextButton( // 執行相對應的邏輯計算或設定屬性參數
             onPressed: () => Navigator.pop(ctx, true), // 導航路由返回：關閉當前頁面並返回上一頁
             child: const Text('確認註銷', style: TextStyle(color: AppColors.danger)), // 建立文字顯示元件（Text）
@@ -322,36 +369,33 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
 
     if (confirm != true) return; // 執行相對應的邏輯計算或設定屬性參數
 
-    try { // 執行相對應的邏輯計算或設定屬性參數
-      final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
-      final token = prefs.getString('jwt_token'); // 宣告類別成員或方法內部的區域變數
+    try {
+      final res = await _authService.deleteAccount();
 
-      final response = await http.delete( // 宣告類別成員或方法內部的區域變數
-        Uri.parse('${ApiConfig.baseUrl}/user/account'), // 執行相對應的邏輯計算或設定屬性參數
-        headers: { // 執行相對應的邏輯計算或設定屬性參數
-          'Authorization': 'Bearer $token', // 執行相對應的邏輯計算或設定屬性參數
-        }, // 程式碼區塊或元件結構結束
-      ); // 程式碼區塊或元件結構結束
-
-      if (response.statusCode == 200) { // 執行相對應的邏輯計算或設定屬性參數
-        // ... (success logic)
-      } else if (response.statusCode == 404 || response.statusCode == 405) { // 執行相對應的邏輯計算或設定屬性參數
-        // 後端未實作時的補償說明 (前端輔助)
-        if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-          ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-            const SnackBar(content: Text('目前後端暫不支援註銷功能，請聯繫管理員。')) // 建立文字顯示元件（Text）
-          ); // 程式碼區塊或元件結構結束
-        } // 程式碼區塊或元件結構結束
-      } else { // 程式碼區塊或元件結構結束
-        throw Exception('註銷失敗，請稍後再試'); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-    } catch (e) { // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) { // 執行相對應的邏輯計算或設定屬性參數
-        ScaffoldMessenger.of(context).showSnackBar( // 執行相對應的邏輯計算或設定屬性參數
-          const SnackBar(content: Text('目前後端尚未開放註銷功能。')) // 建立文字顯示元件（Text）
-        ); // 程式碼區塊或元件結構結束
-      } // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
+      if (res['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(res['message'] ?? '帳號已成功註銷。')),
+          );
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false,
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(res['message'] ?? '註銷帳號失敗，請稍後再試。')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('註銷失敗，請檢查網路連線。')),
+        );
+      }
+    }
   } // 程式碼區塊或元件結構結束
 
   @override // 標記此方法為覆寫父類別之方法
@@ -401,8 +445,8 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                     ),
                   ],
                   _buildSectionBox([ // 執行相對應的邏輯計算或設定屬性參數
-                    _buildRowItem('暱稱', _nameController, enabled: false), // 唯讀模式
-                    _buildRowItem('帳號', _emailController, enabled: false), // 唯讀模式（動態顯示）
+                    _buildRowItem('暱稱', _nameController, enabled: !_isUserAdmin), // 管理者權限為唯讀；一般使用者可修改
+                    _buildRowItem('帳號', _emailController, enabled: false), // 帳號恆為唯讀
                   ]), // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   _buildSectionBox([ // 執行相對應的邏輯計算或設定屬性參數
@@ -716,6 +760,13 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                               } else {
                                 selection.remove(opt);
                               }
+                            }
+                          } else if (label == '目標') {
+                            if (val) {
+                              selection.clear();
+                              selection.add(opt);
+                            } else if (selection.length > 1) {
+                              selection.remove(opt);
                             }
                           } else {
                             if (val) {

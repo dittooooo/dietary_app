@@ -286,6 +286,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               builder: (context) => ElfFeedingPage(
                 imagePath: firstImagePath ?? "",
                 items: elfItems,
+                recordDate: validItems.isNotEmpty ? validItems[0].selectedDate : DateTime.now(),
               ),
             ),
           );
