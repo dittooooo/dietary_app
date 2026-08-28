@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface ProblemFeedbackRepository extends JpaRepository<ProblemFeedback, Long> {
     List<ProblemFeedback> findByUserIdOrderByCreatedAtDesc(Long userId);
+    void deleteByUserId(Long userId);
     List<ProblemFeedback> findAllByOrderByCreatedAtDesc();
 }
