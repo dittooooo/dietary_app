@@ -515,7 +515,7 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
       bottomNavigationBar: (ModalRoute.of(context)?.canPop ?? false)
           ? BottomNavigationBar(
-              currentIndex: 2,
+              currentIndex: 3,
               selectedItemColor: AppColors.primary,
               unselectedItemColor: AppColors.textPrimary.withOpacity(0.4),
               backgroundColor: AppColors.background,
@@ -530,6 +530,7 @@ class _ProfilePageState extends State<ProfilePage> {
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),
                 BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),
+                BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: '飲食報告'),
                 BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁')
               ],
             )

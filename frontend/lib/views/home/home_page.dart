@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_pr
 import '../auth/edit_profile_page.dart'; // 匯入 edit_profile_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../records/dietary_record_page.dart'; // 匯入 dietary_record_page.dart 元件庫或套件
+import '../records/report_page.dart';
 import 'home_view.dart'; // 匯入 home_view.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
@@ -10,7 +11,13 @@ import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫
 class HomePage extends StatefulWidget { // 定義 HomePage 類別，繼承自 StatefulWidget
   final int initialIndex; // 宣告類別成員或方法內部的區域變數
   final bool showChat; // 宣告類別成員或方法內部的區域變數
-  const HomePage({super.key, this.initialIndex = 0, this.showChat = false}); // 建立編譯期常數，優化 Flutter 渲染效能
+  final DateTime? initialReportDate;
+  const HomePage({
+    super.key,
+    this.initialIndex = 0,
+    this.showChat = false,
+    this.initialReportDate,
+  }); // 建立編譯期常數，優化 Flutter 渲染效能
 
   @override // 標記此方法為覆寫父類別之方法
   State<HomePage> createState() => _HomePageState(); // 執行相對應的邏輯計算或設定屬性參數
@@ -19,6 +26,7 @@ class HomePage extends StatefulWidget { // 定義 HomePage 類別，繼承自 St
 class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別，繼承自 State
   late int _selectedIndex; // 宣告類別成員或方法內部的區域變數
   late List<Widget> _pages; // 宣告類別成員或方法內部的區域變數
+  late final ValueNotifier<DateTime> _selectedReportDate;
   // bool _isAdmin = false;
   bool _isRoleChecked = false;
 
@@ -26,6 +34,9 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
     _selectedIndex = widget.initialIndex; // 執行相對應的邏輯計算或設定屬性參數
+    _selectedReportDate = ValueNotifier(
+      widget.initialReportDate ?? DateTime.now(),
+    );
     _pages = []; // 執行相對應的邏輯計算或設定屬性參數
     _checkAdminRole(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
@@ -69,7 +80,11 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
         // _isAdmin = false;
         _pages = [
           HomeView(initialOpenChat: widget.showChat),
-          const DietaryRecordPage(),
+          DietaryRecordPage(onDateSelected: _updateSelectedReportDate),
+          ReportPage(
+            selectedDateListenable: _selectedReportDate,
+            onDateChanged: _updateSelectedReportDate,
+          ),
           const ProfilePage(),
         ];
         _isRoleChecked = true;
@@ -83,7 +98,11 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
         // _isAdmin = true;
         _pages = [
           HomeView(initialOpenChat: widget.showChat),
-          const DietaryRecordPage(),
+          DietaryRecordPage(onDateSelected: _updateSelectedReportDate),
+          ReportPage(
+            selectedDateListenable: _selectedReportDate,
+            onDateChanged: _updateSelectedReportDate,
+          ),
           const ProfilePage(),
         ];
         _isRoleChecked = true;
@@ -174,6 +193,16 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
     }); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
+  void _updateSelectedReportDate(DateTime date) {
+    _selectedReportDate.value = DateTime(date.year, date.month, date.day);
+  }
+
+  @override
+  void dispose() {
+    _selectedReportDate.dispose();
+    super.dispose();
+  }
+
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     if (!_isRoleChecked) { // 執行相對應的邏輯計算或設定屬性參數
@@ -217,6 +246,10 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
               icon: Icon(Icons.edit_note), // 顯示預設的圖示元件（Icon）
               label: '飲食紀錄', // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_outlined),
+              label: '飲食報告',
+            ),
             BottomNavigationBarItem( // 執行相對應的邏輯計算或設定屬性參數
               icon: Icon(Icons.account_circle), // 顯示預設的圖示元件（Icon）
               label: '個人首頁', // 執行相對應的邏輯計算或設定屬性參數

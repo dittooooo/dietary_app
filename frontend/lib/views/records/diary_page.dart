@@ -15,13 +15,15 @@ import '../../services/auth_service.dart';
 
 class DiaryPage extends StatefulWidget { // 定義 DiaryPage 類別，繼承自 StatefulWidget
   final DateTime date; // 宣告類別成員或方法內部的區域變數
-  const DiaryPage({super.key, required this.date}); // 建立編譯期常數，優化 Flutter 渲染效能
+  final ValueChanged<DateTime>? onDateChanged;
+  const DiaryPage({super.key, required this.date, this.onDateChanged}); // 建立編譯期常數，優化 Flutter 渲染效能
 
   @override // 標記此方法為覆寫父類別之方法
   State<DiaryPage> createState() => _DiaryPageState(); // 執行相對應的邏輯計算或設定屬性參數
 } // 程式碼區塊或元件結構結束
 
 class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類別，繼承自 State
+  late DateTime _selectedDate;
   final Set<String> _expandedMeals = {}; // 宣告類別成員或方法內部的區域變數
   String? _swipedMeal; // 執行相對應的邏輯計算或設定屬性參數
   double _dragExtent = 0.0; // 宣告類別成員或方法內部的區域變數
@@ -36,6 +38,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _selectedDate = widget.date;
     _loadPetData(); // 執行相對應的邏輯計算或設定屬性參數
     _fetchRecords(); // 獲取後端飲食紀錄
   } // 程式碼區塊或元件結構結束
@@ -66,6 +69,34 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
       }
     }
   } // 程式碼區塊或結構結束
+
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: AppColors.background,
+            onSurface: AppColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+
+    if (picked == null || !mounted) return;
+    final selectedDate = DateTime(picked.year, picked.month, picked.day);
+    setState(() {
+      _selectedDate = selectedDate;
+      _expandedMeals.clear();
+      _swipedMeal = null;
+    });
+    widget.onDateChanged?.call(selectedDate);
+  }
 
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
@@ -226,15 +257,15 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
     return _allRecords.where((record) {
       final rDate = _getRecordDate(record);
       if (rDate == null) return false;
-      return rDate.year == widget.date.year &&
-             rDate.month == widget.date.month &&
-             rDate.day == widget.date.day;
+      return rDate.year == _selectedDate.year &&
+             rDate.month == _selectedDate.month &&
+             rDate.day == _selectedDate.day;
     }).toList();
   }
 
   @override // 標記此方法為覆寫父類別之方法
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
-    String dateStr = "${widget.date.year}年${widget.date.month}月${widget.date.day}日"; // 宣告類別成員或方法內部的區域變數
+    String dateStr = "${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日"; // 宣告類別成員或方法內部的區域變數
     final todayRecords = _getRecordsForSelectedDate();
 
     // 依餐點時段分類
@@ -287,7 +318,7 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ManualRecordPage(initialDate: widget.date),
+              builder: (context) => ManualRecordPage(initialDate: _selectedDate),
             ),
           );
           _fetchRecords(); // 新增完成後重新整理頁面數據
@@ -302,10 +333,20 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
         unselectedItemColor: Colors.grey, // 設定顏色數值（Color）
         backgroundColor: AppColors.background, // 設定顏色數值（Color）
         type: BottomNavigationBarType.fixed, // 執行相對應的邏輯計算或設定屬性參數
-        onTap: (index) => Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)), (route) => false), // 導航路由跳轉：開啟並推入新頁面
+        onTap: (index) => Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomePage(
+              initialIndex: index,
+              initialReportDate: _selectedDate,
+            ),
+          ),
+          (route) => false,
+        ), // 導航路由跳轉：開啟並推入新頁面
         items: const [ // 建立編譯期常數，優化 Flutter 渲染效能
           BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),  // 顯示預設的圖示元件（Icon）
           BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),  // 顯示預設的圖示元件（Icon）
+          BottomNavigationBarItem(icon: Icon(Icons.assignment_outlined), label: '飲食報告'),
           BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁') // 顯示預設的圖示元件（Icon）
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -377,7 +418,19 @@ class _DiaryPageState extends State<DiaryPage> { // 定義 _DiaryPageState 類�
           ), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
-      child: Center(child: Text(dateStr, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500))), // 建立文字顯示元件（Text）
+      child: InkWell(
+        onTap: _selectDate,
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(dateStr, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+              const SizedBox(width: 4),
+              const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+            ],
+          ),
+        ),
+      ),
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 

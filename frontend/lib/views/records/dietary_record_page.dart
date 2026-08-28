@@ -3,7 +3,6 @@ import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import 'diary_page.dart'; // 匯入 diary_page.dart 元件庫或套件
-import 'report_page.dart'; // 匯入 report_page.dart 元件庫或套件
 import 'manual_record_page.dart'; // 匯入 manual_record_page.dart 元件庫或套件
 import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
@@ -15,7 +14,8 @@ import '../../services/diet_service.dart';
 
 class DietaryRecordPage extends StatefulWidget {
   // 定義 DietaryRecordPage 類別，繼承自 StatefulWidget
-  const DietaryRecordPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
+  final ValueChanged<DateTime>? onDateSelected;
+  const DietaryRecordPage({super.key, this.onDateSelected});
 
   @override // 標記此方法為覆寫父類別之方法
   State<DietaryRecordPage> createState() => _DietaryRecordPageState(); // 執行相對應的邏輯計算或設定屬性參數
@@ -222,8 +222,19 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       // 更新狀態數據並通知 UI 重新渲染畫面
       _selectedDate = date; // 執行相對應的邏輯計算或設定屬性參數
       _rippleDate = date; // 執行相對應的邏輯計算或設定屬性參數
-      _showOverlay = true; // 執行相對應的邏輯計算或設定屬性參數
+      _showOverlay = false;
     }); // 程式碼區塊或元件結構結束
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DiaryPage(
+          date: date,
+          onDateChanged: widget.onDateSelected,
+        ),
+      ),
+    ).then((_) => _loadDietRecords());
+    widget.onDateSelected?.call(date);
 
     Future.microtask(() {
       // 執行相對應的邏輯計算或設定屬性參數
@@ -660,20 +671,6 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => DiaryPage(date: _selectedDate),
-                      ),
-                    );
-                  },
-                ), // 更新狀態數據並通知 UI 重新渲染畫面
-                _buildMenuButton(
-                  title: "報告",
-                  icon: Icons.assignment_outlined,
-                  color: AppColors.surface,
-                  onTap: () {
-                    setState(() => _showOverlay = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReportPage(date: _selectedDate),
                       ),
                     );
                   },

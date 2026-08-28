@@ -2,7 +2,6 @@ import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套�
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
 import 'dart:convert'; // 匯入 json 處理套件
-import '../home/home_page.dart'; // 匯入 home_page.dart 元件庫或套件
 import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../controllers/dog_state_controller.dart';
@@ -12,16 +11,25 @@ import '../../services/diet_service.dart'; // 匯入 diet_service.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/auth_service.dart';
 import '../../config/api_config.dart';
+import 'package:flutter/foundation.dart';
 
 class ReportPage extends StatefulWidget { // 定義 ReportPage 類別，繼承自 StatefulWidget
-  final DateTime date; // 宣告類別成員或方法內部的區域變數
-  const ReportPage({super.key, required this.date}); // 建立編譯期常數，優化 Flutter 渲染效能
+  final DateTime? initialDate;
+  final ValueListenable<DateTime>? selectedDateListenable;
+  final ValueChanged<DateTime>? onDateChanged;
+  const ReportPage({
+    super.key,
+    this.initialDate,
+    this.selectedDateListenable,
+    this.onDateChanged,
+  });
 
   @override // 標記此方法為覆寫父類別之方法
   State<ReportPage> createState() => _ReportPageState(); // 執行相對應的邏輯計算或設定屬性參數
 } // 程式碼區塊或元件結構結束
 
 class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin { // 定義 _ReportPageState 類別，繼承自 State
+  late DateTime _selectedDate;
   int _viewType = 0; // 0: 今日, 1: 一週
   int? _hoveredIdx; // 用於追蹤圖表上被點擊/懸停的點
 
@@ -63,6 +71,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    _selectedDate = widget.selectedDateListenable?.value ??
+        widget.initialDate ??
+        DateTime.now();
+    widget.selectedDateListenable?.addListener(_handleSharedDateChanged);
     _dogController.setState(DogAnimationState.idle);
     _loadAvatar();
     
@@ -209,9 +221,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   }
 
   void _processRecords() {
-    // 1. Weekly data: Sunday to Saturday of the week containing widget.date
-    final sundayOffset = widget.date.weekday % 7;
-    final sunday = widget.date.subtract(Duration(days: sundayOffset));
+    // 1. Weekly data: Sunday to Saturday of the week containing the selected date.
+    final sundayOffset = _selectedDate.weekday % 7;
+    final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
     List<double> weekly = [];
     for (int i = 0; i < 7; i++) {
       final targetDate = sunday.add(Duration(days: i));
@@ -228,10 +240,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       weekly.add(dailyTotal);
     }
 
-    // 2. Monthly data: from widget.date - 29 days to widget.date
+    // 2. Monthly data: from the selected date - 29 days to the selected date.
     List<double> monthly = [];
     for (int i = 29; i >= 0; i--) {
-      final targetDate = widget.date.subtract(Duration(days: i));
+      final targetDate = _selectedDate.subtract(Duration(days: i));
       double dailyTotal = 0.0;
       for (var record in _allRecords) {
         final rDate = _getRecordDate(record);
@@ -253,6 +265,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   @override // 標記此方法為覆寫父類別之方法
   void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
+    widget.selectedDateListenable?.removeListener(_handleSharedDateChanged);
     _hoverController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
     super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
@@ -266,13 +279,56 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   String get _dateDisplay { // 宣告類別成員或方法內部的區域變數
     if (_viewType == 0) { // 執行相對應的邏輯計算或設定屬性參數
-      return "${widget.date.year}年 ${widget.date.month.toString().padLeft(2, '0')}月 ${widget.date.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
+      return "${_selectedDate.year}年 ${_selectedDate.month.toString().padLeft(2, '0')}月 ${_selectedDate.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
     } else { // 程式碼區塊或元件結構結束
-      DateTime startDate = widget.date.subtract(Duration(days: widget.date.weekday % 7));
+      DateTime startDate = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
       DateTime endDate = startDate.add(const Duration(days: 6));
       return "${startDate.year}年 ${startDate.month.toString().padLeft(2, '0')}月 ${startDate.day.toString().padLeft(2, '0')}日 - ${endDate.year == startDate.year ? '' : '${endDate.year}年 '}${endDate.month.toString().padLeft(2, '0')}月 ${endDate.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
     } // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
+
+  void _handleSharedDateChanged() {
+    final sharedDate = widget.selectedDateListenable?.value;
+    if (sharedDate == null ||
+        (sharedDate.year == _selectedDate.year &&
+            sharedDate.month == _selectedDate.month &&
+            sharedDate.day == _selectedDate.day)) {
+      return;
+    }
+
+    setState(() {
+      _selectedDate = sharedDate;
+      _hoveredIdx = null;
+    });
+    _processRecords();
+  }
+
+  Future<void> _changeDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2023),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: AppColors.background,
+            onSurface: AppColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+
+    if (picked == null || !mounted) return;
+    setState(() {
+      _selectedDate = picked;
+      _hoveredIdx = null;
+    });
+    widget.onDateChanged?.call(picked);
+    _processRecords();
+  }
 
   Widget _buildTabButton(String label, bool isSelected) { // 定義用於重複使用的 UI 封裝建構方法
     return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
@@ -413,21 +469,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
           _buildHeader(context), // 執行相對應的邏輯計算或設定屬性參數
         ], // 執行相對應的邏輯計算或設定屬性參數
       ), // 執行相對應的邏輯計算或設定屬性參數
-      bottomNavigationBar: BottomNavigationBar( // 執行相對應的邏輯計算或設定屬性參數
-        currentIndex: 1, // 執行相對應的邏輯計算或設定屬性參數
-        selectedItemColor: AppColors.primary, // 設定顏色數值（Color）
-        unselectedItemColor: Colors.grey, // 設定顏色數值（Color）
-        backgroundColor: AppColors.background, // 設定顏色數值（Color）
-        type: BottomNavigationBarType.fixed, // 執行相對應的邏輯計算或設定屬性參數
-        onTap: (index) { // 執行相對應的邏輯計算或設定屬性參數
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => HomePage(initialIndex: index)), (route) => false); // 導航路由跳轉：開啟並推入新頁面
-        }, // 程式碼區塊或元件結構結束
-        items: const [ // 建立編譯期常數，優化 Flutter 渲染效能
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'), // 顯示預設的圖示元件（Icon）
-          BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'), // 顯示預設的圖示元件（Icon）
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: '個人首頁'), // 顯示預設的圖示元件（Icon）
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
@@ -443,26 +484,27 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
           ),
           padding: EdgeInsets.fromLTRB(16, statusBarHeight + 10, 16, 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios, size: 28)),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => setState(() { _viewType = (_viewType + 1) % 2; _hoveredIdx = null; }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(10)),
-                      child: Text(_viewLabel, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Colors.white)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text('趨勢報告', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary, letterSpacing: 1.2)),
-                ],
+              const Text(
+                '飲食報告',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                  letterSpacing: 1.2,
+                ),
               ),
-              _buildProfileAvatar(context),
+              Positioned(
+                right: 0,
+                child: IconButton(
+                  tooltip: '更改日期',
+                  onPressed: _changeDate,
+                  icon: const Icon(Icons.calendar_month_outlined,
+                      color: AppColors.textPrimary),
+                ),
+              ),
             ],
           ),
         ),
@@ -575,7 +617,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     double dinnerCal = 0.0;
     double otherCal = 0.0;
 
-    final DateTime startDate = widget.date.subtract(Duration(days: widget.date.weekday % 7));
+    final DateTime startDate = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
     final DateTime endDate = startDate.add(const Duration(days: 6));
     
     final DateTime startLimit = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
@@ -725,9 +767,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       final rDate = _getRecordDate(record);
       if (rDate == null) continue;
       try {
-        if (rDate.year == widget.date.year &&
-            rDate.month == widget.date.month &&
-            rDate.day == widget.date.day) {
+        if (rDate.year == _selectedDate.year &&
+            rDate.month == _selectedDate.month &&
+            rDate.day == _selectedDate.day) {
           todayCal += _getCaloriesFromRecord(record);
           todayProtein += _getProteinFromRecord(record);
           todayFat += _getFatFromRecord(record);
@@ -1104,8 +1146,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
         LayoutBuilder( // 執行相對應的邏輯計算或設定屬性參數
           builder: (context, constraints) { // 執行相對應的邏輯計算或設定屬性參數
-            final sundayOffset = widget.date.weekday % 7;
-            final sunday = widget.date.subtract(Duration(days: sundayOffset));
+            final sundayOffset = _selectedDate.weekday % 7;
+            final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
             final weekdaysZh = ["日", "一", "二", "三", "四", "五", "六"];
             List<String> labels = [];
             for (int i = 0; i < 7; i++) {
@@ -1151,9 +1193,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       final todayRecords = _allRecords.where((record) {
         final rDate = _getRecordDate(record);
         if (rDate == null) return false;
-        return rDate.year == widget.date.year &&
-               rDate.month == widget.date.month &&
-               rDate.day == widget.date.day;
+        return rDate.year == _selectedDate.year &&
+               rDate.month == _selectedDate.month &&
+               rDate.day == _selectedDate.day;
       }).toList();
 
       todayRecords.sort((a, b) {
@@ -1217,8 +1259,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         ),
       );
     } else {
-      final sundayOffset = widget.date.weekday % 7;
-      final sunday = widget.date.subtract(Duration(days: sundayOffset));
+      final sundayOffset = _selectedDate.weekday % 7;
+      final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
 
       final List<Map<String, dynamic>> daysData = [];
       final weekdaysZh = ["週日", "週一", "週二", "週三", "週四", "週五", "週六"];
