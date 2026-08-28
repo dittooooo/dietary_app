@@ -104,11 +104,17 @@ public class AuthService {
 
         dietRecordRepository.deleteByUserId(user.getId());
         problemFeedbackRepository.deleteByUserId(user.getId());
+        dietRecordRepository.flush();
+        problemFeedbackRepository.flush();
 
         userProfileRepository.findByUser(user)
-                .ifPresent(userProfileRepository::delete);
+                .ifPresent(profile -> {
+                    userProfileRepository.delete(profile);
+                    userProfileRepository.flush();
+                });
 
         userRepository.delete(user);
+        userRepository.flush();
     }
 
     private AuthResponse issueTokens(User user, String message, boolean needsOnboarding) {
