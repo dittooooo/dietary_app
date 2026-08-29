@@ -4,6 +4,8 @@ import com.tku.dietary_app.dto.AdminUserRequest;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
+import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.ProblemFeedbackRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,8 @@ public class AdminService {
 
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
+    private final DietRecordRepository dietRecordRepository;
+    private final ProblemFeedbackRepository problemFeedbackRepository;
     private final PasswordEncoder passwordEncoder;
     private final BodyMetricsService bodyMetricsService;
 
