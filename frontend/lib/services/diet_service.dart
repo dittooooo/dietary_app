@@ -579,7 +579,13 @@ class DietService {
   }
 
   /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
-  Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
+  ///
+  /// [userPrompt]：使用者輸入的最新對話內容。
+  /// [tempStory]：前端快取的最近最多 3 則歷史對話，供後端無狀態微服務作為 LLM 推理上下文。
+  Future<Map<String, dynamic>> sendCompanionUserPrompt(
+    String userPrompt, {
+    List<Map<String, String>> tempStory = const [],
+  }) async {
     final normalizedPrompt = userPrompt.trim();
     if (normalizedPrompt.isEmpty) {
       return {'success': false, 'message': '請先輸入想和精靈說的內容。'};
@@ -592,7 +598,10 @@ class DietService {
       try {
         final response = await _client.post(
           '$baseUrl/companion/ask',
-          {'user_prompt': normalizedPrompt},
+          {
+            'user_prompt': normalizedPrompt,
+            'temp_story': tempStory, // 打包近 3 則歷史對話傳送至無狀態後端
+          },
           headers: {
             if (token != null) 'Authorization': 'Bearer $token',
           },

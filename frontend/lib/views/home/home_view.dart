@@ -23,7 +23,7 @@ class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 St
   State<HomeView> createState() => _HomeViewState(); // 執行相對應的邏輯計算或設定屬性參數
 } // 程式碼區塊或元件結構結束
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 定義 _HomeViewState 類別，繼承自 State
+class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver { // 定義 _HomeViewState 類別，繼承自 State
   static bool _hasCheckedBodyTransitionOnStartup = false;
   static const Set<String> _dietRecordRelatedIntents = {
     'daily_diet_report',
@@ -47,7 +47,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   String _petType = '米粒(Mili)'; // 宣告類別成員或方法內部的區域變數
   // String _dietGoal = '養生'; // 未使用，先註解
   
-  List<Map<String, dynamic>> _messages = []; // 執行相對應的邏輯計算或設定屬性參數
+  List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
+  List<Map<String, String>> _tempStory = []; // 前端託管最近最多 3 則訊息 ([{role: 'user'|'assistant', content: '...'}])
+  DateTime? _lastUpdateTime; // 最後互動時間戳，供 24h 閒置檢測比對
 
   String _stripEmojis(String text) {
     final regex = RegExp(
@@ -62,6 +64,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   @override // 標記此方法為覆寫父類別之方法
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
     super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    WidgetsBinding.instance.addObserver(this); // 註冊 WidgetsBindingObserver 監聽系統生命週期事件
     _isChatOpen = widget.initialOpenChat; // 執行相對應的邏輯計算或設定屬性參數
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
@@ -79,11 +82,129 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
  
   @override // 標記此方法為覆寫父類別之方法
   void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
+    WidgetsBinding.instance.removeObserver(this); // 移除 WidgetsBindingObserver 監聽器，防止 Memory Leak
     _inputController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
     _chatScrollController.dispose(); // 新增：釋放對話滾動控制器資源
     super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
   } // 程式碼區塊或元件結構結束
- 
+
+  /// 監聽 App 生命週期變化 (WidgetsBindingObserver)
+  /// 當使用者切換 App 重新回到前景 (resumed) 時，自動觸發 24 小時閒置檢測
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _check24hIdleTimeout();
+    }
+  }
+
+  /// 從 SharedPreferences 載入 temp_story 快取與最後更新時間
+  Future<void> _loadTempStoryFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? storyJson = prefs.getString('temp_story');
+    final int? lastTimeMs = prefs.getInt('last_update_time');
+
+    if (lastTimeMs != null) {
+      _lastUpdateTime = DateTime.fromMillisecondsSinceEpoch(lastTimeMs);
+    }
+
+    if (storyJson != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(storyJson);
+        _tempStory = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+      } catch (e) {
+        debugPrint('載入 temp_story 快取失敗: $e');
+        _tempStory = [];
+      }
+    }
+
+    // 若有未過期歷史對話，還原至 UI 對話列表中
+    if (_tempStory.isNotEmpty) {
+      final loadedMessages = <Map<String, dynamic>>[];
+      for (var item in _tempStory) {
+        loadedMessages.add({
+          'isElf': item['role'] == 'assistant',
+          'text': item['content'] ?? '',
+        });
+      }
+      setState(() {
+        _messages = loadedMessages;
+      });
+    }
+
+    _check24hIdleTimeout();
+  }
+
+  /// 檢查與最後互動時間的時差，若 >= 24 小時自動清空歷史快取
+  Future<void> _check24hIdleTimeout() async {
+    if (_lastUpdateTime != null) {
+      final difference = DateTime.now().difference(_lastUpdateTime!);
+      if (difference.inHours >= 24) {
+        debugPrint('⏱️ 超過 24 小時未互動，自動清空歷史');
+        await resetChat();
+      }
+    }
+  }
+
+  /// 清空對話歷史與 SharedPreferences 快取，重置為初始話題
+  Future<void> resetChat() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('temp_story');
+    await prefs.remove('last_update_time');
+
+    setState(() {
+      _messages = [
+        {
+          'isElf': true,
+          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'
+        },
+      ];
+      _tempStory.clear();
+      _lastUpdateTime = DateTime.now();
+    });
+  }
+
+  /// 將新對話推入 tempStory，維持最多 3 則訊息的滑動視窗 (Sliding Window)，並寫入 SharedPreferences
+  void _appendTempStory(String role, String content) async {
+    _tempStory.add({'role': role, 'content': content});
+    if (_tempStory.length > 3) {
+      _tempStory.removeAt(0); // 維持最多 3 則舊對話
+    }
+    _lastUpdateTime = DateTime.now();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('temp_story', jsonEncode(_tempStory));
+    await prefs.setInt('last_update_time', _lastUpdateTime!.millisecondsSinceEpoch);
+  }
+
+  /// 內嵌於 home_view.dart 中的「🌱 開啟新話題」按鈕 UI
+  Widget _buildNewTopicButton() {
+    return TextButton.icon(
+      onPressed: () {
+        resetChat();
+        _scrollToBottom();
+      },
+      icon: const Text('🌱', style: TextStyle(fontSize: 14)),
+      label: const Text(
+        '開啟新話題',
+        style: TextStyle(
+          color: Color(0xFF2E7D32),
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: const Color(0xFFE8F5E9),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0xFFA5D6A7)),
+        ),
+      ),
+    );
+  }
+
   Future<void> _loadHomeData() async { // 定義非同步方法（Future），執行耗時操作
     // 1. 先從本地快取讀取 (前端輔助，速度快)
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
@@ -96,8 +217,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
     }
 
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-      _userNickname = nick; // 執行相對應的邏輯計算或設定屬性參數
+      _userNickname = prefs.getString('user_nickname') ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
       _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
+      // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       _messages = [ // 執行相對應的邏輯計算或設定屬性參數
         {
           'isElf': true, 
@@ -105,6 +227,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
         }, // 執行相對應的邏輯計算或設定屬性參數
       ]; // 程式碼區塊或元件結構結束
     }); // 程式碼區塊或元件結構結束
+    await _loadTempStoryFromStorage();
  
     // 2. 向後端請求最新資料 (後端為主，保持同步)
     await _syncBodyStatus(prefs);
@@ -128,8 +251,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       }
 
       setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
-        _userNickname = fetchedNick; // 執行相對應的邏輯計算或設定屬性參數
+        _userNickname = userData['nickname'] ?? '使用者'; // 執行相對應的邏輯計算或設定屬性參數
         _petType = '米粒(Mili)'; // 執行相對應的邏輯計算或設定屬性參數
+        // _dietGoal = g; // 未使用，先註解
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) { // 執行相對應的邏輯計算或設定屬性參數
           _messages[0]['text'] = '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'; // 執行相對應的邏輯計算或設定屬性參數
@@ -942,6 +1066,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
   void _handleMessage(String text) { // 執行相對應的邏輯計算或設定屬性參數
     FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
+
+    // 複製一份當前歷史傳給後端
+    final payloadHistory = List<Map<String, String>>.from(_tempStory);
+    _appendTempStory('user', text);
+
     setState(() { // 更新狀態數據並通知 UI 重新渲染畫面
       _messages.add({'isElf': false, 'text': text}); // 執行相對應的邏輯計算或設定屬性參數
       _inputController.clear(); // 執行相對應的邏輯計算或設定屬性參數
@@ -961,7 +1090,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
       });
       _scrollToBottom(); // 新增：載入中提示滑到底部
       
-      DietService().sendCompanionUserPrompt(text).then((res) {
+      DietService().sendCompanionUserPrompt(text, tempStory: payloadHistory).then((res) {
         _showDogResponseThenIdle();
         setState(() {
           if (_messages.isNotEmpty && _messages.last['text'] == '米粒正在思考中....') {
@@ -972,10 +1101,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
               (res['data'] is Map ? res['data']['companion_reply'] : null);
 
           if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
+            final replyStr = reply.toString();
             _messages.add({
               'isElf': true,
-              'text': reply.toString(),
+              'text': replyStr,
             });
+            _appendTempStory('assistant', replyStr);
 
             // 判斷意圖若為 meal_record 且含草稿，自動觸發飲食紀錄確認彈窗
             final intent = res['intent_category'] ?? '';
@@ -1184,6 +1315,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin { // 
                     onPressed: () => _toggleChat(false), // 執行相對應的邏輯計算或設定屬性參數
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   const Text("與精靈對話", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+                  const Spacer(),
+                  _buildNewTopicButton(),
                 ], // 執行相對應的邏輯計算或設定屬性參數
               ), // 執行相對應的邏輯計算或設定屬性參數
             ), // 執行相對應的邏輯計算或設定屬性參數
