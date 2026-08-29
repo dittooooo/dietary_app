@@ -89,6 +89,7 @@ async function handleCompanionAsk(req, res) {
       intent_category: openAiResult.screening.intent_category,
       question_type: openAiResult.screening.question_type,
       confidence: openAiResult.screening.confidence,
+      query_date: openAiResult.screening.query_date,
       meal_items: openAiResult.screening.meal_items
 
     }, null, 2));
@@ -128,7 +129,7 @@ async function handleCompanionAsk(req, res) {
       }
       console.log("");
     } else {
-      console.log("ℹ️ [分流判定] 跳過 Java Dietary Agent 與翻譯外掛（非諮詢類、飲食紀錄或無食物訊息）\n");
+      console.log("ℹ️ [分流判定] 跳過 Java Dietary Agent 與翻譯外掛（非諮詢類、飲食紀錄/查詢或無食物訊息）\n");
     }
 
     console.log("------------------ [LLM 階段 3：陪伴式回覆生成] ------------------");
@@ -148,12 +149,13 @@ async function handleCompanionAsk(req, res) {
     console.log(`[Companion Agent] 📤 已成功回應前端 (Intent: ${openAiResult.screening.intent_category || "general_chat"})`);
     console.log("======================================================================\n");
 
-    // 回傳符合 v6 標準合約的對話結果給客戶端 (包含一維 meal_items)
+    // 回傳符合規格合約的對話結果給客戶端 (包含一維 meal_items 與 query_date)
     return res.json({
       success: true,
       companion_reply: companionReply,
       intent_category: openAiResult.screening.intent_category || "general_chat",
       meal_items: openAiResult.screening.meal_items || [],
+      query_date: openAiResult.screening.query_date || null,
       dietary_agent_error: dietaryAgentError
     });
   } catch (error) {

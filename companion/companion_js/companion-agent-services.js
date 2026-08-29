@@ -70,10 +70,16 @@ async function runOpenAIFlow(userPrompt, tempStory = []) {
   const result = await runLLMAnalysis(userPrompt, tempStory);
   const { screening, emotion } = result;
 
-  // 2. 三路分流機制處理
-  // 分流 A：閒聊/非飲食 (should_handle === false 或 intent_category === "general_chat")
-  // 分流 B：飲食紀錄 (intent_category === "meal_record")
-  if (!screening.should_handle || screening.intent_category === "general_chat" || screening.intent_category === "meal_record") {
+  // 2. 多路分流機制處理
+  // 旁路處理：閒聊/非飲食 (should_handle === false 或 intent_category === "general_chat")
+  // 旁路處理：飲食紀錄 (intent_category === "meal_record")
+  // 旁路處理：歷史飲食查詢 (intent_category === "meal_query")
+  if (
+    !screening.should_handle ||
+    screening.intent_category === "general_chat" ||
+    screening.intent_category === "meal_record" ||
+    screening.intent_category === "meal_query"
+  ) {
     return {
       screening,
       emotion,
@@ -178,6 +184,19 @@ async function getCompanionReply({
       return `幫你整理好${summaryList}草稿囉！請在下方確認一下內容是否正確，按下確認就可以幫你存起來囉！✨`;
     } else {
       return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
+    }
+  }
+
+  // 飲食紀錄查詢意圖處理 (分流 D 極速日期卡片對話組裝)
+  if (screening?.intent_category === "meal_query") {
+    if (screening.query_date) {
+      const dateParts = screening.query_date.split("-");
+      const formattedDateStr = dateParts.length === 3
+        ? `${parseInt(dateParts[1], 10)}/${parseInt(dateParts[2], 10)}`
+        : screening.query_date;
+      return `幫你找到 ${formattedDateStr} 號的飲食紀錄囉！請在下方卡片確認當天記錄的內容吧！✨`;
+    } else {
+      return `收到你想查詢歷史飲食紀錄，但似乎沒有聽到具體的日期。你可以再跟我說一次你想看哪一天的紀錄喔！（例如：「我 6/19 吃了什麼」）`;
     }
   }
 
