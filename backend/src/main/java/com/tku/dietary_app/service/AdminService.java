@@ -144,10 +144,19 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到要刪除的使用者資料 (ID: " + id + ")"));
 
         User user = profile.getUser();
+        if (user != null) {
+            dietRecordRepository.deleteByUserId(user.getId());
+            problemFeedbackRepository.deleteByUserId(user.getId());
+            dietRecordRepository.flush();
+            problemFeedbackRepository.flush();
+        }
+
         userProfileRepository.delete(profile);
+        userProfileRepository.flush();
 
         if (user != null) {
             userRepository.delete(user);
+            userRepository.flush();
         }
     }
 
