@@ -65,15 +65,30 @@ class _MealRecordCardState extends State<MealRecordCard> {
     }
   }
 
+  // 安全提取熱量數值（相容頂層 calories、嵌套 nutrition.calories 以及帶有 "481.21 kcal" 單位之字串）
+  double? _extractCalories(dynamic rec) {
+    if (rec is! Map) return null;
+
+    dynamic rawCal = rec['nutrition'] is Map ? rec['nutrition']['calories'] : null;
+    rawCal ??= rec['calories'];
+
+    if (rawCal == null) return null;
+
+    final str = rawCal.toString();
+    final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(str);
+    if (match != null) {
+      return double.tryParse(match.group(1) ?? '');
+    }
+    return double.tryParse(str);
+  }
+
   // 計算當天總大卡熱量
   double _calculateTotalCalories() {
     double total = 0.0;
     for (var rec in _records) {
-      if (rec is Map) {
-        final cal = rec['calories'];
-        if (cal != null) {
-          total += (double.tryParse(cal.toString()) ?? 0.0);
-        }
+      final cal = _extractCalories(rec);
+      if (cal != null) {
+        total += cal;
       }
     }
     return total;
@@ -303,9 +318,9 @@ class _MealRecordCardState extends State<MealRecordCard> {
                           ...periodItems.map((item) {
                             final name = (item['dishName'] ?? item['dish_name'] ?? '餐點').toString();
                             final amount = item['amount'] ?? 1;
-                            final cal = item['calories'];
-                            final calStr = cal != null
-                                ? '${(double.tryParse(cal.toString()) ?? 0.0).toStringAsFixed(0)} kcal'
+                            final calVal = _extractCalories(item);
+                            final calStr = calVal != null
+                                ? '${calVal.toStringAsFixed(0)} kcal'
                                 : '';
 
                             return Container(

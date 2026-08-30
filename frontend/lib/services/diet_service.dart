@@ -166,11 +166,6 @@ class DietService {
         }
       }
 
-      // 4. 備援防護：若過濾後為空但後端確有回傳資料，直接回傳 rawList
-      if (result.isEmpty && rawList.isNotEmpty && response.statusCode == 200) {
-        return rawList;
-      }
-
       return result;
     } catch (e) {
       print('Load diet records by date failed: $e');

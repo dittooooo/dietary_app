@@ -1491,7 +1491,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 onNavigateToDiary: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const DiaryPage()),
+                    MaterialPageRoute(
+                      builder: (context) => DiaryPage(
+                        date: DateTime.tryParse(queryDate) ?? DateTime.now(),
+                      ),
+                    ),
                   );
                 },
                 // todo: 要確認補登記有成功打api 
