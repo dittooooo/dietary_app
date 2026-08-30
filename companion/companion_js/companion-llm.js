@@ -171,6 +171,9 @@ const ANALYSIS_SYSTEM_PROMPT = `
 
 請嚴格遵守以下分類與擷取規則：
 
+【絕對防呆規則】
+- **絕對防呆規則**：【歷史對話紀錄】僅供理解語境與指涉代名詞使用。在抽取 meal_items 時，**嚴禁抽取歷史紀錄中已提及的舊餐點**，僅能針對「使用者最新輸入」中提及的餐點進行抽取。
+
 【screen_user_request 的規則】
 1. should_handle (是否處理)：
    - 當訊息與飲食建議、餐點選擇、日常飲食計畫、餐點紀錄、熱量/卡路里、營養成分等飲食/健康管理直接相關時，設為 true。
@@ -189,6 +192,7 @@ const ANALYSIS_SYSTEM_PROMPT = `
    - 當 intent_category 為 "meal_query" 時，請務必結合傳入之「當前系統時間」，將使用者表述之日期（如「6/19」、「昨天」、「前天」）精準推算轉換為標準 ISO 日期格式 YYYY-MM-DD（例如："2026-06-19"）。若無法識別明確日期或為未來日期，請設為 null。
 5. meal_items (一維餐點明細陣列)：
    - 將訊息中所提及的每一個食物/飲料品項，抽取為一維扁平物件陣列。每個物件必須包含 "name"、"quantity"、"unit" 與推算之 "meal_period"（"早餐"、"中餐"、"晚餐"、"其他"）。
+   - **絕對防呆規則**：【歷史對話紀錄】僅供理解語境與指涉代名詞使用。在抽取 meal_items 時，**嚴禁抽取歷史紀錄中已提及的舊餐點**，僅能針對「使用者最新輸入」中提及的餐點進行抽取。
    - 【餐期推算規則與強烈禁令】：
      * 若問句中已有明確時間詞（如「上午吃了...」、「晚餐想吃...」），優先採納該時間詞所對應之餐期。
      * 若問句中未明確提及餐期時間詞，請務必依據傳入之 24 小時制當前系統時間推算：
@@ -578,9 +582,9 @@ async function generateCompanionReply({
   // 將前置對話歷史轉換為符合 OpenAI Chat Completions 標準的 messages 格式
   const formattedHistory = Array.isArray(tempStory)
     ? tempStory.map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content
-      }))
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content
+    }))
     : [];
 
   // 呼叫 OpenAI 官方標準的 Chat Completions API
