@@ -27,19 +27,19 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
   late int _selectedIndex; // 宣告類別成員或方法內部的區域變數
   late List<Widget> _pages; // 宣告類別成員或方法內部的區域變數
   late final ValueNotifier<DateTime> _selectedReportDate;
-  // bool _isAdmin = false;
   bool _isRoleChecked = false;
+  bool _hasShownAdminDialog = false;
 
-  @override // 標記此方法為覆寫父類別之方法
-  void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
-    _selectedIndex = widget.initialIndex; // 執行相對應的邏輯計算或設定屬性參數
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialIndex;
     _selectedReportDate = ValueNotifier(
       widget.initialReportDate ?? DateTime.now(),
     );
-    _pages = []; // 執行相對應的邏輯計算或設定屬性參數
-    _checkAdminRole(); // 執行相對應的邏輯計算或設定屬性參數
-  } // 程式碼區塊或元件結構結束
+    _pages = [];
+    _checkAdminRole();
+  }
 
   Future<void> _checkAdminRole() async {
     final prefs = await SharedPreferences.getInstance();
@@ -66,10 +66,14 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
 
       if (isBackendAdmin) {
         await prefs.setString('user_role', 'ROLE_ADMIN');
-        _applyAdminConfig();
+        if (!isCachedAdmin) {
+          _applyAdminConfig();
+        }
       } else {
         await prefs.setString('user_role', 'ROLE_USER');
-        _applyUserConfig();
+        if (isCachedAdmin) {
+          _applyUserConfig();
+        }
       }
     }
   }
@@ -112,19 +116,25 @@ class _HomePageState extends State<HomePage> { // 定義 _HomePageState 類別�
   }
 
   Future<void> _showAdminMandatoryProfileDialog() async {
+    if (_hasShownAdminDialog) return;
+    _hasShownAdminDialog = true;
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final profileResult = await AuthService().getUserProfile();
-      final profileData = (profileResult['success'] == true && profileResult['data'] != null)
-          ? Map<String, dynamic>.from(profileResult['data'])
-          : <String, dynamic>{};
+      if (profileResult['success'] != true || profileResult['data'] == null || profileResult['isOffline'] == true) {
+        return;
+      }
 
-      // 若資料庫已有完整個人資訊紀錄，登入直接進入預設首頁，不跳彈窗
+      final profileData = Map<String, dynamic>.from(profileResult['data']);
+
+      final String? email = profileData['email']?.toString().trim().toLowerCase();
+      final bool isAlreadyOnboarded = profileData['hasCompletedOnboarding'] == true;
       final hasHeight = profileData['height'] != null && (double.tryParse(profileData['height'].toString()) ?? 0) > 0;
       final hasWeight = profileData['weight'] != null && (double.tryParse(profileData['weight'].toString()) ?? 0) > 0;
       final hasGender = profileData['gender'] != null && profileData['gender'].toString().trim().isNotEmpty;
       
-      if (hasHeight && hasWeight && hasGender) {
+      if (email == 'admin@gmail.com' || isAlreadyOnboarded || (hasHeight && hasWeight && hasGender)) {
         return;
       }
 

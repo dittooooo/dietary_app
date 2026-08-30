@@ -179,30 +179,31 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     await prefs.setInt('last_update_time', _lastUpdateTime!.millisecondsSinceEpoch);
   }
 
-  /// 內嵌於 home_view.dart 中的「🌱 開啟新話題」按鈕 UI
+  /// 內嵌於 home_view.dart 中的「開啟新話題」按鈕 UI
   Widget _buildNewTopicButton() {
-    return TextButton.icon(
-      onPressed: () {
-        resetChat();
-        _scrollToBottom();
-      },
-      icon: const Text('🌱', style: TextStyle(fontSize: 14)),
-      label: const Text(
-        '開啟新話題',
-        style: TextStyle(
-          color: Color(0xFF2E7D32),
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-      ),
-      style: TextButton.styleFrom(
-        backgroundColor: const Color(0xFFE8F5E9),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFA5D6A7)),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          resetChat();
+          _scrollToBottom();
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.secondary, width: 1.2),
+          ),
+          child: const Text(
+            '開啟新話題',
+            style: TextStyle(
+              color: AppColors.secondary,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
         ),
       ),
     );

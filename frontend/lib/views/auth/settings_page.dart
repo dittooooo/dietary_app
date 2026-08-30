@@ -75,13 +75,13 @@ class _SettingsMenuButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFFFEDAA),
-      borderRadius: BorderRadius.circular(8),
+      color: AppColors.background,
+      borderRadius: BorderRadius.circular(12),
       elevation: 1.5,
-      shadowColor: Colors.black.withOpacity(0.18),
+      shadowColor: Colors.black.withOpacity(0.08),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 16),

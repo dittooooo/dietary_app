@@ -111,6 +111,41 @@ class _DiaryPageState extends State<DiaryPage> {
     widget.onDateChanged?.call(selectedDate);
   }
 
+  void _goToPreviousDay() {
+    final prevDate = _selectedDate.subtract(const Duration(days: 1));
+    setState(() {
+      _selectedDate = DateTime(prevDate.year, prevDate.month, prevDate.day);
+      _expandedMeals.clear();
+      _swipedMeal = null;
+    });
+    widget.onDateChanged?.call(_selectedDate);
+  }
+
+  void _goToNextDay() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final currentSelected = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+
+    if (currentSelected.isAtSameMomentAs(today) || currentSelected.isAfter(today)) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('已經是最新的日期'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    final nextDate = _selectedDate.add(const Duration(days: 1));
+    setState(() {
+      _selectedDate = DateTime(nextDate.year, nextDate.month, nextDate.day);
+      _expandedMeals.clear();
+      _swipedMeal = null;
+    });
+    widget.onDateChanged?.call(_selectedDate);
+  }
+
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
@@ -560,49 +595,65 @@ class _DiaryPageState extends State<DiaryPage> {
   } // 程式碼區塊或元件結構結束
 
   Widget _buildDateBar(String dateStr) {
-    // 定義用於重複使用的 UI 封裝建構方法
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final currentSelected = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final bool isLatest = currentSelected.isAtSameMomentAs(today) || currentSelected.isAfter(today);
+
     return Container(
-      // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: 10,
-      ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        color: AppColors.background, // 設定顏色數值（Color）
+        color: AppColors.background,
         boxShadow: [
-          // 執行相對應的邏輯計算或設定屬性參數
           BoxShadow(
-            // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-            color: Colors.black.withOpacity(0.05), // 設定顏色數值（Color）
-            blurRadius: 0.975, // 執行相對應的邏輯計算或設定屬性參數
-            offset: const Offset(0, 0.39), // 建立編譯期常數，優化 Flutter 渲染效能
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      child: InkWell(
-        onTap: _selectDate,
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 0.975,
+            offset: const Offset(0, 0.39),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: _goToPreviousDay,
+            icon: const Icon(
+              Icons.chevron_left,
+              color: AppColors.textPrimary,
+              size: 28,
+            ),
+            tooltip: '前一天',
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: _selectDate,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Text(
                 dateStr,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.textPrimary,
-              ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(width: 8),
+          IconButton(
+            onPressed: _goToNextDay,
+            icon: Icon(
+              Icons.chevron_right,
+              color: isLatest ? AppColors.textPrimary.withOpacity(0.35) : AppColors.textPrimary,
+              size: 28,
+            ),
+            tooltip: '後一天',
+          ),
+        ],
       ),
-    ); // 程式碼區塊或元件結構結束
+    );
   } // 程式碼區塊或元件結構結束
 
   // 組合餐點時段與多筆後端飲食紀錄
