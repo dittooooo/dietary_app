@@ -120,6 +120,64 @@ class DietService {
     }
   }
 
+  /// 依特定日期 (YYYY-MM-DD) 取得歷史飲食紀錄明細（含後端 API 與前端日期備用過濾）
+  Future<List<dynamic>> getDietRecordsByDate(String dateStr) async {
+    final targetDate = dateStr.trim();
+    if (targetDate.isEmpty) return [];
+
+    final token = await _token();
+    if (token == null) return [];
+
+    try {
+      // 1. 發送 GET 請求向後端查詢單日紀錄 (?date=YYYY-MM-DD)
+      final response = await _client.get(
+        '/diet-records?date=$targetDate',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      List<dynamic> rawList = [];
+      if (response.statusCode == 200) {
+        rawList = _unwrapListResponse(response.body);
+      } else {
+        // 2. 若帶參查詢失敗，改為撈取全量紀錄再由前端自行篩選
+        rawList = await getMyDietRecords();
+      }
+
+      // 3. 對撈出的紀錄進行餐期標記處理與目標日期二次過濾
+      final List<dynamic> result = [];
+      for (var record in rawList) {
+        if (record is Map) {
+          var processedRecord = Map<String, dynamic>.from(record);
+          final desc = (processedRecord['description'] ?? '').toString();
+          if (desc.startsWith('[MealType:OTHER]')) {
+            processedRecord['mealType'] = 'OTHER';
+            processedRecord['description'] = desc.replaceFirst('[MealType:OTHER]', '');
+          }
+
+          // 正規化日期格式並進行比對
+          final rawDate = processedRecord['date'] ??
+              processedRecord['mealDate'] ??
+              processedRecord['createdAt'];
+          final normDate = _normalizeRecordDate(rawDate);
+
+          if (normDate.isEmpty || normDate.startsWith(targetDate) || normDate == targetDate) {
+            result.add(processedRecord);
+          }
+        }
+      }
+
+      // 4. 備援防護：若過濾後為空但後端確有回傳資料，直接回傳 rawList
+      if (result.isEmpty && rawList.isNotEmpty && response.statusCode == 200) {
+        return rawList;
+      }
+
+      return result;
+    } catch (e) {
+      print('Load diet records by date failed: $e');
+      return [];
+    }
+  }
+
   int _parseAmount(dynamic amt) {
     if (amt is int) return amt;
     if (amt is double) return amt.toInt();
@@ -639,6 +697,7 @@ class DietService {
             'success': data['success'] ?? true,
             'companion_reply': data['companion_reply'] ?? '',
             'intent_category': data['intent_category'] ?? 'general',
+            'query_date': data['query_date'],
             'meal_records': mealRecords,      // ✅ 前端 UI 現行彈窗立即可用之分組陣列
             'dietary_agent_error': data['dietary_agent_error'],
             'data': data,

@@ -13,7 +13,10 @@ import '../../utils/friendly_error_message.dart';
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
-import '../records/elf_feeding_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
+import '../../widgets/meal_record_card.dart';
+import '../records/diary_page.dart';
+import '../records/elf_feeding_page.dart';
+import '../records/manual_record_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
 
 class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 StatefulWidget
   final bool initialOpenChat; // 宣告類別成員或方法內部的區域變數
@@ -1102,18 +1105,23 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
 
           if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
             final replyStr = reply.toString();
+            // 取得 AI 助手識別的意圖類別 (intent_category) 與歷史查詢日期 (query_date)
+            final intent = (res['intent_category'] ?? '').toString();
+            final queryDate = res['query_date']?.toString();
+
             _messages.add({
               'isElf': true,
               'text': replyStr,
+              'intentCategory': intent, // 存入意圖類別（如 meal_query）
+              'queryDate': queryDate,   // 存入查詢日期（如 2026-06-19）
             });
             _appendTempStory('assistant', replyStr);
 
             // 判斷意圖若為 meal_record 且含草稿，自動觸發飲食紀錄確認彈窗
-            final intent = res['intent_category'] ?? '';
             final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
             if (intent == 'meal_record' && mealRecords.isNotEmpty) {
               _showMealRecordDraftDialog(context, mealRecords, userPrompt: text);
-            } else if (_shouldShowDietReportForPrompt(text, intent.toString())) {
+            } else if (_shouldShowDietReportForPrompt(text, intent)) {
               Future.microtask(() => _showDietReportFromCompanion(text));
             }
           } else {
@@ -1340,6 +1348,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     msg['isElf'],
                     msg['text'],
                     options: msg['options'],
+                    intentCategory: msg['intentCategory'],
+                    queryDate: msg['queryDate'],
                   );
                 }, // 程式碼區塊或元件結構結束
               ), // 執行相對應的邏輯計算或設定屬性參數
@@ -1409,7 +1419,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     ); // 程式碼區塊或元件結構結束
   } // 程式碼區塊或元件結構結束
 
-  Widget _buildChatMessage(bool isElf, String text, {List<dynamic>? options}) {
+  Widget _buildChatMessage(
+    bool isElf,
+    String text, {
+    List<dynamic>? options,
+    String? intentCategory,
+    String? queryDate,
+  }) {
     return Align(
       alignment: isElf ? Alignment.centerLeft : Alignment.centerRight,
       child: Column(
@@ -1437,34 +1453,60 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     height: 1.4,
                   ),
                 ),
+                // TODO: 這個部分是甚麼呀? 
+                // 若米粒回應含有推薦餐點選項 (options)，於泡泡內繪製可點擊的營養成分按鈕
                 if (isElf && options != null) ...[
-                  const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  const Divider(height: 1), // 建立編譯期常數，優化 Flutter 渲染效能
-                  const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  ...options.map((opt) => Padding( // 建立間距容器（Padding），用於設定內部邊距
-                    padding: const EdgeInsets.only(bottom: 8.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                    child: SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                      width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
-                      child: ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
-                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']), // 執行相對應的邏輯計算或設定屬性參數
-                        style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
-                          backgroundColor: AppColors.surface, // 設定顏色數值（Color）
-                          foregroundColor: AppColors.textPrimary, // 設定顏色數值（Color）
-                          elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
-                          side: const BorderSide(color: AppColors.border), // 設定顏色數值（Color）
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
-                        ), // 執行相對應的邏輯計算或設定屬性參數
-                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-                      ), // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  )).toList(), // 執行相對應的邏輯計算或設定屬性參數
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ], // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+                  const SizedBox(height: 15),
+                  const Divider(height: 1),
+                  const SizedBox(height: 10),
+                  ...options.map((opt) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.surface,
+                          foregroundColor: AppColors.textPrimary,
+                          elevation: 0,
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  )).toList(),
+                ],
+              ],
+            ),
+          ),
+          // 當意圖為「歷史飲食紀錄查詢 (meal_query)」且含有合法日期時，於對話泡泡下方動態掛載卡片
+          if (isElf && intentCategory == 'meal_query' && queryDate != null && queryDate.isNotEmpty)
+            Container(
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+              child: MealRecordCard(
+                queryDate: queryDate,
+                onClose: () {},
+                // 點擊「查看完整飲食日記」跳轉至日記頁
+                onNavigateToDiary: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const DiaryPage()),
+                  );
+                },
+                // todo: 要確認補登記有成功打api 
+                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁
+                onAddRecordForDate: (date) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ManualRecordPage()),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
   } // 程式碼區塊或元件結構結束
 
   void _showNutrientDetail(String name, Map<String, dynamic> nutrients) { // 執行相對應的邏輯計算或設定屬性參數
