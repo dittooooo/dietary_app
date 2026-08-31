@@ -10,12 +10,13 @@ from .disease_rules import retrieve_disease_rules
 from .dish_matcher import DishMatcher, normalize_name
 from .evidence_builder import UNITS, build_evidence
 from .models import (
-    DishInfo, DishNutrition, DishNutritionRequest, DishNutritionResponse,
+    CalorieEstimate, DishInfo, DishNutrition, DishNutritionRequest, DishNutritionResponse,
+    DishSearchResponse, DishSearchResult,
     HealthCondition, NutrientAmount, NutritionAgentRequest, NutritionAgentResponse,
 )
-from .nutrition_calculator import MACRO_FORMULA, NutritionCalculator
+from .nutrition_calculator import COMMON_NUTRIENT_ALIASES, MACRO_FORMULA, NutritionCalculator, calculate_calories
 from .retriever import GraphRetriever
-from .template_cypher import build_graph_retrieval_cypher
+from .template_cypher import SUMMARY_NUTRIENT_NAMES, build_graph_retrieval_cypher
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,113 @@ class NutritionAgent:
             dish_info=[DishInfo(dish_name=request.dish_name)],
         )
         return DishNutritionResponse(dish_nutrition=dishes[0])
+
+    def search_dishes(self, query: str, *, limit: int = 20) -> DishSearchResponse:
+        """Find Dish and FoodItem nodes whose names contain the supplied keyword."""
+        query = query.strip()
+        if not query:
+            raise ValueError("q must not be blank")
+
+        parameters = {"query": query, "limit": limit}
+        count_rows = self.retriever.retrieve(
+            """
+            MATCH (n)
+            WHERE (n:Dish OR n:FoodItem) AND n.name CONTAINS $query
+            RETURN count(n) AS total
+            LIMIT 1
+            """,
+            parameters,
+        )
+        rows = self.retriever.retrieve(
+            """
+            MATCH (n)
+            WHERE (n:Dish OR n:FoodItem) AND n.name CONTAINS $query
+            RETURN CASE WHEN n:Dish THEN n.recipe_id ELSE n.food_id END AS id,
+                   n.name AS name,
+                   CASE WHEN n:Dish THEN "dish" ELSE "food_item" END AS type
+            ORDER BY CASE
+                WHEN n.name = $query THEN 0
+                WHEN n.name STARTS WITH $query THEN 1
+                ELSE 2
+            END, n.name, type
+            LIMIT $limit
+            """,
+            parameters,
+        )
+        return DishSearchResponse(
+            query=query,
+            results=self._add_search_calories([DishSearchResult(**row) for row in rows]),
+            total=int(count_rows[0]["total"]),
+            limit=limit,
+        )
+
+    def _add_search_calories(self, results: List[DishSearchResult]) -> List[DishSearchResult]:
+        if not results:
+            return []
+
+        rows = self.retriever.retrieve(
+            """
+            UNWIND $targets AS target
+            OPTIONAL MATCH (f:FoodItem {food_id: target.id})-[fh:HAS_NUTRITION]->(fn:Nutrition)
+            WHERE target.type = "food_item"
+              AND coalesce(fn.name_zh, fn.name) IN $nutrient_names
+            WITH target, collect(CASE WHEN fn IS NULL THEN null ELSE {
+                name: coalesce(fn.name_zh, fn.name),
+                amount: fh.amount_per_100g,
+                unit: fh.unit
+            } END) AS food_nutrients
+            OPTIONAL MATCH (d:Dish {recipe_id: target.id})-[c:CONTAINS]->(:Ingredient)-[:MAPS_TO]->(df:FoodItem)-[dh:HAS_NUTRITION]->(dn:Nutrition)
+            WHERE target.type = "dish"
+              AND coalesce(dn.name_zh, dn.name) IN $nutrient_names
+            WITH target, food_nutrients, collect(CASE WHEN dn IS NULL THEN null ELSE {
+                name: coalesce(dn.name_zh, dn.name),
+                amount: dh.amount_per_100g * c.amount_per_serving / 100.0,
+                unit: dh.unit
+            } END) AS dish_nutrients
+            RETURN target.id AS id,
+                   target.type AS type,
+                   CASE WHEN target.type = "dish" THEN dish_nutrients ELSE food_nutrients END AS nutrients
+            LIMIT $limit
+            """,
+            {
+                "targets": [{"id": item.id, "type": item.type} for item in results],
+                "nutrient_names": SUMMARY_NUTRIENT_NAMES,
+                "limit": len(results),
+            },
+        )
+        estimates = {
+            (str(row["id"]), str(row["type"])): self._estimate_calories(row.get("nutrients") or [], str(row["type"]))
+            for row in rows
+        }
+        return [item.model_copy(update={"calories": estimates.get((item.id, item.type))}) for item in results]
+
+    @staticmethod
+    def _estimate_calories(nutrients: List[Dict[str, Any]], item_type: str) -> CalorieEstimate | None:
+        values: Dict[str, float] = {}
+        graph_calories: float | None = None
+        for nutrient in nutrients:
+            raw_name = str(nutrient.get("name") or "")
+            name = COMMON_NUTRIENT_ALIASES.get(raw_name, raw_name)
+            amount = nutrient.get("amount")
+            unit = str(nutrient.get("unit") or "").lower()
+            if not isinstance(amount, (int, float)):
+                continue
+            if name in {"蛋白質", "碳水化合物", "脂肪"} and unit == "g":
+                values[name] = values.get(name, 0.0) + float(amount)
+            elif name == "熱量" and unit == "kcal":
+                graph_calories = (graph_calories or 0.0) + float(amount)
+
+        if {"蛋白質", "碳水化合物", "脂肪"}.issubset(values):
+            calories = calculate_calories(values["蛋白質"], values["碳水化合物"], values["脂肪"])
+        elif graph_calories is not None:
+            calories = round(graph_calories, 2)
+        else:
+            return None
+
+        return CalorieEstimate(
+            value=calories,
+            basis="per_serving" if item_type == "dish" else "per_100g",
+        )
 
     def ask(self, request: NutritionAgentRequest) -> NutritionAgentResponse:
         from .models import UserProfile

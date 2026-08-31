@@ -48,6 +48,20 @@ class NutritionAgentRequest(BaseModel):
     weekly_diet_records: Optional[List[DietRecord]] = None
 class DishNutritionRequest(BaseModel):
     dish_name: str
+class CalorieEstimate(BaseModel):
+    value: float
+    unit: Literal["kcal"] = "kcal"
+    basis: Literal["per_serving", "per_100g"]
+class DishSearchResult(BaseModel):
+    id: str
+    name: str
+    type: Literal["dish", "food_item"]
+    calories: Optional[CalorieEstimate] = None
+class DishSearchResponse(BaseModel):
+    query: str
+    results: List[DishSearchResult]
+    total: int
+    limit: int
 class NutrientAmount(BaseModel):
     name: str
     amount_per_serving: Optional[float] = None

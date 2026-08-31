@@ -7,6 +7,7 @@ Runtime path:
 ```text
 POST /ask -> proactive disease rules + deterministic nutrition retrieval -> evidence -> validated OpenAI advice
 POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
+GET /dishes/search -> Neo4j Dish and FoodItem name keyword search
 ```
 
 ## Request
@@ -100,6 +101,35 @@ NEO4J_PASSWORD=...
 ```
 
 `/dish-nutrition` itself only uses Neo4j and does not call OpenAI.
+
+## Dish Name Search
+
+Use `GET /dishes/search?q=便` to find stored recipe and food-item names containing a keyword. The endpoint searches both `Dish.name` and `FoodItem.name`; it does not call OpenAI or calculate nutrition. Results are ordered as exact match, name-prefix match, then other containing matches.
+
+```json
+{
+  "query": "便",
+  "results": [
+    {
+      "id": "recipe-1",
+      "name": "雞腿便當",
+      "type": "dish",
+      "calories": {"value": 620.0, "unit": "kcal", "basis": "per_serving"}
+    },
+    {
+      "id": "food-1",
+      "name": "香蕉",
+      "type": "food_item",
+      "calories": {"value": 85.0, "unit": "kcal", "basis": "per_100g"}
+    }
+  ],
+  "total": 1,
+  "limit": 20
+}
+```
+
+`q` is required and accepts 1–100 characters. `limit` is optional (default `20`, maximum `50`).
+`calories` is `null` when the graph lacks enough nutrition data. Calories are calculated from protein, carbohydrate, and fat when all three are available; otherwise the graph's calorie value is used.
 
 Optional:
 

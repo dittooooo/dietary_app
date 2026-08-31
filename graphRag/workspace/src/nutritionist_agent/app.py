@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from typing import Dict
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from neo4j.exceptions import Neo4jError
 
 from .agent import NutritionAgent
 from .config import validate_required_config
-from .models import DishNutritionRequest, DishNutritionResponse, NutritionAgentRequest, NutritionAgentResponse
+from .models import (
+    DishNutritionRequest, DishNutritionResponse, DishSearchResponse,
+    NutritionAgentRequest, NutritionAgentResponse,
+)
 
 
 # 讓 FastAPI 回應明確帶上 UTF-8，避免繁體中文在呼叫端顯示亂碼。
@@ -38,6 +41,20 @@ def readiness_check() -> Dict[str, str]:
     except Neo4jError as exc:
         raise HTTPException(status_code=503, detail=f"Neo4j connection failed: {exc}") from exc
     return {"status": "ready", "neo4j": "ok"}
+
+
+# 依名稱關鍵字搜尋 Dish 與 FoodItem 節點，不呼叫 OpenAI 或營養計算流程。
+@app.get("/dishes/search", response_model=DishSearchResponse)
+def dish_search(
+    q: str = Query(..., min_length=1, max_length=100),
+    limit: int = Query(20, ge=1, le=50),
+) -> DishSearchResponse:
+    try:
+        return agent.search_dishes(q, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Neo4jError as exc:
+        raise HTTPException(status_code=503, detail=f"Neo4j query failed: {exc}") from exc
 
 
 # 接收使用者問題與個人/飲食資料，交給 NutritionAgent 完成 GraphRAG 流程。
