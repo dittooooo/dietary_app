@@ -1,8 +1,8 @@
-.env
-**/.env
 __pycache__/
 *.py[cod]
 
+.env
+**/.env
 *.env
 !.env.example
 .venv/
@@ -26,5 +26,3 @@ monitor.ps1
 # Ignored test directory
 test/
 test
-
-
