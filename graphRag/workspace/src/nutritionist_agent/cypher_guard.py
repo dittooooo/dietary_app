@@ -53,6 +53,8 @@ def validate_read_only_cypher(cypher: str) -> None:
 
 def validate_nutrition_return_schema(cypher: str) -> None:
     validate_read_only_cypher(cypher)
+    if re.search(r":\s*`?(Disease|HAS_DIET_RULE)\b", cypher, re.IGNORECASE):
+        raise ValueError("Disease rules must be retrieved separately from nutrition totals.")
     aliases = set(re.findall(r"\bAS\s+`?([A-Za-z_][A-Za-z0-9_]*)`?", cypher, re.IGNORECASE))
     missing = sorted(REQUIRED_NUTRITION_RETURN_ALIASES - aliases)
     if missing:

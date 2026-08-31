@@ -20,11 +20,9 @@ except ModuleNotFoundError:
         return values
 
 
-# 依序載入 graphRag/workspace/.env 與本資料夾 .env，補齊環境變數。
+# 僅從 dietary_app 根目錄載入 .env；部署環境已設定的變數仍優先。
 def load_env_files() -> None:
     env_paths = [
-        Path(__file__).resolve().parents[2] / ".env",
-        Path(__file__).resolve().parent / ".env",
         Path(__file__).resolve().parents[4] / ".env",
     ]
     placeholder_values = {"", "dummy-key"}
@@ -58,9 +56,6 @@ DISH_MATCH_THRESHOLD = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_THRESHOLD", "60
 DISH_BM25_TOP_K = int(os.getenv("NUTRITION_AGENT_DISH_BM25_TOP_K", "20"))
 DISH_MATCH_MIN_MARGIN = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_MIN_MARGIN", "5"))
 GRAPH_QUERY_LIMIT = int(os.getenv("NUTRITION_AGENT_GRAPH_QUERY_LIMIT", "1000"))
-CYPHER_MODE = os.getenv("NUTRITION_AGENT_CYPHER_MODE", "langchain").lower()
-CYPHER_FALLBACK = os.getenv("NUTRITION_AGENT_CYPHER_FALLBACK", "template").lower()
-CYPHER_MODEL = os.getenv("NUTRITION_AGENT_CYPHER_MODEL", OPENAI_MODEL)
 
 
 # 正式環境啟動時檢查必要設定，避免用 dummy-key 或預設密碼上線。
@@ -76,24 +71,3 @@ def validate_required_config() -> None:
     if missing:
         joined = ", ".join(missing)
         raise RuntimeError(f"Missing required production environment variables: {joined}")
-
-
-GRAPH_SCHEMA = """
-Neo4j graph schema:
-
-Nodes:
-- (:Dish {recipe_id, name, servings})
-- (:Ingredient {name, matched_food_id, matched_food_name, mapping_method})
-- (:FoodItem {food_id, name, category, aliases})
-- (:Nutrition {nutrition_id, name, name_zh, unit, category, source_column})
-- (:Disease {disease_id, name, name_en})
-
-Relationships:
-- (:Dish)-[:CONTAINS {amount, unit, amount_per_serving, matched_food_id, matched_food_name}]->(:Ingredient)
-- (:Ingredient)-[:MAPS_TO {method, source}]->(:FoodItem)
-- (:FoodItem)-[:HAS_NUTRITION {amount_per_100g, unit, source_column}]->(:Nutrition)
-- (:Disease)-[:HAS_DIET_RULE {relation, direction, note, reason, food_level_condition, sources_json}]->(:Nutrition)
-
-Main retrieval path:
-Dish -> CONTAINS -> Ingredient -> MAPS_TO -> FoodItem -> HAS_NUTRITION -> Nutrition <- HAS_DIET_RULE <- Disease
-""".strip()

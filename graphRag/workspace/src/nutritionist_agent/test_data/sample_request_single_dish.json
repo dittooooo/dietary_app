@@ -1,72 +1,32 @@
 {
-  "question": "請分析義式千層麵是否適合糖尿病患者，並列出主要營養風險與改善建議。",
+  "question": "我今天晚餐想吃一碗紅燒牛肉麵，請問這樣會不會太油或熱量太高？",
+  "question_type": "single_dish",
   "dish_info_list": [
     {
-      "dish_name": "義式千層麵",
+      "dish_name": "紅燒牛肉麵",
       "amount": 1
     }
   ],
-  "question_type": "single_dish",
   "user_profile": {
+    "diet_goal": "增肌",
     "height_cm": 170,
     "weight_kg": 70,
-    "gender": "male",
     "age": 30
-  },
-  "health_condition": {
-    "has_chronic_disease": true,
-    "chronic_diseases": ["糖尿病"]
   },
   "weekly_diet_records": [
     {
-      "date": "2026-05-18",
+      "date": "2026-08-30",
       "record": [
         {
-          "meal_type": "breakfast",
-          "dish_name": "鮪魚蛋吐司",
-          "note": "無糖豆漿一杯"
-        }
-      ]
-    },
-    {
-      "date": "2026-05-18",
-      "record": [
-        {
-          "meal_type": "lunch",
-          "dish_name": "雞腿便當",
-          "note": "沒吃完，有點太多了"
-        }
-      ]
-    },
-    {
-      "date": "2026-05-19",
-      "record": [
-        {
-          "meal_type": "dinner",
           "dish_name": "牛肉麵",
-          "note": "湯喝一半而已，他好鹹"
-        }
-      ]
-    },
-    {
-      "date": "2026-05-20",
-      "record": [
-        {
           "meal_type": "lunch",
-          "dish_name": "滷味",
-          "note": "配菜有豆干、青菜和麵"
-        }
-      ]
-    },
-    {
-      "date": "2026-05-21",
-      "record": [
-        {
-          "meal_type": "dinner",
-          "dish_name": "義式千層麵",
-          "note": "有點油，但好吃"
+          "note": "覺得太鹹，湯沒有喝完"
         }
       ]
     }
-  ]
+  ],
+  "health_condition": {
+    "has_chronic_disease": true,
+    "chronic_diseases": ["高血壓"]
+  }
 }

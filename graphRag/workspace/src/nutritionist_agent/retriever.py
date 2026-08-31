@@ -19,10 +19,10 @@ class GraphRetriever:
         self.driver.close()
 
     # 執行 read-only Cypher，並把 Neo4j 型別轉成一般 Python dict/list。
-    def retrieve(self, cypher: str) -> List[Dict[str, Any]]:
+    def retrieve(self, cypher: str, parameters: Dict[str, Any] | None = None) -> List[Dict[str, Any]]:
         validate_read_only_cypher(cypher)
-        with self.driver.session() as session:
-            result = session.run(cypher)
+        with self.driver.session(default_access_mode="READ") as session:
+            result = session.run(cypher, parameters or {})
             return [{key: self.to_plain_value(value) for key, value in record.data().items()} for record in result]
 
     # 遞迴轉換 Neo4j Node、Relationship、Path，讓結果可 JSON 序列化。
