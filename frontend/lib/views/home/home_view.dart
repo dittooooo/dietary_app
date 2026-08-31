@@ -1498,13 +1498,19 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     ),
                   );
                 },
-                // todo: 要確認補登記有成功打api 
-                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁
-                onAddRecordForDate: (date) {
-                  Navigator.push(
+                // todo: 補記這天的飲食
+                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁 (帶入解析後的目標日期，並於返回時觸發畫面刷新)
+                onAddRecordForDate: (date) async {
+                  final targetDate = DateTime.tryParse(date) ?? DateTime.now();
+                  await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ManualRecordPage()),
+                    MaterialPageRoute(
+                      builder: (context) => ManualRecordPage(initialDate: targetDate),
+                    ),
                   );
+                  if (mounted) {
+                    setState(() {});
+                  }
                 },
               ),
             ),
