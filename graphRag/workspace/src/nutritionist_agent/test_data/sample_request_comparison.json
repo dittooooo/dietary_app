@@ -1,50 +1,41 @@
 {
-  "question": "在我有高血壓的情況下，我想增肌，你覺得我今天要吃雞排便當麵還是排骨便當",
+  "question": "你覺得我今天要吃雞排便當還是排骨便當比較好？",
   "question_type": "dish_comparison",
   "dish_info_list": [
-    {"dish_name": "雞排便當", "amount": 1},
-    {"dish_name": "排骨便當", "amount": 1}
+    {
+      "dish_name": "雞排便當",
+      "amount": 1
+    },
+    {
+      "dish_name": "排骨便當",
+      "amount": 1
+    }
   ],
   "user_profile": {
+    "diet_goal": "增肌",
     "height_cm": 170,
     "weight_kg": 70,
-    "gender": "male",
     "age": 30
-  },
-  "health_condition": {
-    "has_chronic_disease": true,
-    "chronic_diseases": ["高血壓"]
   },
   "weekly_diet_records": [
     {
-      "date": "2026-05-18",
+      "date": "2026-08-30",
       "record": [
-        {"meal_type": "breakfast", "dish_name": "鮪魚蛋吐司", "note": "無糖豆漿一杯"}
-      ]
-    },
-    {
-      "date": "2026-05-18",
-      "record": [
-        {"meal_type": "lunch", "dish_name": "雞腿便當", "note": "沒吃完，有點太多了"}
-      ]
-    },
-    {
-      "date": "2026-05-19",
-      "record": [
-        {"meal_type": "dinner", "dish_name": "牛肉麵", "note": "湯喝一半而已，他好鹹"}
-      ]
-    },
-    {
-      "date": "2026-05-20",
-      "record": [
-        {"meal_type": "lunch", "dish_name": "滷味", "note": "配菜有豆干、青菜和麵"}
-      ]
-    },
-    {
-      "date": "2026-05-21",
-      "record": [
-        {"meal_type": "dinner", "dish_name": "義式千層麵", "note": "有點油，但好吃"}
+        {
+          "dish_name": "牛肉麵",
+          "meal_type": "lunch",
+          "note": "覺得太鹹，湯沒有喝完"
+        },
+        {
+          "dish_name": "鮪魚三明治",
+          "meal_type": "breakfast",
+          "note": ""
+        }
       ]
     }
-  ]
+  ],
+  "health_condition": {
+    "has_chronic_disease": true,
+    "chronic_diseases": ["高血壓"]
+  }
 }

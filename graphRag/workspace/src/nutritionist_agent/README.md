@@ -5,7 +5,7 @@ FastAPI GraphRAG service for nutrition advice.
 Runtime path:
 
 ```text
-POST /ask -> NutritionAgent -> Neo4j retrieval -> nutrition summary -> OpenAI answer
+POST /ask -> proactive disease rules + deterministic nutrition retrieval -> evidence -> validated OpenAI advice
 POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 ```
 
@@ -15,7 +15,7 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 
 ```json
 {
-  "question": "我有糖尿病，這些料理適合我嗎？",
+  "question": "今天午餐怎麼選比較好？",
   "dish_info_list": [
     {"dish_name": "雞腿便當", "amount": 1},
     {"dish_name": "滷肉飯", "amount": 1}
@@ -25,7 +25,8 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
     "height_cm": 170,
     "weight_kg": 70,
     "gender": "male",
-    "age": 30
+    "age": 30,
+    "diet_goal": "增肌"
   },
   "health_condition": {
     "has_chronic_disease": true,
@@ -33,7 +34,7 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
   },
   "weekly_diet_records": [
     {
-      "date": "2026-07-13",
+      "date": "2026-08-30",
       "record": [
         {
           "meal_type": "lunch",
@@ -52,8 +53,10 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 - `dish_info_list`: Required structured dish names and serving amounts from the caller. Nutritionist Agent does not extract dish names from `question`.
 - `question_type`: Required. One of `single_dish`, `dish_comparison`, or `unknown`.
 - `user_profile`: Optional user profile.
-- `health_condition`: Optional chronic disease context.
-- `weekly_diet_records`: Optional recent diet records for answer context.
+- `health_condition`: If `has_chronic_disease=true`, proactively retrieve all named diseases' rules even when the question never mentions disease. Disease names mentioned in the question are also matched against Neo4j `Disease.name` and retrieved, without changing the user's diagnosis. The question's actual topic leads the answer; profile restrictions are secondary context when relevant. Matching is case-insensitive literal-name matching, not alias or typo resolution. Missing evidence is explained by the model when relevant; no fixed conclusion suffix is appended.
+- `weekly_diet_records`: Uses only valid records from today and the preceding six days. Update static example dates before testing.
+
+See [flow and evidence rules](NUTRITION_AGENT_FLOW.md) and [test instructions](test_area/README.md). New ready-to-paste cases are in `test_data/advice_cases/`; `test_data/v1/` is historical.
 
 ## Dish Nutrition Lookup
 
@@ -86,6 +89,8 @@ Response:
 ## Environment
 
 Required for a real `/ask` request:
+
+Only `dietary_app/.env` is loaded; process environment variables take precedence. Nested `.env` files are ignored.
 
 ```env
 OPENAI_API_KEY=sk-...
