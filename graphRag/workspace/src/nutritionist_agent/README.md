@@ -16,7 +16,10 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 ```json
 {
   "question": "我有糖尿病，這些料理適合我嗎？",
-  "dish_names": ["雞腿便當", "滷肉飯"],
+  "dish_info_list": [
+    {"dish_name": "雞腿便當", "amount": 1},
+    {"dish_name": "滷肉飯", "amount": 1}
+  ],
   "question_type": "dish_comparison",
   "user_profile": {
     "height_cm": 170,
@@ -31,9 +34,13 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
   "weekly_diet_records": [
     {
       "date": "2026-07-13",
-      "meal": "lunch",
-      "dish_name": "雞腿便當",
-      "note": "外食"
+      "record": [
+        {
+          "meal_type": "lunch",
+          "dish_name": "雞腿便當",
+          "note": "外食"
+        }
+      ]
     }
   ]
 }
@@ -42,8 +49,8 @@ POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
 ## Fields
 
 - `question`: Required user question.
-- `dish_names`: Structured dish names from the caller. If present, these are used before parsing dish names from `question`.
-- `question_type`: Optional. One of `single_dish`, `dish_comparison`, or `unknown`.
+- `dish_info_list`: Required structured dish names and serving amounts from the caller. Nutritionist Agent does not extract dish names from `question`.
+- `question_type`: Required. One of `single_dish`, `dish_comparison`, or `unknown`.
 - `user_profile`: Optional user profile.
 - `health_condition`: Optional chronic disease context.
 - `weekly_diet_records`: Optional recent diet records for answer context.
@@ -94,7 +101,7 @@ Optional:
 ```env
 APP_ENV=local
 OPENAI_API_BASE=https://api.openai.com/v1
-OPENAI_MODEL=gpt-4.1-nano
+OPENAI_MODEL=gpt-5.6-luna
 NUTRITION_AGENT_TOP_N_ROWS=80
 NUTRITION_AGENT_DISH_MATCH_THRESHOLD=60
 NUTRITION_AGENT_GRAPH_QUERY_LIMIT=1000

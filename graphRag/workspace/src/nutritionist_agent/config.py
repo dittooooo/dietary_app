@@ -51,7 +51,7 @@ NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "password")
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-nano")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna")
 
 DEFAULT_TOP_N_ROWS = int(os.getenv("NUTRITION_AGENT_TOP_N_ROWS", "80"))
 DISH_MATCH_THRESHOLD = int(os.getenv("NUTRITION_AGENT_DISH_MATCH_THRESHOLD", "60"))

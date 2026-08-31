@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Literal, Optional
+
 from pydantic import BaseModel, Field
 
 QuestionType = Literal["single_dish", "dish_comparison", "unknown"]
@@ -28,7 +29,7 @@ class DietRecord(BaseModel):
     record: List[DietRecordItem] = Field(default_factory=list)
 class DishInfo(BaseModel):
     dish_name: str
-    amount: float = 1
+    amount: float = Field(default=1, gt=0, description="Number of servings for this dish")
 class NutritionAgentRequest(BaseModel):
     question: str
     question_type: QuestionType

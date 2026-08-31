@@ -1,15 +1,15 @@
 # Current Neo4j Schema
 
-Snapshot read from the connected Neo4j database on 2026-08-23. This document describes the current database state; it is not a proposed redesign.
+Snapshot read from the connected Neo4j database on 2026-08-27 after importing the complete `recipes_json` directory. This document describes the current database state; it is not a proposed redesign.
 
 ## Node Counts
 
 | Label | Count |
 |---|---:|
 | `Disease` | 10 |
-| `Dish` | 2,050 |
+| `Dish` | 2,933 |
 | `FoodItem` | 2,383 |
-| `Ingredient` | 2,925 |
+| `Ingredient` | 3,147 |
 | `Nutrition` | 104 |
 | `Biomarker` | 0 |
 
@@ -17,8 +17,8 @@ Snapshot read from the connected Neo4j database on 2026-08-23. This document des
 
 | Relationship | From | To | Count |
 |---|---|---|---:|
-| `CONTAINS` | `Dish` | `Ingredient` | 15,915 |
-| `MAPS_TO` | `Ingredient` | `FoodItem` | 2,925 |
+| `CONTAINS` | `Dish` | `Ingredient` | 22,844 |
+| `MAPS_TO` | `Ingredient` | `FoodItem` | 3,147 |
 | `HAS_NUTRITION` | `FoodItem` | `Nutrition` | 170,774 |
 | `HAS_DIET_RULE` | `Disease` | `Nutrition` | 71 |
 

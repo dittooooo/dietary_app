@@ -122,7 +122,7 @@ GraphRAG 問答核心。
 它使用的資料來源不在 `kg_builder/data`，而是在 workspace 層級：
 
 ```text
-graphRag/workspace/data/recipe_and_nutrition/food_and_nutrition_mapping.json
+graphRag/workspace/data/recipe_and_nutrition/recipes_json/*.json
 graphRag/workspace/data/recipe_and_nutrition/nutrition_data_categorized.json
 graphRag/workspace/data/recipe_and_nutrition/nutrition_components.json
 graphRag/workspace/data/disease_and_biomarker/chronic_disease_rules_v2.json
@@ -140,7 +140,7 @@ graphRag/workspace/data/disease_and_biomarker/chronic_disease_rules_v2.json
 常用指令：
 
 ```bash
-python knowledge_agent_importer.py --clear --mapping-path ..\\data\\recipe_and_nutrition\\food_and_nutrition_mapping.json
+python knowledge_agent_importer.py --mapping-path ..\\data\\recipe_and_nutrition\\recipes_json
 ```
 
 測試少量食譜：
@@ -162,7 +162,7 @@ python append_recipe_mapping.py --mapping-path path\\to\\recipes.json
 python append_recipe_mapping.py --mapping-path path\\to\\recipes_json
 ```
 
-資料夾模式會依檔名排序讀取其中所有 `.json` 檔，並合併成同一批食譜匯入；重複執行不會重複建立 Dish、Ingredient 或關係。匯入前可加 `--dry-run` 檢查筆數、缺少的 FoodItem 與重複 recipe ID。
+預設來源是 `workspace/data/recipe_and_nutrition/recipes_json`。資料夾模式會依檔名排序讀取其中所有 `.json` 檔，並合併成同一批食譜匯入；傳入單一 JSON 檔也仍然支援。重複執行不會重複建立 Dish、Ingredient 或關係。匯入前可加 `--dry-run` 檢查筆數、缺少的 FoodItem 與重複 recipe ID。
 
 Recipe importer 會依 `Ingredient.matched_food_id` 先刪除舊的 `MAPS_TO`，再建立唯一的 `Ingredient -> FoodItem` 映射。對同一原始名稱但不同整合編號的資料，會使用 `原始名稱 [整合編號]` 作為內部 Ingredient key，避免一個 Ingredient 對到多個 FoodItem。
 
