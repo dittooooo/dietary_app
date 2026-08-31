@@ -176,14 +176,10 @@ async function getCompanionReply({
   dietaryAgentError,
   tempStory = []
 }) {
-  // 飲食紀錄意圖處理 (分流 B 極速草稿文字組裝)
+  // 飲食紀錄意圖處理 (分流 B 極速卡片數據與成功對話組裝，由前端實作延遲渲染)
   if (screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
-      const summaryList = screening.meal_items.map(item => {
-        return `${item.meal_period || "即時"}的「${item.quantity}${item.unit}${item.name}」`;
-      }).join('，以及');
-
-      return `幫你整理好${summaryList}草稿囉！請在下方確認一下內容是否正確，按下確認就可以幫你存起來囉！✨`;
+      return `已成功幫你將飲食存入紀錄庫囉！✨`;
     } else {
       return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
     }
