@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import APIRouter, FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from neo4j.exceptions import Neo4jError
 
@@ -24,17 +24,18 @@ app = FastAPI(
     title="Nutrition Agent GraphRAG API",
     default_response_class=UTF8JSONResponse,
 )
+api = APIRouter(prefix="/nutritionist-agent")
 validate_required_config()
 agent = NutritionAgent()
 
 # 提供最基本的服務存活檢查，不會連線 Neo4j 或 OpenAI。
-@app.get("/health")
+@api.get("/health")
 def health_check() -> Dict[str, str]:
     return {"status": "ok", "service": "nutrition_agent"}
 
 
 # 確認服務已可處理請求，重點是檢查 Neo4j driver 是否能連線。
-@app.get("/ready")
+@api.get("/ready")
 def readiness_check() -> Dict[str, str]:
     try:
         agent.retriever.driver.verify_connectivity()
@@ -44,7 +45,7 @@ def readiness_check() -> Dict[str, str]:
 
 
 # 依名稱關鍵字搜尋 Dish 與 FoodItem 節點，不呼叫 OpenAI 或營養計算流程。
-@app.get("/dishes/search", response_model=DishSearchResponse)
+@api.get("/dishes/search", response_model=DishSearchResponse)
 def dish_search(
     q: str = Query(..., min_length=1, max_length=100),
     limit: int = Query(20, ge=1, le=50),
@@ -58,7 +59,7 @@ def dish_search(
 
 
 # 接收使用者問題與個人/飲食資料，交給 NutritionAgent 完成 GraphRAG 流程。
-@app.post("/ask", response_model=NutritionAgentResponse)
+@api.post("/ask", response_model=NutritionAgentResponse)
 def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
     try:
         return agent.ask(req)
@@ -71,7 +72,7 @@ def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
 
 
 # 查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不呼叫 OpenAI。
-@app.post("/dish-nutrition", response_model=DishNutritionResponse)
+@api.post("/dish-nutrition", response_model=DishNutritionResponse)
 def dish_nutrition(req: DishNutritionRequest) -> DishNutritionResponse:
     try:
         # HTTP 層只負責接收 request 與轉換錯誤碼，實際圖譜檢索交給 NutritionAgent。
@@ -85,3 +86,6 @@ def dish_nutrition(req: DishNutritionRequest) -> DishNutritionResponse:
     except Neo4jError as exc:
         # Neo4j 查詢或連線失敗時回 503，呼叫端可稍後重試。
         raise HTTPException(status_code=503, detail=f"Neo4j query failed: {exc}") from exc
+
+
+app.include_router(api)

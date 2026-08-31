@@ -5,9 +5,9 @@ FastAPI GraphRAG service for nutrition advice.
 Runtime path:
 
 ```text
-POST /ask -> proactive disease rules + deterministic nutrition retrieval -> evidence -> validated OpenAI advice
-POST /dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
-GET /dishes/search -> Neo4j Dish and FoodItem name keyword search
+POST /nutritionist-agent/ask -> proactive disease rules + deterministic nutrition retrieval -> evidence -> validated OpenAI advice
+POST /nutritionist-agent/dish-nutrition -> NutritionAgent -> Neo4j retrieval -> nutrition summary
+GET /nutritionist-agent/dishes/search -> Neo4j Dish and FoodItem name keyword search
 ```
 
 ## Request
@@ -61,7 +61,7 @@ See [flow and evidence rules](NUTRITION_AGENT_FLOW.md) and [test instructions](t
 
 ## Dish Nutrition Lookup
 
-Use `POST /dish-nutrition` when another service only needs nutrition data for a single dish, such as writing a diet record. This endpoint does not call OpenAI and does not generate advice.
+Use `POST /nutritionist-agent/dish-nutrition` when another service only needs nutrition data for a single dish, such as writing a diet record. This endpoint does not call OpenAI and does not generate advice.
 
 Request:
 
@@ -104,7 +104,7 @@ NEO4J_PASSWORD=...
 
 ## Dish Name Search
 
-Use `GET /dishes/search?q=便` to find stored recipe and food-item names containing a keyword. The endpoint searches both `Dish.name` and `FoodItem.name`; it does not call OpenAI or calculate nutrition. Results are ordered as exact match, name-prefix match, then other containing matches.
+Use `GET /nutritionist-agent/dishes/search?q=便` to find stored recipe and food-item names containing a keyword. The endpoint searches both `Dish.name` and `FoodItem.name`; it does not call OpenAI or calculate nutrition. Results are ordered as exact match, name-prefix match, then other containing matches.
 
 ```json
 {
