@@ -1,5 +1,11 @@
 {
-  "question": "我今天想吃義式千層麵，你覺得如何",
+  "question": "請分析義式千層麵是否適合糖尿病患者，並列出主要營養風險與改善建議。",
+  "dish_info_list": [
+    {
+      "dish_name": "義式千層麵",
+      "amount": 1
+    }
+  ],
   "question_type": "single_dish",
   "user_profile": {
     "height_cm": 170,
@@ -14,34 +20,53 @@
   "weekly_diet_records": [
     {
       "date": "2026-05-18",
-      "meal": "breakfast",
-      "dish_name": "鮪魚蛋吐司",
-      "note": "無糖豆漿一杯"
+      "record": [
+        {
+          "meal_type": "breakfast",
+          "dish_name": "鮪魚蛋吐司",
+          "note": "無糖豆漿一杯"
+        }
+      ]
     },
     {
       "date": "2026-05-18",
-      "meal": "lunch",
-      "dish_name": "雞腿便當",
-      "note": "沒吃完，有點太多了"
+      "record": [
+        {
+          "meal_type": "lunch",
+          "dish_name": "雞腿便當",
+          "note": "沒吃完，有點太多了"
+        }
+      ]
     },
     {
       "date": "2026-05-19",
-      "meal": "dinner",
-      "dish_name": "牛肉麵",
-      "note": "湯喝一半而已，他好鹹"
+      "record": [
+        {
+          "meal_type": "dinner",
+          "dish_name": "牛肉麵",
+          "note": "湯喝一半而已，他好鹹"
+        }
+      ]
     },
     {
       "date": "2026-05-20",
-      "meal": "lunch",
-      "dish_name": "滷味",
-      "note": "配菜有豆干、青菜和麵"
+      "record": [
+        {
+          "meal_type": "lunch",
+          "dish_name": "滷味",
+          "note": "配菜有豆干、青菜和麵"
+        }
+      ]
     },
     {
       "date": "2026-05-21",
-      "meal": "dinner",
-      "dish_name": "義式千層麵",
-      "note": "有點油，但好吃"
+      "record": [
+        {
+          "meal_type": "dinner",
+          "dish_name": "義式千層麵",
+          "note": "有點油，但好吃"
+        }
+      ]
     }
-  ],
-  "debug": false
+  ]
 }

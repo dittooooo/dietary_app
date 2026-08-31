@@ -21,6 +21,9 @@ FOR (n:Ingredient) REQUIRE n.name IS UNIQUE;
 CREATE CONSTRAINT ingredient_matched_food_id_required IF NOT EXISTS
 FOR (n:Ingredient) REQUIRE n.matched_food_id IS NOT NULL;
 
+CREATE CONSTRAINT ingredient_matched_food_id_required IF NOT EXISTS
+FOR (n:Ingredient) REQUIRE n.matched_food_id IS NOT NULL;
+
 CREATE CONSTRAINT disease_name_unique IF NOT EXISTS
 FOR (n:Disease) REQUIRE n.name IS UNIQUE;
 

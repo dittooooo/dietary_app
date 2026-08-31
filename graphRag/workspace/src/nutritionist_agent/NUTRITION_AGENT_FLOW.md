@@ -1,6 +1,6 @@
 # Nutrition Agent v2 架構與生命週期說明
 
-這個資料夾實作的是一個飲食建議 GraphRAG agent。外部呼叫者透過 FastAPI 的 `/ask` 路徑送入使用者問題、個人資料、慢性病資訊與近一周飲食紀錄；系統會抽出料理名稱，對齊 Neo4j 圖譜中的料理或食物節點，查出營養素與疾病飲食規則，重新彙總主要營養資訊，最後呼叫 OpenAI 產生繁體中文飲食建議並回傳。若只需要替飲食紀錄取得單一道料理營養成分，則可呼叫 `/dish-nutrition`，它會共用圖譜檢索與營養彙總流程，但不呼叫 OpenAI。
+這個資料夾實作的是一個飲食建議 GraphRAG agent。外部呼叫者透過 FastAPI 的 `/ask` 路徑送入使用者問題、已整理好的料理清單、個人資料、慢性病資訊與近一周飲食紀錄；Nutrition Agent 不負責從問題抽取料理或判斷問題類型。系統會對齊 Neo4j 圖譜中的料理或食物節點，查出營養素與疾病飲食規則，重新彙總主要營養資訊，最後呼叫 OpenAI 產生繁體中文飲食建議並回傳。若只需要替飲食紀錄取得單一道料理營養成分，則可呼叫 `/dish-nutrition`，它會共用圖譜檢索與營養彙總流程，但不呼叫 OpenAI。
 
 目前主流程不是讓 LLM 即時自由生成 Cypher，而是由 `text_to_cypher.py` 依照料理配對結果用程式化模板產生 read-only Cypher。這樣可以讓圖譜查詢欄位、慢性病條件與安全限制都維持穩定。
 
@@ -16,7 +16,6 @@
 - `answer_generator.py`：組合 LLM context、呼叫 OpenAI、驗證與清理回答。
 - `cypher_guard.py`：檢查 Cypher 是否只讀、安全、單一語句且有 `LIMIT`。
 - `config.py`：讀取 `.env` 與環境變數，提供 Neo4j/OpenAI/查詢限制設定。
-- `mock_inputs.py`：本機測試用的預設使用者、健康狀況與飲食紀錄。
 
 `test_area` 是 Neo4j 資料檢查與修補用途，本文件依照需求不納入主流程說明。
 
@@ -25,8 +24,8 @@
 外部呼叫 `POST /ask` 時，請求模型定義在 `models.py` 的 `NutritionAgentRequest`：
 
 - `question`：使用者原始問題，必填。
-- `dish_names`：呼叫端明確提供的料理名稱。若有提供，會優先於從自然語言問題抽料理。
-- `question_type`：可選，`single_dish`、`dish_comparison` 或 `unknown`。
+- `dish_info_list`：呼叫端明確提供的料理名稱與份數，Nutrition Agent 不再從自然語言問題抽料理。
+- `question_type`：呼叫端提供的 `single_dish`、`dish_comparison` 或 `unknown`。
 - `user_profile`：使用者身高、體重、性別、年齡。
 - `health_condition`：是否有慢性病與慢性病清單。
 - `weekly_diet_records`：近一周飲食紀錄，提供個人化建議背景。
@@ -49,8 +48,7 @@ FastAPI 入口在 `app.py` 的 `ask(req: NutritionAgentRequest)`。這個 functi
 
 `config.py` 在匯入時會呼叫 `load_env_files()`，依序讀取：
 
-- `graphRag/workspace/.env`
-- `graphRag/workspace/src/nutritionist_agent/.env`
+- 根目錄 `dietary_app/.env`
 
 接著建立以下設定：
 
@@ -96,11 +94,7 @@ agent = NutritionAgent()
 - 若 `health_condition` 沒提供，使用空的 `HealthCondition()`。
 - 若 `weekly_diet_records` 沒提供，使用空清單。
 
-接著呼叫 `text_to_cypher.py` 的 `infer_question_type()`：
-
-- 若問題包含「還是」「或」「比較」「哪個」「vs」等詞，判斷為 `dish_comparison`。
-- 若 request 已提供合法 `question_type`，則採用 request 的值。
-- 否則預設為 `single_dish`。
+`question_type` 與 `dish_info_list` 均由呼叫端提供，Agent 直接採用，不再分析 question 文字。
 
 ### 5. 標準化第一次 payload
 
@@ -122,22 +116,7 @@ agent = NutritionAgent()
 
 ### 6. 抽出料理候選名稱
 
-`agent.py` 呼叫 `text_to_cypher.py` 的 `extract_dish_candidates(full_payload)`。
-
-這個 function 的優先順序是：
-
-1. 如果 payload 中有 `dish_names` 或 `selected_dishes`，直接使用這些結構化料理名稱。
-2. 如果沒有結構化資料，才從 `question` 自然語言中抽料理。
-
-自然語言抽取會做幾件事：
-
-- 移除「我今天想吃」「請問」「適合吃」「可以」「好嗎」等問句語氣詞。
-- 比較題用「還是」「或」「跟」「和」「、」「vs」等切分。
-- 單題用標點符號切分。
-- `split_pairing_context()` 會拆開「搭配」「配」「加」「喝」「吃」等搭配語境。
-- `prune_leading_context()` 會清掉疾病、餐別、時間與語氣脈絡。
-- `is_usable_candidate()` 過濾「早餐」「午餐」「便當」「飯」「麵」等太籠統的名稱。
-- `dedupe_candidates()` 去重並移除被更長候選包含的短詞。
+料理名稱抽取與問題類型判斷已移至呼叫端；Agent 僅驗證並使用 `dish_info_list`。
 
 ### 7. 料理名稱配對 Neo4j 節點
 
@@ -318,7 +297,7 @@ protein_g*4 + carbohydrate_g*4 + fat_g*9
 - 建議文字不可輸出 kcal、mg、g、克、百分比等具體數字或單位。
 - 慢性疾病只根據 `health_condition`，不能從 question 文字推測。
 - 若是比較題，必須剛好推薦一個候選料理。
-- 結尾要提醒實際仍需依個人血糖、病況與醫囑調整。
+- 若有慢性病，結尾會依 `health_condition.chronic_diseases` 動態加入對應健康指標與用藥提醒；沒有慢性病資料時不強行加入疾病提醒。
 
 ### 16. 比較題回答校正
 
@@ -362,9 +341,7 @@ protein_g*4 + carbohydrate_g*4 + fat_g*9
 POST /ask
   -> app.py: ask()
   -> agent.py: NutritionAgent.ask()
-  -> text_to_cypher.py: infer_question_type()
   -> text_to_cypher.py: normalize_request_payload()
-  -> text_to_cypher.py: extract_dish_candidates()
   -> dish_matcher.py: DishMatcher.match_dishes()
   -> text_to_cypher.py: normalize_request_payload()
   -> text_to_cypher.py: TextToCypherTranslator.translate()
@@ -390,7 +367,6 @@ POST /dish-nutrition
   -> app.py: dish_nutrition()
   -> agent.py: NutritionAgent.get_dish_nutrition()
   -> text_to_cypher.py: normalize_request_payload()
-  -> text_to_cypher.py: extract_dish_candidates()
   -> dish_matcher.py: DishMatcher.match_dishes()
   -> text_to_cypher.py: TextToCypherTranslator.translate()
   -> retriever.py: GraphRetriever.retrieve()

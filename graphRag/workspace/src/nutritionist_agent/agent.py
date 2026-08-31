@@ -25,7 +25,6 @@ from .text_to_cypher import (
 )
 from .cypher_guard import validate_nutrition_rows
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -66,23 +65,17 @@ class NutritionAgent:
         weekly_records: List[Any] = []
         question_type: QuestionType = "single_dish"
 
-        # 使用 dish_names 明確指定料理，避免把純料理名稱再當成自然語言問題做過度解析。
-        full_payload = normalize_request_payload(
-            question=dish_name,
-            question_type=question_type,
-            user_profile=user_profile,
-            health_condition=health_condition,
-            weekly_diet_records=weekly_records,
-            dish_info_list=[{"dish_name": dish_name, "amount": 1}],
-        )
-
-        # 沿用 /ask 的候選抽取與圖譜配對邏輯，確保同一個料理名稱在兩支 API 中查到一致結果。
+        # 單一料理 endpoint 的輸入本身就是 authoritative dish candidate。
         dish_candidates = [dish_name]
+        amount_by_dish = {dish_name: 1}
         logger.info("[NutritionAgent] nutrition_lookup_candidates=%s", dish_candidates)
-        match_results = self.dish_matcher.match_dishes(dish_candidates)
+        match_results = self._attach_amounts(
+            self.dish_matcher.match_dishes(dish_candidates),
+            amount_by_dish,
+        )
         logger.info("[NutritionAgent] nutrition_lookup_match=%s", match_results)
 
-        # 第二次 payload 帶入配對結果，讓 TextToCypherTranslator 能依 retrieval_strategy 組查詢。
+        # 帶入配對結果，讓 TextToCypherTranslator 能依 retrieval_strategy 組查詢。
         full_payload = normalize_request_payload(
             question=dish_name,
             question_type=question_type,
@@ -100,23 +93,17 @@ class NutritionAgent:
         missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
         if missing_candidates:
             # 若 Dish 配對有結果但查不到營養列，退回 ingredient_fallback 再查一次，增加飲食紀錄可用率。
-            fallback_results = [
-                {
-                    "input_name": candidate,
-                    "matched_dish_name": None,
-                    "match_score": 0,
-                    "match_reason": "no nutrition rows from dish match",
-                    "retrieval_strategy": "ingredient_fallback",
-                }
-                for candidate in missing_candidates
-            ]
+            fallback_results = self._build_fallback_results(missing_candidates, {name: 1 for name in missing_candidates})
             fallback_payload = normalize_request_payload(
                 question=dish_name,
                 question_type=question_type,
                 user_profile=user_profile,
                 health_condition=health_condition,
                 weekly_diet_records=weekly_records,
-                dish_info_list=[{"dish_name": name, "amount": 1} for name in missing_candidates],
+                dish_info_list=[
+                    {"dish_name": name, "amount": amount_by_dish.get(name, 1)}
+                    for name in missing_candidates
+                ],
                 dish_match_results=fallback_results,
             )
             fallback_rows = self._retrieve_template_nutrition_rows(fallback_payload)
@@ -153,7 +140,7 @@ class NutritionAgent:
         dish_info_list = [item.model_dump() for item in request.dish_info_list]
         dish_candidates = [item["dish_name"] for item in dish_info_list]
 
-        # 第一次 payload 只放原始輸入，先用來抽出料理候選名稱。
+        # 呼叫端已完成料理抽取；這裡只使用結構化 dish_info_list。
         full_payload = normalize_request_payload(
             question=request.question,
             question_type=effective_question_type,
@@ -165,7 +152,11 @@ class NutritionAgent:
         logger.info("[NutritionAgent] dish_candidates=%s", dish_candidates)
 
         # 先把使用者輸入的料理名稱對齊圖譜中的 Dish 或 FoodItem，決定後續檢索策略。
-        match_results = self.dish_matcher.match_dishes(dish_candidates)
+        amount_by_dish = {item["dish_name"]: item["amount"] for item in dish_info_list}
+        match_results = self._attach_amounts(
+            self.dish_matcher.match_dishes(dish_candidates),
+            amount_by_dish,
+        )
         logger.info("[NutritionAgent] dish_match=%s", match_results)
 
         full_payload["dish_match_results"] = match_results
@@ -179,23 +170,17 @@ class NutritionAgent:
         missing_candidates = self._missing_candidates_from_rows(dish_candidates, match_results, rows)
         if missing_candidates:
             # 若料理配對成功但沒有查到營養列，改用食材 fallback 再查一次，盡量保留回覆能力。
-            fallback_results = [
-                {
-                    "input_name": candidate,
-                    "matched_dish_name": None,
-                    "match_score": 0,
-                    "match_reason": "no nutrition rows from dish match",
-                    "retrieval_strategy": "ingredient_fallback",
-                }
-                for candidate in missing_candidates
-            ]
+            fallback_results = self._build_fallback_results(missing_candidates, amount_by_dish)
             fallback_payload = normalize_request_payload(
                 question=request.question,
                 question_type=effective_question_type,
                 user_profile=user_profile,
                 health_condition=health_condition,
                 weekly_diet_records=weekly_records,
-                dish_info_list=[{"dish_name": name, "amount": 1} for name in missing_candidates],
+                dish_info_list=[
+                    {"dish_name": name, "amount": amount_by_dish.get(name, 1)}
+                    for name in missing_candidates
+                ],
                 dish_match_results=fallback_results,
             )
             fallback_rows = self._retrieve_nutrition_rows(fallback_payload)
@@ -240,6 +225,33 @@ class NutritionAgent:
     def _retrieve_nutrition_rows(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         translated = self.translator.translate(payload)
         return self._retrieve_translated_nutrition_rows(payload, translated)
+
+    @staticmethod
+    def _attach_amounts(
+        match_results: List[Dict[str, Any]],
+        amount_by_dish: Dict[str, float],
+    ) -> List[Dict[str, Any]]:
+        return [
+            {**result, "amount": amount_by_dish.get(str(result.get("input_name")), 1)}
+            for result in match_results
+        ]
+
+    @staticmethod
+    def _build_fallback_results(
+        candidates: List[str],
+        amount_by_dish: Dict[str, float],
+    ) -> List[Dict[str, Any]]:
+        return [
+            {
+                "input_name": candidate,
+                "matched_dish_name": None,
+                "match_score": 0,
+                "match_reason": "no nutrition rows from dish match",
+                "retrieval_strategy": "ingredient_fallback",
+                "amount": amount_by_dish.get(candidate, 1),
+            }
+            for candidate in candidates
+        ]
 
     def _retrieve_template_nutrition_rows(self, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
         translated = self.translator.translate_template(payload)
@@ -337,8 +349,15 @@ class NutritionAgent:
         # 優先使用清理後的候選名稱作為顯示名稱；若連候選都沒有，就回到原始輸入。
         display_name = dish_candidates[0] if dish_candidates else dish_name
         match = match_results[0] if match_results else {}
+        return NutritionAgent._empty_nutrition(
+            display_name,
+            match,
+        )
+
+    @staticmethod
+    def _empty_nutrition(dish_name: str, match: Dict[str, Any]) -> DishNutrition:
         return DishNutrition(
-            dish_name=display_name,
+            dish_name=dish_name,
             matched_name=match.get("matched_dish_name") or match.get("matched_food_name"),
             matched_type=(
                 "dish"
@@ -401,39 +420,12 @@ class NutritionAgent:
                 continue
             # 沒有營養列的候選仍建立一筆「資料不足」結果，讓 LLM 知道它是比較選項之一。
             completed.append(
-                DishNutrition(
-                    dish_name=display_name,
-                    matched_name=(
-                        match_by_name.get(display_name, {}).get("matched_dish_name")
-                        or match_by_name.get(display_name, {}).get("matched_food_name")
-                    ),
-                    matched_type=(
-                        "dish"
-                        if match_by_name.get(display_name, {}).get("matched_dish_name")
-                        else "food_item"
-                        if match_by_name.get(display_name, {}).get("matched_food_name")
-                        else None
-                    ),
-                    match_score=match_by_name.get(display_name, {}).get("match_score"),
-                    match_reason=match_by_name.get(display_name, {}).get("match_reason"),
-                    retrieval_strategy=strategy_by_name.get(display_name, "not_found"),
-                    nutrients=[
-                        NutrientAmount(
-                            name="熱量",
-                            amount_per_serving=None,
-                            unit="kcal",
-                            calculation_method="macro_calculation",
-                            formula="protein_g*4 + carbohydrate_g*4 + fat_g*9",
-                            calorie_status="insufficient_macros",
-                        ),
-                        NutrientAmount(name="蛋白質", amount_per_serving=None, unit="g"),
-                        NutrientAmount(name="脂肪", amount_per_serving=None, unit="g"),
-                        NutrientAmount(name="碳水化合物", amount_per_serving=None, unit="g"),
-                        NutrientAmount(name="糖", amount_per_serving=None, unit="g"),
-                        NutrientAmount(name="鈉", amount_per_serving=None, unit="mg"),
-                        NutrientAmount(name="膳食纖維", amount_per_serving=None, unit="g"),
-                        NutrientAmount(name="飽和脂肪", amount_per_serving=None, unit="g"),
-                    ],
+                self._empty_nutrition(
+                    display_name,
+                    {
+                        **match_by_name.get(display_name, {}),
+                        "retrieval_strategy": strategy_by_name.get(display_name, "not_found"),
+                    },
                 )
             )
         return completed

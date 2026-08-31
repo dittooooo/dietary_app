@@ -36,7 +36,7 @@ dish_nutrition 中的數值只供內部排序與判斷參考，因為使用情�
 - 若近期飲食偏油、偏鹹、偏甜，請溫和提醒；若近期飲食均衡，可允許較彈性的份量建議。
 - 不要輸出冗長圖譜路徑說明。
 - 不要逐筆列出所有 graph rows。
-- 最後加一句：實際仍需依個人血糖、病況與醫囑調整。
+- 若 health_condition 有慢性病，請根據實際疾病名稱與相關健康指標，動態補充個人化的安全提醒；不要對沒有提供的疾病或指標自行推測，也不要每次使用同一句固定提醒。
 
 請輸出 JSON：
 {
@@ -129,6 +129,7 @@ class AnswerGenerator:
         # 回答完成後補上圖譜配對 metadata，並移除模型可能輸出的具體營養數字。
         parsed = self.attach_match_metadata_to_advice(parsed, dish_nutrition)
         parsed = self.sanitize_nutrition_numbers(parsed)
+        parsed = self.add_dynamic_health_reminder(parsed, health_condition)
         return parsed
 
     # 實際呼叫 LLM，並在比較題沒有明確選項時要求模型重試一次。
@@ -325,6 +326,40 @@ class AnswerGenerator:
         cleaned = re.sub(r"\s+", " ", cleaned).strip()
         return cleaned
 
+    # 只在使用者提供慢性病時補充提醒，並依疾病名稱選擇相關健康指標，避免固定寫死「血糖」。
+    @staticmethod
+    def add_dynamic_health_reminder(
+        parsed: Dict[str, Any],
+        health_condition: HealthCondition,
+    ) -> Dict[str, Any]:
+        diseases = [name.strip() for name in health_condition.chronic_diseases if name and name.strip()]
+        if not health_condition.has_chronic_disease or not diseases:
+            return parsed
+
+        conclusion = str(parsed.get("conclusion", "")).strip()
+        # 移除舊提示詞中的固定句，避免與新的疾病導向提醒重複。
+        conclusion = conclusion.replace("實際仍需依個人血糖、病況與醫囑調整。", "").strip()
+
+        disease_text = "、".join(dict.fromkeys(diseases))
+        disease_terms = {
+            "糖尿病": "血糖與用藥情況",
+            "高血糖": "血糖與用藥情況",
+            "高血壓": "血壓與用藥情況",
+            "高血脂": "血脂與用藥情況",
+            "腎臟病": "腎功能與用藥情況",
+            "腎病": "腎功能與用藥情況",
+        }
+        focus = next(
+            (term for disease, term in disease_terms.items() if any(disease in name for name in diseases)),
+            "目前病況與用藥情況",
+        )
+        reminder = (
+            f"本次建議已納入{disease_text}的飲食資訊；實際仍請依您的{focus}，"
+            "與醫療專業人員共同評估與調整。"
+        )
+        parsed["conclusion"] = f"{conclusion} {reminder}".strip()
+        return parsed
+
     # 把身高體重、慢性病與近期飲食紀錄整理成 LLM 容易使用的摘要。
     @staticmethod
     def summarize_user_context(
@@ -382,11 +417,10 @@ class AnswerGenerator:
 
     # 呼叫 OpenAI Chat Completions API 並取回文字內容。
     def _complete(self, messages: List[Dict[str, str]]) -> str:
-        # temperature=0 讓同樣的 GraphRAG context 盡量得到穩定、可預期的 JSON 回答。
+        # gpt-5.6-luna 只接受 temperature 的預設值，因此省略此參數。
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            temperature=0.0,
         )
         content = response.choices[0].message.content
         if not content:

@@ -188957,11 +188957,11 @@
         "matched": "香菜",
         "整合編號": "E9900201",
         "method": "Global Search + LLM",
-        "amount_raw": "適量",
+        "amount_raw": "5g",
         "amount_value": 5.0,
         "amount_unit": "克",
         "amount_note": "適量",
-        "amount_per_serving": 1.0
+        "amount_per_serving": 5.0
       },
       {
         "original": "九層塔",

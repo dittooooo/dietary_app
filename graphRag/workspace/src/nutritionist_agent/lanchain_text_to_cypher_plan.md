@@ -6,7 +6,7 @@
 
 - 預設保留現有 template 查詢，確保 `/ask`、`/dish-nutrition` 不被破壞。
 - 新增 LangChain Text-to-Cypher translator，只負責產生 Cypher，不負責執行查詢或產生回答。
-- 呼叫端負責 `should_handle`、`dish_names`、`question_type`；nutritionist agent 信任這些結構化欄位，但仍保留舊抽取邏輯作為相容 fallback。
+- 呼叫端負責 `should_handle`、`dish_info_list`、`question_type`；nutritionist agent 只信任這些結構化欄位。
 - 後端保留 `DishMatcher`、`cypher_guard`、row schema validation，避免 LangChain 自由產生不可用或不安全的查詢。
 
 ## Responsibility Split
@@ -14,7 +14,7 @@
 呼叫端負責：
 
 - 判斷 `should_handle`：不該處理的問題不要呼叫 nutritionist API。
-- 抽取 `dish_names`：作為 authoritative dish candidates；nutritionist agent 不再讓 LangChain 自行猜料理名稱。
+- 提供 `dish_info_list`：作為 authoritative dish candidates 與份數；nutritionist agent 不讓 LangChain 自行猜料理名稱。
 - 判斷 `question_type`：
   - 1 道料理：`single_dish`
   - 2 道以上料理：`dish_comparison`
@@ -24,8 +24,8 @@
 
 nutritionist agent 負責：
 
-- 接收 `/ask` payload，若有 `dish_names/question_type` 就優先採用。
-- 用 `DishMatcher` 將 `dish_names` 對齊 Neo4j 中的 `Dish` 或 `FoodItem`。
+- 接收 `/ask` payload，直接採用 `dish_info_list/question_type`。
+- 用 `DishMatcher` 將 `dish_info_list` 中的料理名稱對齊 Neo4j 中的 `Dish` 或 `FoodItem`。
 - 將 `question`、`question_type`、`dish_match_results`、`health_condition`、`GRAPH_SCHEMA` 組成 LangChain prompt context。
 - 由 LangChain 產生 read-only Cypher。
 - 驗證 Cypher 安全性、必備 RETURN aliases、查詢結果 row schema。
@@ -51,10 +51,7 @@ nutritionist agent 負責：
   - 新增 RETURN alias validator，檢查必要欄位是否以正確 alias 回傳。
   - 新增 row validator，查詢後確認 rows 至少符合 `NutritionCalculator` 的必要欄位契約。
 - `/ask` 流程維持相容：
-  - 有 `dish_names`：直接使用呼叫端提供的料理名稱。
-  - 沒有 `dish_names`：保留現有 `extract_dish_candidates()` fallback。
-  - 有 `question_type`：採用呼叫端判斷。
-  - 沒有 `question_type`：保留現有 `infer_question_type()` fallback。
+- 直接使用呼叫端提供的 `dish_info_list` 與 `question_type`。
 - `/dish-nutrition` 同樣透過 translator factory，避免單一料理營養 API 與 `/ask` 查詢邏輯分裂。
 
 ## LangChain Prompt Policy
@@ -75,17 +72,17 @@ nutritionist agent 負責：
   - LangChain 輸出多語句、寫入語句、缺 `LIMIT`、缺必要 RETURN alias 時會被拒絕。
   - LangChain 失敗時依 `NUTRITION_AGENT_CYPHER_FALLBACK=template` 回到 template。
 - Integration tests：
-  - `/ask` single dish：有 `dish_names/question_type`，回傳 `dish_nutrition` 與 `dish_advice`。
+  - `/ask` single dish：有 `dish_info_list/question_type`，回傳 `dish_nutrition` 與 `dish_advice`。
   - `/ask` dish comparison：兩道料理皆保留在 response 中，即使其中一道查不到資料。
   - `/dish-nutrition`：單一道料理仍能不呼叫 AnswerGenerator，只回營養摘要。
-  - 無 `dish_names` 舊 payload：仍可走相容 fallback，不破壞既有呼叫端。
+  - `dish_info_list` 中的 amount 會套用到圖譜營養量。
 - Manual validation：
   - 比較同一組 request 在 `template` 與 `langchain` mode 的 generated Cypher、row count、final response。
   - 測試問題類型：低鈉、低糖、高蛋白、糖尿病適合度、兩道料理比較。
 
 ## Assumptions
 
-- 先不把 `dish_names`、`question_type` 改成 API 必填，避免破壞既有呼叫端。
+- `dish_info_list`、`question_type` 由呼叫端提供，作為 API 必填欄位。
 - `should_handle` 不加入 nutritionist API；呼叫端判斷不處理時直接不要呼叫。
 - LangChain 只做 Cypher generation，不使用 `GraphCypherQAChain` 直接查詢或回答，因為現有系統需要固定 row schema 給 `NutritionCalculator`。
 - 第一版預設 `NUTRITION_AGENT_CYPHER_MODE=template`；開發與展示時再切到 `langchain` 驗證效果。

@@ -98,6 +98,7 @@ Rules:
 - Only use ingredient_fallback logic when retrieval_strategy is ingredient_fallback.
 - If retrieval_strategy is fooditem_fallback, look up FoodItem by matched_food_id.
 - If retrieval_strategy is ingredient_fallback, use input_name only for a limited Ingredient.name contains lookup.
+- Multiply each retrieved nutrition amount by target.amount, which is the requested serving count.
 - Use health_condition.chronic_diseases only for Disease diet-rule lookup.
 - Return nutrition rows for the existing calculator, not final advice.
 - The Cypher must be read-only, one statement, and include LIMIT.
@@ -160,7 +161,8 @@ class LangChainTextToCypherTranslator:
                 openai_api_key=self.openai_api_key,
                 openai_api_base=self.openai_api_base,
                 model=self.model,
-                temperature=0,
+                # gpt-5.6-luna 僅接受預設值 1；LangChain 未指定時會帶入 0.7。
+                temperature=1,
             )
         return self._llm
 
@@ -262,131 +264,6 @@ def extract_note_keywords(notes: List[str]) -> List[str]:
     return keywords
 
 
-# 判斷問題是單一道料理評估，還是多道料理比較。
-def infer_question_type(question: str, request_question_type: Optional[QuestionType] = None) -> QuestionType:
-    comparison_markers = ("還是", "或", "或是", "或者", "vs", "VS", "比較", "哪個", "哪一個", "哪一道")
-    if any(marker in question for marker in comparison_markers):
-        return "dish_comparison"
-    if request_question_type in ("single_dish", "dish_comparison", "unknown"):
-        return request_question_type
-    return "single_dish"
-
-
-# 從結構化 dish_names 或自然語言問題中抽出可能的料理名稱。
-def extract_dish_candidates(payload: Dict[str, Any]) -> List[str]:
-    structured = payload.get("dish_names") or payload.get("selected_dishes")
-    if isinstance(structured, list):
-        return dedupe_candidates([str(item) for item in structured])
-
-    question = str(payload.get("question") or "")
-    question_type = payload.get("question_type")
-    cleaned = question
-    # 先移除常見問句語氣詞，降低把「我想吃」「適合嗎」誤當料理名稱的機率。
-    for token in (
-        "我今天想吃",
-        "今天想吃",
-        "你覺得",
-        "覺得如何",
-        "我今天要吃",
-        "今天要吃",
-        "我要吃",
-        "我想吃",
-        "我吃",
-        "想吃",
-        "適合吃",
-        "適合",
-        "請問",
-        "可以吃",
-        "可不可以",
-        "可以",
-        "能吃",
-        "如何",
-        "怎麼樣",
-        "怎樣",
-        "哪一個比較好",
-        "哪個比較好",
-        "哪一個好",
-        "哪個好",
-        "哪一個",
-        "哪個",
-        "比較適合",
-        "比較好",
-        "好不好",
-        "好嗎",
-        "這樣",
-        "嗎",
-        "呢",
-        "？",
-        "?",
-    ):
-        cleaned = cleaned.replace(token, " ")
-
-    if question_type == "dish_comparison":
-        # 比較題通常用「還是、或、跟、vs」連接多道料理，因此用這些符號切分。
-        parts = re.split(r"還是|或是|或者|或|跟|和|、|,|，|/|\s+vs\s+|\s+VS\s+|\s*v\.s\.\s*", cleaned)
-    else:
-        parts = re.split(r"[，,。.!！；;：:]", cleaned)
-
-    candidates = []
-    for part in parts:
-        for subpart in split_pairing_context(part):
-            candidate = re.sub(r"\s+", "", subpart)
-            candidate = candidate.strip("。.!！:：；;，,、")
-            candidate = prune_leading_context(candidate)
-            if is_usable_candidate(candidate):
-                candidates.append(candidate)
-    return dedupe_candidates(candidates)
-
-
-# 拆開「主餐搭配飲料/配菜」這類句子，避免整串被當成單一料理。
-def split_pairing_context(text: str) -> List[str]:
-    parts = re.split(
-        r"要搭配|要配|搭配|配上|配|加上|加|附|佐|喝|吃",
-        text,
-    )
-    cleaned_parts = []
-    for part in parts:
-        candidate = re.sub(r"\s+", "", part)
-        candidate = candidate.strip("。.!！:：；;，,、")
-        candidate = prune_leading_context(candidate)
-        if is_usable_candidate(candidate):
-            cleaned_parts.append(candidate)
-    return cleaned_parts or [text]
-
-
-# 清掉候選料理前方的疾病、時間、語氣與餐別脈絡字詞。
-def prune_leading_context(candidate: str) -> str:
-    for marker in ("有糖尿病", "有高血壓", "糖尿病", "高血壓", "慢性病"):
-        candidate = candidate.replace(marker, "")
-    candidate = candidate.strip("。.!！:：；;，,、 \t")
-    candidate = re.sub(
-        r"^(最近|近期|今天|明天|今晚|中午|晚上|早上|早餐|午餐|晚餐|宵夜|"
-        r"很|真的|突然|有點|有些|一點|點|一些|"
-        r"想|吃|喝|來|個|份|好吃的|好吃|美味|的)+",
-        "",
-        candidate,
-    )
-    return candidate.strip("。.!！:：；;，,、 \t")
-
-
-# 過濾太短或太籠統的候選名稱，保留較像料理或食材的字串。
-def is_usable_candidate(candidate: str) -> bool:
-    generic_names = {"早餐", "午餐", "晚餐", "宵夜", "便當", "餐", "料理", "食物", "東西", "飯", "麵"}
-    return len(candidate) >= 2 and candidate not in generic_names
-
-
-# 保留候選名稱原本順序並去重，也移除被較長候選完全包含的短詞。
-def dedupe_candidates(candidates: List[str]) -> List[str]:
-    deduped = []
-    for candidate in candidates:
-        candidate = candidate.strip()
-        if candidate and candidate not in deduped:
-            deduped.append(candidate)
-    if len(deduped) > 1:
-        deduped = [name for name in deduped if not any(name != other and name in other for other in deduped)]
-    return deduped
-
-
 # 只從 health_condition 取得慢性病名稱，不從問題文字自行推測疾病。
 def resolve_diseases_from_payload(payload: Dict[str, Any]) -> List[str]:
     health_condition = payload.get("health_condition") or {}
@@ -404,6 +281,7 @@ def build_graph_retrieval_cypher(match_results: List[Dict[str, Any]], disease_na
             "matched_dish_name": item["matched_dish_name"],
             "matched_food_id": item.get("matched_food_id"),
             "matched_food_name": item.get("matched_food_name"),
+            "amount": item.get("amount", 1),
             "retrieval_strategy": item["retrieval_strategy"],
             "match_score": item.get("match_score"),
             "match_reason": item.get("match_reason"),
@@ -439,8 +317,8 @@ WHERE f IS NOT NULL
 MATCH (f)-[hn:HAS_NUTRITION]->(n:Nutrition)
 WITH target, d, c, ing, f, hn, n,
   CASE
-    WHEN c.amount_per_serving IS NOT NULL THEN round(hn.amount_per_100g * c.amount_per_serving / 100.0, 6)
-    ELSE hn.amount_per_100g
+    WHEN c.amount_per_serving IS NOT NULL THEN round(hn.amount_per_100g * c.amount_per_serving * target.amount / 100.0, 6)
+    ELSE round(hn.amount_per_100g * target.amount, 6)
   END AS amount_per_serving
 WHERE amount_per_serving <> 0 OR n.name IN {summary_nutrient_literal} OR n.name_zh IN {summary_nutrient_literal}
 OPTIONAL MATCH (dis:Disease)-[rule:HAS_DIET_RULE]->(n)
