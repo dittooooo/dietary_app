@@ -29,7 +29,9 @@ DATA_DIR = BASE_DIR / "data"
 RECIPE_DATA_DIR = DATA_DIR / "recipe_and_nutrition"
 DISEASE_DATA_DIR = DATA_DIR / "disease_and_biomarker"
 
-FOOD_MAPPING_PATH = RECIPE_DATA_DIR / "food_and_nutrition_mapping.json"
+RECIPE_MAPPING_PATH = RECIPE_DATA_DIR / "recipes_json"
+# Backward-compatible name used by the recipe-only entry point.
+FOOD_MAPPING_PATH = RECIPE_MAPPING_PATH
 NUTRITION_DATA_PATH = RECIPE_DATA_DIR / "nutrition_data_categorized.json"
 NUTRITION_COMPONENTS_PATH = RECIPE_DATA_DIR / "nutrition_components.json"
 DISEASE_RULES_PATH = DISEASE_DATA_DIR / "chronic_disease_rules_v2.json"
@@ -217,14 +219,14 @@ class KnowledgeAgentImporter:
             ingredient_rows = session.run(
                 """
                 MATCH (i:Ingredient)
-                WHERE i.original_name IS NOT NULL AND i.matched_food_id IS NOT NULL
-                RETURN i.original_name AS original_name, i.matched_food_id AS matched_food_id
+                RETURN properties(i) AS properties
                 """
             ).data()
         self.existing_food_ids_by_original = defaultdict(set)
         for row in ingredient_rows:
-            original_name = clean_text(row.get("original_name"))
-            food_id = clean_food_id(row.get("matched_food_id"))
+            properties = row.get("properties") or {}
+            original_name = clean_text(properties.get("original_name") or properties.get("name"))
+            food_id = clean_food_id(properties.get("matched_food_id"))
             if original_name and food_id:
                 self.existing_food_ids_by_original[original_name].add(food_id)
 

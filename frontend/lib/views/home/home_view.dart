@@ -1110,20 +1110,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             final intent = (res['intent_category'] ?? '').toString();
             final queryDate = res['query_date']?.toString();
 
-            _messages.add({
-              'isElf': true,
-              'text': replyStr,
-              'intentCategory': intent, // 存入意圖類別（如 meal_query）
-              'queryDate': queryDate,   // 存入查詢日期（如 2026-06-19）
-            });
-            _appendTempStory('assistant', replyStr);
-
-            // 判斷意圖若為 meal_record 且含草稿，自動觸發飲食紀錄確認彈窗
+            // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
             final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
             if (intent == 'meal_record' && mealRecords.isNotEmpty) {
-              _showMealRecordDraftDialog(context, mealRecords, userPrompt: text);
-            } else if (_shouldShowDietReportForPrompt(text, intent)) {
-              Future.microtask(() => _showDietReportFromCompanion(text));
+              _showMealRecordDraftDialog(context, mealRecords, userPrompt: text, delayedReply: replyStr);
+            } else {
+              _messages.add({
+                'isElf': true,
+                'text': replyStr,
+                'intentCategory': intent,
+                'queryDate': queryDate,
+              });
+              _appendTempStory('assistant', replyStr);
+              if (_shouldShowDietReportForPrompt(text, intent)) {
+                Future.microtask(() => _showDietReportFromCompanion(text));
+              }
             }
           } else {
             _messages.add({
@@ -1499,13 +1500,19 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     ),
                   );
                 },
-                // todo: 要確認補登記有成功打api 
-                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁
-                onAddRecordForDate: (date) {
-                  Navigator.push(
+                // todo: 補記這天的飲食
+                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁 (帶入解析後的目標日期，並於返回時觸發畫面刷新)
+                onAddRecordForDate: (date) async {
+                  final targetDate = DateTime.tryParse(date) ?? DateTime.now();
+                  await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const ManualRecordPage()),
+                    MaterialPageRoute(
+                      builder: (context) => ManualRecordPage(initialDate: targetDate),
+                    ),
                   );
+                  if (mounted) {
+                    setState(() {});
+                  }
                 },
               ),
             ),
@@ -1673,7 +1680,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   }
 
   /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者針對每個餐點卡片獨立點擊展開/收合修改餐點名稱、日期、餐別與份量
-  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords, {String userPrompt = ''}) {
+  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords, {String userPrompt = '', String? delayedReply}) {
     final DateTime defaultDate = _parseDateFromPrompt(userPrompt);
     final ScrollController draftScrollController = ScrollController();
 
@@ -2159,6 +2166,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                             if (ctx.mounted) Navigator.of(ctx).pop();
                             if (context.mounted) {
                               FocusScope.of(context).unfocus();
+
+                              // 延遲渲染 Companion 成功對話泡泡至對話紀錄中
+                              if (delayedReply != null && delayedReply.trim().isNotEmpty) {
+                                setState(() {
+                                  _messages.add({
+                                    'isElf': true,
+                                    'text': delayedReply,
+                                    'intentCategory': 'meal_record',
+                                  });
+                                });
+                                _appendTempStory('assistant', delayedReply);
+                                _scrollToBottom();
+                              }
+
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('飲食紀錄已成功儲存！'),

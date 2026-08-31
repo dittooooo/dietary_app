@@ -1,8 +1,10 @@
 from __future__ import annotations
 from typing import List, Literal, Optional
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, Field, field_validator
 
 QuestionType = Literal["single_dish", "dish_comparison", "unknown"]
+Suitability = Literal["推薦", "較不建議", "適合", "可少量吃", "不建議", "資料不足"]
 class UserProfile(BaseModel):
     height_cm: Optional[float] = None
     weight_kg: Optional[float] = None
@@ -28,11 +30,19 @@ class DietRecord(BaseModel):
     record: List[DietRecordItem] = Field(default_factory=list)
 class DishInfo(BaseModel):
     dish_name: str
-    amount: float = 1
+    amount: float = Field(default=1, gt=0, allow_inf_nan=False, description="Number of servings for this dish")
+
+    @field_validator("dish_name")
+    @classmethod
+    def nonempty_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("dish_name must not be blank")
+        return value
 class NutritionAgentRequest(BaseModel):
     question: str
     question_type: QuestionType
-    dish_info_list: List[DishInfo]
+    dish_info_list: List[DishInfo] = Field(min_length=1)
     user_profile: Optional[UserProfile] = None
     health_condition: Optional[HealthCondition] = None
     weekly_diet_records: Optional[List[DietRecord]] = None
@@ -59,7 +69,7 @@ class DishAdvice(BaseModel):
     matched_type: Optional[str] = None
     match_score: Optional[int] = None
     match_reason: Optional[str] = None
-    suitability: str
+    suitability: Suitability
     key_reasons: List[str]
     suggestions: List[str]
 class NutritionAgentResponse(BaseModel):

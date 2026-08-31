@@ -95,15 +95,17 @@ async function runOpenAIFlow(userPrompt, tempStory = []) {
     Object.keys(screening.dish_info_list).length > 0
   ) {
     try {
-      // 條件觸發：逐一翻譯每個原始餐點名稱為資料庫標準名，並保持對應之數量
-      const translatedDishInfoList = {};
-      for (const [dishName, amount] of Object.entries(screening.dish_info_list)) {
-        const translatedIngredients = await translateDishes([dishName]);
-        const combined = Array.isArray(translatedIngredients) ? translatedIngredients.join("") : "";
-        const finalDishName = combined.trim() ? combined : dishName;
-        translatedDishInfoList[finalDishName] = amount;
-      }
-      screening.dish_info_list = translatedDishInfoList;
+      // 並行處理：逐一翻譯每個原始餐點名稱為資料庫標準名 (改用 Promise.all 並行化以消除 N+1 延遲)
+      const originalEntries = Object.entries(screening.dish_info_list);
+      const translatedEntries = await Promise.all(
+        originalEntries.map(async ([dishName, amount]) => {
+          const translatedIngredients = await translateDishes([dishName]);
+          const combined = Array.isArray(translatedIngredients) ? translatedIngredients.join("") : "";
+          const finalDishName = combined.trim() ? combined : dishName;
+          return [finalDishName, amount];
+        })
+      );
+      screening.dish_info_list = Object.fromEntries(translatedEntries);
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }
@@ -174,14 +176,10 @@ async function getCompanionReply({
   dietaryAgentError,
   tempStory = []
 }) {
-  // 飲食紀錄意圖處理 (分流 B 極速草稿文字組裝)
+  // 飲食紀錄意圖處理 (分流 B 極速卡片數據與成功對話組裝，由前端實作延遲渲染)
   if (screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
-      const summaryList = screening.meal_items.map(item => {
-        return `${item.meal_period || "即時"}的「${item.quantity}${item.unit}${item.name}」`;
-      }).join('，以及');
-
-      return `幫你整理好${summaryList}草稿囉！請在下方確認一下內容是否正確，按下確認就可以幫你存起來囉！✨`;
+      return `已成功幫你將飲食存入紀錄庫囉！✨`;
     } else {
       return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
     }

@@ -83,11 +83,15 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   }
 
   Future<void> _selectDateFor(int index) async {
+    final initialDate = _items[index].selectedDate;
+    final now = DateTime.now();
+    final effectiveLastDate = initialDate.isAfter(now) ? initialDate : now;
+
     final picked = await showDatePicker(
       context: context,
-      initialDate: _items[index].selectedDate,
+      initialDate: initialDate,
       firstDate: DateTime(2023),
-      lastDate: DateTime.now(),
+      lastDate: effectiveLastDate,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
           colorScheme: const ColorScheme.light(
