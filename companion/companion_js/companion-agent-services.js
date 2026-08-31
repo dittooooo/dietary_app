@@ -95,15 +95,17 @@ async function runOpenAIFlow(userPrompt, tempStory = []) {
     Object.keys(screening.dish_info_list).length > 0
   ) {
     try {
-      // 條件觸發：逐一翻譯每個原始餐點名稱為資料庫標準名，並保持對應之數量
-      const translatedDishInfoList = {};
-      for (const [dishName, amount] of Object.entries(screening.dish_info_list)) {
-        const translatedIngredients = await translateDishes([dishName]);
-        const combined = Array.isArray(translatedIngredients) ? translatedIngredients.join("") : "";
-        const finalDishName = combined.trim() ? combined : dishName;
-        translatedDishInfoList[finalDishName] = amount;
-      }
-      screening.dish_info_list = translatedDishInfoList;
+      // 並行處理：逐一翻譯每個原始餐點名稱為資料庫標準名 (改用 Promise.all 並行化以消除 N+1 延遲)
+      const originalEntries = Object.entries(screening.dish_info_list);
+      const translatedEntries = await Promise.all(
+        originalEntries.map(async ([dishName, amount]) => {
+          const translatedIngredients = await translateDishes([dishName]);
+          const combined = Array.isArray(translatedIngredients) ? translatedIngredients.join("") : "";
+          const finalDishName = combined.trim() ? combined : dishName;
+          return [finalDishName, amount];
+        })
+      );
+      screening.dish_info_list = Object.fromEntries(translatedEntries);
     } catch (err) {
       console.error("Dish translation failed, using original names:", err.message);
     }

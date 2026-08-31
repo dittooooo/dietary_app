@@ -529,7 +529,17 @@ function minimizeDietaryResponse(response) {
     minimized.conclusion = response.conclusion;
   }
 
-  // 2. 保留餐點營養數據 (包含名稱、所有營養素項目如 Calories, Protein, Sodium 等、數值與單位)
+  // 2. 保留各料理的專業建議、適合度、關鍵理由 (key_reasons) 與建議處置 (suggestions)
+  if (Array.isArray(response.dish_advice)) {
+    minimized.dish_advice = response.dish_advice.map(advice => ({
+      dish_name: advice.dish_name,
+      suitability: advice.suitability,
+      key_reasons: Array.isArray(advice.key_reasons) ? advice.key_reasons : [],
+      suggestions: Array.isArray(advice.suggestions) ? advice.suggestions : []
+    }));
+  }
+
+  // 3. 保留餐點營養數據 (包含名稱、所有營養素項目如 Calories, Protein, Sodium 等、數值與單位)
   if (Array.isArray(response.dish_nutrition)) {
     minimized.dish_nutrition = response.dish_nutrition.map(dish => ({
       dish_name: dish.dish_name,
