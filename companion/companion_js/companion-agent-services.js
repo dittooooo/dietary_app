@@ -122,6 +122,20 @@ async function runOpenAIFlow(userPrompt, tempStory = []) {
 }
 
 /**
+ * 帶有 Timeout 中斷防護的安全 Fetch 函式
+ * @param {string} url - 請求目標 URL
+ * @param {Object} options - Fetch 選項
+ * @param {number} timeoutMs - 超時毫秒數 (預設 30000ms / 30秒)
+ * @returns {Promise<Response>} Fetch Response 物件
+ */
+async function safeFetch(url, options = {}, timeoutMs = 30000) {
+  return fetch(url, {
+    ...options,
+    signal: options.signal || AbortSignal.timeout(timeoutMs)
+  });
+}
+
+/**
  * 呼叫飲食助理 (Dietary Agent) API
  * 將請求發送至後端的飲食助理服務以取得專業的飲食/營養分析數據
  * @param {Object} requestBody - 飲食助理所需的請求 Payload
@@ -145,8 +159,8 @@ async function callDietaryAgent(requestBody, authHeader) {
     headers.Authorization = authHeader;
   }
 
-  // 發送 POST 請求至飲食助理的問答端點
-  const response = await fetch(`${baseUrl}/dietary-agent/ask`, {
+  // 發送 POST 請求至飲食助理的問答端點 (附帶 30 秒 Timeout 防護)
+  const response = await safeFetch(`${baseUrl}/dietary-agent/ask`, {
     method: "POST",
     headers,
     body: JSON.stringify(requestBody)
