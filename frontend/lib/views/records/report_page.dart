@@ -428,50 +428,144 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                   const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
 
                   // 2.5 總結數據區域 (僅限週/月)
-                  if (_viewType != 0) ...[ // 執行相對應的邏輯計算或設定屬性參數
-                    _buildAggregatedStats(), // 執行相對應的邏輯計算或設定屬性參數
-                    const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  ], // 執行相對應的邏輯計算或設定屬性參數
-                  
+                  if (_viewType != 0) ...[
+                    _buildAggregatedStats(),
+                    const SizedBox(height: 20),
+                  ],
+
                   // 3. 總結數據卡片
-                  Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                    width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
-                    margin: const EdgeInsets.symmetric(horizontal: 16), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                    padding: const EdgeInsets.all(20), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                    decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                      color: AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
-                      borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
-                      boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
-                        BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                      ] // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                    child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                      crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-                      children: [ // 執行相對應的邏輯計算或設定屬性參數
-                        Text("${_viewLabel}總結", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
-                        const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                        Text( // 建立文字顯示元件（Text）
-                          _viewType == 0 ? "您的攝取量穩定，建議增加膳食纖維。" : "${_viewLabel}攝取量穩定，繼續保持！",  // 執行相對應的邏輯計算或設定屬性參數
-                          style: const TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                        ), // 執行相對應的邏輯計算或設定屬性參數
-                      ], // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                  const SizedBox(height: 25), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                  _buildSummaryCard(),
+                  const SizedBox(height: 25),
 
                   // 新增：飲食明細 Grid 呈現
                   _buildEatenFoodGrid(),
-                  const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-          // Header omitted for brevity in thought, but should be kept in full file
-          _buildHeader(context), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+          _buildHeader(context),
+        ],
+      ),
+    );
+  }
+
+  String _buildDynamicSummaryComment() {
+    if (_viewType == 0) {
+      double todayCal = 0.0;
+      double todayProtein = 0.0;
+      double todayFat = 0.0;
+      double todayCarbs = 0.0;
+      int recordCount = 0;
+
+      for (var record in _allRecords) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) continue;
+        if (rDate.year == _selectedDate.year &&
+            rDate.month == _selectedDate.month &&
+            rDate.day == _selectedDate.day) {
+          todayCal += _getCaloriesFromRecord(record);
+          todayProtein += _getProteinFromRecord(record);
+          todayFat += _getFatFromRecord(record);
+          todayCarbs += _getCarbsFromRecord(record);
+          recordCount++;
+        }
+      }
+
+      if (recordCount == 0 || todayCal <= 0) {
+        return '今天尚未記錄任何飲食。補上記錄後小精靈就能為您分析營養狀況喔！';
+      }
+
+      final int calRound = todayCal.round();
+      final double pCal = todayProtein * 4;
+      final double fCal = todayFat * 9;
+      final double cCal = todayCarbs * 4;
+      final double macroTotalCal = pCal + fCal + cCal;
+
+      if (todayCal > 2200) {
+        return '今日總攝取熱量為 $calRound kcal，相對較高。建議晚餐選擇輕食與高纖食品，適度控制份量。';
+      }
+      if (todayCal < 1200) {
+        return '今日熱量攝取為 $calRound kcal，稍低於日常推薦。請適當補充優質蛋白質（如雞胸肉、蛋、豆腐）以維持代謝！';
+      }
+
+      if (macroTotalCal > 0) {
+        final double pRatio = pCal / macroTotalCal;
+        final double cRatio = cCal / macroTotalCal;
+        if (pRatio < 0.15) {
+          return '今日攝取 $calRound kcal。蛋白質比例稍偏低，建議多補充蛋、豆、魚、肉類以助肌肉維持。';
+        }
+        if (cRatio > 0.60) {
+          return '今日攝取 $calRound kcal。碳水化合物比例偏高，建議控制含糖飲料與精緻澱粉的份量。';
+        }
+      }
+
+      return '今日熱量 ($calRound kcal) 與三大營養素分配相當均衡，請繼續保持優質飲食習慣！';
+    } else {
+      final DateTime startDate = _selectedDate.subtract(Duration(days: _selectedDate.weekday % 7));
+      final DateTime endDate = startDate.add(const Duration(days: 6));
+      final DateTime startLimit = DateTime(startDate.year, startDate.month, startDate.day, 0, 0, 0);
+      final DateTime endLimit = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+
+      double weekTotalCal = 0.0;
+      Set<String> activeDays = {};
+
+      for (var record in _allRecords) {
+        final rDate = _getRecordDate(record);
+        if (rDate == null) continue;
+        if (rDate.isAfter(startLimit.subtract(const Duration(seconds: 1))) &&
+            rDate.isBefore(endLimit.add(const Duration(seconds: 1)))) {
+          final cal = _getCaloriesFromRecord(record);
+          weekTotalCal += cal;
+          activeDays.add('${rDate.year}-${rDate.month}-${rDate.day}');
+        }
+      }
+
+      final int recordedDays = activeDays.length;
+      if (recordedDays == 0 || weekTotalCal <= 0) {
+        return '本週尚未記錄任何飲食。養成記錄習慣，能幫助您更精準掌控健康狀況！';
+      }
+
+      final double avgCal = weekTotalCal / recordedDays;
+      final int avgRound = avgCal.round();
+
+      if (avgCal > 2200) {
+        return '本週共記錄了 $recordedDays 天，平均每日攝取 $avgRound kcal（偏高）。建議下週選擇輕盈烹調品項，少油少糖。';
+      }
+      if (avgCal < 1200) {
+        return '本週共記錄了 $recordedDays 天，平均每日攝取 $avgRound kcal。總量偏低，請注意每日補充均衡的熱量與蛋白質。';
+      }
+
+      return '本週共記錄了 $recordedDays 天，平均每日攝取 $avgRound kcal。整體飲食控制穩定，請繼續保持！';
+    }
+  }
+
+  // 3. 總結數據卡片
+  Widget _buildSummaryCard() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 1.56)),
+        ]
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("${_viewLabel}總結", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          const SizedBox(height: 10),
+          Text(
+            _buildDynamicSummaryComment(),
+            style: const TextStyle(color: AppColors.textPrimary),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildHeader(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;

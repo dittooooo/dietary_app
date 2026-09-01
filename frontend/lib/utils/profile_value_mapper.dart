@@ -9,6 +9,7 @@ class ProfileValueMapper {
     final upper = normalized.toUpperCase();
 
     if (upper == 'LOSE_WEIGHT' ||
+        upper == 'LOSE_FAT' ||
         normalized.contains('減脂') ||
         normalized.contains('減重')) {
       return 'LOSE_WEIGHT';
@@ -31,6 +32,7 @@ class ProfileValueMapper {
     final upper = normalized.toUpperCase();
 
     if (upper == 'LOSE_WEIGHT' ||
+        upper == 'LOSE_FAT' ||
         normalized.contains('減脂') ||
         normalized.contains('減重')) {
       return '減脂';
@@ -92,14 +94,14 @@ class ProfileValueMapper {
     final normalized = (value ?? '').trim();
     final upper = normalized.toUpperCase();
 
-    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) return 'HYPERTENSION';
+    if (upper == 'HYPERTENSION' || upper == 'HIGH_BLOOD_PRESSURE' || normalized.contains('高血壓')) return 'HYPERTENSION';
     if (upper == 'HYPERLIPIDEMIA' || normalized.contains('高血脂')) return 'HYPERLIPIDEMIA';
     if (upper == 'DIABETES' || normalized.contains('糖尿')) return 'DIABETES';
     if (upper == 'CARDIOVASCULAR' || normalized.contains('心血管')) return 'CARDIOVASCULAR';
     if (upper == 'KIDNEY_DISEASE' || normalized.contains('腎臟')) return 'KIDNEY_DISEASE';
-    if (upper == 'STROKE' || normalized.contains('中風')) return 'STROKE';
+    if (upper == 'STROKE' || normalized.contains('中風')) return '腦中風';
     if (upper == 'METABOLIC_SYNDROME' || normalized.contains('代謝症候群')) return 'METABOLIC_SYNDROME';
-    if (upper == 'GOUT' || normalized.contains('痛風')) return 'GOUT';
+    if (upper == 'GOUT' || normalized.contains('痛風')) return '痛風';
     if (upper == 'HYPERURICEMIA' || normalized.contains('高尿酸')) return 'HYPERURICEMIA';
     if (upper == 'GERD' || normalized.contains('胃食道逆流')) return 'GERD';
     if (upper == 'NONE' ||
@@ -117,7 +119,7 @@ class ProfileValueMapper {
     final normalized = (value ?? '').trim();
     final upper = normalized.toUpperCase();
 
-    if (upper == 'HYPERTENSION' || normalized.contains('高血壓')) return '高血壓';
+    if (upper == 'HYPERTENSION' || upper == 'HIGH_BLOOD_PRESSURE' || normalized.contains('高血壓')) return '高血壓';
     if (upper == 'HYPERLIPIDEMIA' || normalized.contains('高血脂')) return '高血脂';
     if (upper == 'DIABETES' || normalized.contains('糖尿')) return '糖尿病';
     if (upper == 'CARDIOVASCULAR' || normalized.contains('心血管')) return '心血管疾病';

@@ -546,11 +546,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now();
     final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final userEmail = prefs.getString('user_email')?.trim().toLowerCase() ?? '';
+    final userNick = prefs.getString('user_nickname')?.trim() ?? '';
+    final userKey = userEmail.isNotEmpty ? userEmail : (userNick.isNotEmpty ? userNick : 'default');
+    final summaryKey = 'last_shown_summary_date_$userKey';
     
-    // 檢查今天是否已經顯示過飲食總結彈窗（每天僅第一次開啟 app 時跳出）
-    final lastShownDate = prefs.getString('last_shown_summary_date');
+    // 檢查今天是否已經顯示過飲食總結彈窗（每人每天僅第一次開啟 app 時跳出）
+    final lastShownDate = prefs.getString(summaryKey);
     if (lastShownDate == todayStr) {
-      debugPrint('今日 ($todayStr) 已顯示過飲食總結彈窗，不再重複跳出。');
+      debugPrint('今日 ($todayStr) 使用者 ($userKey) 已顯示過飲食總結彈窗，不再重複跳出。');
       return;
     }
 
@@ -582,20 +586,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         }
       }
 
-      // 若為新用戶或完全沒有歷史紀錄，不跳出昨日總結彈窗
-      if (records.isEmpty) {
-        debugPrint('無任何飲食記錄（新用戶），不跳出昨日總結彈窗。');
-        await prefs.setString('last_shown_summary_date', todayStr);
-        return;
-      }
-
       if (!mounted) return;
       debugPrint('=============================================');
-      debugPrint('準備跳出昨日飲食總結彈窗！ Dishes: $yesterdayDishes');
+      debugPrint('準備跳出昨日飲食總結彈窗！ User: $userKey, Dishes: $yesterdayDishes');
       debugPrint('=============================================');
       
       // 紀錄今日已跳出飲食總結彈窗
-      await prefs.setString('last_shown_summary_date', todayStr);
+      await prefs.setString(summaryKey, todayStr);
 
       Future.delayed(const Duration(milliseconds: 800), () {
         if (!mounted) return;
