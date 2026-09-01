@@ -40,13 +40,11 @@ void main() async {
           initialScreen = const HomePage();
         }
       } else {
-        // 後端驗證失敗（例如資料庫已重置/Token失效），自動清除本機快取並導回登入頁
         await prefs.clear();
-        initialScreen = const LoginPage();
+        initialScreen = const LoginPage(initialMessage: '登入憑證已失效，請重新登入');
       }
     } catch (_) {
-      // 連線異常或 Token 無效時，導回登入頁面
-      initialScreen = const LoginPage();
+      initialScreen = const LoginPage(initialMessage: '網路連線短暫不穩定或伺服器維護中，請重新登入');
     }
   } else {
     initialScreen = const LoginPage();

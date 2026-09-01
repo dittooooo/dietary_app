@@ -77,22 +77,22 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       SystemChannels.textInput.invokeMethod('TextInput.hide');
       FocusManager.instance.primaryFocus?.unfocus();
-      await _checkAndShowBodyTransitionOnStartup();
+      // 依序觸發彈窗：1. 先顯示昨日飲食報告彈窗 (若為今日首次登入)
+      await _checkAndShowDietSummaryDialog();
       if (!mounted) return;
-      _checkAndShowDietSummaryDialog();
+      // 2. 昨日報告彈窗關閉後 (或今日已顯示過跳過後)，再顯示體態變化動畫
+      await _checkAndShowBodyTransitionOnStartup();
     });
-  } // 程式碼區塊或元件結構結束
- 
-  @override // 標記此方法為覆寫父類別之方法
-  void dispose() { // 銷毀狀態生命週期方法，釋放頁面資源與控制器
-    WidgetsBinding.instance.removeObserver(this); // 移除 WidgetsBindingObserver 監聽器，防止 Memory Leak
-    _inputController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-    _chatScrollController.dispose(); // 新增：釋放對話滾動控制器資源
-    super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-  } // 程式碼區塊或元件結構結束
+  }
 
-  /// 監聽 App 生命週期變化 (WidgetsBindingObserver)
-  /// 當使用者切換 App 重新回到前景 (resumed) 時，自動觸發 24 小時閒置檢測
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _inputController.dispose();
+    _chatScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -100,11 +100,24 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     }
   }
 
-  /// 從 SharedPreferences 載入 temp_story 快取與最後更新時間
+  Future<String> _getUserStorageKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('user_email');
+    final nickname = prefs.getString('user_nickname');
+    final rawKey = (email != null && email.trim().isNotEmpty)
+        ? email.trim().toLowerCase()
+        : ((nickname != null && nickname.trim().isNotEmpty)
+            ? nickname.trim().toLowerCase()
+            : 'default');
+    return rawKey;
+  }
+
+  /// 從 SharedPreferences 載入 temp_story 快取與最後更新時間（依使用者帳號隔離）
   Future<void> _loadTempStoryFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? storyJson = prefs.getString('temp_story');
-    final int? lastTimeMs = prefs.getInt('last_update_time');
+    final userKey = await _getUserStorageKey();
+    final String? storyJson = prefs.getString('temp_story_$userKey');
+    final int? lastTimeMs = prefs.getInt('last_update_time_$userKey');
 
     if (lastTimeMs != null) {
       _lastUpdateTime = DateTime.fromMillisecondsSinceEpoch(lastTimeMs);
@@ -115,12 +128,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         final List<dynamic> decoded = jsonDecode(storyJson);
         _tempStory = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
       } catch (e) {
-        debugPrint('載入 temp_story 快取失敗: $e');
+        debugPrint('載入 temp_story_$userKey 快取失敗: $e');
         _tempStory = [];
       }
     }
 
-    // 若有未過期歷史對話，還原至 UI 對話列表中
     if (_tempStory.isNotEmpty) {
       final loadedMessages = <Map<String, dynamic>>[];
       for (var item in _tempStory) {
@@ -148,11 +160,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     }
   }
 
-  /// 清空對話歷史與 SharedPreferences 快取，重置為初始話題
+  /// 清空對話歷史與 SharedPreferences 快取，重置為初始話題（依使用者帳號隔離）
   Future<void> resetChat() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('temp_story');
-    await prefs.remove('last_update_time');
+    final userKey = await _getUserStorageKey();
+    await prefs.remove('temp_story_$userKey');
+    await prefs.remove('last_update_time_$userKey');
 
     setState(() {
       _messages = [
@@ -166,17 +179,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     });
   }
 
-  /// 將新對話推入 tempStory，維持最多 3 則訊息的滑動視窗 (Sliding Window)，並寫入 SharedPreferences
+  /// 將新對話推入 tempStory，維持最多 3 則訊息的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
   void _appendTempStory(String role, String content) async {
     _tempStory.add({'role': role, 'content': content});
     if (_tempStory.length > 3) {
-      _tempStory.removeAt(0); // 維持最多 3 則舊對話
+      _tempStory.removeAt(0);
     }
     _lastUpdateTime = DateTime.now();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('temp_story', jsonEncode(_tempStory));
-    await prefs.setInt('last_update_time', _lastUpdateTime!.millisecondsSinceEpoch);
+    final userKey = await _getUserStorageKey();
+    await prefs.setString('temp_story_$userKey', jsonEncode(_tempStory));
+    await prefs.setInt('last_update_time_$userKey', _lastUpdateTime!.millisecondsSinceEpoch);
   }
 
   /// 內嵌於 home_view.dart 中的「開啟新話題」按鈕 UI
@@ -542,7 +556,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     }
   }
 
-  void _checkAndShowDietSummaryDialog() async {
+  Future<void> _checkAndShowDietSummaryDialog() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now();
     final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
@@ -594,17 +608,16 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       // 紀錄今日已跳出飲食總結彈窗
       await prefs.setString(summaryKey, todayStr);
 
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (!mounted) return;
-        _showDietSummaryDialog(
-          date: yesterday,
-          calories: totalCalories,
-          protein: totalProtein,
-          fat: totalFat,
-          carbs: totalCarbs,
-          dishes: yesterdayDishes,
-        );
-      });
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (!mounted) return;
+      await _showDietSummaryDialog(
+        date: yesterday,
+        calories: totalCalories,
+        protein: totalProtein,
+        fat: totalFat,
+        carbs: totalCarbs,
+        dishes: yesterdayDishes,
+      );
     } catch (e) {
       debugPrint('取得昨日飲食總結失敗: $e');
     }
@@ -740,7 +753,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     );
   }
 
-  void _showDietSummaryDialog({
+  Future<void> _showDietSummaryDialog({
     required DateTime date,
     required double calories,
     required double protein,
@@ -749,7 +762,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     required List<String> dishes,
     String? emptyComment,
     String Function(List<String> dishes, double calories)? filledCommentBuilder,
-  }) {
+  }) async {
     final String dateStr = '${date.month}/${date.day}';
     final String comment = dishes.isEmpty
         ? emptyComment ?? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
@@ -775,7 +788,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       fatPercent = 100 - carbsPercent - proteinPercent;
     }
 
-    showDialog(
+    await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (BuildContext context) {

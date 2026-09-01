@@ -8,23 +8,44 @@ import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_pr
 import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 
-class LoginPage extends StatefulWidget { // 定義 LoginPage 類別，繼承自 StatefulWidget
-  const LoginPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
+class LoginPage extends StatefulWidget {
+  final String? initialMessage;
+  const LoginPage({super.key, this.initialMessage});
 
-  @override // 標記此方法為覆寫父類別之方法
-  State<LoginPage> createState() => _LoginPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
-class _LoginPageState extends State<LoginPage> { // 定義 _LoginPageState 類別，繼承自 State
-  final _formKey = GlobalKey<FormState>(); // 宣告類別成員或方法內部的區域變數
-  final _emailController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
-  final _passwordController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   
-  bool _isPasswordVisible = false; // 宣告類別成員或方法內部的區域變數
-  bool _isLoading = false; // 宣告類別成員或方法內部的區域變數
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
-  String? _emailError; // 執行相對應的邏輯計算或設定屬性參數
-  String? _passwordError; // 執行相對應的邏輯計算或設定屬性參數
+  String? _emailError;
+  String? _passwordError;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.initialMessage!,
+              style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+            ),
+            backgroundColor: AppColors.secondary,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      });
+    }
+  }
 
 Future<void> _login() async { // 定義非同步方法（Future），執行耗時操作
     setState(() => _isLoading = true); // 更新狀態數據並通知 UI 重新渲染畫面
