@@ -42,6 +42,23 @@ if (loadedEnvPath) {
   console.log("No explicit .env file found. Falling back to process environment.");
 }
 
+/**
+ * 伺服器啟動時環境變數嚴格預檢 (Boot Validation)
+ * 確保必要環境變數均已正確設定，避免執行期拋出非預期的 500 錯誤。
+ */
+function validateEnv() {
+  const required = ["OPENAI_API_KEY", "DIETARY_AGENT_API_URL"];
+  const missing = required.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    console.error(`❌ [FATAL] 缺少必要的環境變數: ${missing.join(", ")}`);
+    console.error("請在 .env 檔案中補充上述設定欄位後再重新啟動 Companion Agent。");
+    process.exit(1);
+  }
+}
+
+// 執行伺服器啟動環境變數預檢
+validateEnv();
+
 // 初始化 Express 應用程式並設定全域中間件 (Middleware)
 const app = express();
 app.use(cors()); // 啟用跨網域請求存取 (CORS)
@@ -139,7 +156,6 @@ async function handleCompanionAsk(req, res) {
       screening: openAiResult.screening,
       emotion: openAiResult.emotion,
       dietaryAgentResponse,
-      dietaryAgentRequest: openAiResult.dietary_agent_request,
       dietaryAgentError,
       tempStory: sanitizedTempStory
     });
