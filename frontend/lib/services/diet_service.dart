@@ -241,6 +241,7 @@ class DietService {
     String description = '',
     String nutrition = '',
     DateTime? mealDate,
+    bool fetchNutritionIfMissing = true,
   }) async {
     final token = await _token();
     if (token == null) {
@@ -248,7 +249,7 @@ class DietService {
     }
 
     Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
-    if (parsedNutrition['calories'] == null) {
+    if (fetchNutritionIfMissing && parsedNutrition['calories'] == null) {
       final fetchedNut = await fetchDishNutrition(dishName);
       if (fetchedNut['calories'] != null) {
         parsedNutrition = fetchedNut;
