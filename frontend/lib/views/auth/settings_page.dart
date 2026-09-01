@@ -1,12 +1,26 @@
 import 'package:flutter/material.dart';
-
 import '../../color/app_colors.dart';
 import 'problem_feedback_page.dart';
 
+/// 系統設定主頁面 Widget。
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
+  /// 精準清理圖片與繪圖快取暫存，安全保留登入 Token 與用戶 Session。
+  void _clearCache(BuildContext context) {
+    PaintingBinding.instance.imageCache.clear();
+    PaintingBinding.instance.imageCache.clearLiveImages();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('已成功清除圖片快取暫存'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -53,6 +67,12 @@ class SettingsPage extends StatelessWidget {
                   );
                 },
               ),
+              const SizedBox(height: 12),
+              _SettingsMenuButton(
+                icon: Icons.cleaning_services_outlined,
+                label: '清除圖片快取',
+                onTap: () => _clearCache(context),
+              ),
             ],
           ),
         ),
@@ -61,6 +81,7 @@ class SettingsPage extends StatelessWidget {
   }
 }
 
+/// 建立設定頁面圖示選單按鈕的通用元件。
 class _SettingsMenuButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -72,13 +93,15 @@ class _SettingsMenuButton extends StatelessWidget {
     required this.onTap,
   });
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.background,
       borderRadius: BorderRadius.circular(12),
       elevation: 1.5,
-      shadowColor: Colors.black.withOpacity(0.08),
+      shadowColor: Colors.black.withValues(alpha: 0.08),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

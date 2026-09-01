@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../../widgets/dog_avatar.dart';
 import '../home/home_page.dart';
 import 'initial_info_page.dart';
 
+/// 登入/註冊成功過渡動畫頁面 Widget。
 class SuccessTransitionPage extends StatefulWidget {
   final String title;
   final bool shouldNavigate;
@@ -29,18 +31,31 @@ class SuccessTransitionPage extends StatefulWidget {
   State<SuccessTransitionPage> createState() => _SuccessTransitionPageState();
 }
 
+/// 內部使用的 _SuccessTransitionPageState 元件與狀態處理類別。
 class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   final DogStateController _dogController = DogStateController.instance;
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
 
   String _statusText = '正在確認資料...';
+  Timer? _delayTimer;
 
+  /// 初始化 Widget 狀態與訂閱生命週期。
   @override
+  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _runTransition();
   }
 
+  /// 銷毀 Widget 狀態與釋放控制器資源。
+  @override
+  /// 執行 dispose 業務邏輯處理方法。
+  void dispose() {
+    _delayTimer?.cancel();
+    super.dispose();
+  }
+
+  /// 執行過渡頁面核心傳輸、資料確認與結算流程。
   Future<void> _runTransition() async {
     final alreadyOnboarded = await _checkOnboarding();
     SettlementResponse? settlement;
@@ -68,6 +83,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     );
   }
 
+  /// 檢查用戶是否已完成初始健康問卷流程。
   Future<bool> _checkOnboarding() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -87,7 +103,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
       if (token == null || token.isEmpty) return false;
 
-      // 如果本機紀錄已完成 onboarding 或有舊有暱稱，優先判斷為已完成
       if (needsOnboarding == false || (cachedNickname != null && cachedNickname.isNotEmpty)) {
         return true;
       }
@@ -110,13 +125,11 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         return true;
       }
 
-      // 若後端明確回傳 404 (尚未完成 onboarding)
       if (response.statusCode == 404) {
         await prefs.setBool(AuthService.needsOnboardingKey, true);
         return false;
       }
 
-      // 其他網路或暫時性狀態錯誤，若非 404 則預設信任本機資料或已完成
       return needsOnboarding == false;
     } catch (e) {
       debugPrint('Check onboarding failed: $e');
@@ -126,6 +139,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
   }
 
+  /// 向後端發送每日飲食與身體分數結算請求。
   Future<SettlementResponse?> _settleDailyScores() async {
     if (mounted) {
       setState(() => _statusText = '正在更新每日結算...');
@@ -145,6 +159,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
   }
 
+  /// 當寵物體態改變時彈出變化慶祝動畫對話框。
   Future<void> _playBodyTypeChangeIfNeeded(SettlementResponse settlement) async {
     final oldType = DogStateController.parseBodyType(settlement.oldBodyType);
     final newType = DogStateController.parseBodyType(settlement.newBodyType);
@@ -177,20 +192,29 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     _dogController.setState(DogAnimationState.idle);
   }
 
+  /// 儲存最新寵物體態資訊至本地快取。
   Future<void> _saveBodyStatus(String bodyType) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('dog_body_type', bodyType);
   }
 
+  /// 執行安全的倒數計時，可隨時在 dispose 時銷毀。
   Future<void> _animateProgress() async {
     if (mounted) {
       setState(() => _statusText = '正在載入 App...');
     }
 
-    await Future.delayed(const Duration(milliseconds: 1500));
+    final completer = Completer<void>();
+    _delayTimer?.cancel();
+    _delayTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!completer.isCompleted) completer.complete();
+    });
+    await completer.future;
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,

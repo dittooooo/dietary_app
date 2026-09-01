@@ -1,12 +1,10 @@
-// import 'dart:convert';
 import 'dart:ui';
 import '../../controllers/dog_state_controller.dart';
 import '../../widgets/dog_avatar.dart';
 import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart'; // 引入相簿套件
-import 'dart:typed_data'; // 處理圖片數據
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data';
 import '../../config/api_config.dart';
 import '../../color/app_colors.dart';
 import '../superkey/admin_user_list_page.dart'; 
@@ -19,6 +17,7 @@ import 'settings_page.dart';
 import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
 
+/// ProfilePage 視圖頁面與狀態類別。
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
   const ProfilePage({super.key, this.returnIndex = 0});
@@ -27,22 +26,25 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
+/// 內部使用的 _ProfilePageState 元件與狀態處理類別。
 class _ProfilePageState extends State<ProfilePage> {
   bool _isAdmin = false; 
   String _nickname = '載入中...';
   String _email = '...';
   Map<String, dynamic>? _fullUserData;
   Uint8List? _imageBytes;
-  final DogStateController _dogController = DogStateController.instance; // 儲存圖片的記憶體數據，相容 Web 與手機
+  final DogStateController _dogController = DogStateController.instance;
 
+  /// 初始化 Widget 狀態與訂閱生命週期。
   @override
+  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _loadUserData();
   }
 
+  /// 執行 _loadUserData 業務邏輯處理方法。
   Future<void> _loadUserData() async {
-    // 1. 優先從本地快取讀取 (前端輔助，立即響應)
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
     final cachedEmail = prefs.getString('user_email') ?? '...';
@@ -61,7 +63,6 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     });
 
-    // 2. 向後端請求最新資料 (後端為主，更新快取)
     final result = await AuthService().getUserProfile();
     
     if (mounted) {
@@ -85,7 +86,6 @@ class _ProfilePageState extends State<ProfilePage> {
         });
         prefs.setString('user_nickname', _nickname);
       } else {
-        // 如果後端回傳 404 (管理者尚未建立 user_profile 紀錄)，依然確保 _isAdmin 依據 email / role 保持為 true！
         if (isCachedAdmin || _email.trim().toLowerCase() == 'admin@gmail.com') {
           setState(() {
             _isAdmin = true;
@@ -98,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 登出功能
+  /// 執行 _handleLogout 業務邏輯處理方法。
   Future<void> _handleLogout() async {
     await AuthService().logout();
     if (mounted) {
@@ -110,7 +110,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // 根據小精靈名稱獲取對應圖標 (未被使用，先註解)
   /*
   IconData _getPetIcon(String? petType) {
     switch (petType) {
@@ -124,7 +123,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
   */
 
-  // 根據小精靈名稱獲取對應顏色 (未被使用，先註解)
   /*
   Color _getPetColor(String? petType) {
     switch (petType) {
@@ -138,16 +136,16 @@ class _ProfilePageState extends State<ProfilePage> {
   }
   */
 
-  // 選擇圖片與上傳頭像功能
+  /// 啟動圖片選擇器以選取回饋照片附件。
   Future<void> _pickImage() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在開啟圖庫...'), duration: Duration(seconds: 1)));
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 512, // 限制尺寸
+        maxWidth: 512,
         maxHeight: 512,
-        imageQuality: 85, // 壓縮畫質
+        imageQuality: 85,
       );
 
       if (pickedFile != null) {
@@ -165,10 +163,10 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           if (uploadResult['success'] == true) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('頭像上傳成功！')));
-            _loadUserData(); // 重新載入最新資料
+            _loadUserData();
           } else {
             setState(() {
-              _imageBytes = null; // 上傳失敗時清空記憶體預覽，確保 UI 與伺服器狀態一致
+              _imageBytes = null;
             });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text(FriendlyErrorMessage.upload)),
@@ -186,7 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -200,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.background.withOpacity(0.7), 
+                color: AppColors.background.withValues(alpha: 0.7), 
                 border: Border(bottom: BorderSide(color: AppColors.border, width: 0.5)),
               ),
             ),
@@ -224,16 +224,15 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Icon(Icons.settings, color: AppColors.textPrimary, size: 40),
             )
           else
-            const SizedBox(width: 48), // 保持間距平衡
+            const SizedBox(width: 48),
         ],
       ),
       body: Container(
-        color: AppColors.surface, // 確保底色覆蓋全螢幕
+        color: AppColors.surface,
         child: SingleChildScrollView(
           child: Column(
             children: [
-              SizedBox(height: 80 + MediaQuery.of(context).padding.top + 20), // 預留標題列高度
-              // 1. 頭像區域 (包含相機按鈕)
+              SizedBox(height: 80 + MediaQuery.of(context).padding.top + 20),
             Center(
               child: Stack(
                 children: [
@@ -242,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                           blurRadius: 3.9,
                           offset: const Offset(0, 1.95),
                         ),
@@ -278,7 +277,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: AppColors.background,
                       shape: const CircleBorder(),
                       elevation: 0.975,
-                      shadowColor: Colors.black.withOpacity(0.5),
+                      shadowColor: Colors.black.withValues(alpha: 0.5),
                       child: InkWell(
                         onTap: _pickImage,
                         customBorder: const CircleBorder(),
@@ -304,7 +303,6 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 20),
 
-            // 2. 修改個人檔案與設定按鈕
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Row(
@@ -316,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
+                          color: Colors.black.withValues(alpha: 0.25),
                           blurRadius: 2.925,
                           offset: const Offset(0, 1.17),
                         ),
@@ -372,7 +370,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       color: AppColors.background,
                       shape: const CircleBorder(),
                       elevation: 2.925,
-                      shadowColor: Colors.black.withOpacity(0.25),
+                      shadowColor: Colors.black.withValues(alpha: 0.25),
                       child: InkWell(
                         onTap: () {
                           Navigator.push(
@@ -398,7 +396,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-            // 3. 管理員專屬功能區
             if (_isAdmin)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -436,7 +433,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
 
-            // 4. 小精靈展示區
             const SizedBox(height: 20),
             GestureDetector(
               onTap: () => Navigator.pushAndRemoveUntil(
@@ -456,7 +452,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
+                      color: AppColors.primary.withValues(alpha: 0.3),
                       blurRadius: 4.875,
                       offset: const Offset(0, 2.34),
                     ),
@@ -499,7 +495,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
             ),
-            // 5. 登出按鈕
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
               child: ElevatedButton.icon(
@@ -521,6 +516,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// 執行 _buildAdminButton 業務邏輯處理方法。
   Widget _buildAdminButton(String label, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -531,7 +527,7 @@ class _ProfilePageState extends State<ProfilePage> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 1.95,
               offset: const Offset(0, 0.975),
             ),
@@ -549,7 +545,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ).copyWith(
             overlayColor: WidgetStateProperty.resolveWith<Color?>(
               (Set<WidgetState> states) {
-                if (states.contains(WidgetState.pressed)) return AppColors.secondary.withOpacity(0.1);
+                if (states.contains(WidgetState.pressed)) return AppColors.secondary.withValues(alpha: 0.1);
                 return null;
               },
             ),

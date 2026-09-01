@@ -7,6 +7,7 @@ import '../../color/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
 
+/// ProblemFeedbackPage 視圖頁面與狀態類別。
 class ProblemFeedbackPage extends StatefulWidget {
   const ProblemFeedbackPage({super.key});
 
@@ -14,6 +15,7 @@ class ProblemFeedbackPage extends StatefulWidget {
   State<ProblemFeedbackPage> createState() => _ProblemFeedbackPageState();
 }
 
+/// 內部使用的 _ProblemFeedbackPageState 元件與狀態處理類別。
 class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
   final TextEditingController _contentController = TextEditingController();
   bool _isSubmitting = false;
@@ -22,18 +24,23 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
   XFile? _selectedImage;
   Uint8List? _selectedImageBytes;
 
+  /// 初始化 Widget 狀態與訂閱生命週期。
   @override
+  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _loadFeedback();
   }
 
+  /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
+  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _contentController.dispose();
     super.dispose();
   }
 
+  /// 載入歷史問題回饋清單。
   Future<void> _loadFeedback() async {
     setState(() => _isLoadingFeedback = true);
     final list = await AuthService().listMyProblemFeedback();
@@ -44,6 +51,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     });
   }
 
+  /// 提交新的問題回饋內容與附件圖片至後端。
   Future<void> _submit() async {
     final content = _contentController.text.trim();
     if (content.isEmpty) {
@@ -100,6 +108,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     }
   }
 
+  /// 啟動圖片選擇器以選取回饋照片附件。
   Future<void> _pickImage() async {
     try {
       final picker = ImagePicker();
@@ -125,6 +134,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     }
   }
 
+  /// 執行 _clearSelectedImage 業務邏輯處理方法。
   void _clearSelectedImage() {
     setState(() {
       _selectedImage = null;
@@ -132,6 +142,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     });
   }
 
+  /// 執行 _formatDate 業務邏輯處理方法。
   String _formatDate(dynamic value) {
     final text = value?.toString() ?? '';
     if (text.length >= 16) {
@@ -140,7 +151,9 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     return text;
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     final contentLength = _contentController.text.length;
 
@@ -183,6 +196,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
+  /// 執行 _buildSubmitCard 業務邏輯處理方法。
   Widget _buildSubmitCard(int contentLength) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -191,7 +205,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -218,7 +232,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
             decoration: InputDecoration(
               hintText: '例如：在哪個頁面遇到問題、做了什麼操作、畫面出現什麼狀況...',
               filled: true,
-              fillColor: Colors.white.withOpacity(0.72),
+              fillColor: Colors.white.withValues(alpha: 0.72),
               counterText: '$contentLength / 2000',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -252,7 +266,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.55),
+                color: Colors.white.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: AppColors.border),
               ),
@@ -280,7 +294,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
             onPressed: _isSubmitting ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              disabledBackgroundColor: AppColors.primary.withOpacity(0.45),
+              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.45),
               foregroundColor: AppColors.background,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
@@ -309,6 +323,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
+  /// 執行 _buildFeedbackHistory 業務邏輯處理方法。
   Widget _buildFeedbackHistory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,6 +352,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
+  /// 執行 _buildEmptyCard 業務邏輯處理方法。
   Widget _buildEmptyCard() {
     return Container(
       width: double.infinity,
@@ -352,6 +368,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
+  /// 執行 _buildFeedbackCard 業務邏輯處理方法。
   Widget _buildFeedbackCard(dynamic item) {
     final feedback = item is Map ? item : <String, dynamic>{};
     final content = feedback['content']?.toString() ?? '';
@@ -393,7 +410,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
               Text(
                 _formatDate(feedback['createdAt']),
                 style: TextStyle(
-                  color: AppColors.textPrimary.withOpacity(0.55),
+                  color: AppColors.textPrimary.withValues(alpha: 0.55),
                   fontSize: 12,
                 ),
               ),
@@ -428,7 +445,7 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
             Text(
               '回覆時間 ${_formatDate(feedback['repliedAt'])}',
               style: TextStyle(
-                color: AppColors.textPrimary.withOpacity(0.55),
+                color: AppColors.textPrimary.withValues(alpha: 0.55),
                 fontSize: 12,
               ),
             ),

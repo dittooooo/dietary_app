@@ -1,18 +1,16 @@
 import 'dart:async';
-import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
-import 'package:flutter/services.dart'; // 匯入 services.dart 用於 TextInputFormatter
-// import 'dart:convert'; // 匯入 dart:convert 元件庫或套件
-import 'package:http/http.dart' as http; // 匯入 http.dart 元件庫或套件
-import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
-import '../../config/api_config.dart'; // 匯入 api_config.dart 元件庫或套件
-import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
-import '../../services/auth_service.dart'; // 匯入 auth_service.dart 元件庫或套件
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../color/app_colors.dart';
+import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
-import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper
+import '../../utils/profile_value_mapper.dart';
 import 'login_page.dart';
 
-class EditProfilePage extends StatefulWidget { // 定義 EditProfilePage 類別，繼承自 StatefulWidget
-  final Map<String, dynamic> initialData; // 宣告類別成員或方法內部的區域變數
+/// EditProfilePage 視圖頁面與狀態類別。
+class EditProfilePage extends StatefulWidget {
+  final Map<String, dynamic> initialData;
   final bool isMandatoryAdmin;
   final VoidCallback? onSaveSuccess;
   const EditProfilePage({
@@ -20,34 +18,35 @@ class EditProfilePage extends StatefulWidget { // 定義 EditProfilePage 類別�
     required this.initialData, 
     this.isMandatoryAdmin = false,
     this.onSaveSuccess,
-  }); // 建立編譯期常數，優化 Flutter 渲染效能
+  });
 
-  @override // 標記此方法為覆寫父類別之方法
-  State<EditProfilePage> createState() => _EditProfilePageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  @override
+  State<EditProfilePage> createState() => _EditProfilePageState();
+}
 
-class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProfilePageState 類別，繼承自 State
-  final _formKey = GlobalKey<FormState>(); // 宣告類別成員或方法內部的區域變數
+/// 內部使用的 _EditProfilePageState 元件與狀態處理類別。
+class _EditProfilePageState extends State<EditProfilePage> {
+  final _formKey = GlobalKey<FormState>();
   
-  late AuthService _authService; // 宣告類別成員或方法內部的區域變數
+  late AuthService _authService;
   
-  late TextEditingController _nameController; // 宣告類別成員或方法內部的區域變數
+  late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _yearController;
   late TextEditingController _monthController;
   late TextEditingController _dayController;
-  late TextEditingController _heightController; // 宣告類別成員或方法內部的區域變數
-  late TextEditingController _weightController; // 宣告類別成員或方法內部的區域變數
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
   
-  String _gender = ''; // 宣告類別成員或方法內部的區域變數
-  Set<String> _diseases = {}; // 執行相對應的邏輯計算或設定屬性參數
-  Set<String> _goals = {}; // 執行相對應的邏輯計算或設定屬性參數
+  String _gender = '';
+  Set<String> _diseases = {};
+  Set<String> _goals = {};
 
   bool _showTopBanner = false;
   String _topBannerText = '請輸入完整訊息';
   Timer? _bannerTimer;
 
-  final List<String> _genderOptions = ['男', '女']; // 宣告類別成員或方法內部的區域變數
+  final List<String> _genderOptions = ['男', '女'];
   final List<String> _diseaseOptions = [
     '高血壓',
     '高血脂',
@@ -61,7 +60,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     '胃食道逆流',
     '無疾病',
   ];
-  final List<String> _goalOptions = ['減脂', '增肌', '養生']; // 宣告類別成員或方法內部的區域變數
+  final List<String> _goalOptions = ['減脂', '增肌', '養生'];
 
   bool get _isUserAdmin {
     final role = widget.initialData['user']?['role'] ?? widget.initialData['role'];
@@ -72,10 +71,12 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
         email == 'admin@gmail.com';
   }
 
-  @override // 標記此方法為覆寫父類別之方法
-  void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
-    _authService = AuthService(); // 執行相對應的邏輯計算或設定屬性參數
+  /// 初始化 Widget 狀態與訂閱生命週期。
+  @override
+  /// 執行 initState 業務邏輯處理方法。
+  void initState() {
+    super.initState();
+    _authService = AuthService();
     _nameController = TextEditingController();
     _emailController = TextEditingController();
     _yearController = TextEditingController();
@@ -88,6 +89,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     _fetchProfileFromBackend();
   }
 
+  /// 向後端服務發送 GET 請求取得最新用戶個人資料。
   Future<void> _fetchProfileFromBackend() async {
     try {
       final result = await _authService.getUserProfile();
@@ -100,13 +102,13 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     } catch (_) {}
   }
 
+  /// 解析 JSON 個人資料並自動填入各大輸入框 Controller。
   void _populateFieldsFromData(Map<String, dynamic> data) {
     if (data.isEmpty) {
       if (_emailController.text.isEmpty) _loadUserEmail();
       return;
     }
     
-    // 暱稱：若未設定則預設顯示 '系統管理員' 或空
     final initialName = (data['nickname'] != null && data['nickname'].toString().trim().isNotEmpty)
         ? data['nickname'].toString().trim()
         : (_isUserAdmin ? '系統管理員' : '');
@@ -114,14 +116,12 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       _nameController.text = initialName;
     }
 
-    // 帳號：動態取得 Email (唯讀)
     final initialEmail = data['email']?.toString().trim() ?? data['user']?['email']?.toString().trim() ?? '';
     if (initialEmail.isNotEmpty || _emailController.text.isEmpty) {
       _emailController.text = initialEmail;
     }
     _loadUserEmail();
 
-    // 載入個人資訊 (若 DB 有紀錄則自動填入現有資料)
     final gStr = data['gender']?.toString().toUpperCase() ?? '';
     if (gStr == 'FEMALE') {
       _gender = '女';
@@ -129,7 +129,6 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       _gender = '男';
     }
 
-    // 相容後端所有生日格式 (List JSON, ISO YYYY-MM-DD, 斜線 YYYY/MM/DD, 點號 YYYY.MM.DD, 無分隔符 8 位數, 帶時間 T, 及年齡 age 備用)
     String yearStr = '';
     String monthStr = '';
     String dayStr = '';
@@ -190,6 +189,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     }
   }
 
+  /// 載入本地快取之用戶電子郵件信箱。
   Future<void> _loadUserEmail() async {
     if (_emailController.text.isEmpty) {
       final prefs = await SharedPreferences.getInstance();
@@ -205,7 +205,9 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     }
   }
 
+  /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
+  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _bannerTimer?.cancel();
     _nameController.dispose();
@@ -218,6 +220,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     super.dispose();
   }
 
+  /// 檢驗修改後之個人資料並發送 PUT 請求更新至後端。
   Future<void> _updateProfile() async {
     FocusManager.instance.primaryFocus?.unfocus();
 
@@ -235,7 +238,6 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     final heightVal = double.tryParse(heightText);
     final weightVal = double.tryParse(weightText);
 
-    // 1. 驗證年月日必填
     if (yearText.isEmpty || monthText.isEmpty || dayText.isEmpty ||
         yearVal == null || monthVal == null || dayVal == null) {
       _showValidationError('請輸入完整訊息');
@@ -245,7 +247,6 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // 2. 年月日數值與範圍檢查
     if (yearVal < 1900 || yearVal > now.year ||
         monthVal < 1 || monthVal > 12 ||
         dayVal < 1 || dayVal > 31) {
@@ -265,13 +266,11 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       return;
     }
 
-    // 3. 前端阻擋超過今天的未來日期
     if (parsedBirthDate.isAfter(today)) {
       _showValidationError('請輸入完整訊息');
       return;
     }
 
-    // 4. 有任何未填寫或未選擇的欄位，跳出籠統通知「請輸入完整訊息」
     if (_gender.trim().isEmpty ||
         heightText.isEmpty || heightVal == null || heightVal <= 0 ||
         weightText.isEmpty || weightVal == null || weightVal <= 0 ||
@@ -281,7 +280,6 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
       return;
     }
 
-    // 動態計算年齡
     int ageVal = now.year - parsedBirthDate.year;
     if (now.month < parsedBirthDate.month || (now.month == parsedBirthDate.month && now.day < parsedBirthDate.day)) {
       ageVal--;
@@ -329,10 +327,12 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     }
   }
 
+  /// 觸發頂部警告訊息橫幅彈出。
   void triggerValidationError([String? message]) {
     _showValidationError(message ?? '請輸入完整訊息');
   }
 
+  /// 顯示頂部警告訊息橫幅並設定 2 秒自動隱藏計時器。
   void _showValidationError([String? message]) {
     _bannerTimer?.cancel();
     setState(() {
@@ -348,26 +348,27 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     });
   }
 
-  Future<void> _deleteAccount() async { // 定義非同步方法（Future），執行耗時操作
-    final confirm = await showDialog<bool>( // 宣告類別成員或方法內部的區域變數
-      context: context, // 執行相對應的邏輯計算或設定屬性參數
-      builder: (ctx) => AlertDialog( // 執行相對應的邏輯計算或設定屬性參數
-        title: const Text('確定要註銷帳號嗎？'), // 建立文字顯示元件（Text）
-        content: const Text('這將會永久刪除您的所有資料，且無法復原。'), // 建立文字顯示元件（Text）
-        actions: [ // 執行相對應的邏輯計算或設定屬性參數
+  /// 彈出對話框供用戶確認，確認後執行帳號註銷刪除流程。
+  Future<void> _deleteAccount() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('確定要註銷帳號嗎？'),
+        content: const Text('這將會永久刪除您的所有資料，且無法復原。'),
+        actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('取消', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-          ), // 導航路由返回：關閉當前頁面並返回上一頁
-          TextButton( // 執行相對應的邏輯計算或設定屬性參數
-            onPressed: () => Navigator.pop(ctx, true), // 導航路由返回：關閉當前頁面並返回上一頁
-            child: const Text('確認註銷', style: TextStyle(color: AppColors.danger)), // 建立文字顯示元件（Text）
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('確認註銷', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
 
-    if (confirm != true) return; // 執行相對應的邏輯計算或設定屬性參數
+    if (confirm != true) return;
 
     try {
       final res = await _authService.deleteAccount();
@@ -396,39 +397,41 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
         );
       }
     }
-  } // 程式碼區塊或元件結構結束
+  }
 
-  @override // 標記此方法為覆寫父類別之方法
-  Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
-    return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
-      appBar: AppBar( // 設定頂部的導航欄（AppBar）
-        title: Text(widget.isMandatoryAdmin ? '請輸入資訊' : '編輯資料', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
-        centerTitle: true, // 執行相對應的邏輯計算或設定屬性參數
-        backgroundColor: AppColors.background, // 設定顏色數值（Color）
-        elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
+  @override
+  /// 執行 build 業務邏輯處理方法。
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: Text(widget.isMandatoryAdmin ? '請輸入資訊' : '編輯資料', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        centerTitle: true,
+        backgroundColor: AppColors.background,
+        elevation: 0,
         automaticallyImplyLeading: !widget.isMandatoryAdmin,
-        leading: widget.isMandatoryAdmin ? null : IconButton( // 建立點擊圖示按鈕（IconButton）
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary), // 設定顏色數值（Color）
-          onPressed: () => Navigator.pop(context), // 導航路由返回：關閉當前頁面並返回上一頁
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
+        leading: widget.isMandatoryAdmin ? null : IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Stack(
         children: [
-          SingleChildScrollView( // 設定頁面的主要內容區域（body）
-            padding: const EdgeInsets.all(20.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-            child: Form( // 執行相對應的邏輯計算或設定屬性參數
-              key: _formKey, // 執行相對應的邏輯計算或設定屬性參數
-              child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-                children: [ // 執行相對應的邏輯計算或設定屬性參數
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(20.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
                   if (widget.isMandatoryAdmin) ...[
                     Container(
                       margin: const EdgeInsets.only(bottom: 15),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
                       child: const Row(
                         children: [
@@ -444,20 +447,20 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       ),
                     ),
                   ],
-                  _buildSectionBox([ // 執行相對應的邏輯計算或設定屬性參數
-                    _buildRowItem('暱稱', _nameController, enabled: !_isUserAdmin), // 管理者權限為唯讀；一般使用者可修改
-                    _buildRowItem('帳號', _emailController, enabled: false), // 帳號恆為唯讀
-                  ]), // 執行相對應的邏輯計算或設定屬性參數
-                  const SizedBox(height: 15), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  _buildSectionBox([ // 執行相對應的邏輯計算或設定屬性參數
-                    _buildGenderSelector(), // 執行相對應的邏輯計算或設定屬性參數
+                  _buildSectionBox([
+                    _buildRowItem('暱稱', _nameController, enabled: !_isUserAdmin),
+                    _buildRowItem('帳號', _emailController, enabled: false),
+                  ]),
+                  const SizedBox(height: 15),
+                  _buildSectionBox([
+                    _buildGenderSelector(),
                     _buildBirthDateRow(),
-                    _buildRowItem('身高', _heightController, isNumber: true, suffix: 'cm'), // 執行相對應的邏輯計算或設定屬性參數
-                    _buildRowItem('體重', _weightController, isNumber: true, suffix: 'kg'), // 執行相對應的邏輯計算或設定屬性參數
-                    _buildTagSelector('疾病', _diseaseOptions, _diseases), // 執行相對應的邏輯計算或設定屬性參數
-                    _buildTagSelector('目標', _goalOptions, _goals), // 執行相對應的邏輯計算或設定屬性參數
-                  ]), // 執行相對應的邏輯計算或設定屬性參數
-                  const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                    _buildRowItem('身高', _heightController, isNumber: true, suffix: 'cm'),
+                    _buildRowItem('體重', _weightController, isNumber: true, suffix: 'kg'),
+                    _buildTagSelector('疾病', _diseaseOptions, _diseases),
+                    _buildTagSelector('目標', _goalOptions, _goals),
+                  ]),
+                  const SizedBox(height: 30),
                   if (widget.isMandatoryAdmin) ...[
                     SizedBox(
                       width: double.infinity,
@@ -472,20 +475,19 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       ),
                     ),
                   ] else ...[
-                    Row( // 建立水平排列元件（Row），橫向排列多個子元件
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly, // 執行相對應的邏輯計算或設定屬性參數
-                      children: [ // 執行相對應的邏輯計算或設定屬性參數
-                        _buildCustomButton('刪除帳戶', AppColors.danger, isFilled: false, onTap: _deleteAccount), // 設定顏色數值（Color）
-                        _buildCustomButton('完成修改', AppColors.primary, isFilled: true, onTap: _updateProfile), // 設定顏色數值（Color）
-                      ], // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildCustomButton('刪除帳戶', AppColors.danger, isFilled: false, onTap: _deleteAccount),
+                        _buildCustomButton('完成修改', AppColors.primary, isFilled: true, onTap: _updateProfile),
+                      ],
+                    ),
                   ],
-                ], // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+                ],
+              ),
+            ),
+          ),
 
-          // 頂部滑出深灰色通知條 (Top Notification Banner)
           AnimatedPositioned(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
@@ -497,11 +499,11 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: AppColors.textPrimary, // 深灰色 / 深咖啡色背景
+                  color: AppColors.textPrimary,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      color: Colors.black.withValues(alpha: 0.25),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -528,26 +530,28 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
           ),
         ],
       ),
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+    );
+  }
 
-  Widget _buildSectionBox(List<Widget> children) { // 定義用於重複使用的 UI 封裝建構方法
-    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        color: AppColors.background, // 設定顏色數值（Color）
-        borderRadius: BorderRadius.circular(15), // 設定容器的圓角弧度半徑大小
-        boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
-          BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-            color: AppColors.primary.withOpacity(0.05), // 設定顏色數值（Color）
-            blurRadius: 1.95, // 執行相對應的邏輯計算或設定屬性參數
-            offset: const Offset(0, 0.78), // 建立編譯期常數，優化 Flutter 渲染效能
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      child: Column(children: children), // 建立垂直排列元件（Column），縱向排列多個子元件
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  /// 建立白色圓角背景容器區塊 Widget。
+  Widget _buildSectionBox(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 1.95,
+            offset: const Offset(0, 0.78),
+          ),
+        ],
+      ),
+      child: Column(children: children),
+    );
+  }
 
+  /// 建立生日年月日輸入列 Widget。
   Widget _buildBirthDateRow() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -575,7 +579,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       disabledBorder: InputBorder.none,
                       counterText: '',
                       hintText: 'YYYY',
-                      hintStyle: TextStyle(color: AppColors.textPrimary.withOpacity(0.35), fontSize: 14),
+                      hintStyle: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.35), fontSize: 14),
                     ),
                   ),
                 ),
@@ -595,7 +599,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       disabledBorder: InputBorder.none,
                       counterText: '',
                       hintText: 'MM',
-                      hintStyle: TextStyle(color: AppColors.textPrimary.withOpacity(0.35), fontSize: 14),
+                      hintStyle: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.35), fontSize: 14),
                     ),
                   ),
                 ),
@@ -615,7 +619,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       disabledBorder: InputBorder.none,
                       counterText: '',
                       hintText: 'DD',
-                      hintStyle: TextStyle(color: AppColors.textPrimary.withOpacity(0.35), fontSize: 14),
+                      hintStyle: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.35), fontSize: 14),
                     ),
                   ),
                 ),
@@ -628,6 +632,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     );
   }
 
+  /// 建立通用單列輸入欄位 Widget。
   Widget _buildRowItem(
     String label, 
     TextEditingController controller, {
@@ -637,76 +642,78 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
     String? hintText,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
-  }) { // 定義用於重複使用的 UI 封裝建構方法
-    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-      decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        border: Border(bottom: BorderSide(color: AppColors.border)), // 設定顏色數值（Color）
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-            child: TextField( // 建立文字輸入框元件（TextField）
-              controller: controller, // 執行相對應的邏輯計算或設定屬性參數
-              enabled: enabled, // 執行相對應的邏輯計算或設定屬性參數
-              keyboardType: keyboardType ?? (isNumber ? TextInputType.number : TextInputType.text), // 執行相對應的邏輯計算或設定屬性參數
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 60, child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: enabled,
+              keyboardType: keyboardType ?? (isNumber ? TextInputType.number : TextInputType.text),
               inputFormatters: inputFormatters,
-              textAlign: TextAlign.center, // 執行相對應的邏輯計算或設定屬性參數
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: enabled ? FontWeight.normal : FontWeight.bold,
                 color: enabled ? AppColors.textPrimary : AppColors.textPrimary,
               ),
-              decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
-                border: InputBorder.none, // 執行相對應的邏輯計算或設定屬性參數
+              decoration: InputDecoration(
+                border: InputBorder.none,
                 disabledBorder: InputBorder.none,
-                hintText: enabled ? (hintText ?? '請輸入') : '', // 執行相對應的邏輯計算或設定屬性參數
+                hintText: enabled ? (hintText ?? '請輸入') : '',
                 hintStyle: TextStyle(
-                  color: AppColors.textPrimary.withOpacity(0.35),
+                  color: AppColors.textPrimary.withValues(alpha: 0.35),
                   fontSize: 14,
                 ),
-                suffixText: suffix, // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+                suffixText: suffix,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _buildGenderSelector() { // 定義用於重複使用的 UI 封裝建構方法
-    return Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-      decoration: const BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        border: Border(bottom: BorderSide(color: AppColors.border)), // 設定顏色數值（Color）
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
-          const SizedBox(width: 60, child: Text('性別', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-          Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-            child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
-              mainAxisAlignment: MainAxisAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
-              children: _genderOptions.map((g) => Padding( // 建立間距容器（Padding），用於設定內部邊距
-                padding: const EdgeInsets.symmetric(horizontal: 10), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                child: ChoiceChip( // 執行相對應的邏輯計算或設定屬性參數
-                  label: Text(g), // 建立文字顯示元件（Text）
-                  selected: _gender == g, // 執行相對應的邏輯計算或設定屬性參數
-                  onSelected: (val) => setState(() => _gender = g), // 更新狀態數據並通知 UI 重新渲染畫面
-                  selectedColor: AppColors.secondary.withOpacity(0.2), // 設定顏色數值（Color）
-                   labelStyle: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                     color: _gender == g ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5), // 設定顏色數值（Color）
-                     fontWeight: _gender == g ? FontWeight.bold : FontWeight.normal, // 執行相對應的邏輯計算或設定屬性參數
-                   ), // 執行相對應的邏輯計算或設定屬性參數
-                 ), // 執行相對應的邏輯計算或設定屬性參數
-              )).toList(), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+  /// 建立性別選擇標籤組 Widget。
+  Widget _buildGenderSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          const SizedBox(width: 60, child: Text('性別', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _genderOptions.map((g) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: ChoiceChip(
+                  label: Text(g),
+                  selected: _gender == g,
+                  onSelected: (val) => setState(() => _gender = g),
+                  selectedColor: AppColors.secondary.withValues(alpha: 0.2),
+                   labelStyle: TextStyle(
+                     color: _gender == g ? AppColors.textPrimary : AppColors.textPrimary.withValues(alpha: 0.5),
+                     fontWeight: _gender == g ? FontWeight.bold : FontWeight.normal,
+                   ),
+                 ),
+              )).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
+  /// 建立疾病與目標多選標籤列 Widget。
   Widget _buildTagSelector(String label, List<String> options, Set<String> selection) {
     final sortedOptions = List<String>.from(options);
     sortedOptions.sort((a, b) {
@@ -738,7 +745,7 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       label: Text(
                         opt,
                         style: TextStyle(
-                          color: isSelected ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.5),
+                          color: isSelected ? AppColors.textPrimary : AppColors.textPrimary.withValues(alpha: 0.5),
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -779,8 +786,8 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
                       },
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide.none),
                       showCheckmark: false,
-                      backgroundColor: AppColors.surface.withOpacity(0.5),
-                      selectedColor: AppColors.secondary.withOpacity(0.2),
+                      backgroundColor: AppColors.surface.withValues(alpha: 0.5),
+                      selectedColor: AppColors.secondary.withValues(alpha: 0.2),
                     ),
                   );
                 }).toList(),
@@ -791,38 +798,40 @@ class _EditProfilePageState extends State<EditProfilePage> { // 定義 _EditProf
         ],
       ),
     );
-  } // 程式碼區塊或元件結構結束
+  }
 
-  Widget _buildCustomButton(String text, Color color, {bool isFilled = false, required VoidCallback onTap}) { // 定義用於重複使用的 UI 封裝建構方法
-    return InkWell( // 回傳建構完成的元件或方法計算結果
-      onTap: onTap, // 執行相對應的邏輯計算或設定屬性參數
-      child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-        decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-          color: isFilled ? color : AppColors.background, // 設定顏色數值（Color）
-          borderRadius: BorderRadius.circular(15), // 設定容器的圓角弧度半徑大小
-          boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
-            BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-              color: isFilled ? color.withOpacity(0.3) : Colors.black.withOpacity(0.1), // 設定顏色數值（Color）
-              blurRadius: 3.9, // 執行相對應的邏輯計算或設定屬性參數
-              offset: const Offset(0, 1.95), // 建立編譯期常數，優化 Flutter 渲染效能
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ], // 執行相對應的邏輯計算或設定屬性參數
-          border: isFilled ? null : Border.all(color: color.withOpacity(0.5)), // 設定容器的四周邊框線條樣式
-        ), // 執行相對應的邏輯計算或設定屬性參數
-        child: Text( // 建立文字顯示元件（Text）
-          text, // 執行相對應的邏輯計算或設定屬性參數
-          style: TextStyle( // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-            color: isFilled ? AppColors.background : color, // 設定顏色數值（Color）
-            fontWeight: FontWeight.bold,  // 執行相對應的邏輯計算或設定屬性參數
-            fontSize: 16 // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+  /// 建立頁面底部自訂樣式操作按鈕 Widget。
+  Widget _buildCustomButton(String text, Color color, {bool isFilled = false, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 12),
+        decoration: BoxDecoration(
+          color: isFilled ? color : AppColors.background,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: isFilled ? color.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.1),
+              blurRadius: 3.9,
+              offset: const Offset(0, 1.95),
+            ),
+          ],
+          border: isFilled ? null : Border.all(color: color.withValues(alpha: 0.5)),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isFilled ? AppColors.background : color,
+            fontWeight: FontWeight.bold,
+            fontSize: 16
+          ),
+        ),
+      ),
+    );
   } // end _buildCustomButton
 } // end _EditProfilePageState
 
+/// DateTextInputFormatter 視圖頁面與狀態類別。
 class DateTextInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
