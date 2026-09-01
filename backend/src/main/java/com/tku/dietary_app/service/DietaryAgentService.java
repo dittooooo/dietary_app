@@ -49,10 +49,10 @@ public class DietaryAgentService {
     @Value("${app.partner.dietary.base-url:}")
     private String partnerApiBaseUrl;
 
-    @Value("${app.partner.dietary.ask-path:/ask}")
+    @Value("${app.partner.dietary.ask-path:/nutritionist-agent/ask}")
     private String partnerApiAskPath;
 
-    @Value("${app.partner.dietary.dish-nutrition-path:/dish-nutrition}")
+    @Value("${app.partner.dietary.dish-nutrition-path:/nutritionist-agent/dish-nutrition}")
     private String partnerApiDishNutritionPath;
 
     public Object ask(Long userId, DietaryAskRequest request) {
