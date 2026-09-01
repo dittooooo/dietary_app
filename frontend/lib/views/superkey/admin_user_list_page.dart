@@ -5,25 +5,29 @@ import '../../services/admin_service.dart'; // 匯入 admin_service.dart
 import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart'; // 匯入 ProfileValueMapper 進行字串對應轉換
 
-class AdminUserListPage extends StatefulWidget { // 定義 AdminUserListPage 類別，繼承自 StatefulWidget
+/// 管理者全站使用者帳號管理、權限變更與刪除清單頁面。
+class AdminUserListPage extends StatefulWidget {
   const AdminUserListPage({super.key}); // 建立編譯期常數，優化 Flutter 渲染效能
 
   @override // 標記此方法為覆寫父類別之方法
-  State<AdminUserListPage> createState() => _AdminUserListPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  State<AdminUserListPage> createState() => _AdminUserListPageState();
+}
 
+/// 全站使用者管理清單頁面之搜尋、分頁與權限狀態。
 class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _AdminUserListPageState 類別，繼承自 State
-  final TextEditingController _searchController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
+  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
 
   List<dynamic> _users = []; // 儲存後端獲取的使用者列表
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 執行 initState 之專屬功能操作。
   void initState() { // 初始化狀態生命週期方法，頁年建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    super.initState();
     _fetchUsers(); // 獲取後端使用者清單
-  } // 程式碼區塊或元件結構結束
+  }
 
+  /// 向後端獲取全站使用者帳號清單，包含暱稱、Email、角色與健康目標。
   Future<void> _fetchUsers() async {
     setState(() => _isLoading = true);
     try {
@@ -39,47 +43,48 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
   }
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
-      appBar: AppBar( // 設定頂部的導航欄（AppBar）
-        title: const Text('使用者管理清單', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-        backgroundColor: AppColors.background, // 設定顏色數值（Color）
-        elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
-        iconTheme: const IconThemeData(color: AppColors.textPrimary), // 設定顏色數值（Color）
-        actions: [ // 執行相對應的邏輯計算或設定屬性參數
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text('使用者管理清單', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        actions: [
           IconButton( // 建立點擊圖示按鈕（IconButton）
             icon: const Icon(Icons.refresh), // 顯示預設的圖示元件（Icon）
             onPressed: _fetchUsers, // 更新狀態數據並通知 UI 重新渲染畫面
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      body: Column( // 設定頁面的主要內容區域（body）
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
           Padding( // 建立間距容器（Padding），用於設定內部邊距
-            padding: const EdgeInsets.all(15.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-            child: TextField( // 建立文字輸入框元件（TextField）
-              controller: _searchController, // 執行相對應的邏輯計算或設定屬性參數
+            padding: const EdgeInsets.all(15.0),
+            child: TextField(
+              controller: _searchController,
               onChanged: (value) => _fetchUsers(), // 輸入變更時重新查詢 API
               decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
-                filled: true, // 執行相對應的邏輯計算或設定屬性參數
-                fillColor: AppColors.background, // 設定顏色數值（Color）
-                hintText: '輸入名稱、帳號或 ID 查詢...', // 執行相對應的邏輯計算或設定屬性參數
-                prefixIcon: const Icon(Icons.search, color: AppColors.secondary), // 設定顏色數值（Color）
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none), // 設定容器的圓角弧度半徑大小
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.border)), // 設定容器的圓角弧度半徑大小
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.primary)), // 設定容器的圓角弧度半徑大小
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+                filled: true,
+                fillColor: AppColors.background,
+                hintText: '輸入名稱、帳號或 ID 查詢...',
+                prefixIcon: const Icon(Icons.search, color: AppColors.secondary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.primary)),
+              ),
+            ),
+          ),
 
           Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-              : _users.isNotEmpty // 執行相對應的邏輯計算或設定屬性參數
+              : _users.isNotEmpty
                   ? ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
-                      itemCount: _users.length, // 執行相對應的邏輯計算或設定屬性參數
-                      itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
+                      itemCount: _users.length,
+                      itemBuilder: (context, index) {
                         final userProfile = _users[index]; // 這是 UserProfileResponse 物件
                         final userObj = userProfile['user'] is Map ? userProfile['user'] : {};
                         final int profileId = userProfile['id'] ?? 0;
@@ -87,24 +92,24 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                         final String displayName = userProfile['nickname'] ?? (email.isNotEmpty ? email.split('@')[0] : '使用者');
                         final bool isEnabled = userProfile['enabled'] != false && userObj['enabled'] != false;
                         
-                        return Card( // 回傳建構完成的元件或方法計算結果
-                          color: AppColors.background, // 設定顏色數值（Color）
-                          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), // 設定外邊距或內边距的數值大小（EdgeInsets）
-                          elevation: 2, // 執行相對應的邏輯計算或設定屬性參數
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
-                          child: ListTile( // 執行相對應的邏輯計算或設定屬性參數
-                            leading: CircleAvatar( // 執行相對應的邏輯計算或設定屬性參數
-                              backgroundColor: AppColors.secondary, // 設定顏色數值（Color）
-                              child: Text("#$profileId", style: const TextStyle(color: AppColors.background, fontSize: 12)), // 建立文字顯示元件（Text）
-                            ), // 執行相對應的邏輯計算或設定屬性參數
-                            title: Text( // 建立文字顯示元件（Text）
-                              displayName, // 執行相對應的邏輯計算或設定屬性參數
-                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-                            ), // 執行相對應的邏輯計算或設定屬性參數
+                        return Card(
+                          color: AppColors.background,
+                          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: AppColors.secondary,
+                              child: Text("#$profileId", style: const TextStyle(color: AppColors.background, fontSize: 12)),
+                            ),
+                            title: Text(
+                              displayName,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(email.isNotEmpty ? email : '無電子郵件', style: const TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
+                                Text(email.isNotEmpty ? email : '無電子郵件', style: const TextStyle(color: Colors.black54)),
                                 const SizedBox(height: 4),
                                 Text(
                                   isEnabled ? '狀態：啟用中' : '狀態：已禁用',
@@ -125,8 +130,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                                 value,
                               ),
                             ),
-                            onTap: () { // 執行相對應的邏輯計算或設定屬性參數
-                              // 跳轉至使用者詳情頁，並將目標與疾病統一轉換為中文顯示
+                            onTap: () {
                               final String goalText = ProfileValueMapper.dietGoalsToDisplaySet(userProfile['dietGoal']).join(', ');
                               final String healthText = ProfileValueMapper.healthConditionsToDisplaySet(userProfile['healthConditions']).join(', ');
 
@@ -142,50 +146,51 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                                 'status': isEnabled ? '啟用中' : '已禁用',
                               };
                               Navigator.push( // 導航路由跳轉：開啟並推入新頁面
-                                context, // 執行相對應的邏輯計算或設定屬性參數
-                                MaterialPageRoute( // 執行相對應的邏輯計算或設定屬性參數
-                                  builder: (context) => UserDetailPage(userData: mappedDetail), // 執行相對應的邏輯計算或設定屬性參數
-                                ), // 執行相對應的邏輯計算或設定屬性參數
-                              ); // 程式碼區塊或元件結構結束
-                            }, // 程式碼區塊或元件結構結束
-                          ), // 執行相對應的邏輯計算或設定屬性參數
-                        ); // 程式碼區塊或元件結構結束
-                      }, // 程式碼區塊或元件結構結束
-                    ) // 執行相對應的邏輯計算或設定屬性參數
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => UserDetailPage(userData: mappedDetail),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    )
                   : const Center( // 建立置中對齊元件（Center），將子元件居中顯示
-                      child: Text('找不到該使用者', style: TextStyle(fontSize: 18, color: Colors.black54)), // 建立文字顯示元件（Text）
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      floatingActionButton: FloatingActionButton( // 執行相對應的邏輯計算或設定屬性參數
-        backgroundColor: AppColors.primary, // 設定顏色數值（Color）
+                      child: Text('找不到該使用者', style: TextStyle(fontSize: 18, color: Colors.black54)),
+                    ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.primary,
         onPressed: _showCreateUserDialog, // 新增使用者彈出對話框
-        child: const Icon(Icons.add, color: AppColors.background), // 設定顏色數值（Color）
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+        child: const Icon(Icons.add, color: AppColors.background),
+      ),
+    );
+  }
 
-  void _showStatusConfirmDialog(int userId, String name, bool enabled) { // 執行相對應的邏輯計算或設定屬性參數
-    showDialog( // 執行相對應的邏輯計算或設定屬性參數
-      context: context, // 執行相對應的邏輯計算或設定屬性參數
-      builder: (BuildContext context) { // 執行相對應的邏輯計算或設定屬性參數
-        return AlertDialog( // 回傳建構完成的元件或方法計算結果
-          backgroundColor: AppColors.background, // 設定顏色數值（Color）
-          title: Text(enabled ? '確認啟用' : '確認禁用', style: const TextStyle(color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
+  /// 彈出對話框供管理者確認是否啟用或禁用指定使用者帳號，點擊確認後呼叫控制台修改狀態。
+  void _showStatusConfirmDialog(int userId, String name, bool enabled) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.background,
+          title: Text(enabled ? '確認啟用' : '確認禁用', style: const TextStyle(color: AppColors.textPrimary)),
           content: Text(
             enabled
                 ? '確定要啟用使用者「$name」嗎？啟用後該帳號可以重新登入。'
                 : '確定要禁用使用者「$name」嗎？禁用後該帳號將無法登入，既有登入狀態也會失效。',
             style: const TextStyle(color: Colors.black54),
-          ), // 建立文字顯示元件（Text）
-          actions: [ // 執行相對應的邏輯計算或設定屬性參數
-            TextButton( // 執行相對應的邏輯計算或設定屬性參數
-              onPressed: () => Navigator.of(context).pop(), // 執行相對應的邏輯計算或設定屬性參數
-              child: const Text('取消', style: TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
-            ), // 執行相對應的邏輯計算或設定屬性參數
-            TextButton( // 執行相對應的邏輯計算或設定屬性參數
-              onPressed: () async { // 執行相對應的邏輯計算或設定屬性參數
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消', style: TextStyle(color: Colors.black54)),
+            ),
+            TextButton(
+              onPressed: () async {
                 Navigator.of(context).pop(); // 關閉對話框
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(enabled ? '正在啟用使用者...' : '正在禁用使用者...')),
@@ -205,21 +210,22 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                   }
                 }
 
-              }, // 程式碼區塊或元件結構結束
+              },
               child: Text(
                 enabled ? '確認啟用' : '確認禁用',
                 style: TextStyle(
                   color: enabled ? AppColors.primary : AppColors.danger,
                   fontWeight: FontWeight.bold,
                 ),
-              ), // 建立文字顯示元件（Text）
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ], // 執行相對應的邏輯計算或設定屬性參數
-        ); // 程式碼區塊或元件結構結束
-      }, // 程式碼區塊或元件結構結束
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
+  /// 彈出新增使用者對話框，提供暱稱、Email 與密碼輸入欄位供管理者快速創建新帳號。
   void _showCreateUserDialog() {
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
@@ -250,7 +256,6 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 TextField(controller: ageController, decoration: const InputDecoration(labelText: '年齡'), keyboardType: TextInputType.number),
                 const SizedBox(height: 10),
 
-                // 性別選擇
                 Row(
                   children: [
                     const Text('性別：'),
@@ -270,7 +275,6 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 ),
                 const SizedBox(height: 10),
 
-                // 疾病選擇 (多選)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -288,7 +292,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                             label: Text(disease),
                             selected: isSelected,
                             backgroundColor: Colors.transparent,
-                            selectedColor: AppColors.secondary.withOpacity(0.2),
+                            selectedColor: AppColors.secondary.withValues(alpha: 0.2),
                             onSelected: (bool selected) {
                               setDialogState(() {
                                 if (disease == '無疾病') {
@@ -315,7 +319,6 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 ),
                 const SizedBox(height: 10),
 
-                // 飲食目標選擇 (多選)
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -333,7 +336,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                             label: Text(goal),
                             selected: isSelected,
                             backgroundColor: Colors.transparent,
-                            selectedColor: AppColors.primary.withOpacity(0.2),
+                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
                             onSelected: (bool selected) {
                               setDialogState(() {
                                 if (selectedGoals.contains(goal)) {

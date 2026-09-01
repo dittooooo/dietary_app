@@ -10,6 +10,7 @@ import '../../services/diet_service.dart';
 import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
 
+/// 管理者專用之測試工具箱與開發者除錯主控制頁面。
 class AdminTestToolsPage extends StatefulWidget {
   const AdminTestToolsPage({super.key});
 
@@ -17,13 +18,16 @@ class AdminTestToolsPage extends StatefulWidget {
   State<AdminTestToolsPage> createState() => _AdminTestToolsPageState();
 }
 
+/// 測試工具箱頁面之測試任務執行狀態與日誌輸出管理。
 class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
   DogBodyType _oldBodyType = DogBodyType.normal;
   DogBodyType _newBodyType = DogBodyType.heavy;
   String _reportDateMode = 'YESTERDAY';
   bool _isLoadingReport = false;
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -123,7 +127,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                     ),
                   ),
                   style: _primaryButtonStyle(
-                    disabledBackgroundColor: AppColors.primary.withOpacity(0.55),
+                    disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.55),
                   ),
                 ),
               ),
@@ -134,6 +138,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 ToolCard 區塊之視覺 UI 視圖元件。
   Widget _buildToolCard({
     required String title,
     required List<Widget> children,
@@ -173,6 +178,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 BodyTypePicker 區塊之視覺 UI 視圖元件。
   Widget _buildBodyTypePicker({
     required String label,
     required DogBodyType value,
@@ -200,6 +206,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 將體態 Enum 轉譯為單字中文標籤（瘦、標準、壯、胖）。
   String _bodyTypeLabel(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
@@ -213,6 +220,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     }
   }
 
+  /// 彈出對話視窗以進行 BodyTransitionTest 相關操作與資料確認。
   void _showBodyTransitionTest() {
     showDialog(
       context: context,
@@ -226,6 +234,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 彈出對話視窗以進行 DietSummaryReport 相關操作與資料確認。
   Future<void> _showDietSummaryReport() async {
     setState(() => _isLoadingReport = true);
 
@@ -297,6 +306,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 執行 isSameDate 之專屬功能操作。
   bool _isSameDate(DateTime date, DateTime targetDate) {
     return date.year == targetDate.year &&
         date.month == targetDate.month &&
@@ -340,6 +350,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     return null;
   }
 
+  /// 向伺服器或本地快取加載 CaloriesFromRecord 之數據內容。
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0;
     final nutritionValue = _nutritionValue(record, 'calories');
@@ -357,6 +368,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     return record['dishName']?.toString().trim().isNotEmpty == true ? 400 : 0;
   }
 
+  /// 向伺服器或本地快取加載 NutrientFromRecord 之數據內容。
   double _getNutrientFromRecord(dynamic record, String pattern) {
     if (record == null) return 0;
     String key = '';
@@ -401,6 +413,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     return match == null ? null : double.tryParse(match.group(1) ?? '');
   }
 
+  /// 彈出對話視窗以進行 DietSummaryDialog 相關操作與資料確認。
   void _showDietSummaryDialog({
     required DateTime date,
     required double calories,
@@ -486,17 +499,17 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withOpacity(0.15),
+                      color: AppColors.primary.withValues(alpha: 0.15),
                     ),
                   ),
                   child: Text(
                     comment,
                     style: TextStyle(
                       fontSize: 11.5,
-                      color: AppColors.textPrimary.withOpacity(0.85),
+                      color: AppColors.textPrimary.withValues(alpha: 0.85),
                       height: 1.3,
                     ),
                   ),
@@ -526,13 +539,14 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 CalorieArcGaugeCard 區塊之視覺 UI 視圖元件。
   Widget _buildCalorieArcGaugeCard(int currentCalories, String dateLabel) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,6 +624,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 執行 formatInt 之專屬功能操作。
   String _formatInt(int value) {
     return value.toString().replaceAllMapped(
           RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
@@ -617,6 +632,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
         );
   }
 
+  /// 建立 GaugeZoneLabel 區塊之視覺 UI 視圖元件。
   Widget _buildGaugeZoneLabel(String zoneTitle, String rangeStr, Color color) {
     return Column(
       children: [
@@ -641,6 +657,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 MacronutrientBarChartCard 區塊之視覺 UI 視圖元件。
   Widget _buildMacronutrientBarChartCard({
     required String dateLabel,
     required int carbsPercent,
@@ -655,7 +672,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -719,6 +736,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 MacroLabelItem 區塊之視覺 UI 視圖元件。
   Widget _buildMacroLabelItem(String label, double grams) {
     return SizedBox(
       width: 62,
@@ -748,6 +766,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     );
   }
 
+  /// 建立 DashedGridLine 區塊之視覺 UI 視圖元件。
   Widget _buildDashedGridLine(String label) {
     return Row(
       children: [
@@ -765,13 +784,14 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
         Expanded(
           child: Container(
             height: 1,
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
           ),
         ),
       ],
     );
   }
 
+  /// 建立 SingleBarItem 區塊之視覺 UI 視圖元件。
   Widget _buildSingleBarItem(int pct, Color color) {
     const plotHeight = 84.0;
     final barHeight =
@@ -797,7 +817,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withOpacity(0.25),
+                    color: color.withValues(alpha: 0.25),
                     blurRadius: 3,
                     offset: const Offset(0, 1),
                   ),
@@ -822,6 +842,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
   }
 }
 
+/// 執行 DietSummary 之專屬功能操作。
 class _DietSummary {
   final double calories;
   final double protein;
@@ -838,12 +859,14 @@ class _DietSummary {
   });
 }
 
+/// 執行 AdminCalorieGaugeArcPainter 之專屬功能操作。
 class _AdminCalorieGaugeArcPainter extends CustomPainter {
   final double currentCalories;
 
   const _AdminCalorieGaugeArcPainter({required this.currentCalories});
 
   @override
+  /// 執行 paint 之專屬功能操作。
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height - 10);
     final radius = size.width / 2 - 20;
@@ -912,6 +935,7 @@ class _AdminCalorieGaugeArcPainter extends CustomPainter {
   }
 
   @override
+  /// 執行 shouldRepaint 之專屬功能操作。
   bool shouldRepaint(covariant _AdminCalorieGaugeArcPainter oldDelegate) {
     return oldDelegate.currentCalories != currentCalories;
   }

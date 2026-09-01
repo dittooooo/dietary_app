@@ -4,6 +4,7 @@ import '../controllers/dog_state_controller.dart';
 import '../views/auth/model_viewer_web_stub.dart'
     if (dart.library.html) '../views/auth/model_viewer_web_impl.dart';
 
+/// 3D 柴犬角色模型渲染 Avatar 通用視覺元件。
 class DogAvatar extends StatelessWidget {
   final DogStateController controller;
   final double scale;
@@ -30,6 +31,7 @@ class DogAvatar extends StatelessWidget {
     required this.instanceId,
   }) : controller = controller ?? DogStateController.instance;
 
+  /// 依據柴犬體態（瘦、標準、壯、胖）計算模型縮放比例倍率。
   double _bodyTypeScaleMultiplier(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
@@ -41,6 +43,7 @@ class DogAvatar extends StatelessWidget {
     }
   }
 
+  /// 依據柴犬體態計算模型的垂直畫布偏移量。
   Offset _bodyTypeOffset(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
@@ -52,7 +55,9 @@ class DogAvatar extends StatelessWidget {
     }
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,

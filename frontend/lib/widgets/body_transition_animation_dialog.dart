@@ -6,6 +6,7 @@ import '../color/app_colors.dart';
 import '../controllers/dog_state_controller.dart';
 import 'dog_avatar.dart';
 
+/// 當柴犬體態改變時彈出之 3D 動畫慶祝過渡對話框。
 class BodyTransitionAnimationDialog extends StatefulWidget {
   final DogBodyType oldBodyType;
   final DogBodyType newBodyType;
@@ -21,6 +22,7 @@ class BodyTransitionAnimationDialog extends StatefulWidget {
       _BodyTransitionAnimationDialogState();
 }
 
+/// BodyTransitionAnimationDialog 之動畫狀態控制器。
 class _BodyTransitionAnimationDialogState
     extends State<BodyTransitionAnimationDialog>
     with SingleTickerProviderStateMixin {
@@ -35,7 +37,9 @@ class _BodyTransitionAnimationDialogState
   bool _transitionStarted = false;
   bool _newModelLoaded = false;
 
+  /// 初始化 Widget 狀態與動畫控制器。
   @override
+  /// 執行 initState 之專屬功能操作。
   void initState() {
     super.initState();
     final transitionId = DateTime.now().microsecondsSinceEpoch;
@@ -49,7 +53,9 @@ class _BodyTransitionAnimationDialogState
     )..addListener(_holdLightUntilNewModelLoaded);
   }
 
+  /// 銷毀狀態並釋放動畫控制器資源。
   @override
+  /// 執行 dispose 之專屬功能操作。
   void dispose() {
     _controller.dispose();
     _oldDogController.dispose();
@@ -57,6 +63,7 @@ class _BodyTransitionAnimationDialogState
     super.dispose();
   }
 
+  /// 當舊體態 3D 模型載入完成時觸發，啟動過渡計時動畫。
   void _handleIntroModelLoaded() {
     if (_transitionStarted) return;
     _transitionStarted = true;
@@ -67,6 +74,7 @@ class _BodyTransitionAnimationDialogState
     });
   }
 
+  /// 在新模型尚未準備好前將光芒動畫定格於最高峰狀態。
   void _holdLightUntilNewModelLoaded() {
     if (_newModelLoaded ||
         _controller.value < _waitForNewModelProgress ||
@@ -79,6 +87,7 @@ class _BodyTransitionAnimationDialogState
       ..value = _waitForNewModelProgress;
   }
 
+  /// 當新體態 3D 模型載入完成時解鎖並繼續完成收尾動畫。
   void _handleNewModelLoaded() {
     if (_newModelLoaded) return;
 
@@ -89,6 +98,7 @@ class _BodyTransitionAnimationDialogState
     }
   }
 
+  /// 將體態 Enum 轉譯為單字中文標籤（瘦、標準、壯、胖）。
   String _bodyTypeLabel(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
@@ -102,11 +112,14 @@ class _BodyTransitionAnimationDialogState
     }
   }
 
+  /// 計算區間動態數值之正規化百分比（0.0 ~ 1.0）。
   double _progress(double value, double start, double end) {
     return ((value - start) / (end - start)).clamp(0.0, 1.0).toDouble();
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -255,6 +268,7 @@ class _BodyTransitionAnimationDialogState
   }
 }
 
+/// 體態變換光波與閃耀背景特效元件。
 class _BodyTransitionLightEffect extends StatelessWidget {
   final bool showSparkLines;
 
@@ -262,7 +276,9 @@ class _BodyTransitionLightEffect extends StatelessWidget {
     required this.showSparkLines,
   });
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Container(
       width: 150,
@@ -300,8 +316,10 @@ class _BodyTransitionLightEffect extends StatelessWidget {
   }
 }
 
+/// 繪製體態過渡時四射金光線條之自訂 CustomPainter。
 class _BodyTransitionSparkPainter extends CustomPainter {
   @override
+  /// 執行 paint 之專屬功能操作。
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()
@@ -324,5 +342,6 @@ class _BodyTransitionSparkPainter extends CustomPainter {
   }
 
   @override
+  /// 執行 shouldRepaint 之專屬功能操作。
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

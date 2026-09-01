@@ -4,6 +4,7 @@ import '../../color/app_colors.dart';
 import '../../config/api_config.dart';
 import '../../services/admin_service.dart';
 
+/// 管理者檢視與回覆全站使用者問題反饋之主視圖頁面。
 class AdminProblemFeedbackPage extends StatefulWidget {
   const AdminProblemFeedbackPage({super.key});
 
@@ -11,16 +12,20 @@ class AdminProblemFeedbackPage extends StatefulWidget {
   State<AdminProblemFeedbackPage> createState() => _AdminProblemFeedbackPageState();
 }
 
+/// 管理者問題反饋頁面之狀態管理與 API 互動邏輯。
 class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
   bool _isLoading = true;
   List<dynamic> _feedbackList = [];
 
+  /// 初始化 Widget 狀態與管理控制台資料。
   @override
+  /// 執行 initState 之專屬功能操作。
   void initState() {
     super.initState();
     _loadFeedback();
   }
 
+  /// 向後端 AdminService 發送請求，載入全站使用者提交之問題反饋清單。
   Future<void> _loadFeedback() async {
     setState(() => _isLoading = true);
     final list = await AdminService().listProblemFeedback();
@@ -31,6 +36,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     });
   }
 
+  /// 執行 formatDate 之專屬功能操作。
   String _formatDate(dynamic value) {
     final text = value?.toString() ?? '';
     if (text.length >= 16) {
@@ -39,6 +45,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     return text;
   }
 
+  /// 執行 openReplyDialog 之專屬功能操作。
   Future<void> _openReplyDialog(Map feedback) async {
     final id = int.tryParse('${feedback['id'] ?? ''}');
     if (id == null) return;
@@ -68,6 +75,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     }
   }
 
+  /// 判斷圖片路徑格式，將相對路徑轉譯補全為可供網頁或 App 載入之完整圖片 URL。
   String _resolveImageUrl(String photoUrl) {
     if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
       return photoUrl;
@@ -75,6 +83,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     return '${ApiConfig.serverBaseUrl}$photoUrl';
   }
 
+  /// 彈出大圖對話框，放大檢視使用者附帶之問題反饋圖片。
   Future<void> _openPhotoDialog(String photoUrl) async {
     final imageUrl = _resolveImageUrl(photoUrl);
     await showDialog<void>(
@@ -134,7 +143,9 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     );
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -184,6 +195,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
     );
   }
 
+  /// 建立 FeedbackCard 區塊之視覺 UI 視圖元件。
   Widget _buildFeedbackCard(Map feedback) {
     final adminReply = feedback['adminReply']?.toString() ?? '';
     final photoUrl = feedback['photoUrl']?.toString() ?? '';
@@ -230,7 +242,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
           Text(
             '送出時間 ${_formatDate(feedback['createdAt'])}',
             style: TextStyle(
-              color: AppColors.textPrimary.withOpacity(0.55),
+              color: AppColors.textPrimary.withValues(alpha: 0.55),
               fontSize: 12,
             ),
           ),
@@ -279,6 +291,7 @@ class _AdminProblemFeedbackPageState extends State<AdminProblemFeedbackPage> {
   }
 }
 
+/// 彈出式回覆對話框元件，提供文字輸入框供管理者撰寫回覆內容。
 class _ReplyDialog extends StatefulWidget {
   final String initialReply;
 
@@ -288,21 +301,27 @@ class _ReplyDialog extends StatefulWidget {
   State<_ReplyDialog> createState() => _ReplyDialogState();
 }
 
+/// 回覆對話框之輸入框控制器與狀態管理。
 class _ReplyDialogState extends State<_ReplyDialog> {
   late final TextEditingController _controller;
 
+  /// 初始化 Widget 狀態與管理控制台資料。
   @override
+  /// 執行 initState 之專屬功能操作。
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.initialReply);
   }
 
+  /// 銷毀狀態並釋放控制器資源。
   @override
+  /// 執行 dispose 之專屬功能操作。
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
+  /// 執行 submit 之專屬功能操作。
   void _submit() {
     final reply = _controller.text.trim();
     if (reply.isEmpty) {
@@ -314,7 +333,9 @@ class _ReplyDialogState extends State<_ReplyDialog> {
     Navigator.pop(context, reply);
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColors.background,

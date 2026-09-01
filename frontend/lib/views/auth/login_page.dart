@@ -27,7 +27,6 @@ class _LoginPageState extends State<LoginPage> {
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     if (widget.initialMessage != null && widget.initialMessage!.isNotEmpty) {
@@ -125,7 +124,6 @@ class _LoginPageState extends State<LoginPage> {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -250,9 +248,7 @@ class _LoginPageState extends State<LoginPage> {
     bool isPassword = false,
     String? errorText,
     TextInputAction? textInputAction,
-    /// 執行 Function 業務邏輯處理方法。
     void Function(String)? onChanged,
-    /// 執行 Function 業務邏輯處理方法。
     void Function(String)? onSubmitted,
   }) {
     return Column(

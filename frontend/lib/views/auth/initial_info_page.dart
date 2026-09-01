@@ -14,7 +14,7 @@ import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart';
 
 
-/// InitialInfoPage 視圖頁面與狀態類別。
+/// 首次登入健康問卷與基本身體資料（暱稱、性別、生日、身高、體重、疾病史、飲食目標）收集頁面。
 class InitialInfoPage extends StatefulWidget {
   const InitialInfoPage({super.key});
 
@@ -84,7 +84,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     return age < 0 ? 0 : age;
   }
 
-  /// 執行 _daysInMonth 業務邏輯處理方法。
+  /// 依據西元年份與月份，計算並傳回該月份之實際總天數（自動處理閏年 29 天）。
   int _daysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
@@ -117,7 +117,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _pageController = PageController();
@@ -184,7 +183,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
-  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _pageController.dispose();
     _pacmanController.dispose();
@@ -386,7 +384,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     final double topPadding = MediaQuery.of(context).padding.top;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
@@ -1110,7 +1107,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   }
 
   /*
-  /// 執行 _buildSideNavButton 業務邏輯處理方法。
   Widget _buildSideNavButton(String direction, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -1256,7 +1252,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
   });
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     final Rect rect = Offset.zero & size;
     final Paint paint = Paint()..color = AppColors.surface;
@@ -1341,7 +1336,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
     return path;
   }
 
-  /// 執行 _drawBinderRings 業務邏輯處理方法。
   void _drawBinderRings(Canvas canvas, Offset origin, double w) {
     int ringCount = 18;
     double yPos = origin.dy;
@@ -1392,7 +1386,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
     }
   }
 
-  /// 執行 _drawPacManProgress 業務邏輯處理方法。
   void _drawPacManProgress(Canvas canvas, Offset origin, double w) {
     double yPos = origin.dy + 75;
     int dotCount = 7;
@@ -1437,7 +1430,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
   }
 
   /*
-  /// 執行 _drawHillAndFigure 業務邏輯處理方法。
   void _drawHillAndFigure(Canvas canvas, Offset origin, double w, double h) {
     Offset hillCenter = Offset(
       origin.dx + w - 80,
@@ -1510,7 +1502,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
   */
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(HandDrawnNotebookPainter oldDelegate) {
     return oldDelegate.scrollProgress != scrollProgress ||
         oldDelegate.mouthProgress != mouthProgress;
@@ -1523,7 +1514,6 @@ class HandDrawnBoxPainter extends CustomPainter {
   HandDrawnBoxPainter({this.isSelected = false});
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     Path boxPath = Path();
     Random rand = Random();
@@ -1582,7 +1572,6 @@ class HandDrawnBoxPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(HandDrawnBoxPainter oldDelegate) =>
       oldDelegate.isSelected != isSelected;
 }
@@ -1593,7 +1582,6 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
   HandDrawnRoundedBoxPainter({this.isSelected = false});
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     Random rand = Random();
     Path path = Path();
@@ -1692,7 +1680,6 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(HandDrawnRoundedBoxPainter oldDelegate) =>
       oldDelegate.isSelected != isSelected;
 }
@@ -1703,7 +1690,6 @@ class ArrowPainter extends CustomPainter {
   ArrowPainter({required this.direction});
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     Paint arrowPaint = Paint()
       ..color = AppColors.background
@@ -1723,7 +1709,6 @@ class ArrowPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(ArrowPainter oldDelegate) =>
       oldDelegate.direction != direction;
 }
@@ -1734,7 +1719,6 @@ class PageFlipPainter extends CustomPainter {
   PageFlipPainter({required this.progress});
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     final double W = size.width;
     final double H = size.height;
@@ -1819,7 +1803,6 @@ class PageFlipPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(PageFlipPainter oldDelegate) =>
       oldDelegate.progress != progress;
 }
@@ -1830,7 +1813,6 @@ class WashiTapeButtonPainter extends CustomPainter {
   WashiTapeButtonPainter({this.text = '下一頁 >'});
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     Path baseShape = Path();
     Random rand = Random(text.hashCode);
@@ -1881,7 +1863,6 @@ class WashiTapeButtonPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(WashiTapeButtonPainter oldDelegate) =>
       oldDelegate.text != text;
 }
@@ -1889,12 +1870,10 @@ class WashiTapeButtonPainter extends CustomPainter {
 /// WashiPainter 視圖頁面與狀態類別。
 class WashiPainter extends CustomPainter {
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     /* 可擴充紙膠帶條紋圖案的邏輯 */
   }
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 /// PagePeelClipper 視圖頁面與狀態類別。
@@ -1931,7 +1910,6 @@ class PagePeelClipper extends CustomClipper<Path> {
   }
 
   @override
-  /// 執行 shouldReclip 業務邏輯處理方法。
   bool shouldReclip(PagePeelClipper oldClipper) =>
       oldClipper.progress != progress;
 }
@@ -1947,7 +1925,6 @@ class SinglePagePacmanProgressPainter extends CustomPainter {
   });
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     final Offset center = Offset(size.width / 2, size.height / 2);
     final double ringRadius = min(size.width, size.height) / 2 - 4;
@@ -2002,7 +1979,6 @@ class SinglePagePacmanProgressPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(SinglePagePacmanProgressPainter oldDelegate) {
     return oldDelegate.pageIndex != pageIndex ||
         oldDelegate.mouthProgress != mouthProgress;
@@ -2020,7 +1996,6 @@ class HandDrawnNotebookPaperPainter extends CustomPainter {
   });
 
   @override
-  /// 執行 paint 業務邏輯處理方法。
   void paint(Canvas canvas, Size size) {
     double margin = 20;
     double topMargin = margin + topPadding;
@@ -2088,6 +2063,5 @@ class HandDrawnNotebookPaperPainter extends CustomPainter {
   }
 
   @override
-  /// 執行 shouldRepaint 業務邏輯處理方法。
   bool shouldRepaint(HandDrawnNotebookPaperPainter oldDelegate) => false;
 }

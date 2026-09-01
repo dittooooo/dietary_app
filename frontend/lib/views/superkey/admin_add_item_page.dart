@@ -3,28 +3,28 @@ import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套�
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
 import '../../utils/friendly_error_message.dart';
 
-class AdminAddItemPage extends StatefulWidget { // 定義 AdminAddItemPage 類別，繼承自 StatefulWidget
-  final String title; // 宣告類別成員或方法內部的區域變數
+/// 管理者新增菜色或編輯現有飲食紀錄資料庫項目之輸入表單頁面。
+class AdminAddItemPage extends StatefulWidget {
+  final String title;
   final Map<String, dynamic>? editItem; // 編輯項目，為空則為新增模式
 
   const AdminAddItemPage({super.key, required this.title, this.editItem}); // 建立編譯期常數，優化 Flutter 渲染效能
 
   @override // 標記此方法為覆寫父類別之方法
-  State<AdminAddItemPage> createState() => _AdminAddItemPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  State<AdminAddItemPage> createState() => _AdminAddItemPageState();
+}
 
+/// 管理者新增/編輯菜色頁面之表單驗證與儲存狀態管理。
 class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminAddItemPageState 類別，繼承自 State
-  final _formKey = GlobalKey<FormState>(); // 宣告類別成員或方法內部的區域變數
+  final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
-  // 餐廳管理欄位
   final TextEditingController _restNameController = TextEditingController();
   final TextEditingController _restAddressController = TextEditingController();
   final TextEditingController _restPhoneController = TextEditingController();
   final TextEditingController _restReviewController = TextEditingController();
   int _restStars = 5;
 
-  // 菜單管理欄位
   final TextEditingController _menuRestaurantNameController = TextEditingController();
   final TextEditingController _menuDishNameController = TextEditingController();
   final TextEditingController _menuIngredientsController = TextEditingController();
@@ -34,6 +34,7 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
   bool get _isEditMode => widget.editItem != null;
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 執行 initState 之專屬功能操作。
   void initState() {
     super.initState();
     if (_isEditMode) {
@@ -54,7 +55,9 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
     }
   }
 
+  /// 銷毀狀態並釋放控制器資源。
   @override
+  /// 執行 dispose 之專屬功能操作。
   void dispose() {
     _restNameController.dispose();
     _restAddressController.dispose();
@@ -68,31 +71,31 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
   }
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     final isRestaurant = widget.title.contains('餐廳');
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
-      appBar: AppBar( // 設定頂部的導航欄（AppBar）
-        title: Text('${_isEditMode ? '編輯' : '新增'}${widget.title.replaceAll('管理', '')}', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-        backgroundColor: AppColors.background, // 設定顏色數值（Color）
-        elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
-        iconTheme: const IconThemeData(color: AppColors.textPrimary), // 設定顏色數值（Color）
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      body: SingleChildScrollView( // 設定頁面的主要內容區域（body）
-        padding: const EdgeInsets.all(20.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-        child: Form( // 執行相對應的邏輯計算或設定屬性參數
-          key: _formKey, // 執行相對應的邏輯計算或設定屬性參數
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: Text('${_isEditMode ? '編輯' : '新增'}${widget.title.replaceAll('管理', '')}', style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Form(
+          key: _formKey,
           child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
-            crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
-            children: [ // 執行相對應的邏輯計算或設定屬性參數
-              Text( // 建立文字顯示元件（Text）
-                isRestaurant ? '餐廳詳細資訊' : '菜單餐點詳細資訊', // 執行相對應的邏輯計算或設定屬性參數
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-              ), // 執行相對應的邏輯計算或設定屬性參數
-              const SizedBox(height: 20), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isRestaurant ? '餐廳詳細資訊' : '菜單餐點詳細資訊',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 20),
               
               if (isRestaurant) ...[
-                // 餐廳管理表單
                 _buildField(_restNameController, '餐廳名稱', Icons.store, '請輸入餐廳名稱'),
                 const SizedBox(height: 15),
                 _buildField(_restAddressController, '地址', Icons.location_on, '請輸入地址'),
@@ -115,7 +118,6 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
                   ],
                 ),
               ] else ...[
-                // 菜單管理表單
                 _buildField(_menuRestaurantNameController, '所屬餐廳名稱', Icons.store, '請輸入餐廳名稱'),
                 const SizedBox(height: 15),
                 _buildField(_menuDishNameController, '餐點名稱', Icons.restaurant_menu, '請輸入餐點名稱'),
@@ -139,31 +141,32 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
                 ),
               ],
               
-              const SizedBox(height: 40), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-              SizedBox( // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
-                height: 55, // 執行相對應的邏輯計算或設定屬性參數
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 55,
                 child: ElevatedButton( // 建立常規按鈕（ElevatedButton），點擊時觸作相對應事件
-                  style: ElevatedButton.styleFrom( // 執行相對應的邏輯計算或設定屬性參數
-                    backgroundColor: AppColors.primary, // 設定顏色數值（Color）
-                    foregroundColor: AppColors.background, // 設定顏色數值（Color）
-                    elevation: 5, // 執行相對應的邏輯計算或設定屬性參數
-                    shadowColor: Colors.black.withOpacity(0.3), // 設定顏色數值（Color）
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                  onPressed: _isSaving ? null : _submitForm, // 執行相對應的邏輯計算或設定屬性參數
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.background,
+                    elevation: 5,
+                    shadowColor: Colors.black.withValues(alpha: 0.3),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: _isSaving ? null : _submitForm,
                   child: _isSaving 
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : Text(_isEditMode ? '儲存變更' : '確認新增', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-            ], // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+                      : Text(_isEditMode ? '儲存變更' : '確認新增', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
+  /// 建立帶有圖示、外框與輸入格式驗證器之自訂文字輸入欄位 Component。
   Widget _buildField(TextEditingController controller, String label, IconData icon, String errorMsg, {int maxLines = 1}) {
     return TextFormField(
       controller: controller,
@@ -183,8 +186,9 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
     );
   }
 
-  Future<void> _submitForm() async { // 執行相對應的邏輯計算或設定屬性參數
-    if (_formKey.currentState!.validate()) { // 執行相對應的邏輯計算或設定屬性參數
+  /// 檢查菜名、熱量與三大營養素輸入欄位，確認無誤後發送 API 儲存或更新菜色。
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
       setState(() => _isSaving = true);
       final isRestaurant = widget.title.contains('餐廳');
       try {
@@ -240,6 +244,6 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
       } finally {
         setState(() => _isSaving = false);
       }
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
-} // 程式碼區塊或元件結構結束
+    }
+  }
+}

@@ -41,7 +41,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _runTransition();
@@ -49,7 +48,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
   /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
-  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _delayTimer?.cancel();
     super.dispose();
@@ -214,7 +212,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,

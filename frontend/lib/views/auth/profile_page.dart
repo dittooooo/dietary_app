@@ -17,7 +17,7 @@ import 'settings_page.dart';
 import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
 
-/// ProfilePage 視圖頁面與狀態類別。
+/// 個人中心主頁面 Widget，展示用戶頭像、暱稱、熱量目標與設定功能選單。
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
   const ProfilePage({super.key, this.returnIndex = 0});
@@ -37,13 +37,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _loadUserData();
   }
 
-  /// 執行 _loadUserData 業務邏輯處理方法。
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
@@ -98,7 +96,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /// 執行 _handleLogout 業務邏輯處理方法。
   Future<void> _handleLogout() async {
     await AuthService().logout();
     if (mounted) {
@@ -186,7 +183,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -516,7 +512,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// 執行 _buildAdminButton 業務邏輯處理方法。
   Widget _buildAdminButton(String label, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

@@ -7,7 +7,7 @@ import '../../color/app_colors.dart';
 import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
 
-/// ProblemFeedbackPage 視圖頁面與狀態類別。
+/// 使用者提交問題回饋與查看歷史回饋紀錄主頁面 Widget。
 class ProblemFeedbackPage extends StatefulWidget {
   const ProblemFeedbackPage({super.key});
 
@@ -26,7 +26,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _loadFeedback();
@@ -34,7 +33,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
 
   /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
-  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _contentController.dispose();
     super.dispose();
@@ -134,7 +132,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     }
   }
 
-  /// 執行 _clearSelectedImage 業務邏輯處理方法。
   void _clearSelectedImage() {
     setState(() {
       _selectedImage = null;
@@ -142,7 +139,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     });
   }
 
-  /// 執行 _formatDate 業務邏輯處理方法。
   String _formatDate(dynamic value) {
     final text = value?.toString() ?? '';
     if (text.length >= 16) {
@@ -153,7 +149,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     final contentLength = _contentController.text.length;
 
@@ -196,7 +191,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
-  /// 執行 _buildSubmitCard 業務邏輯處理方法。
   Widget _buildSubmitCard(int contentLength) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -323,7 +317,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
-  /// 執行 _buildFeedbackHistory 業務邏輯處理方法。
   Widget _buildFeedbackHistory() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +345,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
-  /// 執行 _buildEmptyCard 業務邏輯處理方法。
   Widget _buildEmptyCard() {
     return Container(
       width: double.infinity,
@@ -368,7 +360,6 @@ class _ProblemFeedbackPageState extends State<ProblemFeedbackPage> {
     );
   }
 
-  /// 執行 _buildFeedbackCard 業務邏輯處理方法。
   Widget _buildFeedbackCard(dynamic item) {
     final feedback = item is Map ? item : <String, dynamic>{};
     final content = feedback['content']?.toString() ?? '';

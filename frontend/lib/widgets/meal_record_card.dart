@@ -11,30 +11,34 @@ class MealRecordCard extends StatefulWidget {
   final ValueChanged<String>? onAddRecordForDate; // 點擊「＋ 補記這天的飲食」的回調
 
   const MealRecordCard({
-    Key? key,
+    super.key,
     required this.queryDate,
     this.onClose,
     this.onNavigateToDiary,
     this.onAddRecordForDate,
-  }) : super(key: key);
+  });
 
   @override
   State<MealRecordCard> createState() => _MealRecordCardState();
 }
 
+/// MealRecordCard 之狀態管理類別。
 class _MealRecordCardState extends State<MealRecordCard> {
   final DietService _dietService = DietService();
   bool _isLoading = true;
   List<dynamic> _records = [];
   bool _isClosed = false;
 
+  /// 初始化 Widget 狀態與動畫控制器。
   @override
+  /// 執行 initState 之專屬功能操作。
   void initState() {
     super.initState();
     _fetchRecords();
   }
 
   @override
+  /// 執行 didUpdateWidget 之專屬功能操作。
   void didUpdateWidget(covariant MealRecordCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.queryDate != widget.queryDate) {
@@ -42,6 +46,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
     }
   }
 
+  /// 向 DietService 載入特定日期之歷史飲食紀錄數據。
   Future<void> _fetchRecords() async {
     setState(() {
       _isLoading = true;
@@ -83,6 +88,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
   }
 
   // 計算當天總大卡熱量
+  /// 計算特定日期飲食紀錄之攝取熱量總和（kcal）。
   double _calculateTotalCalories() {
     double total = 0.0;
     for (var rec in _records) {
@@ -120,6 +126,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
     return grouped;
   }
 
+  /// 依據餐期 Key 取得帶有圖示之中文標題名稱。
   String _getPeriodLabel(String key) {
     switch (key) {
       case 'BREAKFAST':
@@ -133,7 +140,9 @@ class _MealRecordCardState extends State<MealRecordCard> {
     }
   }
 
+  /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     if (_isClosed) return const SizedBox.shrink();
 
@@ -149,7 +158,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
         border: Border.all(color: AppColors.surface, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -185,7 +194,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 3.0),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.2),
+                        color: AppColors.accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                       child: Text(
@@ -212,7 +221,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
                     child: Container(
                       padding: const EdgeInsets.all(2.0),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -329,7 +338,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(8.0),
-                                border: Border.all(color: AppColors.border.withOpacity(0.4)),
+                                border: Border.all(color: AppColors.border.withValues(alpha: 0.4)),
                               ),
                               child: Row(
                                 children: [
@@ -357,7 +366,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
                                 ],
                               ),
                             );
-                          }).toList(),
+                          }),
                         ],
                       ),
                     );

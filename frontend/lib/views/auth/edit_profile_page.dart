@@ -8,7 +8,7 @@ import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart';
 import 'login_page.dart';
 
-/// EditProfilePage 視圖頁面與狀態類別。
+/// 編輯個人資料與健康目標主頁面 Widget。
 class EditProfilePage extends StatefulWidget {
   final Map<String, dynamic> initialData;
   final bool isMandatoryAdmin;
@@ -73,7 +73,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
-  /// 執行 initState 業務邏輯處理方法。
   void initState() {
     super.initState();
     _authService = AuthService();
@@ -207,7 +206,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// 銷毀 Widget 狀態與釋放控制器資源。
   @override
-  /// 執行 dispose 業務邏輯處理方法。
   void dispose() {
     _bannerTimer?.cancel();
     _nameController.dispose();
@@ -401,7 +399,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,

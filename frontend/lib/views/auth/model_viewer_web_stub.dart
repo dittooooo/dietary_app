@@ -95,7 +95,6 @@ const String _modelViewerLoadedCallbackJs = '''
 })();
 ''';
 
-/// createWebModelView 業務邏輯處理方法。
 Widget createWebModelView({
   required String colorScheme,
   required bool autoSpin,
@@ -163,7 +162,6 @@ class _MobileModelViewerAnimationSwitcherState
   WebViewController? _controller;
 
   @override
-  /// 執行 didUpdateWidget 業務邏輯處理方法。
   void didUpdateWidget(covariant _MobileModelViewerAnimationSwitcher oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.animationName != widget.animationName ||
@@ -172,14 +170,12 @@ class _MobileModelViewerAnimationSwitcherState
     }
   }
 
-  /// 執行 _handleWebViewCreated 業務邏輯處理方法。
   void _handleWebViewCreated(WebViewController controller) {
     _controller = controller;
     _installModelLoadedBridge();
     _applyAnimation();
   }
 
-  /// 執行 _installModelLoadedBridge 業務邏輯處理方法。
   void _installModelLoadedBridge() {
     final controller = _controller;
     if (controller == null) return;
@@ -198,7 +194,6 @@ class _MobileModelViewerAnimationSwitcherState
     });
   }
 
-  /// 執行 _applyAnimation 業務邏輯處理方法。
   void _applyAnimation() {
     final controller = _controller;
     final animationName = widget.animationName;
@@ -215,7 +210,6 @@ class _MobileModelViewerAnimationSwitcherState
     }
   }
 
-  /// 執行 _runAnimationSwitchScript 業務邏輯處理方法。
   void _runAnimationSwitchScript(String animationName, String shouldPlay) {
     if (!mounted || _controller == null) return;
     _controller!.runJavaScript('''
@@ -236,7 +230,6 @@ class _MobileModelViewerAnimationSwitcherState
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return ModelViewer(
       src: widget.src,

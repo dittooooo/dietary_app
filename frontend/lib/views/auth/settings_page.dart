@@ -20,7 +20,6 @@ class SettingsPage extends StatelessWidget {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -95,7 +94,6 @@ class _SettingsMenuButton extends StatelessWidget {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 執行 build 業務邏輯處理方法。
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.background,

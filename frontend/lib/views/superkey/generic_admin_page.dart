@@ -3,40 +3,42 @@ import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套�
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
 import '../../utils/friendly_error_message.dart';
 
-class GenericAdminListPage extends StatefulWidget { // 定義 GenericAdminListPage 類別，繼承自 StatefulWidget
-  final String title; // 宣告類別成員或方法內部的區域變數
-  final String searchHint; // 宣告類別成員或方法內部的區域變數
+/// 執行 GenericAdminListPage 之專屬功能操作。
+class GenericAdminListPage extends StatefulWidget {
+  final String title;
+  final String searchHint;
 
   const GenericAdminListPage({ // 建立編譯期常數，優化 Flutter 渲染效能
-    super.key, // 執行相對應的邏輯計算或設定屬性參數
-    required this.title, // 執行相對應的邏輯計算或設定屬性參數
-    this.searchHint = '輸入關鍵字查詢...', // 執行相對應的邏輯計算或設定屬性參數
-  }); // 程式碼區塊或元件結構結束
+    super.key,
+    required this.title,
+    this.searchHint = '輸入關鍵字查詢...',
+  });
 
   @override // 標記此方法為覆寫父類別之方法
-  State<GenericAdminListPage> createState() => _GenericAdminListPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  State<GenericAdminListPage> createState() => _GenericAdminListPageState();
+}
 
+/// 執行 GenericAdminListPageState 之專屬功能操作。
 class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義 _GenericAdminListPageState 類別，繼承自 State
-  final TextEditingController _searchController = TextEditingController(); // 宣告類別成員或方法內部的區域變數
-  bool _isDeleteMode = false; // 宣告類別成員或方法內部的區域變數
-  bool _isLoading = false; // 宣告類別成員或方法內部的區域變數
+  final TextEditingController _searchController = TextEditingController();
+  bool _isDeleteMode = false;
+  bool _isLoading = false;
 
   List<dynamic> _dataList = []; // 從後端獲取的原始資料列表
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 執行 initState 之專屬功能操作。
   void initState() { // 初始化狀態生命週期方法，頁面建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
-    _fetchData(); // 執行相對應的邏輯計算或設定屬性參數
-  } // 程式碼區塊或元件結構結束
+    super.initState();
+    _fetchData();
+  }
 
+  /// 向伺服器或本地快取加載 Data 之數據內容。
   Future<void> _fetchData() async { // 定義非同步方法（Future），執行耗時操作
     setState(() => _isLoading = true); // 更新狀態數據並通知 UI 重新渲染畫面
     try {
       final query = _searchController.text.trim().toLowerCase();
       
-      // 不直接向後端同時帶入 nickname 與 dishName (會被後端 SQL 判定為 AND 導致找不到資料)
-      // 先獲取全量數據，再於前端進行 OR 模糊比對篩選
       final allRecords = await AdminService().listDietRecords();
       
       final filteredList = allRecords.where((item) {
@@ -61,48 +63,49 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
   }
 
   @override // 標記此方法為覆寫父類別之方法
+  /// 建立  區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) { // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold( // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
-      appBar: AppBar( // 設定頂部的導航欄（AppBar）
-        title: Text(_isDeleteMode ? '點擊以刪除' : widget.title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-        backgroundColor: _isDeleteMode ? AppColors.danger.withOpacity(0.1) : AppColors.background, // 設定顏色數值（Color）
-        elevation: 0, // 執行相對應的邏輯計算或設定屬性參數
-        iconTheme: const IconThemeData(color: AppColors.textPrimary), // 設定顏色數值（Color）
-        actions: [ // 執行相對應的邏輯計算或設定屬性參數
+      backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: Text(_isDeleteMode ? '點擊以刪除' : widget.title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold)),
+        backgroundColor: _isDeleteMode ? AppColors.danger.withValues(alpha: 0.1) : AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        actions: [
           IconButton( // 建立點擊圖示按鈕（IconButton）
             icon: Icon(_isDeleteMode ? Icons.close : Icons.delete), // 顯示預設的圖示元件（Icon）
             onPressed: () => setState(() => _isDeleteMode = !_isDeleteMode), // 更新狀態數據並通知 UI 重新渲染畫面
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-      body: Column( // 設定頁面的主要內容區域（body）
-        children: [ // 執行相對應的邏輯計算或設定屬性參數
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
           Padding( // 建立間距容器（Padding），用於設定內部邊距
-            padding: const EdgeInsets.all(15.0), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-            child: TextField( // 建立文字輸入框元件（TextField）
-              controller: _searchController, // 執行相對應的邏輯計算或設定屬性參數
-              onChanged: (value) => _fetchData(), // 執行相對應的邏輯計算或設定屬性參數
+            padding: const EdgeInsets.all(15.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => _fetchData(),
               decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
-                filled: true, // 執行相對應的邏輯計算或設定屬性參數
-                fillColor: AppColors.background, // 設定顏色數值（Color）
-                hintText: widget.title.contains('飲食紀錄') ? '輸入餐點名稱或暱稱搜尋...' : widget.searchHint, // 執行相對應的邏輯計算或設定屬性參數
-                prefixIcon: const Icon(Icons.search, color: AppColors.secondary), // 設定顏色數值（Color）
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none), // 設定容器的圓角弧度半徑大小
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.border)), // 設定容器的圓角弧度半徑大小
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.primary)), // 設定容器的圓角弧度半徑大小
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
+                filled: true,
+                fillColor: AppColors.background,
+                hintText: widget.title.contains('飲食紀錄') ? '輸入餐點名稱或暱稱搜尋...' : widget.searchHint,
+                prefixIcon: const Icon(Icons.search, color: AppColors.secondary),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: const BorderSide(color: AppColors.primary)),
+              ),
+            ),
+          ),
           Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
-            child: _isLoading // 執行相對應的邏輯計算或設定屬性參數
+            child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary)) // 建立置中對齊元件（Center），將子元件居中顯示
-                : _dataList.isEmpty // 執行相對應的邏輯計算或設定屬性參數
-                    ? const Center(child: Text('查無資料', style: TextStyle(fontSize: 18, color: Colors.black54))) // 建立文字顯示元件（Text）
+                : _dataList.isEmpty
+                    ? const Center(child: Text('查無資料', style: TextStyle(fontSize: 18, color: Colors.black54)))
                     : ListView.builder( // 建立滾動清單元件（ListView），支援多個子元件滾動瀏覽
-                        itemCount: _dataList.length, // 執行相對應的邏輯計算或設定屬性參數
-                        itemBuilder: (context, index) { // 執行相對應的邏輯計算或設定屬性參數
-                          final item = _dataList[index]; // 宣告類別成員或方法內部的區域變數
+                        itemCount: _dataList.length,
+                        itemBuilder: (context, index) {
+                          final item = _dataList[index];
                           String name = '未命名';
                           String desc = '';
                           
@@ -145,33 +148,33 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
 
                           desc = '時段: $mealTypeStr • 日期: $dateStr\n熱量: $displayCalText • 份量: ${item['amount'] ?? 1} 份\n備註: ${displayNote.isEmpty ? '無' : displayNote}';
 
-                          return Card( // 回傳建構完成的元件或方法計算結果
-                            color: AppColors.background, // 設定顏色數值（Color）
-                            margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                            elevation: 2, // 執行相對應的邏輯計算或設定屬性參數
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), // 設定容器的圓角弧度半徑大小
-                            child: ListTile( // 執行相對應的邏輯計算或設定屬性參數
-                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
-                              subtitle: Text(desc, style: const TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
+                          return Card(
+                            color: AppColors.background,
+                            margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: ListTile(
+                              title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                              subtitle: Text(desc, style: const TextStyle(color: Colors.black54)),
                               trailing: Icon(
                                 _isDeleteMode ? Icons.delete : Icons.edit,
                                 size: 20,
                                 color: _isDeleteMode ? AppColors.danger : AppColors.secondary,
-                              ), // 設定顏色數值（Color）
-                              onTap: () { // 執行相對應的邏輯計算或設定屬性參數
-                                if (_isDeleteMode) { // 執行相對應的邏輯計算或設定屬性參數
-                                  _showDeleteDialog(item); // 執行相對應的邏輯計算或設定屬性參數
-                                } else { // 程式碼區塊或元件結構結束
+                              ),
+                              onTap: () {
+                                if (_isDeleteMode) {
+                                  _showDeleteDialog(item);
+                                } else {
                                   _showEditDietRecordDialog(item);
-                                } // 程式碼區塊或元件結構結束
-                              }, // 程式碼區塊或元件結構結束
-                            ), // 執行相對應的邏輯計算或設定屬性參數
-                          ); // 程式碼區塊或元件結構結束
-                        }, // 程式碼區塊或元件結構結束
-          ), // 執行相對應的邏輯計算或設定屬性參數
+                                }
+                              },
+                            ),
+                          );
+                        },
+          ),
         ),
       ],
-    ), // 執行相對應的邏輯計算或設定屬性參數
+    ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         onPressed: () {
@@ -179,9 +182,10 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
         },
         child: const Icon(Icons.add, color: AppColors.background),
       ),
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+    );
+  }
 
+  /// 執行 cleanDescription 之專屬功能操作。
   String _cleanDescription(String text) {
     return text
         .replaceAll(RegExp(r'\[UserId:\d+\]'), '')
@@ -189,6 +193,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
         .trim();
   }
 
+  /// 執行 formatNutrient 之專屬功能操作。
   String _formatNutrient(dynamic val, String unit) {
     if (val == null) return '';
     String str = val.toString().trim();
@@ -199,18 +204,19 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
     return '$str $unit';
   }
 
-  void _showDeleteDialog(dynamic item) { // 執行相對應的邏輯計算或設定屬性參數
+  /// 彈出對話視窗以進行 DeleteDialog 相關操作與資料確認。
+  void _showDeleteDialog(dynamic item) {
     final int id = item['id'];
-    showDialog( // 執行相對應的邏輯計算或設定屬性參數
-      context: context, // 執行相對應的邏輯計算或設定屬性參數
-      builder: (ctx) => AlertDialog( // 執行相對應的邏輯計算或設定屬性參數
-        backgroundColor: AppColors.background, // 設定顏色數值（Color）
-        title: const Text('確定刪除？', style: TextStyle(color: AppColors.textPrimary)), // 建立文字顯示元件（Text）
-        content: const Text('此動作將會永久從後端資料庫物理移除這項資料。', style: TextStyle(color: Colors.black54)), // 建立文字顯示元件（Text）
-        actions: [ // 執行相對應的邏輯計算或設定屬性參數
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        title: const Text('確定刪除？', style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text('此動作將會永久從後端資料庫物理移除這項資料。', style: TextStyle(color: Colors.black54)),
+        actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消', style: TextStyle(color: Colors.black54))), // 導航路由返回：關閉當前頁面並返回上一頁
-          TextButton( // 執行相對應的邏輯計算或設定屬性參數
-            onPressed: () async { // 執行相對應的邏輯計算或設定屬性參數
+          TextButton(
+            onPressed: () async {
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
               
@@ -224,14 +230,15 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('刪除失敗，請檢查管理權限')));
                 }
               }
-            }, // 程式碼區塊或元件結構結束
-            child: const Text('確定', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)), // 建立文字顯示元件（Text）
-          ), // 執行相對應的邏輯計算或設定屬性參數
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+            },
+            child: const Text('確定', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 
+  /// 彈出對話視窗以進行 EditDietRecordDialog 相關操作與資料確認。
   void _showEditDietRecordDialog(dynamic record) {
     final nameController = TextEditingController(text: record['dishName'] ?? '');
     final amountController = TextEditingController(text: '${record['amount'] ?? 1} 份');
@@ -334,7 +341,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. 選擇使用者 (可編輯)
                   const Text('選擇使用者：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Container(
@@ -382,7 +388,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                     ),
                   const SizedBox(height: 16),
 
-                  // 2. 紀錄日期 (可編輯)
                   const Text('紀錄日期：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   InkWell(
@@ -420,7 +425,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. 餐點名稱 (可編輯)
                   TextField(
                     controller: nameController,
                     onChanged: (val) {
@@ -453,7 +457,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 4. 數量 / 份量 (可編輯)
                   TextField(
                     controller: amountController,
                     decoration: InputDecoration(
@@ -471,7 +474,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 5. 餐別時段 (可編輯)
                   const Text('餐別時段：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Container(
@@ -498,7 +500,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 6. 營養資訊 (唯讀)
                   TextField(
                     readOnly: true,
                     controller: TextEditingController(text: nutritionText),
@@ -515,7 +516,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 7. 描述備註 (唯讀)
                   TextField(
                     readOnly: true,
                     controller: descController,
@@ -630,6 +630,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
     );
   }
 
+  /// 向伺服器或本地快取加載 AutoMealType 之數據內容。
   String _getAutoMealType() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 11) return 'BREAKFAST';
@@ -637,6 +638,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
     return 'DINNER';
   }
 
+  /// 彈出對話視窗以進行 CreateDietRecordDialog 相關操作與資料確認。
   void _showCreateDietRecordDialog() {
     final nameController = TextEditingController();
     final amountController = TextEditingController(text: '1 份');
@@ -686,7 +688,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. 選擇使用者
                   const Text('選擇使用者：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Container(
@@ -734,7 +735,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                     ),
                   const SizedBox(height: 16),
 
-                  // 2. 紀錄日期
                   const Text('紀錄日期：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   InkWell(
@@ -772,7 +772,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. 餐點名稱
                   TextField(
                     controller: nameController,
                     onChanged: (val) {
@@ -805,7 +804,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 4. 數量 / 份量
                   TextField(
                     controller: amountController,
                     decoration: InputDecoration(
@@ -823,7 +821,6 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   ),
                   const SizedBox(height: 16),
 
-                  // 5. 餐別時段 (包含早餐、午餐、晚餐、其他)
                   const Text('餐別時段：', style: TextStyle(fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                   const SizedBox(height: 4),
                   Container(
@@ -943,4 +940,4 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
       ),
     );
   }
-} // 程式碼區塊或元件結構結束
+}

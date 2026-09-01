@@ -35,7 +35,6 @@ const String _modelViewerLoadingCss = '''
 }
 ''';
 
-/// createWebModelView 業務邏輯處理方法。
 Widget createWebModelView({
   required String colorScheme,
   required bool autoSpin,
@@ -56,7 +55,6 @@ Widget createWebModelView({
   final elementId = 'model-viewer-pet-$safeId';
   _modelLoadedCallbacks[elementId] = onModelLoaded;
 
-  /// 執行 applyAttributes 業務邏輯處理方法。
   void applyAttributes(html.Element element) {
     element
       ..setAttribute('alt', '3D Mascot Pet')
@@ -146,7 +144,6 @@ Widget createWebModelView({
   );
 }
 
-/// _ensureModelViewerLoadingIndicator 業務邏輯處理方法。
 void _ensureModelViewerLoadingIndicator(html.Element element) {
   if (element.querySelector('.$_modelViewerLoadingClass') == null) {
     final spinner = html.DivElement()
@@ -158,7 +155,6 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
     element.append(loading);
   }
 
-  /// 執行 notifyModelLoaded 業務邏輯處理方法。
   void notifyModelLoaded() {
     final currentSrc = element.dataset['currentModelSrc'] ?? '';
     if (currentSrc.isEmpty || element.dataset['loadedModelSrc'] == currentSrc) {
@@ -169,7 +165,6 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
     _modelLoadedCallbacks[element.id]?.call();
   }
 
-  /// 執行 hideLoading 業務邏輯處理方法。
   void hideLoading(html.Event _) {
     element
         .querySelector('.$_modelViewerLoadingClass')
@@ -178,7 +173,6 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
     notifyModelLoaded();
   }
 
-  /// 執行 showOrHideLoading 業務邏輯處理方法。
   void showOrHideLoading(html.Event event) {
     final loading = element.querySelector('.$_modelViewerLoadingClass');
     if (loading == null) return;
@@ -212,7 +206,6 @@ void _ensureModelViewerLoadingIndicator(html.Element element) {
   }
 }
 
-/// _ensureModelViewerLoadingStyles 業務邏輯處理方法。
 void _ensureModelViewerLoadingStyles() {
   if (html.document.getElementById(_modelViewerLoadingStyleId) != null) return;
 
@@ -222,7 +215,6 @@ void _ensureModelViewerLoadingStyles() {
   html.document.head?.append(style);
 }
 
-/// _ensureModelViewerScriptLoaded 業務邏輯處理方法。
 void _ensureModelViewerScriptLoaded() {
   final existingScript = html.document.querySelector('script[src*="model-viewer"]');
   if (existingScript != null) return;
