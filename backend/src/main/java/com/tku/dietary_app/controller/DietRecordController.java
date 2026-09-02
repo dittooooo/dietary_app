@@ -3,6 +3,7 @@ package com.tku.dietary_app.controller;
 import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
+import com.tku.dietary_app.dto.UserCustomDishResponse;
 import com.tku.dietary_app.entity.MealType;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.exception.UnauthorizedException;
@@ -51,6 +52,17 @@ public class DietRecordController {
                 dietRecordService.getRecordsByUser(user.getId())
                         .stream()
                         .map(DietRecordResponse::fromEntity)
+                        .toList()
+        ));
+    }
+
+    @GetMapping("/custom-dishes")
+    public ResponseEntity<ApiResponse<?>> getCustomDishes() {
+        User user = getLoginUser();
+        return ResponseEntity.ok(ApiResponse.success(
+                dietRecordService.getCustomDishesByUser(user.getId())
+                        .stream()
+                        .map(UserCustomDishResponse::fromEntity)
                         .toList()
         ));
     }
@@ -214,6 +226,7 @@ public class DietRecordController {
         request.setDescription(readText(item, "description"));
         request.setMealType(readText(item, "meal_type", "mealType"));
         request.setAmount(readInteger(item, "amount"));
+        request.setType(readText(item, "type"));
         return request;
     }
 
