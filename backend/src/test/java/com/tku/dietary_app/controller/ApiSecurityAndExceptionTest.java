@@ -114,7 +114,6 @@ class ApiSecurityAndExceptionTest {
     void adminDietRecordRejectsInvalidMealType() throws Exception {
         User loginUser = User.builder().id(1L).email("admin@example.com").password("encoded").build();
         when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(loginUser));
-        when(dietRecordService.create(eq(1L), any())).thenThrow(new IllegalArgumentException("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
 
         mockMvc.perform(post("/api/diet-records")
                         .with(authentication(authToken("admin@example.com", "ROLE_ADMIN")))
@@ -127,7 +126,28 @@ class ApiSecurityAndExceptionTest {
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
+    }
+
+    @Test
+    void dietRecordCreateRejectsInvalidDateFormat() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+
+        mockMvc.perform(post("/api/diet-records")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dish_name": "雞胸肉",
+                                  "meal_type": "LUNCH",
+                                  "record_date": "not-a-date"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("日期格式不正確 (not-a-date)，請使用 YYYY-MM-DD 格式"));
     }
 
     @Test
@@ -187,11 +207,14 @@ class ApiSecurityAndExceptionTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
+                                  "dish_name": "牛肉麵",
+                                  "meal_type": "DINNER",
                                   "description": "updated"
                                 }
                                 """))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.error").value("沒有權限修改這筆紀錄"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("沒有權限修改這筆紀錄"));
     }
 
     @Test
@@ -207,7 +230,8 @@ class ApiSecurityAndExceptionTest {
                         .file("file", "not-an-image".getBytes())
                         .with(authentication(authToken("user@example.com", "ROLE_USER"))))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("僅支援 JPEG、PNG、WEBP 圖片"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("僅支援 JPEG、PNG、WEBP 圖片"));
     }
 
     @Test
@@ -225,7 +249,8 @@ class ApiSecurityAndExceptionTest {
                                 }
                                 """))
                 .andExpect(status().isBadGateway())
-                .andExpect(jsonPath("$.error").value("dietary partner API 呼叫失敗"));
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("dietary partner API 呼叫失敗"));
     }
 
     @Test
