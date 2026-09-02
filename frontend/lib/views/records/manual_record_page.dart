@@ -1,11 +1,15 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/diet_service.dart';
 import '../../services/dish_search_service.dart';
 import '../../utils/friendly_error_message.dart';
+import 'elf_feeding_page.dart';
+import 'simple_camera_page.dart';
 
 class _NutritionValues {
   const _NutritionValues({
@@ -35,6 +39,9 @@ class _SelectedFood {
     required this.unitLabel,
     required this.isManual,
     required this.nutrition,
+    this.amount = 1,
+    this.selectedImage,
+    this.imageBytes,
   });
 
   final String id;
@@ -42,6 +49,27 @@ class _SelectedFood {
   final String unitLabel;
   final bool isManual;
   final _NutritionValues nutrition;
+  final double amount;
+  final XFile? selectedImage;
+  final Uint8List? imageBytes;
+
+  _SelectedFood copyWith({
+    double? amount,
+    XFile? selectedImage,
+    Uint8List? imageBytes,
+    bool clearImage = false,
+  }) {
+    return _SelectedFood(
+      id: id,
+      name: name,
+      unitLabel: unitLabel,
+      isManual: isManual,
+      nutrition: nutrition,
+      amount: amount ?? this.amount,
+      selectedImage: clearImage ? null : selectedImage ?? this.selectedImage,
+      imageBytes: clearImage ? null : imageBytes ?? this.imageBytes,
+    );
+  }
 }
 
 class _EditorResult {
@@ -49,6 +77,198 @@ class _EditorResult {
 
   final String name;
   final _NutritionValues nutrition;
+}
+
+class _AmountEditorDialog extends StatefulWidget {
+  const _AmountEditorDialog({required this.item});
+
+  final _SelectedFood item;
+
+  @override
+  State<_AmountEditorDialog> createState() => _AmountEditorDialogState();
+}
+
+class _AmountEditorDialogState extends State<_AmountEditorDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final amount = widget.item.amount;
+    _controller = TextEditingController(
+      text: amount == amount.roundToDouble()
+          ? amount.toInt().toString()
+          : amount.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('設定${widget.item.name}份數'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          labelText: widget.item.unitLabel == '100克' ? '倍數（1 = 100克）' : '份數',
+          border: const OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final value = double.tryParse(_controller.text.trim());
+            if (value != null && value > 0) Navigator.pop(context, value);
+          },
+          child: const Text('套用'),
+        ),
+      ],
+    );
+  }
+}
+
+class _NutritionEditorDialog extends StatefulWidget {
+  const _NutritionEditorDialog({
+    required this.initialName,
+    required this.initialNutrition,
+  });
+
+  final String initialName;
+  final _NutritionValues initialNutrition;
+
+  @override
+  State<_NutritionEditorDialog> createState() => _NutritionEditorDialogState();
+}
+
+class _NutritionEditorDialogState extends State<_NutritionEditorDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _caloriesController;
+  late final TextEditingController _proteinController;
+  late final TextEditingController _fatController;
+  late final TextEditingController _carbohydratesController;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+    _caloriesController = TextEditingController(
+      text: _numberText(widget.initialNutrition.calories),
+    );
+    _proteinController = TextEditingController(
+      text: _numberText(widget.initialNutrition.protein),
+    );
+    _fatController = TextEditingController(
+      text: _numberText(widget.initialNutrition.fat),
+    );
+    _carbohydratesController = TextEditingController(
+      text: _numberText(widget.initialNutrition.carbohydrates),
+    );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _fatController.dispose();
+    _carbohydratesController.dispose();
+    super.dispose();
+  }
+
+  String _numberText(double? value) {
+    if (value == null) return '';
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  Widget _field(String label, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        keyboardType: label == '名稱'
+            ? TextInputType.text
+            : const TextInputType.numberWithOptions(decimal: true),
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    final nutrition = _NutritionValues(
+      calories: double.tryParse(_caloriesController.text.trim()),
+      protein: double.tryParse(_proteinController.text.trim()),
+      fat: double.tryParse(_fatController.text.trim()),
+      carbohydrates: double.tryParse(_carbohydratesController.text.trim()),
+    );
+    final hasAllValues =
+        nutrition.calories != null &&
+        nutrition.protein != null &&
+        nutrition.fat != null &&
+        nutrition.carbohydrates != null;
+    if (_nameController.text.trim().isEmpty || !hasAllValues) {
+      setState(() => _error = '請填寫名稱與四項有效數值。');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _EditorResult(name: _nameController.text.trim(), nutrition: nutrition),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('手動新增營養資訊'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '請填寫料理名稱和營養資訊',
+              style: TextStyle(color: Colors.black54, fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            _field('名稱', _nameController),
+            _field('熱量（kcal）', _caloriesController),
+            _field('蛋白質（g）', _proteinController),
+            _field('脂肪（g）', _fatController),
+            _field('碳水化合物（g）', _carbohydratesController),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(color: AppColors.danger, fontSize: 13),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('儲存')),
+      ],
+    );
+  }
 }
 
 class ManualRecordPage extends StatefulWidget {
@@ -63,12 +283,12 @@ class ManualRecordPage extends StatefulWidget {
 class _ManualRecordPageState extends State<ManualRecordPage> {
   final _searchController = TextEditingController();
   final _searchService = DishSearchService();
+  final _imagePicker = ImagePicker();
   final _selectedItems = <_SelectedFood>[];
 
   Timer? _searchDebounce;
   DateTime _selectedDate = DateTime.now();
   String _mealType = '早餐';
-  String _selectedTab = 'food';
   List<DishSearchResult> _results = const [];
   bool _isSearching = false;
   bool _isSaving = false;
@@ -137,9 +357,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     }
   }
 
-  List<DishSearchResult> get _visibleResults => _results
-      .where((item) => _selectedTab == 'dish' ? item.isDish : !item.isDish)
-      .toList();
+  List<DishSearchResult> get _visibleResults => _results;
 
   _SelectedFood? _selectedFor(String id) {
     for (final item in _selectedItems) {
@@ -150,19 +368,263 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
   void _toggleSelection(DishSearchResult item) {
     setState(() {
-      final index = _selectedItems.indexWhere((selected) => selected.id == item.id);
+      final index = _selectedItems.indexWhere(
+        (selected) => selected.id == item.id,
+      );
       if (index >= 0) {
         _selectedItems.removeAt(index);
       } else {
-        _selectedItems.add(_SelectedFood(
-          id: item.id,
-          name: item.name,
-          unitLabel: item.unitLabel,
-          isManual: false,
-          nutrition: _NutritionValues(calories: item.calories),
-        ));
+        _selectedItems.add(
+          _SelectedFood(
+            id: item.id,
+            name: item.name,
+            unitLabel: item.unitLabel,
+            isManual: false,
+            nutrition: _NutritionValues(calories: item.calories),
+          ),
+        );
       }
     });
+  }
+
+  void _replaceSelectedItem(_SelectedFood replacement) {
+    final index = _selectedItems.indexWhere(
+      (item) => item.id == replacement.id,
+    );
+    if (index < 0) return;
+    setState(() => _selectedItems[index] = replacement);
+  }
+
+  String _formatAmount(double amount) {
+    return amount == amount.roundToDouble()
+        ? amount.toInt().toString()
+        : amount.toString();
+  }
+
+  Future<void> _editAmount(_SelectedFood item) async {
+    final amount = await showDialog<double>(
+      context: context,
+      builder: (_) => _AmountEditorDialog(item: item),
+    );
+    if (amount != null && mounted)
+      _replaceSelectedItem(item.copyWith(amount: amount));
+  }
+
+  Future<void> _pickImageFor(_SelectedFood item) async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('相機拍照'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('從相簿選擇'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    try {
+      XFile? image;
+      if (source == ImageSource.camera) {
+        image = await Navigator.push<XFile>(
+          context,
+          MaterialPageRoute(builder: (context) => const SimpleCameraPage()),
+        );
+      } else {
+        image = await _imagePicker.pickImage(source: ImageSource.gallery);
+      }
+      if (image == null || !mounted) return;
+      _replaceSelectedItem(
+        item.copyWith(
+          selectedImage: image,
+          imageBytes: await image.readAsBytes(),
+        ),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(FriendlyErrorMessage.upload)),
+        );
+      }
+    }
+  }
+
+  Future<void> _showSelectedItemsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        top: false,
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Container(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                const Text(
+                  '設定已選項目',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '可調整份數或加入餐點照片',
+                  style: TextStyle(color: Colors.black54),
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _selectedItems.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final item = _selectedItems[index];
+                      final hasPhoto = item.imageBytes != null;
+                      return Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 23,
+                                  backgroundColor: Colors.white,
+                                  backgroundImage: hasPhoto
+                                      ? MemoryImage(item.imageBytes!)
+                                      : null,
+                                  child: hasPhoto
+                                      ? null
+                                      : const Icon(
+                                          Icons.restaurant_outlined,
+                                          color: AppColors.secondary,
+                                        ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        '${_formatAmount(item.amount)} × ${item.unitLabel}',
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  tooltip: '移除此項目',
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: AppColors.danger,
+                                  ),
+                                  onPressed: () {
+                                    setState(
+                                      () => _selectedItems.removeAt(index),
+                                    );
+                                    setSheetState(() {});
+                                  },
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await _editAmount(item);
+                                      setSheetState(() {});
+                                    },
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 18,
+                                    ),
+                                    label: const Text('更改份數'),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await _pickImageFor(item);
+                                      setSheetState(() {});
+                                    },
+                                    icon: Icon(
+                                      hasPhoto
+                                          ? Icons.photo_camera
+                                          : Icons.add_a_photo_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(hasPhoto ? '更換照片' : '新增照片'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: FilledButton.icon(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text('完成設定'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      shape: const StadiumBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _pickDate() async {
@@ -190,15 +652,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
     if (result == null || !mounted) return;
 
-    final unitLabel = _selectedTab == 'dish' ? '1份' : '100克';
+    const unitLabel = '1份';
     setState(() {
-      _selectedItems.add(_SelectedFood(
-        id: 'manual-${DateTime.now().microsecondsSinceEpoch}',
-        name: result.name,
-        unitLabel: unitLabel,
-        isManual: true,
-        nutrition: result.nutrition,
-      ));
+      _selectedItems.add(
+        _SelectedFood(
+          id: 'manual-${DateTime.now().microsecondsSinceEpoch}',
+          name: result.name,
+          unitLabel: unitLabel,
+          isManual: true,
+          nutrition: result.nutrition,
+        ),
+      );
     });
   }
 
@@ -206,88 +670,11 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     required String initialName,
     required _NutritionValues initialNutrition,
   }) async {
-    final nameController = TextEditingController(text: initialName);
-    final caloriesController = TextEditingController(text: _numberText(initialNutrition.calories));
-    final proteinController = TextEditingController(text: _numberText(initialNutrition.protein));
-    final fatController = TextEditingController(text: _numberText(initialNutrition.fat));
-    final carbohydratesController = TextEditingController(text: _numberText(initialNutrition.carbohydrates));
-    String? error;
-
-    final result = await showDialog<_EditorResult>(
+    return showDialog<_EditorResult>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('手動新增營養資訊'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '資料庫沒有這項食物，請填寫四項營養資訊。',
-                  style: const TextStyle(color: Colors.black54, fontSize: 13),
-                ),
-                const SizedBox(height: 14),
-                _buildEditorField('名稱', nameController),
-                _buildEditorField('熱量（kcal）', caloriesController),
-                _buildEditorField('蛋白質（g）', proteinController),
-                _buildEditorField('脂肪（g）', fatController),
-                _buildEditorField('碳水化合物（g）', carbohydratesController),
-                if (error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(error!, style: const TextStyle(color: AppColors.danger, fontSize: 13)),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
-            FilledButton(
-              onPressed: () {
-                final nutrition = _NutritionValues(
-                  calories: double.tryParse(caloriesController.text.trim()),
-                  protein: double.tryParse(proteinController.text.trim()),
-                  fat: double.tryParse(fatController.text.trim()),
-                  carbohydrates: double.tryParse(carbohydratesController.text.trim()),
-                );
-                final hasAllValues = nutrition.calories != null &&
-                    nutrition.protein != null &&
-                    nutrition.fat != null &&
-                    nutrition.carbohydrates != null;
-                if (nameController.text.trim().isEmpty || !hasAllValues) {
-                  setDialogState(() => error = '請填寫名稱與四項有效數值。');
-                  return;
-                }
-                Navigator.pop(context, _EditorResult(name: nameController.text.trim(), nutrition: nutrition));
-              },
-              child: const Text('套用'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    nameController.dispose();
-    caloriesController.dispose();
-    proteinController.dispose();
-    fatController.dispose();
-    carbohydratesController.dispose();
-    return result;
-  }
-
-  String _numberText(double? value) {
-    if (value == null) return '';
-    return value == value.roundToDouble() ? value.toInt().toString() : value.toString();
-  }
-
-  Widget _buildEditorField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: controller,
-        keyboardType: label == '名稱'
-            ? TextInputType.text
-            : const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      builder: (_) => _NutritionEditorDialog(
+        initialName: initialName,
+        initialNutrition: initialNutrition,
       ),
     );
   }
@@ -298,27 +685,59 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
     final dietService = DietService();
     var savedCount = 0;
+    String? firstImagePath;
+    final elfItems = <Map<String, dynamic>>[];
     try {
       for (final item in _selectedItems) {
         final result = await dietService.createDietRecord(
           dishName: item.name,
           mealType: _mealType,
-          amount: 1,
+          amount: item.amount,
           nutrition: item.nutrition.toNutritionText(),
           description: '${item.isManual ? '手動新增' : '系統搜尋'}（${item.unitLabel}）',
           mealDate: _selectedDate,
           fetchNutritionIfMissing: false,
         );
-        if (result['success'] == true) savedCount++;
+        if (result['success'] == true) {
+          savedCount++;
+          final recordData = result['data'];
+          final recordId = int.tryParse(recordData?['id']?.toString() ?? '');
+          if (recordId != null &&
+              item.selectedImage != null &&
+              item.imageBytes != null) {
+            await dietService.uploadDietPhoto(
+              recordId,
+              item.imageBytes!,
+              item.selectedImage!.name,
+            );
+          }
+          firstImagePath ??= item.selectedImage?.path;
+          elfItems.add({
+            'name': item.name,
+            'portion': '${_formatAmount(item.amount)} × ${item.unitLabel}',
+            'calories': item.nutrition.calories == null
+                ? '-- kcal'
+                : '${item.nutrition.calories} kcal',
+          });
+        }
       }
 
       if (!mounted) return;
       if (savedCount == _selectedItems.length) {
-        Navigator.pop(context, true);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已儲存 $savedCount 項，部分項目未能儲存。')),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ElfFeedingPage(
+              imagePath: firstImagePath ?? '',
+              items: elfItems,
+              recordDate: _selectedDate,
+            ),
+          ),
         );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('已儲存 $savedCount 項，部分項目未能儲存。')));
       }
     } catch (_) {
       if (mounted) {
@@ -349,8 +768,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             TextButton.icon(
               onPressed: _showMealPicker,
               icon: const Icon(Icons.arrow_drop_down, size: 20),
-              label: Text(_mealType, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-              style: TextButton.styleFrom(foregroundColor: AppColors.secondary, padding: EdgeInsets.zero),
+              label: Text(
+                _mealType,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.secondary,
+                padding: EdgeInsets.zero,
+              ),
             ),
             InkWell(
               onTap: _pickDate,
@@ -365,7 +793,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       ),
       body: Column(
         children: [
-          _buildTabs(),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
             child: TextField(
@@ -377,7 +804,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               textInputAction: TextInputAction.search,
               onSubmitted: _search,
               decoration: InputDecoration(
-                hintText: _selectedTab == 'dish' ? '搜尋食譜' : '搜尋食材',
+                hintText: '搜尋料理',
                 prefixIcon: const Icon(Icons.search, color: Colors.black),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
@@ -392,11 +819,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(28),
-                  borderSide: const BorderSide(color: Color(0xFFD0D0D0), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD0D0D0),
+                    width: 2,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(28),
-                  borderSide: const BorderSide(color: Color(0xFFD0D0D0), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD0D0D0),
+                    width: 2,
+                  ),
                 ),
               ),
             ),
@@ -406,54 +839,104 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       ),
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 10, 20, 18),
-        child: SizedBox(
-          height: 54,
-          child: ElevatedButton(
-            onPressed: _selectedItems.isEmpty || _isSaving ? null : _saveSelectedItems,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
-              disabledBackgroundColor: const Color(0xFFD9D9D3),
-              shape: const StadiumBorder(),
-            ),
-            child: _isSaving
-                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(
-                    _selectedItems.isEmpty ? '請選擇食物' : '儲存 ${_selectedItems.length} 項',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_selectedItems.isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: OutlinedButton(
+                  onPressed: _showSelectedItemsSheet,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.secondary,
+                    side: const BorderSide(color: AppColors.secondary),
+                    shape: const StadiumBorder(),
                   ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    return Container(
-      color: AppColors.secondary,
-      child: Row(children: [_buildTab('dish', '食譜'), _buildTab('food', '食材')]),
-    );
-  }
-
-  Widget _buildTab(String tab, String label) {
-    final isActive = _selectedTab == tab;
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _selectedTab = tab),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            border: isActive ? const Border(bottom: BorderSide(color: Colors.white, width: 3)) : null,
-          ),
-          child: Text(label, textAlign: TextAlign.center, style: TextStyle(color: isActive ? Colors.white : Colors.white60, fontSize: 17, fontWeight: FontWeight.w700)),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      const Icon(Icons.tune_outlined),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '設定已選 ${_selectedItems.length} 項',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Text(
+                              '調整份數與新增照片',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right),
+                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
+                onPressed: _selectedItems.isEmpty || _isSaving
+                    ? null
+                    : _saveSelectedItems,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  disabledBackgroundColor: const Color(0xFFD9D9D3),
+                  shape: const StadiumBorder(),
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        _selectedItems.isEmpty ? '請選擇食物' : '完成紀錄並餵食',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildResultArea() {
-    if (_isSearching) return const Center(child: CircularProgressIndicator(color: AppColors.secondary));
-    if (_searchError != null) return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_searchError!, textAlign: TextAlign.center)));
-    if (_searchController.text.trim().isEmpty) return const Center(child: Text('輸入名稱，搜尋食譜或食材', style: TextStyle(color: Colors.black54)));
+    if (_isSearching)
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.secondary),
+      );
+    if (_searchError != null)
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(_searchError!, textAlign: TextAlign.center),
+        ),
+      );
+    if (_searchController.text.trim().isEmpty)
+      return const Center(
+        child: Text('輸入名稱，搜尋料理', style: TextStyle(color: Colors.black54)),
+      );
 
     final results = _visibleResults;
     if (results.isEmpty) {
@@ -463,14 +946,15 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('資料庫找不到這項食物', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              const Text('要不要手動新增四項營養資訊？', style: TextStyle(color: Colors.black54)),
+              const Text(
+                '找不到你要的內容？',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 14),
               OutlinedButton.icon(
                 onPressed: _addManualItem,
                 icon: const Icon(Icons.add),
-                label: const Text('手動新增'),
+                label: const Text('手動新增紀錄'),
               ),
             ],
           ),
@@ -485,17 +969,30 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         final item = results[index];
         final selected = _selectedFor(item.id);
         final calories = selected?.nutrition.calories ?? item.calories;
-        final calorieText = calories == null ? '約略熱量暫無資料' : '約 ${calories.round()} 大卡';
+        final calorieText = calories == null
+            ? '約略熱量暫無資料'
+            : '約 ${calories.round()} 大卡';
         return ListTile(
           onTap: () => _toggleSelection(item),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
-          title: Text(item.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 22,
+            vertical: 6,
+          ),
+          title: Text(
+            item.name,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 5),
-            child: Text('${item.unitLabel}  ·  $calorieText', style: const TextStyle(color: AppColors.success, fontSize: 15)),
+            child: Text(
+              '${item.unitLabel}  ·  $calorieText',
+              style: const TextStyle(color: AppColors.success, fontSize: 15),
+            ),
           ),
           trailing: Icon(
-            selected == null ? Icons.radio_button_unchecked : Icons.check_circle,
+            selected == null
+                ? Icons.radio_button_unchecked
+                : Icons.check_circle,
             color: selected == null ? Colors.black26 : AppColors.success,
             size: 28,
           ),
@@ -510,13 +1007,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: _mealOptions.map((meal) => ListTile(
-            title: Text(meal, textAlign: TextAlign.center),
-            onTap: () {
-              setState(() => _mealType = meal);
-              Navigator.pop(context);
-            },
-          )).toList(),
+          children: _mealOptions
+              .map(
+                (meal) => ListTile(
+                  title: Text(meal, textAlign: TextAlign.center),
+                  onTap: () {
+                    setState(() => _mealType = meal);
+                    Navigator.pop(context);
+                  },
+                ),
+              )
+              .toList(),
         ),
       ),
     );

@@ -124,9 +124,14 @@ class _DiaryPageState extends State<DiaryPage> {
   void _goToNextDay() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final currentSelected = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final currentSelected = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
 
-    if (currentSelected.isAtSameMomentAs(today) || currentSelected.isAfter(today)) {
+    if (currentSelected.isAtSameMomentAs(today) ||
+        currentSelected.isAfter(today)) {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -470,8 +475,8 @@ class _DiaryPageState extends State<DiaryPage> {
         items: const [
           // 建立編譯期常數，優化 Flutter 渲染效能
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '首頁',
+            icon: Icon(Icons.smart_toy_outlined),
+            label: '米粒',
           ), // 顯示預設的圖示元件（Icon）
           BottomNavigationBarItem(
             icon: Icon(Icons.edit_note),
@@ -597,8 +602,14 @@ class _DiaryPageState extends State<DiaryPage> {
   Widget _buildDateBar(String dateStr) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final currentSelected = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-    final bool isLatest = currentSelected.isAtSameMomentAs(today) || currentSelected.isAfter(today);
+    final currentSelected = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    );
+    final bool isLatest =
+        currentSelected.isAtSameMomentAs(today) ||
+        currentSelected.isAfter(today);
 
     return Container(
       width: double.infinity,
@@ -646,7 +657,9 @@ class _DiaryPageState extends State<DiaryPage> {
             onPressed: _goToNextDay,
             icon: Icon(
               Icons.chevron_right,
-              color: isLatest ? AppColors.textPrimary.withOpacity(0.35) : AppColors.textPrimary,
+              color: isLatest
+                  ? AppColors.textPrimary.withOpacity(0.35)
+                  : AppColors.textPrimary,
               size: 28,
             ),
             tooltip: '後一天',
@@ -1188,7 +1201,9 @@ class _DiaryPageState extends State<DiaryPage> {
     final amountDigits = rawAmount.replaceAll(RegExp(r'[^\d.]'), '');
 
     final nameController = TextEditingController(text: record['dishName']);
-    final amountController = TextEditingController(text: amountDigits.isEmpty ? '1' : amountDigits);
+    final amountController = TextEditingController(
+      text: amountDigits.isEmpty ? '1' : amountDigits,
+    );
     final calController = TextEditingController(text: calVal);
     final proController = TextEditingController(text: proVal);
     final fatController = TextEditingController(text: fatVal);
@@ -1256,11 +1271,12 @@ class _DiaryPageState extends State<DiaryPage> {
             onPressed: () async {
               if (nameController.text.trim().isNotEmpty) {
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('正在更新並重新計算營養成分...')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('正在更新並重新計算營養成分...')),
+                );
 
-                final int parsedAmount = int.tryParse(amountController.text.trim()) ?? 1;
+                final int parsedAmount =
+                    int.tryParse(amountController.text.trim()) ?? 1;
 
                 final res = await DietService().updateDietRecord(
                   record['id'],

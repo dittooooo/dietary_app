@@ -49,7 +49,9 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
 
   Future<void> _loadAvatar() async {
     final prefs = await SharedPreferences.getInstance();
-    final cachedAvatarUrl = _resolveAvatarUrl(prefs.getString('user_avatar_url'));
+    final cachedAvatarUrl = _resolveAvatarUrl(
+      prefs.getString('user_avatar_url'),
+    );
     if (mounted) {
       setState(() {
         _avatarUrl = cachedAvatarUrl;
@@ -157,7 +159,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
 
     final records = _recordsForDate(_selectedDate);
     final today = DateTime.now();
-    final isToday = _selectedDate.year == today.year &&
+    final isToday =
+        _selectedDate.year == today.year &&
         _selectedDate.month == today.month &&
         _selectedDate.day == today.day;
 
@@ -228,10 +231,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DiaryPage(
-          date: date,
-          onDateChanged: widget.onDateSelected,
-        ),
+        builder: (context) =>
+            DiaryPage(date: date, onDateChanged: widget.onDateSelected),
       ),
     ).then((_) => _loadDietRecords());
     widget.onDateSelected?.call(date);
@@ -609,14 +610,22 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   const SizedBox(height: 5), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
                   Transform.translate(
-                    offset: const Offset(0, -6), // 僅將小精靈往上移 6 像素，避免與氣泡重疊
+                    offset: const Offset(0, -13), // 放大後上移，避免與提示氣泡重疊
                     child: SizedBox(
                       width: 52,
                       height: 52,
-                      child: DogAvatar(
-                        instanceId: 'diet-record-prompt',
-                        scale: 1.45,
-                        cameraControls: false,
+                      child: OverflowBox(
+                        maxWidth: 82,
+                        maxHeight: 82,
+                        child: SizedBox(
+                          width: 82,
+                          height: 82,
+                          child: DogAvatar(
+                            instanceId: 'diet-record-prompt',
+                            scale: 1.8,
+                            cameraControls: false,
+                          ),
+                        ),
                       ),
                     ),
                   ),
