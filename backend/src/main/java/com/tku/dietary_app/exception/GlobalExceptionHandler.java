@@ -1,5 +1,7 @@
 package com.tku.dietary_app.exception;
 
+import com.tku.dietary_app.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,65 +13,74 @@ import org.springframework.web.client.RestClientException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult().getFieldErrors().forEach(error ->
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        String firstErrorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .orElse("參數驗證失敗");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(firstErrorMessage, errors));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentialsException(BadCredentialsException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<Map<String, String>> handleUnauthorizedException(UnauthorizedException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleUnauthorizedException(UnauthorizedException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(ForbiddenOperationException.class)
-    public ResponseEntity<Map<String, String>> handleForbiddenOperationException(ForbiddenOperationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleForbiddenOperationException(ForbiddenOperationException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(FileValidationException.class)
-    public ResponseEntity<Map<String, String>> handleFileValidationException(FileValidationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleFileValidationException(FileValidationException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler({UpstreamServiceException.class, RestClientException.class})
-    public ResponseEntity<Map<String, String>> handleUpstreamExceptions(Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleUpstreamExceptions(Exception ex) {
+        log.warn("外部服務呼叫異常: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
+        log.error("未預期的系統錯誤: ", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", ex.getMessage()));
+                .body(ApiResponse.error("系統內部錯誤，請稍後再試"));
     }
 }

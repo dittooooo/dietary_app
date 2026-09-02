@@ -3,10 +3,12 @@ package com.tku.dietary_app.controller;
 import com.tku.dietary_app.dto.ApiResponse;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.dto.DietRecordResponse;
+import com.tku.dietary_app.entity.MealType;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.exception.UnauthorizedException;
 import com.tku.dietary_app.repository.UserRepository;
 import com.tku.dietary_app.service.DietRecordService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -57,11 +60,12 @@ public class DietRecordController {
         User user = getLoginUser();
         List<DietRecordRequest> requests = parseCreateRequests(requestBody);
         if (requests.isEmpty()) {
-            throw new IllegalArgumentException("dish_info_list 至少需要一筆");
+            throw new IllegalArgumentException("請至少提供一筆飲食紀錄");
         }
 
         List<DietRecordResponse> createdRecords = new ArrayList<>();
         for (DietRecordRequest request : requests) {
+            validateRequest(request);
             createdRecords.add(DietRecordResponse.fromEntity(dietRecordService.create(user.getId(), request)));
         }
 
@@ -73,7 +77,7 @@ public class DietRecordController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @RequestBody DietRecordRequest request) {
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Long id, @Valid @RequestBody DietRecordRequest request) {
         User user = getLoginUser();
         return ResponseEntity.ok(ApiResponse.success(
                 "飲食紀錄更新成功",
@@ -97,6 +101,39 @@ public class DietRecordController {
         ));
     }
 
+    private void validateRequest(DietRecordRequest request) {
+        if (request.getDishName() == null || request.getDishName().isBlank()) {
+            throw new IllegalArgumentException("dishName 為必填欄位");
+        }
+        if (request.getDishName().length() > 255) {
+            throw new IllegalArgumentException("dishName 長度不可超過 255 個字元");
+        }
+        if (request.getMealType() == null || request.getMealType().isBlank()) {
+            throw new IllegalArgumentException("mealType 為必填欄位");
+        }
+        if (MealType.from(request.getMealType()) == null) {
+            throw new IllegalArgumentException("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐");
+        }
+        if (request.getCalories() != null && request.getCalories() < 0) {
+            throw new IllegalArgumentException("calories 必須大於或等於 0");
+        }
+        if (request.getProtein() != null && request.getProtein() < 0) {
+            throw new IllegalArgumentException("protein 必須大於或等於 0");
+        }
+        if (request.getFat() != null && request.getFat() < 0) {
+            throw new IllegalArgumentException("fat 必須大於或等於 0");
+        }
+        if (request.getCarbohydrates() != null && request.getCarbohydrates() < 0) {
+            throw new IllegalArgumentException("carbohydrates 必須大於或等於 0");
+        }
+        if (request.getAmount() != null && request.getAmount() <= 0) {
+            throw new IllegalArgumentException("amount 必須大於 0");
+        }
+        if (request.getDescription() != null && request.getDescription().length() > 1000) {
+            throw new IllegalArgumentException("description 長度不可超過 1000 個字元");
+        }
+    }
+
     private List<DietRecordRequest> parseCreateRequests(Object requestBody) {
         if (requestBody == null) {
             throw new IllegalArgumentException("請提供飲食紀錄資料");
@@ -105,7 +142,10 @@ public class DietRecordController {
         if (requestBody instanceof List<?> list) {
             List<DietRecordRequest> requests = new ArrayList<>();
             for (Object item : list) {
-                requests.addAll(parseSingleRequestWithSplit((Map<?, ?>) item));
+                if (!(item instanceof Map<?, ?> itemMap)) {
+                    throw new IllegalArgumentException("陣列中的每筆飲食紀錄格式不正確");
+                }
+                requests.addAll(parseSingleRequestWithSplit(itemMap));
             }
             return requests;
         }
@@ -115,7 +155,10 @@ public class DietRecordController {
             if (dishInfoList instanceof List<?> list) {
                 List<DietRecordRequest> requests = new ArrayList<>();
                 for (Object item : list) {
-                    requests.addAll(parseSingleRequestWithSplit((Map<?, ?>) item));
+                    if (!(item instanceof Map<?, ?> itemMap)) {
+                        throw new IllegalArgumentException("dish_info_list 中的每筆紀錄格式不正確");
+                    }
+                    requests.addAll(parseSingleRequestWithSplit(itemMap));
                 }
                 return requests;
             }
@@ -126,7 +169,7 @@ public class DietRecordController {
     }
 
     private List<DietRecordRequest> parseSingleRequestWithSplit(Map<?, ?> item) {
-        if (item == null) {
+        if (item == null || item.isEmpty()) {
             throw new IllegalArgumentException("飲食紀錄資料不可為空");
         }
 
@@ -153,10 +196,6 @@ public class DietRecordController {
     }
 
     private DietRecordRequest parseSingleRequest(Map<?, ?> item, String overrideDishName) {
-        if (item == null) {
-            throw new IllegalArgumentException("飲食紀錄資料不可為空");
-        }
-
         DietRecordRequest request = new DietRecordRequest();
         if (overrideDishName != null) {
             request.setDishName(overrideDishName);
@@ -167,8 +206,11 @@ public class DietRecordController {
         request.setProtein(readDouble(item, "protein"));
         request.setFat(readDouble(item, "fat"));
         request.setCarbohydrates(readDouble(item, "carbohydrates"));
-        String recordDateText = readText(item, "record_date", "date");
-        request.setDate(recordDateText == null ? null : LocalDate.parse(recordDateText));
+        
+        LocalDate parsedDate = readDate(item, "record_date", "date", "meal_date", "mealDate");
+        request.setDate(parsedDate);
+        request.setMealDate(parsedDate);
+        
         request.setDescription(readText(item, "description"));
         request.setMealType(readText(item, "meal_type", "mealType"));
         request.setAmount(readInteger(item, "amount"));
@@ -185,12 +227,28 @@ public class DietRecordController {
         return null;
     }
 
+    private LocalDate readDate(Map<?, ?> map, String... fieldNames) {
+        String text = readText(map, fieldNames);
+        if (text == null) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(text);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("日期格式不正確 (" + text + ")，請使用 YYYY-MM-DD 格式");
+        }
+    }
+
     private Double readDouble(Map<?, ?> map, String fieldName) {
         Object value = map.get(fieldName);
         if (value == null || value.toString().isBlank()) {
             return null;
         }
-        return Double.parseDouble(value.toString());
+        try {
+            return Double.parseDouble(value.toString());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(fieldName + " 必須為有效數字");
+        }
     }
 
     private Integer readInteger(Map<?, ?> map, String fieldName) {
@@ -198,6 +256,10 @@ public class DietRecordController {
         if (value == null || value.toString().isBlank()) {
             return null;
         }
-        return Integer.parseInt(value.toString());
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(fieldName + " 必須為有效整數");
+        }
     }
 }
