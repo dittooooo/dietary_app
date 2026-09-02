@@ -1199,10 +1199,11 @@ class _DiaryPageState extends State<DiaryPage> {
 
     final rawAmount = (record['amount'] ?? record['portion'] ?? '1').toString();
     final amountDigits = rawAmount.replaceAll(RegExp(r'[^\d.]'), '');
-
-    final nameController = TextEditingController(text: record['dishName']);
     final amountController = TextEditingController(
       text: amountDigits.isEmpty ? '1' : amountDigits,
+    );
+    final dishNameController = TextEditingController(
+      text: (record['dishName'] ?? '未命名料理').toString(),
     );
     final calController = TextEditingController(text: calVal);
     final proController = TextEditingController(text: proVal);
@@ -1212,17 +1213,15 @@ class _DiaryPageState extends State<DiaryPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('編輯飲食內容與營養資訊'),
+        title: const Text('調整份數'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: '飲食項目',
-                  hintText: '例：水煮蛋',
-                ),
+                controller: dishNameController,
+                enabled: false,
+                decoration: const InputDecoration(labelText: '料理名稱'),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -1233,6 +1232,14 @@ class _DiaryPageState extends State<DiaryPage> {
                 decoration: const InputDecoration(
                   labelText: '份數',
                   hintText: '例：1',
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  '目前只能修改份數，料理名稱不可編輯。',
+                  style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
               const SizedBox(height: 12),
@@ -1269,36 +1276,45 @@ class _DiaryPageState extends State<DiaryPage> {
           ),
           TextButton(
             onPressed: () async {
-              if (nameController.text.trim().isNotEmpty) {
-                Navigator.pop(ctx);
+              final int parsedAmount =
+                  int.tryParse(amountController.text.trim()) ?? 0;
+              if (parsedAmount <= 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('正在更新並重新計算營養成分...')),
+                  const SnackBar(content: Text('份數需大於 0')),
                 );
+                return;
+              }
 
-                final int parsedAmount =
-                    int.tryParse(amountController.text.trim()) ?? 1;
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('正在更新份數...')),
+              );
 
-                final res = await DietService().updateDietRecord(
-                  record['id'],
-                  dishName: nameController.text.trim(),
-                  mealType: record['mealType'],
-                  description: record['description'] ?? '',
-                  amount: parsedAmount,
-                  mealDate: _getRecordDate(record),
-                  refetchNutrition: true,
+              final int previousAmount =
+                  int.tryParse(amountDigits.isEmpty ? '1' : amountDigits) ?? 1;
+
+              final res = await DietService().updateDietRecord(
+                record['id'],
+                dishName: (record['dishName'] ?? '').toString(),
+                mealType: record['mealType'],
+                description: record['description'] ?? '',
+                amount: parsedAmount,
+                oldAmount: previousAmount,
+                nutrition: nutritionStr,
+                mealDate: _getRecordDate(record),
+                refetchNutrition: false,
+              );
+              if (res['success'] == true) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('更新成功！')));
+                _fetchRecords();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(FriendlyErrorMessage.dietRecord),
+                  ),
                 );
-                if (res['success'] == true) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('更新成功！')));
-                  _fetchRecords();
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(FriendlyErrorMessage.dietRecord),
-                    ),
-                  );
-                }
               }
             },
             child: const Text(

@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/diet_service.dart';
@@ -78,6 +80,49 @@ class _EditorResult {
   final String name;
   final _NutritionValues nutrition;
 }
+
+class _SavedCustomDish {
+  const _SavedCustomDish({
+    required this.name,
+    required this.unitLabel,
+    required this.nutrition,
+    required this.updatedAt,
+  });
+
+  final String name;
+  final String unitLabel;
+  final _NutritionValues nutrition;
+  final DateTime updatedAt;
+
+  factory _SavedCustomDish.fromJson(Map<String, dynamic> json) {
+    double? parseNum(dynamic value) => double.tryParse(value?.toString() ?? '');
+
+    final rawUpdatedAt = DateTime.tryParse(json['updatedAt']?.toString() ?? '');
+    return _SavedCustomDish(
+      name: (json['name'] ?? '').toString(),
+      unitLabel: (json['unitLabel'] ?? '1份').toString(),
+      nutrition: _NutritionValues(
+        calories: parseNum(json['calories']),
+        protein: parseNum(json['protein']),
+        fat: parseNum(json['fat']),
+        carbohydrates: parseNum(json['carbohydrates']),
+      ),
+      updatedAt: rawUpdatedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'unitLabel': unitLabel,
+    'calories': nutrition.calories,
+    'protein': nutrition.protein,
+    'fat': nutrition.fat,
+    'carbohydrates': nutrition.carbohydrates,
+    'updatedAt': updatedAt.toIso8601String(),
+  };
+}
+
+enum _DishSource { catalog, custom }
 
 class _AmountEditorDialog extends StatefulWidget {
   const _AmountEditorDialog({required this.item});
@@ -285,6 +330,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   final _searchService = DishSearchService();
   final _imagePicker = ImagePicker();
   final _selectedItems = <_SelectedFood>[];
+  final _savedCustomDishes = <_SavedCustomDish>[];
 
   Timer? _searchDebounce;
   DateTime _selectedDate = DateTime.now();
@@ -292,15 +338,19 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   List<DishSearchResult> _results = const [];
   bool _isSearching = false;
   bool _isSaving = false;
+  bool _isLoadingCustomDishes = true;
+  _DishSource _dishSource = _DishSource.catalog;
   String? _searchError;
 
   static const _mealOptions = ['早餐', '午餐', '晚餐', '其他'];
+  static const _customDishesPrefsKey = 'manual_custom_dishes';
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate ?? DateTime.now();
     _mealType = _automaticMealType();
+    _loadSavedCustomDishes();
   }
 
   @override
@@ -320,6 +370,14 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   void _onSearchChanged(String query) {
     _searchDebounce?.cancel();
     final trimmedQuery = query.trim();
+    if (_dishSource == _DishSource.custom) {
+      setState(() {
+        _results = const [];
+        _searchError = null;
+        _isSearching = false;
+      });
+      return;
+    }
     if (trimmedQuery.isEmpty) {
       setState(() {
         _results = const [];
@@ -335,6 +393,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   }
 
   Future<void> _search(String query) async {
+    if (_dishSource != _DishSource.catalog) return;
     setState(() {
       _isSearching = true;
       _searchError = null;
@@ -358,6 +417,117 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   }
 
   List<DishSearchResult> get _visibleResults => _results;
+
+  List<_SavedCustomDish> get _visibleCustomDishes {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      return List<_SavedCustomDish>.from(_savedCustomDishes);
+    }
+    return _savedCustomDishes
+        .where((dish) => dish.name.toLowerCase().contains(query))
+        .toList();
+  }
+
+  void _changeDishSource(_DishSource source) {
+    if (_dishSource == source) return;
+
+    setState(() {
+      _dishSource = source;
+      _searchError = null;
+      _isSearching = false;
+    });
+
+    if (source == _DishSource.catalog && _searchController.text.trim().isNotEmpty) {
+      _onSearchChanged(_searchController.text);
+    }
+  }
+
+  Future<void> _loadSavedCustomDishes() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_customDishesPrefsKey);
+      if (raw == null || raw.trim().isEmpty) {
+        if (mounted) {
+          setState(() => _isLoadingCustomDishes = false);
+        }
+        return;
+      }
+
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        if (mounted) {
+          setState(() => _isLoadingCustomDishes = false);
+        }
+        return;
+      }
+
+      final dishes = decoded
+          .whereType<Map>()
+          .map(
+            (item) => _SavedCustomDish.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
+          .where((dish) => dish.name.trim().isNotEmpty)
+          .toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+      if (mounted) {
+        setState(() {
+          _savedCustomDishes
+            ..clear()
+            ..addAll(dishes);
+          _isLoadingCustomDishes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingCustomDishes = false);
+      }
+    }
+  }
+
+  Future<void> _persistSavedCustomDishes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final payload = jsonEncode(
+      _savedCustomDishes.map((dish) => dish.toJson()).toList(),
+    );
+    await prefs.setString(_customDishesPrefsKey, payload);
+  }
+
+  Future<void> _storeSuccessfulManualItems(List<_SelectedFood> items) async {
+    if (items.isEmpty) return;
+
+    final merged = List<_SavedCustomDish>.from(_savedCustomDishes);
+    for (final item in items) {
+      final normalizedName = item.name.trim().toLowerCase();
+      final replacement = _SavedCustomDish(
+        name: item.name.trim(),
+        unitLabel: item.unitLabel,
+        nutrition: item.nutrition,
+        updatedAt: DateTime.now(),
+      );
+
+      final index = merged.indexWhere(
+        (dish) => dish.name.trim().toLowerCase() == normalizedName,
+      );
+      if (index >= 0) {
+        merged[index] = replacement;
+      } else {
+        merged.add(replacement);
+      }
+    }
+
+    merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    if (!mounted) return;
+
+    setState(() {
+      _savedCustomDishes
+        ..clear()
+        ..addAll(merged);
+    });
+    await _persistSavedCustomDishes();
+  }
 
   _SelectedFood? _selectedFor(String id) {
     for (final item in _selectedItems) {
@@ -393,6 +563,31 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
     if (index < 0) return;
     setState(() => _selectedItems[index] = replacement);
+  }
+
+  void _addSavedCustomDishToSelection(_SavedCustomDish dish) {
+    final existingIndex = _selectedItems.indexWhere(
+      (item) => item.name.trim().toLowerCase() == dish.name.trim().toLowerCase(),
+    );
+
+    setState(() {
+      if (existingIndex >= 0) {
+        final existingItem = _selectedItems[existingIndex];
+        _selectedItems[existingIndex] = existingItem.copyWith(
+          amount: existingItem.amount + 1,
+        );
+      } else {
+        _selectedItems.add(
+          _SelectedFood(
+            id: 'saved-${dish.name}-${dish.updatedAt.microsecondsSinceEpoch}',
+            name: dish.name,
+            unitLabel: dish.unitLabel,
+            isManual: true,
+            nutrition: dish.nutrition,
+          ),
+        );
+      }
+    });
   }
 
   String _formatAmount(double amount) {
@@ -687,6 +882,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     var savedCount = 0;
     String? firstImagePath;
     final elfItems = <Map<String, dynamic>>[];
+    final successfulManualItems = <_SelectedFood>[];
     try {
       for (final item in _selectedItems) {
         final result = await dietService.createDietRecord(
@@ -700,6 +896,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         );
         if (result['success'] == true) {
           savedCount++;
+          if (item.isManual) {
+            successfulManualItems.add(item);
+          }
           final recordData = result['data'];
           final recordId = int.tryParse(recordData?['id']?.toString() ?? '');
           if (recordId != null &&
@@ -721,6 +920,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           });
         }
       }
+
+      await _storeSuccessfulManualItems(successfulManualItems);
 
       if (!mounted) return;
       if (savedCount == _selectedItems.length) {
@@ -834,7 +1035,13 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               ),
             ),
           ),
-          Expanded(child: _buildResultArea()),
+          _buildDishSourceTabs(),
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              child: _buildResultArea(),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: SafeArea(
@@ -922,6 +1129,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   }
 
   Widget _buildResultArea() {
+    if (_dishSource == _DishSource.custom) {
+      return _buildCustomDishesArea();
+    }
     if (_isSearching)
       return const Center(
         child: CircularProgressIndicator(color: AppColors.secondary),
@@ -933,10 +1143,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           child: Text(_searchError!, textAlign: TextAlign.center),
         ),
       );
-    if (_searchController.text.trim().isEmpty)
-      return const Center(
-        child: Text('輸入名稱，搜尋料理', style: TextStyle(color: Colors.black54)),
-      );
+    if (_searchController.text.trim().isEmpty) return _buildCatalogPrompt();
 
     final results = _visibleResults;
     if (results.isEmpty) {
@@ -962,42 +1169,220 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       );
     }
 
-    return ListView.separated(
-      itemCount: results.length,
-      separatorBuilder: (_, _) => const Divider(height: 1, indent: 20),
-      itemBuilder: (context, index) {
-        final item = results[index];
-        final selected = _selectedFor(item.id);
-        final calories = selected?.nutrition.calories ?? item.calories;
-        final calorieText = calories == null
-            ? '約略熱量暫無資料'
-            : '約 ${calories.round()} 大卡';
-        return ListTile(
-          onTap: () => _toggleSelection(item),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 22,
-            vertical: 6,
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 24),
+      children: [_buildSearchResultsSection(results)],
+    );
+  }
+
+  Widget _buildDishSourceTabs() {
+    return Container(
+      width: double.infinity,
+      color: AppColors.secondary,
+      child: Row(
+        children: [
+          _buildDishSourceTab(
+            source: _DishSource.catalog,
+            label: '我們的料理',
+            icon: Icons.restaurant_menu_outlined,
           ),
-          title: Text(
-            item.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          _buildDishSourceTab(
+            source: _DishSource.custom,
+            label: '使用者新增',
+            icon: Icons.bookmark_added_outlined,
           ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Text(
-              '${item.unitLabel}  ·  $calorieText',
-              style: const TextStyle(color: AppColors.success, fontSize: 15),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDishSourceTab({
+    required _DishSource source,
+    required String label,
+    required IconData icon,
+  }) {
+    final selected = _dishSource == source;
+    return Expanded(
+      child: InkWell(
+        onTap: () => _changeDishSource(source),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 62,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: selected ? Colors.white : Colors.transparent,
+                width: 4,
+              ),
             ),
           ),
-          trailing: Icon(
-            selected == null
-                ? Icons.radio_button_unchecked
-                : Icons.check_circle,
-            color: selected == null ? Colors.black26 : AppColors.success,
-            size: 28,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCatalogPrompt() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          '輸入名稱搜尋我們提供的料理。',
+          style: TextStyle(color: Colors.black54),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCustomDishesArea() {
+    if (_isLoadingCustomDishes) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.secondary),
+      );
+    }
+
+    final dishes = _visibleCustomDishes;
+    if (dishes.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _searchController.text.trim().isEmpty
+                    ? '目前還沒有使用者新增的料理。'
+                    : '找不到符合的使用者新增料理。',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black54),
+              ),
+              if (_searchController.text.trim().isEmpty) ...[
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: _addManualItem,
+                  icon: const Icon(Icons.add),
+                  label: const Text('手動新增料理'),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+      itemCount: dishes.length,
+      separatorBuilder: (_, __) => const Divider(height: 1),
+      itemBuilder: (context, index) => _buildSavedDishTile(dishes[index]),
+    );
+  }
+
+  Widget _buildSavedDishTile(_SavedCustomDish dish) {
+    final selected = _selectedItems.any(
+      (item) => item.name.trim().toLowerCase() == dish.name.trim().toLowerCase(),
+    );
+
+    return ListTile(
+      onTap: () => _addSavedCustomDishToSelection(dish),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
+      title: Text(
+        dish.name,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 5),
+        child: Text(
+          '${dish.unitLabel}  ·  ${dish.nutrition.toNutritionText().isEmpty ? '未填營養資訊' : dish.nutrition.toNutritionText()}',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppColors.success, fontSize: 14),
+        ),
+      ),
+      trailing: Icon(
+        selected ? Icons.check_circle : Icons.radio_button_unchecked,
+        color: selected ? AppColors.success : Colors.black26,
+        size: 28,
+      ),
+    );
+  }
+
+  Widget _buildSearchResultsSection(List<DishSearchResult> results) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 4, 20, 8),
+          child: Text(
+            '搜尋結果',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: AppColors.secondary,
+            ),
+          ),
+        ),
+        ...results.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          final selected = _selectedFor(item.id);
+          final calories = selected?.nutrition.calories ?? item.calories;
+          final calorieText = calories == null
+              ? '約略熱量暫無資料'
+              : '約 ${calories.round()} 大卡';
+          return Column(
+            children: [
+              ListTile(
+                onTap: () => _toggleSelection(item),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 6,
+                ),
+                title: Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(
+                    '${item.unitLabel}  ·  $calorieText',
+                    style: const TextStyle(
+                      color: AppColors.success,
+                      fontSize: 15,
+                    ),
+                  ),
+                ),
+                trailing: Icon(
+                  selected == null
+                      ? Icons.radio_button_unchecked
+                      : Icons.check_circle,
+                  color: selected == null ? Colors.black26 : AppColors.success,
+                  size: 28,
+                ),
+              ),
+              if (index < results.length - 1)
+                const Divider(height: 1, indent: 20),
+            ],
+          );
+        }),
+      ],
     );
   }
 

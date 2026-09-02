@@ -371,6 +371,7 @@ class DietService {
     required String mealType,
     required String description,
     dynamic amount = 1,
+    dynamic oldAmount = 1,
     String nutrition = '',
     DateTime? mealDate,
     bool refetchNutrition = true,
@@ -381,6 +382,7 @@ class DietService {
     }
 
     final int intAmount = _parseAmount(amount);
+    final int previousAmount = _parseAmount(oldAmount);
     final double amountFactor = intAmount > 0 ? intAmount.toDouble() : 1.0;
     Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
 
@@ -405,6 +407,22 @@ class DietService {
               : null,
         };
       }
+    } else if (previousAmount > 0 && intAmount > 0) {
+      final scaleFactor = intAmount / previousAmount;
+      parsedNutrition = {
+        'calories': parsedNutrition['calories'] != null
+            ? parsedNutrition['calories']! * scaleFactor
+            : null,
+        'protein': parsedNutrition['protein'] != null
+            ? parsedNutrition['protein']! * scaleFactor
+            : null,
+        'fat': parsedNutrition['fat'] != null
+            ? parsedNutrition['fat']! * scaleFactor
+            : null,
+        'carbohydrates': parsedNutrition['carbohydrates'] != null
+            ? parsedNutrition['carbohydrates']! * scaleFactor
+            : null,
+      };
     }
 
     final List<String> parts = [];
