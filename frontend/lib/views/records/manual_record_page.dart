@@ -1,10 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../color/app_colors.dart';
 import '../../services/diet_service.dart';
@@ -94,13 +92,13 @@ class _SavedCustomDish {
   final _NutritionValues nutrition;
   final DateTime updatedAt;
 
-  factory _SavedCustomDish.fromJson(Map<String, dynamic> json) {
+  factory _SavedCustomDish.fromApi(Map<String, dynamic> json) {
     double? parseNum(dynamic value) => double.tryParse(value?.toString() ?? '');
 
     final rawUpdatedAt = DateTime.tryParse(json['updatedAt']?.toString() ?? '');
     return _SavedCustomDish(
-      name: (json['name'] ?? '').toString(),
-      unitLabel: (json['unitLabel'] ?? '1份').toString(),
+      name: (json['dishName'] ?? '').toString(),
+      unitLabel: '1份',
       nutrition: _NutritionValues(
         calories: parseNum(json['calories']),
         protein: parseNum(json['protein']),
@@ -110,16 +108,6 @@ class _SavedCustomDish {
       updatedAt: rawUpdatedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
-
-  Map<String, dynamic> toJson() => {
-    'name': name,
-    'unitLabel': unitLabel,
-    'calories': nutrition.calories,
-    'protein': nutrition.protein,
-    'fat': nutrition.fat,
-    'carbohydrates': nutrition.carbohydrates,
-    'updatedAt': updatedAt.toIso8601String(),
-  };
 }
 
 enum _DishSource { catalog, custom }
@@ -328,6 +316,7 @@ class ManualRecordPage extends StatefulWidget {
 class _ManualRecordPageState extends State<ManualRecordPage> {
   final _searchController = TextEditingController();
   final _searchService = DishSearchService();
+  final _dietService = DietService();
   final _imagePicker = ImagePicker();
   final _selectedItems = <_SelectedFood>[];
   final _savedCustomDishes = <_SavedCustomDish>[];
@@ -343,7 +332,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   String? _searchError;
 
   static const _mealOptions = ['早餐', '午餐', '晚餐', '其他'];
-  static const _customDishesPrefsKey = 'manual_custom_dishes';
 
   @override
   void initState() {
@@ -444,27 +432,11 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
   Future<void> _loadSavedCustomDishes() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_customDishesPrefsKey);
-      if (raw == null || raw.trim().isEmpty) {
-        if (mounted) {
-          setState(() => _isLoadingCustomDishes = false);
-        }
-        return;
-      }
-
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) {
-        if (mounted) {
-          setState(() => _isLoadingCustomDishes = false);
-        }
-        return;
-      }
-
-      final dishes = decoded
+      final records = await _dietService.getMyCustomDishes();
+      final dishes = records
           .whereType<Map>()
           .map(
-            (item) => _SavedCustomDish.fromJson(
+            (item) => _SavedCustomDish.fromApi(
               Map<String, dynamic>.from(item),
             ),
           )
@@ -485,48 +457,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         setState(() => _isLoadingCustomDishes = false);
       }
     }
-  }
-
-  Future<void> _persistSavedCustomDishes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final payload = jsonEncode(
-      _savedCustomDishes.map((dish) => dish.toJson()).toList(),
-    );
-    await prefs.setString(_customDishesPrefsKey, payload);
-  }
-
-  Future<void> _storeSuccessfulManualItems(List<_SelectedFood> items) async {
-    if (items.isEmpty) return;
-
-    final merged = List<_SavedCustomDish>.from(_savedCustomDishes);
-    for (final item in items) {
-      final normalizedName = item.name.trim().toLowerCase();
-      final replacement = _SavedCustomDish(
-        name: item.name.trim(),
-        unitLabel: item.unitLabel,
-        nutrition: item.nutrition,
-        updatedAt: DateTime.now(),
-      );
-
-      final index = merged.indexWhere(
-        (dish) => dish.name.trim().toLowerCase() == normalizedName,
-      );
-      if (index >= 0) {
-        merged[index] = replacement;
-      } else {
-        merged.add(replacement);
-      }
-    }
-
-    merged.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    if (!mounted) return;
-
-    setState(() {
-      _savedCustomDishes
-        ..clear()
-        ..addAll(merged);
-    });
-    await _persistSavedCustomDishes();
   }
 
   _SelectedFood? _selectedFor(String id) {
@@ -878,14 +808,12 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     if (_selectedItems.isEmpty || _isSaving) return;
     setState(() => _isSaving = true);
 
-    final dietService = DietService();
     var savedCount = 0;
     String? firstImagePath;
     final elfItems = <Map<String, dynamic>>[];
-    final successfulManualItems = <_SelectedFood>[];
     try {
       for (final item in _selectedItems) {
-        final result = await dietService.createDietRecord(
+        final result = await _dietService.createDietRecord(
           dishName: item.name,
           mealType: _mealType,
           amount: item.amount,
@@ -893,18 +821,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           description: '${item.isManual ? '手動新增' : '系統搜尋'}（${item.unitLabel}）',
           mealDate: _selectedDate,
           fetchNutritionIfMissing: false,
+          type: item.isManual ? 'MANUAL' : null,
         );
         if (result['success'] == true) {
           savedCount++;
-          if (item.isManual) {
-            successfulManualItems.add(item);
-          }
           final recordData = result['data'];
           final recordId = int.tryParse(recordData?['id']?.toString() ?? '');
           if (recordId != null &&
               item.selectedImage != null &&
               item.imageBytes != null) {
-            await dietService.uploadDietPhoto(
+            await _dietService.uploadDietPhoto(
               recordId,
               item.imageBytes!,
               item.selectedImage!.name,
@@ -920,8 +846,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           });
         }
       }
-
-      await _storeSuccessfulManualItems(successfulManualItems);
 
       if (!mounted) return;
       if (savedCount == _selectedItems.length) {

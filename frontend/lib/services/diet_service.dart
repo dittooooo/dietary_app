@@ -120,6 +120,24 @@ class DietService {
     }
   }
 
+  Future<List<dynamic>> getMyCustomDishes() async {
+    final token = await _token();
+    if (token == null) return [];
+
+    try {
+      final response = await _client.get(
+        '/diet-records/custom-dishes',
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return _unwrapListResponse(response.body);
+      }
+    } catch (e) {
+      print('Load custom dishes failed: $e');
+    }
+    return [];
+  }
+
   /// 依特定日期 (YYYY-MM-DD) 取得歷史飲食紀錄明細（含後端 API 與前端日期備用過濾）
   Future<List<dynamic>> getDietRecordsByDate(String dateStr) async {
     final targetDate = dateStr.trim();
@@ -242,6 +260,7 @@ class DietService {
     String nutrition = '',
     DateTime? mealDate,
     bool fetchNutritionIfMissing = true,
+    String? type,
   }) async {
     final token = await _token();
     if (token == null) {
@@ -278,6 +297,7 @@ class DietService {
           if (parsedNutrition['fat'] != null) 'fat': parsedNutrition['fat'],
           if (parsedNutrition['carbohydrates'] != null) 'carbohydrates': parsedNutrition['carbohydrates'],
           if (mealDate != null) 'date': _formatDate(mealDate),
+          if (type != null && type.trim().isNotEmpty) 'type': type.trim(),
         },
         headers: {'Authorization': 'Bearer $token'},
       );
@@ -367,14 +387,7 @@ class DietService {
 
   Future<Map<String, dynamic>> updateDietRecord(
     int id, {
-    required String dishName,
-    required String mealType,
-    required String description,
     dynamic amount = 1,
-    dynamic oldAmount = 1,
-    String nutrition = '',
-    DateTime? mealDate,
-    bool refetchNutrition = true,
   }) async {
     final token = await _token();
     if (token == null) {
@@ -382,86 +395,12 @@ class DietService {
     }
 
     final int intAmount = _parseAmount(amount);
-    final int previousAmount = _parseAmount(oldAmount);
-    final double amountFactor = intAmount > 0 ? intAmount.toDouble() : 1.0;
-    Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
-
-    if (refetchNutrition) {
-      final fetchedNut = await fetchDishNutrition(dishName);
-      if (fetchedNut['calories'] != null ||
-          fetchedNut['protein'] != null ||
-          fetchedNut['fat'] != null ||
-          fetchedNut['carbohydrates'] != null) {
-        parsedNutrition = {
-          'calories': fetchedNut['calories'] != null
-              ? fetchedNut['calories']! * amountFactor
-              : null,
-          'protein': fetchedNut['protein'] != null
-              ? fetchedNut['protein']! * amountFactor
-              : null,
-          'fat': fetchedNut['fat'] != null
-              ? fetchedNut['fat']! * amountFactor
-              : null,
-          'carbohydrates': fetchedNut['carbohydrates'] != null
-              ? fetchedNut['carbohydrates']! * amountFactor
-              : null,
-        };
-      }
-    } else if (previousAmount > 0 && intAmount > 0) {
-      final scaleFactor = intAmount / previousAmount;
-      parsedNutrition = {
-        'calories': parsedNutrition['calories'] != null
-            ? parsedNutrition['calories']! * scaleFactor
-            : null,
-        'protein': parsedNutrition['protein'] != null
-            ? parsedNutrition['protein']! * scaleFactor
-            : null,
-        'fat': parsedNutrition['fat'] != null
-            ? parsedNutrition['fat']! * scaleFactor
-            : null,
-        'carbohydrates': parsedNutrition['carbohydrates'] != null
-            ? parsedNutrition['carbohydrates']! * scaleFactor
-            : null,
-      };
-    }
-
-    final List<String> parts = [];
-    if (parsedNutrition['calories'] != null) {
-      parts.add('熱量: ${parsedNutrition['calories']!.toStringAsFixed(1)} kcal');
-    }
-    if (parsedNutrition['protein'] != null) {
-      parts.add('蛋白質: ${parsedNutrition['protein']!.toStringAsFixed(1)} g');
-    }
-    if (parsedNutrition['fat'] != null) {
-      parts.add('脂肪: ${parsedNutrition['fat']!.toStringAsFixed(1)} g');
-    }
-    if (parsedNutrition['carbohydrates'] != null) {
-      parts.add('碳水化合物: ${parsedNutrition['carbohydrates']!.toStringAsFixed(1)} g');
-    }
-    final String updatedNutritionStr =
-        parts.isNotEmpty ? parts.join(', ') : nutrition;
-
-    String apiMealType = _mealTypeForApi(mealType);
-    String apiDescription = description;
-    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
-      apiMealType = 'DINNER';
-      apiDescription = '[MealType:OTHER]$description';
-    }
 
     try {
       final response = await _client.put(
         '/diet-records/$id',
         {
-          'dishName': dishName,
-          'mealType': apiMealType,
-          'description': apiDescription,
           'amount': intAmount,
-          'nutrition': updatedNutritionStr,
-          'calories': parsedNutrition['calories'],
-          'protein': parsedNutrition['protein'],
-          'fat': parsedNutrition['fat'],
-          'carbohydrates': parsedNutrition['carbohydrates'],
-          if (mealDate != null) 'date': _formatDate(mealDate),
         },
         headers: {'Authorization': 'Bearer $token'},
       );

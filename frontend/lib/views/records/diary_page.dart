@@ -1290,19 +1290,9 @@ class _DiaryPageState extends State<DiaryPage> {
                 const SnackBar(content: Text('正在更新份數...')),
               );
 
-              final int previousAmount =
-                  int.tryParse(amountDigits.isEmpty ? '1' : amountDigits) ?? 1;
-
               final res = await DietService().updateDietRecord(
                 record['id'],
-                dishName: (record['dishName'] ?? '').toString(),
-                mealType: record['mealType'],
-                description: record['description'] ?? '',
                 amount: parsedAmount,
-                oldAmount: previousAmount,
-                nutrition: nutritionStr,
-                mealDate: _getRecordDate(record),
-                refetchNutrition: false,
               );
               if (res['success'] == true) {
                 ScaffoldMessenger.of(
