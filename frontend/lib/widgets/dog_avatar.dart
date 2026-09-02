@@ -31,15 +31,20 @@ class DogAvatar extends StatelessWidget {
     required this.instanceId,
   }) : controller = controller ?? DogStateController.instance;
 
+  static const double _thinBodyScaleMultiplier = 1.65;
+  static const double _defaultBodyScaleMultiplier = 1.0;
+  static const Offset _thinBodyOffset = Offset(0, 38);
+  static const Offset _defaultBodyOffset = Offset(0, 20);
+
   /// 依據柴犬體態（瘦、標準、壯、胖）計算模型縮放比例倍率。
   double _bodyTypeScaleMultiplier(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
-        return 1.65;
+        return _thinBodyScaleMultiplier;
       case DogBodyType.normal:
       case DogBodyType.muscle:
       case DogBodyType.heavy:
-        return 1.0;
+        return _defaultBodyScaleMultiplier;
     }
   }
 
@@ -47,11 +52,11 @@ class DogAvatar extends StatelessWidget {
   Offset _bodyTypeOffset(DogBodyType bodyType) {
     switch (bodyType) {
       case DogBodyType.thin:
-        return const Offset(0, 38);
+        return _thinBodyOffset;
       case DogBodyType.normal:
       case DogBodyType.muscle:
       case DogBodyType.heavy:
-        return const Offset(0, 20);
+        return _defaultBodyOffset;
     }
   }
 

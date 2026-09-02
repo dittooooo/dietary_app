@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
 import 'user_detail_page.dart'; // 匯入 user_detail_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
@@ -122,7 +123,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                             ),
                             trailing: Switch(
                               value: isEnabled,
-                              activeColor: AppColors.primary,
+                              activeThumbColor: AppColors.primary,
                               inactiveThumbColor: AppColors.danger,
                               onChanged: (value) => _showStatusConfirmDialog(
                                 profileId,
@@ -198,7 +199,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 
                 final res = await AdminService().updateUserStatus(userId, enabled);
                 
-                if (mounted) {
+                if (context.mounted) {
                   if (res['success'] == true) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(enabled ? '已啟用使用者：$name' : '已禁用使用者：$name')),
@@ -370,7 +371,9 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                 }
 
                 Navigator.pop(ctx);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在創建帳戶...')));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在創建帳戶...')));
+                }
 
                 final Map<String, dynamic> payload = {
                   'email': emailController.text.trim(),
@@ -388,7 +391,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
 
                 final res = await AdminService().createUser(payload);
 
-                if (mounted) {
+                if (context.mounted) {
                   if (res['success'] == true) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('帳戶建立成功！')));
                     _fetchUsers(); // 刷新清單

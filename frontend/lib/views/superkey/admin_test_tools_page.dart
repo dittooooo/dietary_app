@@ -83,7 +83,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
             title: '飲食總結報告',
             children: [
               DropdownButtonFormField<String>(
-                value: _reportDateMode,
+                initialValue: _reportDateMode,
                 decoration: InputDecoration(
                   labelText: '報告日期',
                   filled: true,
@@ -185,7 +185,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     required ValueChanged<DogBodyType> onChanged,
   }) {
     return DropdownButtonFormField<DogBodyType>(
-      value: value,
+      initialValue: value,
       decoration: InputDecoration(
         labelText: label,
         filled: true,

@@ -10,8 +10,8 @@ class UserDetailPage extends StatelessWidget {
     required this.userData,
   }); // 建構子，要求必須傳入 userData 資料
 
-  @override // 覆寫父類別的 build 方法來建構畫面
-  /// 建立  區塊之視覺 UI 視圖元件。
+  @override
+  /// 建立 UserDetailPage 區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,

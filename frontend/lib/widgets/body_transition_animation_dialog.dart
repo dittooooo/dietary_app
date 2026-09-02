@@ -119,7 +119,7 @@ class _BodyTransitionAnimationDialogState
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 建立  區塊之視覺 UI 視圖元件。
+  /// 建立 BodyTransitionAnimationDialog 區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -278,7 +278,7 @@ class _BodyTransitionLightEffect extends StatelessWidget {
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
-  /// 建立  區塊之視覺 UI 視圖元件。
+  /// 建立 _BodyTransitionLightEffect 區塊之視覺 UI 視圖元件。
   Widget build(BuildContext context) {
     return Container(
       width: 150,

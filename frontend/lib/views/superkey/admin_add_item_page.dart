@@ -208,12 +208,16 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
               : await AdminService().createRestaurant(payload);
               
           if (res['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新餐廳' : '已成功新增餐廳')));
-            Navigator.pop(context, true);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新餐廳' : '已成功新增餐廳')));
+              Navigator.pop(context, true);
+            }
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text(FriendlyErrorMessage.generic)),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+              );
+            }
           }
         } else {
           final payload = {
@@ -229,20 +233,26 @@ class _AdminAddItemPageState extends State<AdminAddItemPage> { // 定義 _AdminA
               : await AdminService().createMenuItem(payload);
               
           if (res['success'] == true) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新菜單' : '已成功新增菜單')));
-            Navigator.pop(context, true);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEditMode ? '已成功更新菜單' : '已成功新增菜單')));
+              Navigator.pop(context, true);
+            }
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text(FriendlyErrorMessage.generic)),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+              );
+            }
           }
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(FriendlyErrorMessage.generic)),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+          );
+        }
       } finally {
-        setState(() => _isSaving = false);
+        if (mounted) setState(() => _isSaving = false);
       }
     }
   }

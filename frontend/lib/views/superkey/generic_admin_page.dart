@@ -218,7 +218,9 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
           TextButton(
             onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在執行物理刪除...')));
+              }
               
               final success = await AdminService().deleteDietRecord(id);
 
@@ -560,7 +562,9 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   }
 
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在保存更新...')));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在保存更新...')));
+                  }
 
                   final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
                   final rawAmountStr = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
@@ -596,7 +600,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   };
 
                   final res = await AdminService().updateDietRecord(record['id'], payload);
-                  if (mounted) {
+                  if (context.mounted) {
                     if (res['success'] == true) {
                       _fetchData();
                       showDialog(
@@ -875,7 +879,9 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   }
 
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在新增紀錄...')));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在新增紀錄...')));
+                  }
 
                   final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
                   final rawAmountStr = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
@@ -907,7 +913,7 @@ class _GenericAdminListPageState extends State<GenericAdminListPage> { // 定義
                   };
 
                   final res = await AdminService().createDietRecord(selectedUserId!, payload);
-                  if (mounted) {
+                  if (context.mounted) {
                     if (res['success'] == true) {
                       _fetchData();
                       showDialog(
