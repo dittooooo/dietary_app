@@ -4,9 +4,11 @@ import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.MealType;
 import com.tku.dietary_app.entity.User;
+import com.tku.dietary_app.entity.UserCustomDish;
 import com.tku.dietary_app.exception.ForbiddenOperationException;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.UserCustomDishRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ public class DietRecordService {
 
     private final DietRecordRepository dietRecordRepository;
     private final UserRepository userRepository;
+    private final UserCustomDishRepository userCustomDishRepository;
     private final DietaryAgentService dietaryAgentService;
     private final Clock taipeiClock;
     private final ImageStorageService imageStorageService;
@@ -44,6 +47,10 @@ public class DietRecordService {
 
     public List<DietRecord> getRecordsByUser(Long userId) {
         return dietRecordRepository.findByUserIdOrderByDateDescCreatedAtDescIdDesc(userId);
+    }
+
+    public List<UserCustomDish> getCustomDishesByUser(Long userId) {
+        return userCustomDishRepository.findByUserIdOrderByUpdatedAtDescIdDesc(userId);
     }
 
     public List<DietRecord> getAdminRecords(Long userId, String nickname, String dishName, LocalDate date, String mealType, LocalDate weekStart) {
@@ -79,11 +86,14 @@ public class DietRecordService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到使用者 (ID: " + userId + ")"));
 
-        DietaryAgentService.NutritionValues nutritionValues = dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
+        boolean manualCustomDish = isManualCustomDish(request);
+        DietaryAgentService.NutritionValues nutritionValues = manualCustomDish
+                ? new DietaryAgentService.NutritionValues(null, null, null, null)
+                : dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
 
         LocalDate recordDate = resolveRecordDateForCreate(request);
 
-        return dietRecordRepository.save(DietRecord.builder()
+        DietRecord createdRecord = dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName().trim())
                 .calories(selectNutritionValue(nutritionValues.calories(), request.getCalories()))
@@ -96,6 +106,9 @@ public class DietRecordService {
                 .mealType(normalizeMealTypeRequired(request.getMealType()))
                 .amount(resolveAmount(request.getAmount()))
                 .build());
+
+        saveManualCustomDishIfNeeded(user, request, createdRecord);
+        return createdRecord;
     }
 
     public DietRecord updateByAdmin(Long id, DietRecordRequest request) {
@@ -235,6 +248,60 @@ public class DietRecordService {
         if (!hasText(request.getMealType())) {
             throw new IllegalArgumentException("mealType 為必填欄位");
         }
+        if (isManualCustomDish(request)) {
+            requireNutritionValue(request.getCalories(), "calories");
+            requireNutritionValue(request.getProtein(), "protein");
+            requireNutritionValue(request.getFat(), "fat");
+            requireNutritionValue(request.getCarbohydrates(), "carbohydrates");
+        }
+    }
+
+    private void saveManualCustomDishIfNeeded(User user, DietRecordRequest request, DietRecord createdRecord) {
+        if (!isManualCustomDish(request)) {
+            return;
+        }
+
+        userCustomDishRepository.findByUserIdAndDishNameIgnoreCase(user.getId(), createdRecord.getDishName())
+                .map(existingDish -> updateCustomDish(existingDish, createdRecord))
+                .orElseGet(() -> createCustomDish(user, createdRecord));
+    }
+
+    private UserCustomDish updateCustomDish(UserCustomDish existingDish, DietRecord createdRecord) {
+        existingDish.setDishName(createdRecord.getDishName());
+        existingDish.setCalories(requireNutritionValue(createdRecord.getCalories(), "calories"));
+        existingDish.setProtein(requireNutritionValue(createdRecord.getProtein(), "protein"));
+        existingDish.setFat(requireNutritionValue(createdRecord.getFat(), "fat"));
+        existingDish.setCarbohydrates(requireNutritionValue(createdRecord.getCarbohydrates(), "carbohydrates"));
+        existingDish.setType(UserCustomDish.TYPE_MANUAL);
+        return userCustomDishRepository.save(existingDish);
+    }
+
+    private UserCustomDish createCustomDish(User user, DietRecord createdRecord) {
+        return userCustomDishRepository.save(UserCustomDish.builder()
+                .user(user)
+                .dishName(createdRecord.getDishName())
+                .calories(requireNutritionValue(createdRecord.getCalories(), "calories"))
+                .protein(requireNutritionValue(createdRecord.getProtein(), "protein"))
+                .fat(requireNutritionValue(createdRecord.getFat(), "fat"))
+                .carbohydrates(requireNutritionValue(createdRecord.getCarbohydrates(), "carbohydrates"))
+                .type(UserCustomDish.TYPE_MANUAL)
+                .build());
+    }
+
+    private boolean isManualCustomDish(DietRecordRequest request) {
+        if (hasText(request.getType()) && UserCustomDish.TYPE_MANUAL.equalsIgnoreCase(request.getType().trim())) {
+            return true;
+        }
+
+        String description = normalizeNullableText(request.getDescription());
+        return description != null && description.startsWith("手動新增");
+    }
+
+    private double requireNutritionValue(Double value, String fieldName) {
+        if (value == null) {
+            throw new IllegalArgumentException("手動新增料理時 " + fieldName + " 為必填欄位");
+        }
+        return value;
     }
 
     private boolean hasText(String value) {
