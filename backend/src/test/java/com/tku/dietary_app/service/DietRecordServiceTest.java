@@ -3,7 +3,9 @@ package com.tku.dietary_app.service;
 import com.tku.dietary_app.dto.DietRecordRequest;
 import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.User;
+import com.tku.dietary_app.entity.UserCustomDish;
 import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.UserCustomDishRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 
@@ -13,19 +15,23 @@ import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DietRecordServiceTest {
     private final DietRecordRepository dietRecordRepository = mock(DietRecordRepository.class);
     private final UserRepository userRepository = mock(UserRepository.class);
+    private final UserCustomDishRepository userCustomDishRepository = mock(UserCustomDishRepository.class);
     private final DietaryAgentService dietaryAgentService = mock(DietaryAgentService.class);
     private final ImageStorageService imageStorageService = mock(ImageStorageService.class);
     private final Clock clock = Clock.system(ZoneId.of("Asia/Taipei"));
     private final DietRecordService service = new DietRecordService(
             dietRecordRepository,
             userRepository,
+            userCustomDishRepository,
             dietaryAgentService,
             clock,
             imageStorageService
@@ -79,7 +85,7 @@ class DietRecordServiceTest {
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(dietaryAgentService.fetchDishNutrition("Chicken Box"))
                 .thenReturn(new DietaryAgentService.NutritionValues(550.0, 35.0, 12.0, 48.0));
-        when(dietRecordRepository.save(org.mockito.ArgumentMatchers.any(DietRecord.class)))
+        when(dietRecordRepository.save(any(DietRecord.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         DietRecordRequest request = new DietRecordRequest();
@@ -90,6 +96,34 @@ class DietRecordServiceTest {
         DietRecord result = service.create(1L, request);
 
         assertThat(result.getAmount()).isEqualTo(1);
+        verify(userCustomDishRepository, never()).save(any(UserCustomDish.class));
+    }
+
+    @Test
+    void createStoresManualCustomDishWhenDescriptionMarksManual() {
+        User user = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(dietaryAgentService.fetchDishNutrition("Homemade Salad"))
+                .thenReturn(new DietaryAgentService.NutritionValues(null, null, null, null));
+        when(dietRecordRepository.save(any(DietRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(userCustomDishRepository.findByUserIdAndDishNameIgnoreCase(1L, "Homemade Salad"))
+                .thenReturn(Optional.empty());
+        when(userCustomDishRepository.save(any(UserCustomDish.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DietRecordRequest request = new DietRecordRequest();
+        request.setDishName("Homemade Salad");
+        request.setMealType("DINNER");
+        request.setDescription("手動新增（1份）");
+        request.setCalories(320.0);
+        request.setProtein(18.0);
+        request.setFat(12.0);
+        request.setCarbohydrates(30.0);
+
+        service.create(1L, request);
+
+        verify(userCustomDishRepository).save(any(UserCustomDish.class));
     }
 
     @Test

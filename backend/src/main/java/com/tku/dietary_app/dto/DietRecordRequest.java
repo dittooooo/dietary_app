@@ -48,4 +48,6 @@ public class DietRecordRequest {
 
     @Positive(message = "amount 必須大於 0")
     private Integer amount;
+
+    private String type;
 }
