@@ -17,6 +17,7 @@ import '../../widgets/meal_record_card.dart';
 import '../records/diary_page.dart';
 import '../records/elf_feeding_page.dart';
 import '../records/manual_record_page.dart'; // 匯入 elf_feeding_page.dart 元件庫或套件
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class HomeView extends StatefulWidget { // 定義 HomeView 類別，繼承自 StatefulWidget
   final bool initialOpenChat; // 宣告類別成員或方法內部的區域變數
@@ -44,6 +45,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
   
+  late stt.SpeechToText _speech; // 語音轉文字 (SpeechToText) 服務實例
+  bool _isListening = false; // 紀錄目前是否正處於語音收聽/錄音狀態
+  bool _speechAvailable = false; // 紀錄語音辨識服務是否已被順利初始化且可用
+
   late bool _isChatOpen; // 宣告類別成員或方法內部的區域變數
   late double _chatPanelX;  // 宣告類別成員或方法內部的區域變數
   String _userNickname = '使用者'; // 宣告類別成員或方法內部的區域變數
@@ -72,6 +77,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0; // 執行相對應的邏輯計算或設定屬性參數
     _dogController.setState(DogAnimationState.idle);
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
+
+    _speech = stt.SpeechToText(); // 建立語音轉文字元件實例
+    _initSpeech(); // 初始化語音辨識引擎與進行權限檢查
     
     // 檢查並顯示飲食總結報告彈窗，並於初始化/Hot Restart時強制收起鍵盤
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -88,9 +96,65 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    if (_isListening) {
+      _speech.stop(); // 頁面銷毀時，若正處於收聽狀態，自動停止錄音以釋放資源
+    }
     _inputController.dispose();
     _chatScrollController.dispose();
     super.dispose();
+  }
+
+  /// 初始化語音轉文字 (SpeechToText) 引擎並進行硬體與權限檢測
+  void _initSpeech() async {
+    try {
+      _speechAvailable = await _speech.initialize(
+        onStatus: (status) {
+          // 語音辨識結束或停止收聽時，自動更新 UI 狀態
+          if (status == 'done' || status == 'notListening') {
+            if (mounted) setState(() => _isListening = false);
+          }
+        },
+        onError: (errorNotification) {
+          // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
+          if (mounted) setState(() => _isListening = false);
+        },
+      );
+    } catch (e) {
+      _speechAvailable = false;
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// 切換語音收聽狀態（開始錄音 / 停止錄音）
+  void _toggleListening() async {
+    if (!_speechAvailable) {
+      _initSpeech();
+      return;
+    }
+
+    if (_isListening) {
+      // 若目前正在收聽，先更新狀態為 false，並呼叫 cancel 丟棄殘餘 callback
+      if (mounted) setState(() => _isListening = false);
+      await _speech.cancel();
+    } else {
+      // 開始聽取語音，並指定為繁體中文 (zh_TW) 辨識
+      if (mounted) setState(() => _isListening = true);
+      await _speech.listen(
+        localeId: 'zh_TW', // 指定繁體中文語音辨識
+        onResult: (result) {
+          // 若已非收聽狀態（例如已關閉或已送出訊息），忽略殘餘非同步回傳，避免覆蓋已清空的輸入框
+          if (!mounted || !_isListening) return;
+          setState(() {
+            // 將辨識出的文字即時更新寫入輸入框控制器
+            _inputController.text = result.recognizedWords;
+            // 將輸入框游標移動至文字最後方，方便使用者手動修改
+            _inputController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _inputController.text.length),
+            );
+          });
+        },
+      );
+    }
   }
 
   @override
@@ -1081,6 +1145,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
 
+    // 送出訊息時若語音辨識仍在收聽，先取消語音並重置狀態，避免非同步 callback 覆蓋已清空的輸入框
+    if (_isListening) {
+      _isListening = false;
+      _speech.cancel();
+    }
+
     // 複製一份當前歷史傳給後端
     final payloadHistory = List<Map<String, String>>.from(_tempStory);
     _appendTempStory('user', text);
@@ -1278,13 +1348,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
                   children: [ // 執行相對應的邏輯計算或設定屬性參數
+                    IconButton( // 麥克風語音輸入按鈕
+                      icon: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none, // 依收聽狀態動態切換圖示
+                        color: _isListening ? Colors.red : AppColors.primary, // 錄音中顯示紅色
+                      ),
+                      onPressed: _toggleListening, // 點擊切換語音收聽狀態
+                    ),
                     Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
                       child: TextField( // 建立文字輸入框元件（TextField）
                         controller: _inputController, // 執行相對應的邏輯計算或設定屬性參數
-                        decoration: const InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
-                          hintText: "輸入訊息...",  // 執行相對應的邏輯計算或設定屬性參數
+                        decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
+                          hintText: _isListening ? "收聽中，請說話..." : "輸入訊息...",  // 執行相對應的邏輯計算或設定屬性參數
                           border: InputBorder.none, // 執行相對應的邏輯計算或設定屬性參數
-                          hintStyle: TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                          hintStyle: const TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
                         ), // 執行相對應的邏輯計算或設定屬性參數
                         onSubmitted: _handleMessage, // 執行相對應的邏輯計算或設定屬性參數
                       ), // 執行相對應的邏輯計算或設定屬性參數
@@ -1397,16 +1474,23 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   ), // 執行相對應的邏輯計算或設定屬性參數
                   child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
                     children: [ // 執行相對應的邏輯計算或設定屬性參數
+                      IconButton( // 麥克風語音輸入按鈕
+                        icon: Icon(
+                          _isListening ? Icons.mic : Icons.mic_none, // 依收聽狀態動態切換圖示
+                          color: _isListening ? Colors.red : AppColors.primary, // 錄音中顯示紅色
+                        ),
+                        onPressed: _toggleListening, // 點擊切換語音收聽狀態
+                      ),
                       Expanded( // 建立填充元件（Expanded），自動佔滿 Row 或 Column 的剩餘空間
                         child: Container( // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
                           padding: const EdgeInsets.symmetric(horizontal: 15), // 設定外邊距或內邊距的數值大小（EdgeInsets）
                           decoration: BoxDecoration(color: const Color(0xFFFCF8EC), borderRadius: BorderRadius.circular(20)), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                           child: TextField( // 建立文字輸入框元件（TextField）
                             controller: _inputController, // 執行相對應的邏輯計算或設定屬性參數
-                            decoration: const InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
-                              hintText: "詢問建議...",  // 執行相對應的邏輯計算或設定屬性參數
+                            decoration: InputDecoration( // 建立輸入框樣式裝飾（InputDecoration）
+                              hintText: _isListening ? "收聽中，請說話..." : "詢問建議...",  // 執行相對應的邏輯計算或設定屬性參數
                               border: InputBorder.none, // 執行相對應的邏輯計算或設定屬性參數
-                              hintStyle: TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                              hintStyle: const TextStyle(color: AppColors.textPrimary) // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
                             ), // 執行相對應的邏輯計算或設定屬性參數
                             onSubmitted: _handleMessage, // 執行相對應的邏輯計算或設定屬性參數
                           ), // 執行相對應的邏輯計算或設定屬性參數

@@ -1,19 +1,16 @@
-import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
-import 'dart:io'; // 匯入 dart:io 元件庫或套件
-import 'package:flutter/foundation.dart'
-    show kIsWeb; // 匯入 foundation.dart 元件庫或套件
-import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../home/home_page.dart';
 import 'diary_page.dart';
 import '../../core/api_client.dart';
 import '../../controllers/dog_state_controller.dart';
-import '../../widgets/dog_avatar.dart'; // 匯入 home_page.dart 元件庫或套件
-import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
+import '../../widgets/dog_avatar.dart';
+import '../../color/app_colors.dart';
 
+/// 精靈餵食動畫頁面 - 當使用者新增飲食紀錄後，展示小精靈用餐動畫與動態對話
 class ElfFeedingPage extends StatefulWidget {
-  // 定義 ElfFeedingPage 類別，繼承自 StatefulWidget
-  final String imagePath; // 宣告類別成員或方法內部的區域變數
-  final List<Map<String, dynamic>> items; // 宣告類別成員或方法內部的區域變數
+  final String imagePath;
+  final List<Map<String, dynamic>> items;
   final DateTime? recordDate;
 
   const ElfFeedingPage({
@@ -21,110 +18,81 @@ class ElfFeedingPage extends StatefulWidget {
     required this.imagePath,
     required this.items,
     this.recordDate,
-  }); // 程式碼區塊或元件結構結束
+  });
 
-  @override // 標記此方法為覆寫父類別之方法
-  State<ElfFeedingPage> createState() => _ElfFeedingPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  @override
+  State<ElfFeedingPage> createState() => _ElfFeedingPageState();
+}
 
 class _ElfFeedingPageState extends State<ElfFeedingPage>
     with TickerProviderStateMixin {
-  // 定義 _ElfFeedingPageState 類別，繼承自 State
-  late AnimationController _elfController; // 宣告類別成員或方法內部的區域變數
-  late Animation<double> _elfScale; // 宣告類別成員或方法內部的區域變數
-  late Animation<Offset> _elfMove; // 宣告類別成員或方法內部的區域變數
-  bool _isEaten = false; // 宣告類別成員或方法內部的區域變數
-  // String _petType = '米粒(Mili)'; // 未使用，先註解
-  // String _dietGoal = '養生'; // 未使用，先註解
+  // === 狀態宣告與動畫控制器 ===
+  late AnimationController _elfController;
+  late Animation<double> _elfScale;
+  late Animation<Offset> _elfMove;
+  bool _isEaten = false;
   final DogStateController _dogController = DogStateController.instance;
 
-  @override // 標記此方法為覆寫父類別之方法
+  // === 生命週期初始化與動畫設定 ===
+  @override
   void initState() {
-    // 初始化狀態生命週期方法，頁面建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    super.initState();
     _loadPetData();
-    _dogController.setState(DogAnimationState.eating); // 執行相對應的邏輯計算或設定屬性參數
+    _dogController.setState(DogAnimationState.eating);
     _elfController = AnimationController(
-      // 執行相對應的邏輯計算或設定屬性參數
-      vsync: this, // 執行相對應的邏輯計算或設定屬性參數
-      duration: const Duration(seconds: 7), // 建立編譯期常數，優化 Flutter 渲染效能
-    ); // 程式碼區塊或元件結構結束
+      vsync: this,
+      duration: const Duration(seconds: 7),
+    );
 
-    _elfMove =
-        Tween<Offset>(
-          // 執行相對應的邏輯計算或設定屬性參數
-          begin: const Offset(0, 1.5), // 建立編譯期常數，優化 Flutter 渲染效能
-          end: const Offset(0, 0), // 建立編譯期常數，優化 Flutter 渲染效能
-        ).animate(
-          CurvedAnimation(
-            parent: _elfController,
-            curve: const Interval(0.0, 0.3, curve: Curves.easeOutBack),
-          ),
-        ); // 建立編譯期常數，優化 Flutter 渲染效能
+    // 小精靈入場滑動動畫
+    _elfMove = Tween<Offset>(
+      begin: const Offset(0, 1.5),
+      end: const Offset(0, 0),
+    ).animate(
+      CurvedAnimation(
+        parent: _elfController,
+        curve: const Interval(0.0, 0.3, curve: Curves.easeOutBack),
+      ),
+    );
 
+    // 小精靈縮放動畫
     _elfScale = Tween<double>(begin: 1.0, end: 1.5).animate(
-      // 執行相對應的邏輯計算或設定屬性參數
       CurvedAnimation(
         parent: _elfController,
         curve: const Interval(0.3, 0.5, curve: Curves.elasticOut),
-      ), // 建立編譯期常數，優化 Flutter 渲染效能
-    ); // 程式碼區塊或元件結構結束
+      ),
+    );
 
+    // 動畫結束後自動關閉並進入日誌頁
     _elfController.forward().then((_) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      if (mounted) _goToDiary(); // 執行相對應的邏輯計算或設定屬性參數
-    }); // 程式碼區塊或元件結構結束
+      if (mounted) _goToDiary();
+    });
 
-    // 延遲一段時間讓食物消失
+    // 延遲 4 秒讓對話框與食物消失
     Future.delayed(const Duration(seconds: 4), () {
-      // 建立編譯期常數，優化 Flutter 渲染效能
-      if (mounted) setState(() => _isEaten = true); // 更新狀態數據並通知 UI 重新渲染畫面
-    }); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+      if (mounted) setState(() => _isEaten = true);
+    });
+  }
 
+  // === 讀取寵物/精靈體型設定 ===
   Future<void> _loadPetData() async {
-    // 定義非同步方法（Future），執行耗時操作
-    final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
+    final prefs = await SharedPreferences.getInstance();
     if (mounted) {
-      // 執行相對應的邏輯計算或設定屬性參數
       setState(() {
-        // 更新狀態數據並通知 UI 重新渲染畫面
-        // _petType = '米粒(Mili)'; // 未使用，先註解
         _dogController.setBodyTypeFromBackend(
           prefs.getString('dog_body_type') ?? prefs.getString('user_diet_goal'),
         );
-        // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
-      }); // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+      });
+    }
+  }
 
-  /*
-  String _getPetImagePath(String petType, String dietGoal) {
-    // 宣告類別成員或方法內部的區域變數
-    String path = 'assets/images/shiba_normal.png'; // 宣告類別成員或方法內部的區域變數
-    if (petType == '奶油皮丘' || petType.isNotEmpty) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      if (dietGoal.contains('減脂')) {
-        // 執行相對應的邏輯計算或設定屬性參數
-        path = 'assets/images/shiba_fat.png'; // 執行相對應的邏輯計算或設定屬性參數
-      } else if (dietGoal.contains('增肌')) {
-        // 執行相對應的邏輯計算或設定屬性參數
-        path = 'assets/images/shiba_muscular.png'; // 執行相對應的邏輯計算或設定屬性參數
-      } else if (dietGoal.contains('養生')) {
-        // 執行相對應的邏輯計算或設定屬性參數
-        path = 'assets/images/shiba_thin.png'; // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
-    } // 程式碼區塊或元件結構結束
-    return path; // 回傳建構完成的元件或方法計算結果
-  } // 程式碼區塊或元件結構結束
-  */
-
+  // === 頁面導航 (跳轉回首頁並打開飲食日記頁) ===
   void _goToDiary() {
     final targetDate = widget.recordDate ?? DateTime.now();
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (context) => HomePage(initialIndex: 1),
+        builder: (context) => const HomePage(initialIndex: 1),
       ),
       (route) => false,
     );
@@ -133,92 +101,72 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
         builder: (context) => DiaryPage(date: targetDate),
       ),
     );
-  } // 程式碼區塊或元件結構結束
+  }
 
-  @override // 標記此方法為覆寫父類別之方法
+  @override
   void dispose() {
-    // 銷毀狀態生命週期方法，釋放頁面資源與控制器
-    _elfController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-    super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-  } // 程式碼區塊或元件結構結束
+    _elfController.dispose();
+    super.dispose();
+  }
 
-  @override // 標記此方法為覆寫父類別之方法
+  // === UI 主體畫面構建 ===
+  @override
   Widget build(BuildContext context) {
-    // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold(
-      // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: AppColors.surface, // 設定顏色數值（Color）
+      backgroundColor: AppColors.surface,
       body: Stack(
-        // 設定頁面的主要內容區域（body）
         children: [
-          // 執行相對應的邏輯計算或設定屬性參數
-          // 背景與標題
+          // 1. 背景標題文字
           Positioned.fill(
-            // 執行相對應的邏輯計算或設定屬性參數
             child: Column(
-              // 建立垂直排列元件（Column），縱向排列多個子元件
-              mainAxisAlignment: MainAxisAlignment.center, // 執行相對應的邏輯計算或設定屬性參數
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 執行相對應的邏輯計算或設定屬性參數
                 Transform.translate(
                   offset: const Offset(0, -250),
                   child: const Text(
-                    // 建立文字顯示元件（Text）
-                    "小精靈用餐中...", // 執行相對應的邏輯計算或設定屬性參數
+                    "小精靈用餐中...",
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
-                    ), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
+                    ),
                   ),
-                ), // 執行相對應的邏輯計算或設定屬性參數
-                const SizedBox(height: 30), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-              ], // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-          // 小精靈動畫
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+
+          // 2. 小精靈動畫與用餐對話框
           Align(
-            // 執行相對應的邏輯計算或設定屬性參數
-            alignment: Alignment.bottomCenter, // 執行相對應的邏輯計算或設定屬性參數
+            alignment: Alignment.bottomCenter,
             child: SlideTransition(
-              // 執行相對應的邏輯計算或設定屬性參數
-              position: _elfMove, // 執行相對應的邏輯計算或設定屬性參數
+              position: _elfMove,
               child: ScaleTransition(
-                // 執行相對應的邏輯計算或設定屬性參數
-                scale: _elfScale, // 執行相對應的邏輯計算或設定屬性參數
+                scale: _elfScale,
                 child: Padding(
-                  // 建立間距容器（Padding），用於設定內部邊距
-                  padding: const EdgeInsets.only(
-                    bottom: 310,
-                  ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                  padding: const EdgeInsets.only(bottom: 310),
                   child: Transform.translate(
                     offset: const Offset(-10, 0),
                     child: Column(
-                      // 建立垂直排列元件（Column），縱向排列多個子元件
-                      mainAxisSize: MainAxisSize.min, // 執行相對應的邏輯計算或設定屬性參數
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // 執行相對應的邏輯計算或設定屬性參數
-                        if (!_isEaten) // 執行相對應的邏輯計算或設定屬性參數
+                        if (!_isEaten)
                           Container(
-                            // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                            padding: const EdgeInsets.all(
-                              10,
-                            ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: AppColors.background,
                               borderRadius: BorderRadius.circular(15),
-                            ), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+                            ),
                             child: const Text(
                               "啊姆！看起來很好吃！",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
-                            ), // 建立文字顯示元件（Text）
-                          ), // 執行相對應的邏輯計算或設定屬性參數
-                        const SizedBox(
-                          height: 10,
-                        ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                            ),
+                          ),
+                        const SizedBox(height: 10),
                         SizedBox(
                           width: 180,
                           height: 180,
@@ -229,16 +177,17 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
                             cameraControls: false,
                           ),
                         ),
-                      ], // 執行相對應的邏輯計算或設定屬性參數
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ), // 執行相對應的邏輯計算或設定屬性參數
-          ), // 執行相對應的邏輯計算或設定屬性參數
-          // 固定位置的「跳過動畫」按鈕 (不隨 SnackBar 浮動)
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 3. 固定位置的「跳過動畫」按鈕
           Positioned(
-            bottom: 165.0, // 185.0 - 20.0 = 165.0
+            bottom: 165.0,
             left: 0,
             right: 0,
             child: Center(
@@ -248,7 +197,8 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
                   "跳過動畫 >>",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                backgroundColor: AppColors.background.withOpacity(0.8),
+                // Flutter 3.27+ 官方推薦寫法，替代已棄用的 withOpacity(0.8)
+                backgroundColor: AppColors.background.withValues(alpha: 0.8),
                 foregroundColor: AppColors.textPrimary,
                 elevation: 1.0,
                 shape: RoundedRectangleBorder(
@@ -261,8 +211,9 @@ class _ElfFeedingPageState extends State<ElfFeedingPage>
               ),
             ),
           ),
-        ], // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
-} // 程式碼區塊或元件結構結束
+        ],
+      ),
+    );
+  }
+}
+
