@@ -105,7 +105,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   }
 
   /// 初始化語音轉文字 (SpeechToText) 引擎並進行硬體與權限檢測
-  void _initSpeech() async {
+  Future<bool> _initSpeech() async {
     try {
       _speechAvailable = await _speech.initialize(
         onStatus: (status) {
@@ -120,23 +120,43 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         },
       );
     } catch (e) {
+      debugPrint('初始化 SpeechToText 失敗: $e');
       _speechAvailable = false;
     }
     if (mounted) setState(() {});
+    return _speechAvailable;
   }
 
   /// 切換語音收聽狀態（開始錄音 / 停止錄音）
   void _toggleListening() async {
-    if (!_speechAvailable) {
-      _initSpeech();
-      return;
-    }
-
     if (_isListening) {
       // 若目前正在收聽，先更新狀態為 false，並呼叫 cancel 丟棄殘餘 callback
       if (mounted) setState(() => _isListening = false);
-      await _speech.cancel();
-    } else {
+      try {
+        await _speech.cancel();
+      } catch (e) {
+        debugPrint('取消語音收聽失敗: $e');
+      }
+      return;
+    }
+
+    // 若尚未初始化，重新嘗試初始化
+    if (!_speechAvailable) {
+      final initialized = await _initSpeech();
+      if (!initialized) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('無法啟動語音辨識，請確認手機設定中已允許麥克風權限且啟用 Google 語音服務。'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    try {
       // 開始聽取語音，並指定為繁體中文 (zh_TW) 辨識
       if (mounted) setState(() => _isListening = true);
       await _speech.listen(
@@ -154,6 +174,17 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           });
         },
       );
+    } catch (e) {
+      debugPrint('啟動語音收聽失敗: $e');
+      if (mounted) {
+        setState(() => _isListening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('語音輸入失敗，請重新再試一次。'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
