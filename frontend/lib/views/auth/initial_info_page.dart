@@ -96,8 +96,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Set<String> _diseases = {};
   Set<String> _goals = {};
   
-  final List<String> _petOptions = ['米粒(Mili)', '米粒(Mili)', '米粒(Mili)'];
-  int _selectedPetIndex = 0;
+  static const String _defaultPetType = '米粒(Mili)';
   bool _isSubmitting = false;
 
   final List<String> _diseaseOptions = [
@@ -332,7 +331,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         'weight': double.tryParse(_weight) ?? 60.0,
         'healthConditions': ProfileValueMapper.healthConditionsToApi(_diseases),
         'dietGoal': ProfileValueMapper.firstDietGoalToApi(_goals),
-        'petType': ProfileValueMapper.petTypeToApi(_petOptions[_selectedPetIndex]),
+        'petType': ProfileValueMapper.petTypeToApi(_defaultPetType),
       };
 
       debugPrint('提交資料至後端: $onboardingData');
@@ -356,7 +355,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           (result['success'] == true || result['code'] == 200 || result.containsKey('data'))) {
         await prefs.setBool(AuthService.needsOnboardingKey, false);
         await prefs.setString('user_nickname', _name);
-        await prefs.setString('user_pet_type', _petOptions[_selectedPetIndex]);
+        await prefs.setString('user_pet_type', _defaultPetType);
         if (mounted) {
           debugPrint('提交成功，切換至首頁');
           Navigator.pushReplacement(
@@ -1090,7 +1089,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                     ),
                     const SizedBox(height: 15),
                     Text(
-                      _petOptions[0],
+                      _defaultPetType,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 30,
@@ -1105,34 +1104,6 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       ),
     );
   }
-
-  /*
-  Widget _buildSideNavButton(String direction, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 55,
-        height: 100,
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.2),
-              blurRadius: 0.78,
-              offset: const Offset(0.39, 0.39),
-            ),
-          ],
-        ),
-        alignment: Alignment.center,
-        child: CustomPaint(
-          painter: ArrowPainter(direction: direction),
-          size: const Size(25, 25),
-        ),
-      ),
-    );
-  }
-  */
 
   /// 建立手繪風格之文字輸入框 Widget。
   Widget _buildHandDrawnTextField(
@@ -1428,78 +1399,6 @@ class HandDrawnNotebookPainter extends CustomPainter {
       ..strokeWidth = 2;
     canvas.drawPath(pacPath, pacStroke);
   }
-
-  /*
-  void _drawHillAndFigure(Canvas canvas, Offset origin, double w, double h) {
-    Offset hillCenter = Offset(
-      origin.dx + w - 80,
-      origin.dy + h - 160,
-    );
-    double hillRadius = 35;
-
-    Paint hillPaint = Paint()..color = const Color(0xFFD4E5D9);
-    canvas.drawArc(
-      Rect.fromCircle(center: hillCenter, radius: hillRadius),
-      pi,
-      pi,
-      false,
-      hillPaint,
-    );
-
-    Paint hillBorder = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawArc(
-      Rect.fromCircle(center: hillCenter, radius: hillRadius),
-      pi,
-      pi,
-      false,
-      hillBorder,
-    );
-
-    Offset headPos = hillCenter.translate(0, -hillRadius / 2 - 5);
-    Paint headPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    Paint headStroke = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    canvas.drawCircle(headPos, 7, headPaint);
-    canvas.drawCircle(headPos, 7, headStroke);
-
-    Paint footPaint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 2;
-    canvas.drawLine(
-      headPos.translate(-3, 7),
-      headPos.translate(-3, 14),
-      footPaint,
-    );
-    canvas.drawLine(
-      headPos.translate(3, 7),
-      headPos.translate(3, 14),
-      footPaint,
-    );
-
-    TextPainter helloText = TextPainter(
-      text: const TextSpan(
-        text: 'Hello!',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          fontStyle: FontStyle.italic,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    );
-    helloText.layout();
-    helloText.paint(canvas, headPos.translate(15, -5));
-  }
-  */
 
   @override
   bool shouldRepaint(HandDrawnNotebookPainter oldDelegate) {

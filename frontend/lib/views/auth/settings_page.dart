@@ -6,18 +6,6 @@ import 'problem_feedback_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  /// 精準清理圖片與繪圖快取暫存，安全保留登入 Token 與用戶 Session。
-  void _clearCache(BuildContext context) {
-    PaintingBinding.instance.imageCache.clear();
-    PaintingBinding.instance.imageCache.clearLiveImages();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('已成功清除圖片快取暫存'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-  }
-
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
   Widget build(BuildContext context) {
@@ -65,12 +53,6 @@ class SettingsPage extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-              const SizedBox(height: 12),
-              _SettingsMenuButton(
-                icon: Icons.cleaning_services_outlined,
-                label: '清除圖片快取',
-                onTap: () => _clearCache(context),
               ),
             ],
           ),
