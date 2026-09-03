@@ -133,25 +133,25 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     }
 
     if (_isListening) {
-      // 若目前正在收聽，點擊後主動停止錄音
-      await _speech.stop();
+      // 若目前正在收聽，先更新狀態為 false，並呼叫 cancel 丟棄殘餘 callback
       if (mounted) setState(() => _isListening = false);
+      await _speech.cancel();
     } else {
       // 開始聽取語音，並指定為繁體中文 (zh_TW) 辨識
       if (mounted) setState(() => _isListening = true);
       await _speech.listen(
         localeId: 'zh_TW', // 指定繁體中文語音辨識
         onResult: (result) {
-          if (mounted) {
-            setState(() {
-              // 將辨識出的文字即時更新寫入輸入框控制器
-              _inputController.text = result.recognizedWords;
-              // 將輸入框游標移動至文字最後方，方便使用者手動修改
-              _inputController.selection = TextSelection.fromPosition(
-                TextPosition(offset: _inputController.text.length),
-              );
-            });
-          }
+          // 若已非收聽狀態（例如已關閉或已送出訊息），忽略殘餘非同步回傳，避免覆蓋已清空的輸入框
+          if (!mounted || !_isListening) return;
+          setState(() {
+            // 將辨識出的文字即時更新寫入輸入框控制器
+            _inputController.text = result.recognizedWords;
+            // 將輸入框游標移動至文字最後方，方便使用者手動修改
+            _inputController.selection = TextSelection.fromPosition(
+              TextPosition(offset: _inputController.text.length),
+            );
+          });
         },
       );
     }
@@ -1145,10 +1145,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
     if (text.trim().isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
 
-    // 送出訊息時若語音辨識仍在收聽，先強制停止語音辨識，避免非同步 callback 將文字寫回輸入框
+    // 送出訊息時若語音辨識仍在收聽，先取消語音並重置狀態，避免非同步 callback 覆蓋已清空的輸入框
     if (_isListening) {
-      _speech.stop();
       _isListening = false;
+      _speech.cancel();
     }
 
     // 複製一份當前歷史傳給後端
