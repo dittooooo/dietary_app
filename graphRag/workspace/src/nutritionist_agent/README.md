@@ -114,22 +114,35 @@ Use `GET /nutritionist-agent/dishes/search?q=便` to find stored recipe and food
       "id": "recipe-1",
       "name": "雞腿便當",
       "type": "dish",
-      "calories": {"value": 620.0, "unit": "kcal", "basis": "per_serving"}
+      "calories": {"value": 620.0, "unit": "kcal", "basis": "per_serving"},
+      "macronutrients": {
+        "protein_g": 35.2,
+        "carbohydrates_g": 72.4,
+        "fat_g": 18.0,
+        "basis": "per_serving"
+      }
     },
     {
       "id": "food-1",
       "name": "香蕉",
       "type": "food_item",
-      "calories": {"value": 85.0, "unit": "kcal", "basis": "per_100g"}
+      "calories": {"value": 85.0, "unit": "kcal", "basis": "per_100g"},
+      "macronutrients": {
+        "protein_g": 1.1,
+        "carbohydrates_g": 22.0,
+        "fat_g": 0.3,
+        "basis": "per_100g"
+      }
     }
   ],
   "total": 1,
-  "limit": 20
+  "limit": 30
 }
 ```
 
-`q` is required and accepts 1–100 characters. `limit` is optional (default `20`, maximum `50`).
+`q` is required and accepts 1–100 characters. `limit` is optional (default `30`, maximum `50`).
 `calories` is `null` when the graph lacks enough nutrition data. Calories are calculated from protein, carbohydrate, and fat when all three are available; otherwise the graph's calorie value is used.
+`macronutrients` always includes protein, carbohydrates, and fat in grams; unavailable values are `null`.
 
 Optional:
 

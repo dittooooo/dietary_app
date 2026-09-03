@@ -11,6 +11,7 @@ from .dish_matcher import DishMatcher, normalize_name
 from .evidence_builder import UNITS, build_evidence
 from .models import (
     CalorieEstimate, DishInfo, DishNutrition, DishNutritionRequest, DishNutritionResponse,
+    MacronutrientEstimate,
     DishSearchResponse, DishSearchResult,
     HealthCondition, NutrientAmount, NutritionAgentRequest, NutritionAgentResponse,
 )
@@ -41,7 +42,7 @@ class NutritionAgent:
         )
         return DishNutritionResponse(dish_nutrition=dishes[0])
 
-    def search_dishes(self, query: str, *, limit: int = 20) -> DishSearchResponse:
+    def search_dishes(self, query: str, *, limit: int = 30) -> DishSearchResponse:
         """Find Dish and FoodItem nodes whose names contain the supplied keyword."""
         query = query.strip()
         if not query:
@@ -75,12 +76,22 @@ class NutritionAgent:
         )
         return DishSearchResponse(
             query=query,
-            results=self._add_search_calories([DishSearchResult(**row) for row in rows]),
+            results=self._add_search_nutrition([
+                DishSearchResult(
+                    id=str(row["id"]),
+                    name=str(row["name"]),
+                    type=row["type"],
+                    macronutrients=MacronutrientEstimate(
+                        basis="per_serving" if row["type"] == "dish" else "per_100g"
+                    ),
+                )
+                for row in rows
+            ]),
             total=int(count_rows[0]["total"]),
             limit=limit,
         )
 
-    def _add_search_calories(self, results: List[DishSearchResult]) -> List[DishSearchResult]:
+    def _add_search_nutrition(self, results: List[DishSearchResult]) -> List[DishSearchResult]:
         if not results:
             return []
 
@@ -115,13 +126,28 @@ class NutritionAgent:
             },
         )
         estimates = {
-            (str(row["id"]), str(row["type"])): self._estimate_calories(row.get("nutrients") or [], str(row["type"]))
+            (str(row["id"]), str(row["type"])): self._summarize_search_nutrition(
+                row.get("nutrients") or [], str(row["type"])
+            )
             for row in rows
         }
-        return [item.model_copy(update={"calories": estimates.get((item.id, item.type))}) for item in results]
+        enriched_results = []
+        for item in results:
+            basis = "per_serving" if item.type == "dish" else "per_100g"
+            calories, macronutrients = estimates.get(
+                (item.id, item.type),
+                (None, MacronutrientEstimate(basis=basis)),
+            )
+            enriched_results.append(item.model_copy(update={
+                "calories": calories,
+                "macronutrients": macronutrients,
+            }))
+        return enriched_results
 
     @staticmethod
-    def _estimate_calories(nutrients: List[Dict[str, Any]], item_type: str) -> CalorieEstimate | None:
+    def _summarize_search_nutrition(
+        nutrients: List[Dict[str, Any]], item_type: str
+    ) -> tuple[CalorieEstimate | None, MacronutrientEstimate]:
         values: Dict[str, float] = {}
         graph_calories: float | None = None
         for nutrient in nutrients:
@@ -136,17 +162,22 @@ class NutritionAgent:
             elif name == "熱量" and unit == "kcal":
                 graph_calories = (graph_calories or 0.0) + float(amount)
 
+        basis = "per_serving" if item_type == "dish" else "per_100g"
+        macronutrients = MacronutrientEstimate(
+            protein_g=round(values["蛋白質"], 2) if "蛋白質" in values else None,
+            carbohydrates_g=round(values["碳水化合物"], 2) if "碳水化合物" in values else None,
+            fat_g=round(values["脂肪"], 2) if "脂肪" in values else None,
+            basis=basis,
+        )
+
         if {"蛋白質", "碳水化合物", "脂肪"}.issubset(values):
             calories = calculate_calories(values["蛋白質"], values["碳水化合物"], values["脂肪"])
         elif graph_calories is not None:
             calories = round(graph_calories, 2)
         else:
-            return None
+            return None, macronutrients
 
-        return CalorieEstimate(
-            value=calories,
-            basis="per_serving" if item_type == "dish" else "per_100g",
-        )
+        return CalorieEstimate(value=calories, basis=basis), macronutrients
 
     def ask(self, request: NutritionAgentRequest) -> NutritionAgentResponse:
         from .models import UserProfile
