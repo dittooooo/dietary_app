@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'package:flutter/services.dart';
 import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
 import 'package:shared_preferences/shared_preferences.dart'; // 匯入 shared_preferences.dart 元件庫或套件
 import 'package:image_picker/image_picker.dart'; // 匯入相簿套件
@@ -1205,7 +1206,7 @@ class _DiaryPageState extends State<DiaryPage> {
   }
 
   // 1. 編輯紀錄
-  void _handleEditRecord(dynamic record) {
+  Future<void> _handleEditRecord(dynamic record) async {
     setState(() => _swipedMeal = null);
     final String nutritionStr = record['nutrition'] is Map
         ? _getNutritionParts(record['nutrition']).join(', ')
@@ -1227,8 +1228,51 @@ class _DiaryPageState extends State<DiaryPage> {
     final proController = TextEditingController(text: proVal);
     final fatController = TextEditingController(text: fatVal);
     final carbController = TextEditingController(text: carbVal);
+    final initialAmount = double.tryParse(amountController.text) ?? 1;
+    final perServingCalories = (double.tryParse(calVal) ?? 0) / initialAmount;
+    final perServingProtein = (double.tryParse(proVal) ?? 0) / initialAmount;
+    final perServingFat = (double.tryParse(fatVal) ?? 0) / initialAmount;
+    final perServingCarbohydrates =
+        (double.tryParse(carbVal) ?? 0) / initialAmount;
+    var isUpdatingCalculatedValues = false;
+    var caloriesEdited = false;
+    var proteinEdited = false;
+    var fatEdited = false;
+    var carbohydratesEdited = false;
 
-    showDialog(
+    String numberText(double value) => value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+
+    void recalculateUneditedNutrition() {
+      final amount = double.tryParse(amountController.text.trim());
+      if (amount == null || amount <= 0) return;
+
+      isUpdatingCalculatedValues = true;
+      if (!caloriesEdited) {
+        calController.text = numberText(perServingCalories * amount);
+      }
+      if (!proteinEdited) {
+        proController.text = numberText(perServingProtein * amount);
+      }
+      if (!fatEdited) fatController.text = numberText(perServingFat * amount);
+      if (!carbohydratesEdited) {
+        carbController.text = numberText(perServingCarbohydrates * amount);
+      }
+      isUpdatingCalculatedValues = false;
+    }
+
+    amountController.addListener(recalculateUneditedNutrition);
+    calController.addListener(
+      () => caloriesEdited = !isUpdatingCalculatedValues,
+    );
+    proController.addListener(() => proteinEdited = !isUpdatingCalculatedValues);
+    fatController.addListener(() => fatEdited = !isUpdatingCalculatedValues);
+    carbController.addListener(
+      () => carbohydratesEdited = !isUpdatingCalculatedValues,
+    );
+
+    await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('編輯餐點資訊'),
@@ -1244,9 +1288,8 @@ class _DiaryPageState extends State<DiaryPage> {
               const SizedBox(height: 12),
               TextField(
                 controller: amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: const InputDecoration(
                   labelText: '份數',
                   hintText: '例：1',
@@ -1256,7 +1299,7 @@ class _DiaryPageState extends State<DiaryPage> {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '請填寫四項營養數值；沒有資料請填 0。',
+                  '以下為依目前份數換算的總營養，並非單份；沒有資料請填 0。',
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
@@ -1305,9 +1348,11 @@ class _DiaryPageState extends State<DiaryPage> {
               final double? parsedAmount = double.tryParse(
                 amountController.text.trim(),
               );
-              if (parsedAmount == null || parsedAmount <= 0) {
+              if (parsedAmount == null ||
+                  parsedAmount <= 0 ||
+                  parsedAmount != parsedAmount.roundToDouble()) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('份數需大於 0')),
+                  const SnackBar(content: Text('份數需為大於 0 的整數')),
                 );
                 return;
               }
@@ -1362,6 +1407,12 @@ class _DiaryPageState extends State<DiaryPage> {
         ],
       ),
     );
+    amountController.dispose();
+    dishNameController.dispose();
+    calController.dispose();
+    proController.dispose();
+    fatController.dispose();
+    carbController.dispose();
   }
 
   // 2. 上傳相片

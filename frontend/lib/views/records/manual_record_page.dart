@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../color/app_colors.dart';
@@ -30,6 +29,22 @@ class _NutritionValues {
     if (fat != null) '脂肪 $fat g',
     if (carbohydrates != null) '碳水化合物 $carbohydrates g',
   ].join('，');
+
+  _NutritionValues scaledBy(double multiplier) => _NutritionValues(
+        calories: calories == null ? null : calories! * multiplier,
+        protein: protein == null ? null : protein! * multiplier,
+        fat: fat == null ? null : fat! * multiplier,
+        carbohydrates:
+            carbohydrates == null ? null : carbohydrates! * multiplier,
+      );
+
+  _NutritionValues dividedBy(double divisor) => _NutritionValues(
+        calories: calories == null ? null : calories! / divisor,
+        protein: protein == null ? null : protein! / divisor,
+        fat: fat == null ? null : fat! / divisor,
+        carbohydrates:
+            carbohydrates == null ? null : carbohydrates! / divisor,
+      );
 }
 
 class _SelectedFood {
@@ -52,6 +67,8 @@ class _SelectedFood {
   final double amount;
   final XFile? selectedImage;
   final Uint8List? imageBytes;
+
+  _NutritionValues get totalNutrition => nutrition.scaledBy(amount);
 
   _SelectedFood copyWith({
     double? amount,
@@ -139,6 +156,12 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
   late final TextEditingController _proteinController;
   late final TextEditingController _fatController;
   late final TextEditingController _carbohydratesController;
+  late final _NutritionValues _perServingNutrition;
+  var _isUpdatingCalculatedValues = false;
+  var _caloriesEdited = false;
+  var _proteinEdited = false;
+  var _fatEdited = false;
+  var _carbohydratesEdited = false;
   String? _error;
 
   @override
@@ -147,17 +170,28 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
     _amountController = TextEditingController(
       text: _numberText(widget.item.amount),
     );
+    _perServingNutrition = widget.item.nutrition;
+    final totalNutrition = widget.item.totalNutrition;
     _caloriesController = TextEditingController(
-      text: _numberText(widget.item.nutrition.calories),
+      text: _numberText(totalNutrition.calories),
     );
     _proteinController = TextEditingController(
-      text: _numberText(widget.item.nutrition.protein),
+      text: _numberText(totalNutrition.protein),
     );
-    _fatController = TextEditingController(
-      text: _numberText(widget.item.nutrition.fat),
-    );
+    _fatController = TextEditingController(text: _numberText(totalNutrition.fat));
     _carbohydratesController = TextEditingController(
-      text: _numberText(widget.item.nutrition.carbohydrates),
+      text: _numberText(totalNutrition.carbohydrates),
+    );
+    _amountController.addListener(_recalculateUneditedNutrition);
+    _caloriesController.addListener(
+      () => _caloriesEdited = !_isUpdatingCalculatedValues,
+    );
+    _proteinController.addListener(
+      () => _proteinEdited = !_isUpdatingCalculatedValues,
+    );
+    _fatController.addListener(() => _fatEdited = !_isUpdatingCalculatedValues);
+    _carbohydratesController.addListener(
+      () => _carbohydratesEdited = !_isUpdatingCalculatedValues,
     );
   }
 
@@ -178,18 +212,54 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
         : value.toString();
   }
 
+  void _recalculateUneditedNutrition() {
+    final amount = double.tryParse(_amountController.text.trim());
+    if (amount == null || amount <= 0) return;
+
+    _isUpdatingCalculatedValues = true;
+    if (!_caloriesEdited) {
+      _caloriesController.text = _numberText(
+        _perServingNutrition.calories == null
+            ? null
+            : _perServingNutrition.calories! * amount,
+      );
+    }
+    if (!_proteinEdited) {
+      _proteinController.text = _numberText(
+        _perServingNutrition.protein == null
+            ? null
+            : _perServingNutrition.protein! * amount,
+      );
+    }
+    if (!_fatEdited) {
+      _fatController.text = _numberText(
+        _perServingNutrition.fat == null ? null : _perServingNutrition.fat! * amount,
+      );
+    }
+    if (!_carbohydratesEdited) {
+      _carbohydratesController.text = _numberText(
+        _perServingNutrition.carbohydrates == null
+            ? null
+            : _perServingNutrition.carbohydrates! * amount,
+      );
+    }
+    _isUpdatingCalculatedValues = false;
+  }
+
   Widget _field(
     String label,
     TextEditingController controller, {
     TextInputType keyboardType = const TextInputType.numberWithOptions(
       decimal: true,
     ),
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -206,8 +276,8 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
     final carbohydrates = double.tryParse(
       _carbohydratesController.text.trim(),
     );
-    if (amount == null || amount <= 0) {
-      setState(() => _error = '請輸入大於 0 的份數。');
+    if (amount == null || amount <= 0 || amount != amount.roundToDouble()) {
+      setState(() => _error = '請輸入大於 0 的整數份數。');
       return;
     }
     if ([calories, protein, fat, carbohydrates].any(
@@ -246,13 +316,15 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
             ),
             const SizedBox(height: 4),
             Text(
-              '請填寫四項營養數值；沒有資料請填 0。',
+              '以下為依目前份數換算的總營養，並非單份；沒有資料請填 0。',
               style: TextStyle(color: Colors.black.withOpacity(0.6)),
             ),
             const SizedBox(height: 14),
             _field(
               widget.item.unitLabel == '100克' ? '倍數（1 = 100克）' : '份數',
               _amountController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
             _field('熱量（kcal）', _caloriesController),
             _field('蛋白質（g）', _proteinController),
@@ -647,7 +719,10 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
     if (result != null && mounted) {
       _replaceSelectedItem(
-        item.copyWith(amount: result.amount, nutrition: result.nutrition),
+        item.copyWith(
+          amount: result.amount,
+          nutrition: result.nutrition.dividedBy(result.amount),
+        ),
       );
     }
   }
@@ -787,6 +862,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                                         '${_formatAmount(item.amount)} × ${item.unitLabel}',
                                         style: const TextStyle(
                                           color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        item.totalNutrition.toNutritionText(),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: AppColors.success,
+                                          fontSize: 13,
                                         ),
                                       ),
                                     ],
@@ -949,7 +1034,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           dishName: item.name,
           mealType: _mealType,
           amount: item.amount,
-          nutrition: item.nutrition.toNutritionText(),
+          nutrition: item.totalNutrition.toNutritionText(),
           description: '${item.isManual ? '手動新增' : '系統搜尋'}（${item.unitLabel}）',
           mealDate: _selectedDate,
           fetchNutritionIfMissing: false,
@@ -972,9 +1057,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           elfItems.add({
             'name': item.name,
             'portion': '${_formatAmount(item.amount)} × ${item.unitLabel}',
-            'calories': item.nutrition.calories == null
+            'calories': item.totalNutrition.calories == null
                 ? '-- kcal'
-                : '${item.nutrition.calories} kcal',
+                : '${item.totalNutrition.calories} kcal',
           });
         }
       }
@@ -1416,7 +1501,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           final index = entry.key;
           final item = entry.value;
           final selected = _selectedFor(item.id);
-          final calories = selected?.nutrition.calories ?? item.calories;
+          final calories = selected?.totalNutrition.calories ?? item.calories;
           final calorieText = calories == null
               ? '約略熱量暫無資料'
               : '約 ${calories.round()} 大卡';
