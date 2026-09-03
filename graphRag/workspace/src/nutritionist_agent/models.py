@@ -52,11 +52,17 @@ class CalorieEstimate(BaseModel):
     value: float
     unit: Literal["kcal"] = "kcal"
     basis: Literal["per_serving", "per_100g"]
+class MacronutrientEstimate(BaseModel):
+    protein_g: Optional[float] = None
+    carbohydrates_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    basis: Literal["per_serving", "per_100g"]
 class DishSearchResult(BaseModel):
     id: str
     name: str
     type: Literal["dish", "food_item"]
     calories: Optional[CalorieEstimate] = None
+    macronutrients: MacronutrientEstimate
 class DishSearchResponse(BaseModel):
     query: str
     results: List[DishSearchResult]
