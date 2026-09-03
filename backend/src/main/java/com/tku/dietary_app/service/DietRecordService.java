@@ -96,10 +96,10 @@ public class DietRecordService {
         DietRecord createdRecord = dietRecordRepository.save(DietRecord.builder()
                 .user(user)
                 .dishName(request.getDishName().trim())
-                .calories(selectNutritionValue(nutritionValues.calories(), request.getCalories()))
-                .protein(selectNutritionValue(nutritionValues.protein(), request.getProtein()))
-                .fat(selectNutritionValue(nutritionValues.fat(), request.getFat()))
-                .carbohydrates(selectNutritionValue(nutritionValues.carbohydrates(), request.getCarbohydrates()))
+                .calories(preferRequestedNutritionValue(request.getCalories(), nutritionValues.calories()))
+                .protein(preferRequestedNutritionValue(request.getProtein(), nutritionValues.protein()))
+                .fat(preferRequestedNutritionValue(request.getFat(), nutritionValues.fat()))
+                .carbohydrates(preferRequestedNutritionValue(request.getCarbohydrates(), nutritionValues.carbohydrates()))
                 .date(recordDate)
                 .mealDate(recordDate)
                 .description(normalizeNullableText(request.getDescription()))
@@ -224,8 +224,8 @@ public class DietRecordService {
         return keyword.trim();
     }
 
-    private Double selectNutritionValue(Double resolvedValue, Double fallbackValue) {
-        return resolvedValue != null ? resolvedValue : fallbackValue;
+    private Double preferRequestedNutritionValue(Double requestedValue, Double systemValue) {
+        return requestedValue != null ? requestedValue : systemValue;
     }
 
     private LocalDate resolveRecordDateForCreate(DietRecordRequest request) {
