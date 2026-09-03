@@ -79,7 +79,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     _loadHomeData(); // 執行相對應的邏輯計算或設定屬性參數
 
     _speech = stt.SpeechToText(); // 建立語音轉文字元件實例
-    _initSpeech(); // 初始化語音辨識引擎與進行權限檢查
+    // 語音引擎延遲至點擊時初始化，避免在 initState 阻塞主 UI 執行緒造成 ANR 凍結
     
     // 檢查並顯示飲食總結報告彈窗，並於初始化/Hot Restart時強制收起鍵盤
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -946,9 +946,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: AppColors.primary.withOpacity(0.15)),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -958,7 +958,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                           comment,
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: AppColors.textPrimary.withOpacity(0.85),
+                            color: AppColors.textPrimary.withValues(alpha: 0.85),
                             height: 1.3,
                           ),
                         ),
@@ -1025,13 +1025,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       children: [
         Text(
           name,
-          style: TextStyle(fontSize: 12, color: AppColors.textPrimary.withOpacity(0.5)),
+          style: TextStyle(fontSize: 12, color: AppColors.textPrimary.withValues(alpha: 0.5)),
         ),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
@@ -1314,7 +1314,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                                   color: AppColors.background, // 設定顏色數值（Color）
                                   boxShadow: [ // 執行相對應的邏輯計算或設定屬性參數
                                     BoxShadow( // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                                      color: _getPetColor(_petType).withOpacity(0.15),  // 設定顏色數值（Color）
+                                      color: _getPetColor(_petType).withValues(alpha: 0.15),  // 設定顏色數值（Color）
                                       blurRadius: 15,  // 執行相對應的邏輯計算或設定屬性參數
                                       spreadRadius: 2, // 執行相對應的邏輯計算或設定屬性參數
                                     ) // 執行相對應的邏輯計算或設定屬性參數
@@ -1345,7 +1345,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                       decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                         color: AppColors.background, // 設定顏色數值（Color）
                         borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
-                        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.1), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
                       ), // 執行相對應的邏輯計算或設定屬性參數
                       child: Text( // 建立文字顯示元件（Text）
                         _stripEmojis(_messages.isNotEmpty ? _messages[0]['text'] : "載入中..."), // 執行相對應的邏輯計算或設定屬性參數
@@ -1375,7 +1375,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
                   color: AppColors.background, // 設定顏色數值（Color）
                   borderRadius: BorderRadius.circular(30), // 設定容器的圓角弧度半徑大小
-                  boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
                 ), // 執行相對應的邏輯計算或設定屬性參數
                 child: Row( // 建立水平排列元件（Row），橫向排列多個子元件
                   children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -1565,7 +1565,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             decoration: BoxDecoration(
               color: isElf ? AppColors.background : AppColors.secondary,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 0.975)],
+              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 0.975)],
               border: isElf ? Border.all(color: AppColors.border) : null,
             ),
             child: Column(
@@ -1712,7 +1712,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         color: AppColors.background, // 設定顏色數值（Color）
         borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
         border: Border.all(color: AppColors.border), // 設定容器的四周邊框線條樣式
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.05), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 1.95)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
       ), // 執行相對應的邏輯計算或設定屬性參數
       child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
         crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
@@ -1738,7 +1738,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       decoration: BoxDecoration( // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
         color: Colors.white, // 設定顏色數值（Color）
         borderRadius: BorderRadius.circular(25), // 設定容器的圓角弧度半徑大小
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 2.925)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2.925)], // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
       ), // 執行相對應的邏輯計算或設定屬性參數
       child: Column( // 建立垂直排列元件（Column），縱向排列多個子元件
         children: [ // 執行相對應的邏輯計算或設定屬性參數
@@ -1911,7 +1911,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                           border: Border.all(color: AppColors.border),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
+                              color: Colors.black.withValues(alpha: 0.04),
                               blurRadius: 4,
                               offset: const Offset(0, 2),
                             ),
@@ -1943,7 +1943,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.15),
+                                        color: AppColors.primary.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Row(
@@ -2164,7 +2164,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                                                       child: Container(
                                                         padding: const EdgeInsets.all(4),
                                                         decoration: BoxDecoration(
-                                                          color: (cardQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                          color: (cardQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withValues(alpha: 0.15),
                                                           borderRadius: BorderRadius.circular(6),
                                                         ),
                                                         child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
@@ -2186,7 +2186,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                                                       child: Container(
                                                         padding: const EdgeInsets.all(4),
                                                         decoration: BoxDecoration(
-                                                          color: isSaving ? Colors.grey.shade300 : AppColors.primary.withOpacity(0.15),
+                                                          color: isSaving ? Colors.grey.shade300 : AppColors.primary.withValues(alpha: 0.15),
                                                           borderRadius: BorderRadius.circular(6),
                                                         ),
                                                         child: const Icon(Icons.add, size: 16, color: AppColors.primary),
@@ -2347,7 +2347,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2433,7 +2433,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2547,7 +2547,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         Expanded(
           child: Container(
             height: 1,
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
           ),
         ),
       ],
@@ -2574,7 +2574,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 color: color,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
                 boxShadow: [
-                  BoxShadow(color: color.withOpacity(0.25), blurRadius: 3, offset: const Offset(0, 1)),
+                  BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 3, offset: const Offset(0, 1)),
                 ],
               ),
             ),
@@ -2727,7 +2727,7 @@ class MacronutrientValuesDisplay extends StatelessWidget {
           '三大營養素合計 ${total.toStringAsFixed(0)} g',
           style: TextStyle(
             fontSize: 11,
-            color: AppColors.textPrimary.withOpacity(0.65),
+            color: AppColors.textPrimary.withValues(alpha: 0.65),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -2740,9 +2740,9 @@ class MacronutrientValuesDisplay extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.background.withOpacity(0.65),
+        color: AppColors.background.withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withOpacity(0.08)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.08)),
       ),
       child: Column(
         children: [
@@ -2767,7 +2767,7 @@ class MacronutrientValuesDisplay extends StatelessWidget {
             '$unit / $pct%',
             style: TextStyle(
               fontSize: 10,
-              color: AppColors.textPrimary.withOpacity(0.65),
+              color: AppColors.textPrimary.withValues(alpha: 0.65),
               fontWeight: FontWeight.w600,
             ),
           ),
