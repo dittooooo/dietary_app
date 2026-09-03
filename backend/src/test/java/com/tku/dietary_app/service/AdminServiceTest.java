@@ -3,6 +3,8 @@ package com.tku.dietary_app.service;
 import com.tku.dietary_app.dto.AdminUserRequest;
 import com.tku.dietary_app.entity.User;
 import com.tku.dietary_app.entity.UserProfile;
+import com.tku.dietary_app.repository.DietRecordRepository;
+import com.tku.dietary_app.repository.ProblemFeedbackRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,12 @@ class AdminServiceTest {
 
     @Mock
     private UserProfileRepository userProfileRepository;
+
+    @Mock
+    private DietRecordRepository dietRecordRepository;
+
+    @Mock
+    private ProblemFeedbackRepository problemFeedbackRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -101,6 +109,29 @@ class AdminServiceTest {
         assertThatThrownBy(() -> adminService.updateUser(1L, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Email 已被使用");
+    }
+
+    @Test
+    void setUserEnabledRejectsDisablingCurrentAdminAccount() {
+        User currentAdmin = User.builder()
+                .id(1L)
+                .email("admin@example.com")
+                .role("ROLE_ADMIN")
+                .enabled(true)
+                .build();
+        UserProfile profile = UserProfile.builder()
+                .id(1L)
+                .user(currentAdmin)
+                .nickname("Admin")
+                .build();
+
+        when(userProfileRepository.findById(1L)).thenReturn(Optional.of(profile));
+
+        assertThatThrownBy(() -> adminService.setUserEnabled(1L, false, "ADMIN@example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("不能禁用目前登入中的管理者帳號");
+
+        verify(userRepository, never()).save(any(User.class));
     }
 
     private AdminUserRequest buildRequest() {
