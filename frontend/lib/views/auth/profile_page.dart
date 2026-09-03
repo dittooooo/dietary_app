@@ -107,32 +107,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  /*
-  IconData _getPetIcon(String? petType) {
-    switch (petType) {
-      case '米粒(Mili)':
-      case '狗兒':
-      case '奶油皮丘': return Icons.pets;
-      case '薄荷兔兔': return Icons.eco;
-      case '草莓狐狸': return Icons.star;
-      default: return Icons.help_outline;
-    }
-  }
-  */
-
-  /*
-  Color _getPetColor(String? petType) {
-    switch (petType) {
-      case '米粒(Mili)':
-      case '狗兒':
-      case '奶油皮丘': return const Color.fromARGB(255, 181, 181, 60); // Muted orange (retro)
-      case '薄荷兔兔': return const Color.fromARGB(255, 110, 215, 154); // Muted sage (retro)
-      case '草莓狐狸': return const Color.fromARGB(255, 186, 84, 84); // Muted terracotta (retro)
-      default: return const Color.fromARGB(255, 66, 92, 65);
-    }
-  }
-  */
-
   /// 啟動圖片選擇器以選取回饋照片附件。
   Future<void> _pickImage() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在開啟圖庫...'), duration: Duration(seconds: 1)));

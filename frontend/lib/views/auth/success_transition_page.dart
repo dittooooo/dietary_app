@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../color/app_colors.dart';
-import '../../config/api_config.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../models/body_status_models.dart';
 import '../../services/auth_service.dart';
@@ -105,15 +101,13 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         return true;
       }
 
-      final response = await http.get(
-        Uri.parse('${ApiConfig.baseUrl}/user/profile'),
-        headers: {'Authorization': 'Bearer $token'},
-      ).timeout(const Duration(seconds: 5));
+      final profileResult = await AuthService()
+          .getUserProfile()
+          .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final userData = decoded is Map<String, dynamic>
-            ? (decoded['data'] is Map<String, dynamic> ? decoded['data'] : decoded)
+      if (profileResult['success'] == true) {
+        final userData = profileResult['data'] is Map<String, dynamic>
+            ? profileResult['data'] as Map<String, dynamic>
             : <String, dynamic>{};
         final role = userData['user']?['role'] ?? userData['role'];
         if (role != null) {
@@ -123,7 +117,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         return true;
       }
 
-      if (response.statusCode == 404) {
+      if (profileResult['statusCode'] == 404) {
         await prefs.setBool(AuthService.needsOnboardingKey, true);
         return false;
       }
