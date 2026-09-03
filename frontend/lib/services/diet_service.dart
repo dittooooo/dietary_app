@@ -388,6 +388,10 @@ class DietService {
   Future<Map<String, dynamic>> updateDietRecord(
     int id, {
     dynamic amount = 1,
+    double? calories,
+    double? protein,
+    double? fat,
+    double? carbohydrates,
   }) async {
     final token = await _token();
     if (token == null) {
@@ -401,6 +405,10 @@ class DietService {
         '/diet-records/$id',
         {
           'amount': intAmount,
+          if (calories != null) 'calories': calories,
+          if (protein != null) 'protein': protein,
+          if (fat != null) 'fat': fat,
+          if (carbohydrates != null) 'carbohydrates': carbohydrates,
         },
         headers: {'Authorization': 'Bearer $token'},
       );

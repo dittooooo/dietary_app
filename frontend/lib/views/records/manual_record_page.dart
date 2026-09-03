@@ -55,6 +55,7 @@ class _SelectedFood {
 
   _SelectedFood copyWith({
     double? amount,
+    _NutritionValues? nutrition,
     XFile? selectedImage,
     Uint8List? imageBytes,
     bool clearImage = false,
@@ -64,7 +65,7 @@ class _SelectedFood {
       name: name,
       unitLabel: unitLabel,
       isManual: isManual,
-      nutrition: nutrition,
+      nutrition: nutrition ?? this.nutrition,
       amount: amount ?? this.amount,
       selectedImage: clearImage ? null : selectedImage ?? this.selectedImage,
       imageBytes: clearImage ? null : imageBytes ?? this.imageBytes,
@@ -112,46 +113,160 @@ class _SavedCustomDish {
 
 enum _DishSource { catalog, custom }
 
-class _AmountEditorDialog extends StatefulWidget {
-  const _AmountEditorDialog({required this.item});
+class _SelectedFoodEditorResult {
+  const _SelectedFoodEditorResult({
+    required this.amount,
+    required this.nutrition,
+  });
+
+  final double amount;
+  final _NutritionValues nutrition;
+}
+
+class _SelectedFoodEditorDialog extends StatefulWidget {
+  const _SelectedFoodEditorDialog({required this.item});
 
   final _SelectedFood item;
 
   @override
-  State<_AmountEditorDialog> createState() => _AmountEditorDialogState();
+  State<_SelectedFoodEditorDialog> createState() =>
+      _SelectedFoodEditorDialogState();
 }
 
-class _AmountEditorDialogState extends State<_AmountEditorDialog> {
-  late final TextEditingController _controller;
+class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
+  late final TextEditingController _amountController;
+  late final TextEditingController _caloriesController;
+  late final TextEditingController _proteinController;
+  late final TextEditingController _fatController;
+  late final TextEditingController _carbohydratesController;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    final amount = widget.item.amount;
-    _controller = TextEditingController(
-      text: amount == amount.roundToDouble()
-          ? amount.toInt().toString()
-          : amount.toString(),
+    _amountController = TextEditingController(
+      text: _numberText(widget.item.amount),
+    );
+    _caloriesController = TextEditingController(
+      text: _numberText(widget.item.nutrition.calories),
+    );
+    _proteinController = TextEditingController(
+      text: _numberText(widget.item.nutrition.protein),
+    );
+    _fatController = TextEditingController(
+      text: _numberText(widget.item.nutrition.fat),
+    );
+    _carbohydratesController = TextEditingController(
+      text: _numberText(widget.item.nutrition.carbohydrates),
     );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _amountController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _fatController.dispose();
+    _carbohydratesController.dispose();
     super.dispose();
+  }
+
+  String _numberText(double? value) {
+    if (value == null) return '';
+    return value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
+  }
+
+  Widget _field(
+    String label,
+    TextEditingController controller, {
+    TextInputType keyboardType = const TextInputType.numberWithOptions(
+      decimal: true,
+    ),
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  void _submit() {
+    final amount = double.tryParse(_amountController.text.trim());
+    final calories = double.tryParse(_caloriesController.text.trim());
+    final protein = double.tryParse(_proteinController.text.trim());
+    final fat = double.tryParse(_fatController.text.trim());
+    final carbohydrates = double.tryParse(
+      _carbohydratesController.text.trim(),
+    );
+    if (amount == null || amount <= 0) {
+      setState(() => _error = '請輸入大於 0 的份數。');
+      return;
+    }
+    if ([calories, protein, fat, carbohydrates].any(
+      (value) => value == null || value < 0,
+    )) {
+      setState(() => _error = '請填寫四項營養數值；沒有資料請填 0。');
+      return;
+    }
+
+    Navigator.pop(
+      context,
+      _SelectedFoodEditorResult(
+        amount: amount,
+        nutrition: _NutritionValues(
+          calories: calories,
+          protein: protein,
+          fat: fat,
+          carbohydrates: carbohydrates,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('設定${widget.item.name}份數'),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: widget.item.unitLabel == '100克' ? '倍數（1 = 100克）' : '份數',
-          border: const OutlineInputBorder(),
+      title: const Text('編輯餐點資訊'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.item.name,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '請填寫四項營養數值；沒有資料請填 0。',
+              style: TextStyle(color: Colors.black.withOpacity(0.6)),
+            ),
+            const SizedBox(height: 14),
+            _field(
+              widget.item.unitLabel == '100克' ? '倍數（1 = 100克）' : '份數',
+              _amountController,
+            ),
+            _field('熱量（kcal）', _caloriesController),
+            _field('蛋白質（g）', _proteinController),
+            _field('脂肪（g）', _fatController),
+            _field('碳水化合物（g）', _carbohydratesController),
+            if (_error != null)
+              Text(
+                _error!,
+                style: const TextStyle(
+                  color: AppColors.danger,
+                  fontSize: 13,
+                ),
+              ),
+          ],
         ),
       ),
       actions: [
@@ -159,13 +274,7 @@ class _AmountEditorDialogState extends State<_AmountEditorDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('取消'),
         ),
-        FilledButton(
-          onPressed: () {
-            final value = double.tryParse(_controller.text.trim());
-            if (value != null && value > 0) Navigator.pop(context, value);
-          },
-          child: const Text('套用'),
-        ),
+        FilledButton(onPressed: _submit, child: const Text('儲存')),
       ],
     );
   }
@@ -250,13 +359,18 @@ class _NutritionEditorDialogState extends State<_NutritionEditorDialog> {
       fat: double.tryParse(_fatController.text.trim()),
       carbohydrates: double.tryParse(_carbohydratesController.text.trim()),
     );
-    final hasAllValues =
-        nutrition.calories != null &&
-        nutrition.protein != null &&
-        nutrition.fat != null &&
-        nutrition.carbohydrates != null;
-    if (_nameController.text.trim().isEmpty || !hasAllValues) {
-      setState(() => _error = '請填寫名稱與四項有效數值。');
+    final nutritionValues = [
+      nutrition.calories,
+      nutrition.protein,
+      nutrition.fat,
+      nutrition.carbohydrates,
+    ];
+    if (_nameController.text.trim().isEmpty) {
+      setState(() => _error = '請填寫料理名稱。');
+      return;
+    }
+    if (nutritionValues.any((value) => value == null || value < 0)) {
+      setState(() => _error = '請填寫四項營養數值；沒有資料請填 0。');
       return;
     }
     Navigator.pop(
@@ -274,7 +388,7 @@ class _NutritionEditorDialogState extends State<_NutritionEditorDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              '請填寫料理名稱和營養資訊',
+              '請填寫料理名稱與四項營養數值；沒有資料請填 0。',
               style: TextStyle(color: Colors.black54, fontSize: 13),
             ),
             const SizedBox(height: 14),
@@ -526,13 +640,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         : amount.toString();
   }
 
-  Future<void> _editAmount(_SelectedFood item) async {
-    final amount = await showDialog<double>(
+  Future<void> _editSelectedItem(_SelectedFood item) async {
+    final result = await showDialog<_SelectedFoodEditorResult>(
       context: context,
-      builder: (_) => _AmountEditorDialog(item: item),
+      builder: (_) => _SelectedFoodEditorDialog(item: item),
     );
-    if (amount != null && mounted)
-      _replaceSelectedItem(item.copyWith(amount: amount));
+    if (result != null && mounted) {
+      _replaceSelectedItem(
+        item.copyWith(amount: result.amount, nutrition: result.nutrition),
+      );
+    }
   }
 
   Future<void> _pickImageFor(_SelectedFood item) async {
@@ -615,7 +732,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '可調整份數或加入餐點照片',
+                  '可編輯份數、營養成分與餐點照片',
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 16),
@@ -696,14 +813,14 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                                 Expanded(
                                   child: OutlinedButton.icon(
                                     onPressed: () async {
-                                      await _editAmount(item);
+                                      await _editSelectedItem(item);
                                       setSheetState(() {});
                                     },
                                     icon: const Icon(
                                       Icons.edit_outlined,
                                       size: 18,
                                     ),
-                                    label: const Text('更改份數'),
+                                    label: const Text('編輯'),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
@@ -768,9 +885,24 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     if (picked != null && mounted) setState(() => _selectedDate = picked);
   }
 
+  void _changeDateBy(int days) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final candidate = _selectedDate.add(Duration(days: days));
+    final normalized = DateTime(candidate.year, candidate.month, candidate.day);
+    if (normalized.isAfter(today)) return;
+    setState(() => _selectedDate = normalized);
+  }
+
+  bool get _isTodaySelected {
+    final now = DateTime.now();
+    return _selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day;
+  }
+
   Future<void> _addManualItem() async {
     final query = _searchController.text.trim();
-    if (query.isEmpty) return;
     final result = await _showNutritionEditor(
       initialName: query,
       initialNutrition: const _NutritionValues(),
@@ -905,12 +1037,34 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 padding: EdgeInsets.zero,
               ),
             ),
-            InkWell(
-              onTap: _pickDate,
-              child: Text(
-                '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: '前一天',
+                  onPressed: () => _changeDateBy(-1),
+                  icon: const Icon(Icons.chevron_left),
+                  visualDensity: VisualDensity.compact,
+                ),
+                TextButton.icon(
+                  onPressed: _pickDate,
+                  icon: const Icon(Icons.calendar_today_outlined, size: 14),
+                  label: Text(
+                    '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black54,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                IconButton(
+                  tooltip: '後一天',
+                  onPressed: _isTodaySelected ? null : () => _changeDateBy(1),
+                  icon: const Icon(Icons.chevron_right),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ),
           ],
         ),
@@ -1001,7 +1155,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                               ),
                             ),
                             const Text(
-                              '調整份數與新增照片',
+                              '可編輯份數、營養與照片',
                               style: TextStyle(fontSize: 12),
                             ),
                           ],
@@ -1085,7 +1239,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               OutlinedButton.icon(
                 onPressed: _addManualItem,
                 icon: const Icon(Icons.add),
-                label: const Text('手動新增紀錄'),
+                label: const Text('新增自訂料理'),
               ),
             ],
           ),
@@ -1107,12 +1261,12 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         children: [
           _buildDishSourceTab(
             source: _DishSource.catalog,
-            label: '我們的料理',
+            label: '推薦料理',
             icon: Icons.restaurant_menu_outlined,
           ),
           _buildDishSourceTab(
             source: _DishSource.custom,
-            label: '使用者新增',
+            label: '我的料理',
             icon: Icons.bookmark_added_outlined,
           ),
         ],
@@ -1164,7 +1318,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       child: Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          '輸入名稱搜尋我們提供的料理。',
+          '輸入名稱搜尋推薦料理。',
           style: TextStyle(color: Colors.black54),
           textAlign: TextAlign.center,
         ),
@@ -1189,19 +1343,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             children: [
               Text(
                 _searchController.text.trim().isEmpty
-                    ? '目前還沒有使用者新增的料理。'
-                    : '找不到符合的使用者新增料理。',
+                    ? '目前還沒有你建立的料理。'
+                    : '找不到符合的我的料理。',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.black54),
               ),
-              if (_searchController.text.trim().isEmpty) ...[
-                const SizedBox(height: 14),
-                OutlinedButton.icon(
-                  onPressed: _addManualItem,
-                  icon: const Icon(Icons.add),
-                  label: const Text('手動新增料理'),
-                ),
-              ],
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: _addManualItem,
+                icon: const Icon(Icons.add),
+                label: const Text('新增自訂料理'),
+              ),
             ],
           ),
         ),

@@ -50,6 +50,24 @@ class _DiaryPageState extends State<DiaryPage> {
     _fetchRecords(); // 獲取後端飲食紀錄
   } // 程式碼區塊或元件結構結束
 
+  @override
+  void didUpdateWidget(covariant DiaryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldDate = DateTime(
+      oldWidget.date.year,
+      oldWidget.date.month,
+      oldWidget.date.day,
+    );
+    final newDate = DateTime(widget.date.year, widget.date.month, widget.date.day);
+    if (!oldDate.isAtSameMomentAs(newDate)) {
+      setState(() {
+        _selectedDate = newDate;
+        _expandedMeals.clear();
+        _swipedMeal = null;
+      });
+    }
+  }
+
   Future<void> _loadPetData() async {
     // 定義非同步方法（Future），執行耗時操作
     final prefs = await SharedPreferences.getInstance(); // 宣告類別成員或方法內部的區域變數
@@ -1179,7 +1197,7 @@ class _DiaryPageState extends State<DiaryPage> {
   String _parseNutrient(String? nutritionStr, String pattern) {
     if (nutritionStr == null || nutritionStr.isEmpty) return '';
     final regExp = RegExp(
-      pattern + r':\s*(\d+(?:\.\d+)?)',
+      pattern + r'(?:\s*:\s*|\s+)(\d+(?:\.\d+)?)',
       caseSensitive: false,
     );
     final match = regExp.firstMatch(nutritionStr);
@@ -1213,7 +1231,7 @@ class _DiaryPageState extends State<DiaryPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('調整份數'),
+        title: const Text('編輯餐點資訊'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1238,33 +1256,41 @@ class _DiaryPageState extends State<DiaryPage> {
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '目前只能修改份數，料理名稱不可編輯。',
+                  '請填寫四項營養數值；沒有資料請填 0。',
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: calController,
-                enabled: false,
                 decoration: const InputDecoration(labelText: '熱量 (kcal)'),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: proController,
-                enabled: false,
                 decoration: const InputDecoration(labelText: '蛋白質 (g)'),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: fatController,
-                enabled: false,
                 decoration: const InputDecoration(labelText: '脂肪 (g)'),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: carbController,
-                enabled: false,
                 decoration: const InputDecoration(labelText: '碳水化合物 (g)'),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
               ),
             ],
           ),
@@ -1276,23 +1302,44 @@ class _DiaryPageState extends State<DiaryPage> {
           ),
           TextButton(
             onPressed: () async {
-              final int parsedAmount =
-                  int.tryParse(amountController.text.trim()) ?? 0;
-              if (parsedAmount <= 0) {
+              final double? parsedAmount = double.tryParse(
+                amountController.text.trim(),
+              );
+              if (parsedAmount == null || parsedAmount <= 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('份數需大於 0')),
+                );
+                return;
+              }
+              final calories = double.tryParse(calController.text.trim());
+              final protein = double.tryParse(proController.text.trim());
+              final fat = double.tryParse(fatController.text.trim());
+              final carbohydrates = double.tryParse(
+                carbController.text.trim(),
+              );
+              if ([calories, protein, fat, carbohydrates].any(
+                (value) => value == null || value < 0,
+              )) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('請填寫四項營養數值；沒有資料請填 0。'),
+                  ),
                 );
                 return;
               }
 
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('正在更新份數...')),
+                const SnackBar(content: Text('正在更新餐點資訊...')),
               );
 
               final res = await DietService().updateDietRecord(
                 record['id'],
                 amount: parsedAmount,
+                calories: calories,
+                protein: protein,
+                fat: fat,
+                carbohydrates: carbohydrates,
               );
               if (res['success'] == true) {
                 ScaffoldMessenger.of(

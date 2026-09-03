@@ -681,7 +681,10 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DiaryPage(date: _selectedDate),
+                        builder: (context) => DiaryPage(
+                          date: _selectedDate,
+                          onDateChanged: widget.onDateSelected,
+                        ),
                       ),
                     );
                   },
