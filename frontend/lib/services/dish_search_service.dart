@@ -10,29 +10,61 @@ class DishSearchResult {
     required this.name,
     required this.type,
     required this.calories,
+    required this.protein,
+    required this.fat,
+    required this.carbohydrates,
   });
 
   final String id;
   final String name;
   final String type;
   final double? calories;
+  final double? protein;
+  final double? fat;
+  final double? carbohydrates;
 
   bool get isDish => type == 'dish';
   String get unitLabel => isDish ? '1份' : '100克';
 
   factory DishSearchResult.fromJson(Map<String, dynamic> json) {
-    final caloriesData = json['calories'];
-    final caloriesValue = caloriesData is Map<String, dynamic>
-        ? caloriesData['value']
-        : caloriesData;
+    double? parseNumber(dynamic value) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '');
+    }
+
+    double? parseNutritionValue(dynamic value) {
+      if (value is Map<String, dynamic>) {
+        return parseNumber(value['value'] ?? value['amount']);
+      }
+      return parseNumber(value);
+    }
+
+    final macronutrients = json['macronutrients'] is Map
+        ? Map<String, dynamic>.from(json['macronutrients'] as Map)
+        : const <String, dynamic>{};
+    final nutrition = json['nutrition'] is Map
+        ? Map<String, dynamic>.from(json['nutrition'] as Map)
+        : const <String, dynamic>{};
 
     return DishSearchResult(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
       type: json['type']?.toString() ?? '',
-      calories: caloriesValue is num
-          ? caloriesValue.toDouble()
-          : double.tryParse(caloriesValue?.toString() ?? ''),
+      calories: parseNutritionValue(json['calories'] ?? nutrition['calories']),
+      protein: parseNutritionValue(
+        json['protein'] ?? nutrition['protein'] ?? macronutrients['protein_g'],
+      ),
+      fat: parseNutritionValue(
+        json['fat'] ?? nutrition['fat'] ?? macronutrients['fat_g'],
+      ),
+      carbohydrates: parseNutritionValue(
+        json['carbohydrates'] ??
+            json['carbs'] ??
+            nutrition['carbohydrates'] ??
+            nutrition['carbs'] ??
+            macronutrients['carbohydrates_g'] ??
+            macronutrients['carbs_g'],
+      ),
     );
   }
 }

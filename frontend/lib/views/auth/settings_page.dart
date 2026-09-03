@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../color/app_colors.dart';
 import 'problem_feedback_page.dart';
+import 'usage_guide_page.dart';
 
 /// 系統設定主頁面 Widget。
 class SettingsPage extends StatelessWidget {
@@ -36,8 +37,11 @@ class SettingsPage extends StatelessWidget {
                 icon: Icons.menu_book,
                 label: '使用說明',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('使用說明功能尚未開放')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UsageGuidePage(),
+                    ),
                   );
                 },
               ),

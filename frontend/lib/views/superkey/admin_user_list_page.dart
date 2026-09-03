@@ -1,5 +1,7 @@
 // ignore_for_file: deprecated_member_use
 import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'user_detail_page.dart'; // 匯入 user_detail_page.dart 元件庫或套件
 import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
 import '../../services/admin_service.dart'; // 匯入 admin_service.dart
@@ -18,6 +20,7 @@ class AdminUserListPage extends StatefulWidget {
 class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _AdminUserListPageState 類別，繼承自 State
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
+  String _currentAdminEmail = '';
 
   List<dynamic> _users = []; // 儲存後端獲取的使用者列表
 
@@ -25,7 +28,17 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
   /// 執行 initState 之專屬功能操作。
   void initState() { // 初始化狀態生命週期方法，頁年建立時執行一次
     super.initState();
+    _loadCurrentAdmin();
     _fetchUsers(); // 獲取後端使用者清單
+  }
+
+  Future<void> _loadCurrentAdmin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _currentAdminEmail =
+          prefs.getString('user_email')?.trim().toLowerCase() ?? '';
+    });
   }
 
   /// 向後端獲取全站使用者帳號清單，包含暱稱、Email、角色與健康目標。
@@ -33,6 +46,12 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
     setState(() => _isLoading = true);
     try {
       final list = await AdminService().listUsers(keyword: _searchController.text.trim());
+      list.sort((a, b) {
+        final aIsAdmin = _isAdminUser(a);
+        final bIsAdmin = _isAdminUser(b);
+        if (aIsAdmin == bIsAdmin) return 0;
+        return aIsAdmin ? -1 : 1;
+      });
       setState(() {
         _users = list;
       });
@@ -41,6 +60,26 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  bool _isAdminUser(dynamic userProfile) {
+    final userObj = userProfile is Map && userProfile['user'] is Map
+        ? userProfile['user'] as Map
+        : const {};
+    final role = (userProfile is Map
+            ? userProfile['role'] ?? userObj['role'] ?? ''
+            : '')
+        .toString()
+        .trim()
+        .toUpperCase();
+    final email = (userProfile is Map
+            ? userProfile['email'] ?? userObj['email'] ?? ''
+            : '')
+        .toString()
+        .trim()
+        .toLowerCase();
+
+    return role == 'ROLE_ADMIN' || role == 'ADMIN' || email == 'admin@gmail.com';
   }
 
   @override // 標記此方法為覆寫父類別之方法
@@ -92,6 +131,9 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                         final String email = (userProfile['email'] ?? userObj['email'] ?? '').toString();
                         final String displayName = userProfile['nickname'] ?? (email.isNotEmpty ? email.split('@')[0] : '使用者');
                         final bool isEnabled = userProfile['enabled'] != false && userObj['enabled'] != false;
+                        final bool isCurrentAdmin =
+                            _currentAdminEmail.isNotEmpty &&
+                            email.trim().toLowerCase() == _currentAdminEmail;
                         
                         return Card(
                           color: AppColors.background,
@@ -101,7 +143,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                           child: ListTile(
                             leading: CircleAvatar(
                               backgroundColor: AppColors.secondary,
-                              child: Text("#$profileId", style: const TextStyle(color: AppColors.background, fontSize: 12)),
+                              child: Text("#${index + 1}", style: const TextStyle(color: AppColors.background, fontSize: 12)),
                             ),
                             title: Text(
                               displayName,
@@ -113,7 +155,9 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                                 Text(email.isNotEmpty ? email : '無電子郵件', style: const TextStyle(color: Colors.black54)),
                                 const SizedBox(height: 4),
                                 Text(
-                                  isEnabled ? '狀態：啟用中' : '狀態：已禁用',
+                                  isCurrentAdmin
+                                      ? '狀態：啟用中（目前登入管理者）'
+                                      : (isEnabled ? '狀態：啟用中' : '狀態：已禁用'),
                                   style: TextStyle(
                                     color: isEnabled ? AppColors.primary : AppColors.danger,
                                     fontWeight: FontWeight.bold,
@@ -123,13 +167,39 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
                             ),
                             trailing: Switch(
                               value: isEnabled,
-                              activeThumbColor: AppColors.primary,
-                              inactiveThumbColor: AppColors.danger,
-                              onChanged: (value) => _showStatusConfirmDialog(
-                                profileId,
-                                displayName,
-                                value,
+                              thumbColor:
+                                  WidgetStateProperty.resolveWith<Color>(
+                                (states) {
+                                  if (isCurrentAdmin) {
+                                    return AppColors.secondary
+                                        .withValues(alpha: 0.45);
+                                  }
+                                  return isEnabled
+                                      ? AppColors.primary
+                                      : AppColors.danger;
+                                },
                               ),
+                              trackColor:
+                                  WidgetStateProperty.resolveWith<Color>(
+                                (states) {
+                                  if (isCurrentAdmin) {
+                                    return AppColors.secondary
+                                        .withValues(alpha: 0.20);
+                                  }
+                                  return isEnabled
+                                      ? AppColors.primary
+                                          .withValues(alpha: 0.35)
+                                      : AppColors.danger
+                                          .withValues(alpha: 0.28);
+                                },
+                              ),
+                              onChanged: isCurrentAdmin
+                                  ? null
+                                  : (value) => _showStatusConfirmDialog(
+                                        profileId,
+                                        displayName,
+                                        value,
+                                      ),
                             ),
                             onTap: () {
                               final String goalText = ProfileValueMapper.dietGoalsToDisplaySet(userProfile['dietGoal']).join(', ');
@@ -226,187 +296,371 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
     );
   }
 
-  /// 彈出新增使用者對話框，提供暱稱、Email 與密碼輸入欄位供管理者快速創建新帳號。
+  /// 彈出新增使用者對話框，提供必填欄位供管理者快速創建新帳號。
   void _showCreateUserDialog() {
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final nameController = TextEditingController();
-    final heightController = TextEditingController();
-    final weightController = TextEditingController();
-    final ageController = TextEditingController();
-    
-    String gender = '男';
-    final Set<String> selectedDiseases = {'無疾病'};
-    final Set<String> selectedGoals = {'養生'};
-
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: AppColors.background,
-          title: const Text('新增使用者帳戶 (管理員特權)', style: TextStyle(fontWeight: FontWeight.bold)),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(controller: emailController, decoration: const InputDecoration(labelText: '電子郵件 (帳號)')),
-                TextField(controller: passwordController, decoration: const InputDecoration(labelText: '密碼'), obscureText: true),
-                TextField(controller: nameController, decoration: const InputDecoration(labelText: '暱稱 / 姓名')),
-                TextField(controller: heightController, decoration: const InputDecoration(labelText: '身高 (cm)'), keyboardType: TextInputType.number),
-                TextField(controller: weightController, decoration: const InputDecoration(labelText: '體重 (kg)'), keyboardType: TextInputType.number),
-                TextField(controller: ageController, decoration: const InputDecoration(labelText: '年齡'), keyboardType: TextInputType.number),
-                const SizedBox(height: 10),
+      barrierDismissible: false,
+      builder: (_) => _CreateUserDialog(onCreated: _fetchUsers),
+    );
+  }
+}
 
-                Row(
-                  children: [
-                    const Text('性別：'),
-                    Radio<String>(
-                      value: '男',
-                      groupValue: gender,
-                      onChanged: (val) => setDialogState(() => gender = val!),
-                    ),
-                    const Text('男'),
-                    Radio<String>(
-                      value: '女',
-                      groupValue: gender,
-                      onChanged: (val) => setDialogState(() => gender = val!),
-                    ),
-                    const Text('女'),
-                  ],
-                ),
-                const SizedBox(height: 10),
+class _CreateUserDialog extends StatefulWidget {
+  const _CreateUserDialog({required this.onCreated});
 
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('特殊疾病：'),
-                    ),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: ['無疾病', '糖尿病', '高血壓'].map((disease) {
-                          final isSelected = selectedDiseases.contains(disease);
-                          return FilterChip(
-                            label: Text(disease),
-                            selected: isSelected,
-                            backgroundColor: Colors.transparent,
-                            selectedColor: AppColors.secondary.withValues(alpha: 0.2),
-                            onSelected: (bool selected) {
-                              setDialogState(() {
-                                if (disease == '無疾病') {
-                                  selectedDiseases.clear();
-                                  selectedDiseases.add('無疾病');
-                                } else {
-                                  selectedDiseases.remove('無疾病');
-                                  if (selectedDiseases.contains(disease)) {
-                                    selectedDiseases.remove(disease);
-                                    if (selectedDiseases.isEmpty) {
-                                      selectedDiseases.add('無疾病');
-                                    }
-                                  } else {
-                                    selectedDiseases.add(disease);
-                                  }
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
+  final VoidCallback onCreated;
 
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('飲食目標：'),
-                    ),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: ['養生', '減脂', '增肌'].map((goal) {
-                          final isSelected = selectedGoals.contains(goal);
-                          return FilterChip(
-                            label: Text(goal),
-                            selected: isSelected,
-                            backgroundColor: Colors.transparent,
-                            selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                            onSelected: (bool selected) {
-                              setDialogState(() {
-                                if (selectedGoals.contains(goal)) {
-                                  if (selectedGoals.length > 1) {
-                                    selectedGoals.remove(goal);
-                                  }
-                                } else {
-                                  selectedGoals.add(goal);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 15),
+  @override
+  State<_CreateUserDialog> createState() => _CreateUserDialogState();
+}
 
+class _CreateUserDialogState extends State<_CreateUserDialog> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _birthYearController = TextEditingController();
+  final TextEditingController _birthMonthController = TextEditingController();
+  final TextEditingController _birthDayController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
 
-              ],
+  String? _gender;
+  bool _isSubmitting = false;
+  List<String> _validationMessages = [];
+  final Set<String> _selectedDiseases = {};
+  final Set<String> _selectedGoals = {};
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _nameController.dispose();
+    _birthYearController.dispose();
+    _birthMonthController.dispose();
+    _birthDayController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  String? _buildBirthDate() {
+    final year = int.tryParse(_birthYearController.text.trim());
+    final month = int.tryParse(_birthMonthController.text.trim());
+    final day = int.tryParse(_birthDayController.text.trim());
+    if (year == null || month == null || day == null) return null;
+
+    final parsed = DateTime(year, month, day);
+    if (parsed.year != year || parsed.month != month || parsed.day != day) {
+      return null;
+    }
+    if (parsed.isAfter(DateTime.now())) return null;
+
+    return '${year.toString().padLeft(4, '0')}-'
+        '${month.toString().padLeft(2, '0')}-'
+        '${day.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildBirthField(
+    TextEditingController controller,
+    String hint,
+    int maxLength,
+  ) {
+    return SizedBox(
+      width: maxLength == 4 ? 64 : 42,
+      child: TextField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        textAlign: TextAlign.center,
+        maxLength: maxLength,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        decoration: InputDecoration(
+          counterText: '',
+          hintText: hint,
+          border: const UnderlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    final birthDate = _buildBirthDate();
+    final height = double.tryParse(_heightController.text.trim());
+    final weight = double.tryParse(_weightController.text.trim());
+    final missing = <String>[];
+
+    if (_emailController.text.trim().isEmpty) missing.add('請填寫電子郵件');
+    if (_passwordController.text.isEmpty) missing.add('請填寫密碼');
+    if (_nameController.text.trim().isEmpty) missing.add('請填寫暱稱 / 姓名');
+    if (_birthYearController.text.trim().isEmpty ||
+        _birthMonthController.text.trim().isEmpty ||
+        _birthDayController.text.trim().isEmpty) {
+      missing.add('請完整填寫生日');
+    } else if (birthDate == null) {
+      missing.add('請填寫正確的生日日期');
+    }
+    if (_heightController.text.trim().isEmpty) {
+      missing.add('請填寫身高');
+    } else if (height == null || height <= 0) {
+      missing.add('身高必須為正數');
+    }
+    if (_weightController.text.trim().isEmpty) {
+      missing.add('請填寫體重');
+    } else if (weight == null || weight <= 0) {
+      missing.add('體重必須為正數');
+    }
+    if (_gender == null) missing.add('請選擇性別');
+    if (_selectedDiseases.isEmpty) missing.add('請選擇特殊疾病，若無請選「無疾病」');
+    if (_selectedGoals.isEmpty) missing.add('請選擇飲食目標');
+
+    if (missing.isNotEmpty) {
+      setState(() => _validationMessages = missing);
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    final Map<String, dynamic> payload = {
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text,
+      'role': 'ROLE_USER',
+      'name': _nameController.text.trim(),
+      'gender': _gender,
+      'birthDate': birthDate,
+      'height': height,
+      'weight': weight,
+      'petType': '米粒(Mili)',
+      'dietGoal': _selectedGoals.join(', '),
+      'specialDisease': _selectedDiseases.join(', '),
+    };
+
+    setState(() {
+      _isSubmitting = true;
+      _validationMessages = [];
+    });
+    messenger.showSnackBar(const SnackBar(content: Text('正在創建帳戶...')));
+
+    try {
+      final res = await AdminService().createUser(payload);
+      if (!mounted) return;
+
+      if (res['success'] == true) {
+        navigator.pop();
+        messenger.showSnackBar(const SnackBar(content: Text('帳戶建立成功！')));
+        widget.onCreated();
+      } else {
+        setState(() => _isSubmitting = false);
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              (res['message'] ?? FriendlyErrorMessage.generic).toString(),
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
-            TextButton(
-              onPressed: () async {
-                if (emailController.text.trim().isEmpty || passwordController.text.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('帳號與密碼為必填欄位')));
-                  return;
-                }
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      messenger.showSnackBar(
+        const SnackBar(content: Text(FriendlyErrorMessage.generic)),
+      );
+    }
+  }
 
-                Navigator.pop(ctx);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在創建帳戶...')));
-                }
-
-                final Map<String, dynamic> payload = {
-                  'email': emailController.text.trim(),
-                  'password': passwordController.text,
-                  'role': 'ROLE_USER', // 只能新增一般使用者
-                  'name': nameController.text.trim().isNotEmpty ? nameController.text.trim() : null,
-                  'gender': gender,
-                  'age': int.tryParse(ageController.text),
-                  'height': double.tryParse(heightController.text),
-                  'weight': double.tryParse(weightController.text),
-                  'petType': '米粒(Mili)', // 預設小精靈
-                  'dietGoal': selectedGoals.join(', '),
-                  'specialDisease': selectedDiseases.join(', '),
-                };
-
-                final res = await AdminService().createUser(payload);
-
-                if (context.mounted) {
-                  if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('帳戶建立成功！')));
-                    _fetchUsers(); // 刷新清單
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text(FriendlyErrorMessage.generic)),
-                    );
-                  }
-                }
-              },
-              child: const Text('確認創建', style: TextStyle(fontWeight: FontWeight.bold)),
-            )
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.background,
+      title: const Text(
+        '新增使用者帳戶 (管理員特權)',
+        style: TextStyle(fontWeight: FontWeight.bold),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: const InputDecoration(labelText: '電子郵件 (帳號)'),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: '密碼'),
+              obscureText: true,
+            ),
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: '暱稱 / 姓名'),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const SizedBox(
+                  width: 54,
+                  child: Text(
+                    '生日',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                _buildBirthField(_birthYearController, 'YYYY', 4),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Text('年'),
+                ),
+                _buildBirthField(_birthMonthController, 'MM', 2),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 5),
+                  child: Text('月'),
+                ),
+                _buildBirthField(_birthDayController, 'DD', 2),
+                const Padding(
+                  padding: EdgeInsets.only(left: 5),
+                  child: Text('日'),
+                ),
+              ],
+            ),
+            TextField(
+              controller: _heightController,
+              decoration: const InputDecoration(labelText: '身高 (cm)'),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            TextField(
+              controller: _weightController,
+              decoration: const InputDecoration(labelText: '體重 (kg)'),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+            if (_validationMessages.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: AppColors.danger.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Text(
+                  _validationMessages.join('\n'),
+                  style: const TextStyle(
+                    color: AppColors.danger,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text('性別：'),
+                Radio<String>(
+                  value: '男',
+                  groupValue: _gender,
+                  onChanged: (val) => setState(() => _gender = val),
+                ),
+                const Text('男'),
+                Radio<String>(
+                  value: '女',
+                  groupValue: _gender,
+                  onChanged: (val) => setState(() => _gender = val),
+                ),
+                const Text('女'),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text('特殊疾病：'),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: ['無疾病', '糖尿病', '高血壓'].map((disease) {
+                      final isSelected = _selectedDiseases.contains(disease);
+                      return FilterChip(
+                        label: Text(disease),
+                        selected: isSelected,
+                        backgroundColor: Colors.transparent,
+                        selectedColor: AppColors.secondary.withValues(alpha: 0.2),
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (disease == '無疾病') {
+                              _selectedDiseases.clear();
+                              if (selected) _selectedDiseases.add('無疾病');
+                            } else {
+                              _selectedDiseases.remove('無疾病');
+                              if (_selectedDiseases.contains(disease)) {
+                                _selectedDiseases.remove(disease);
+                              } else {
+                                _selectedDiseases.add(disease);
+                              }
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(top: 8.0),
+                  child: Text('飲食目標：'),
+                ),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: ['養生', '減脂', '增肌'].map((goal) {
+                      final isSelected = _selectedGoals.contains(goal);
+                      return FilterChip(
+                        label: Text(goal),
+                        selected: isSelected,
+                        backgroundColor: Colors.transparent,
+                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                        onSelected: (bool selected) {
+                          setState(() {
+                            if (_selectedGoals.contains(goal)) {
+                              _selectedGoals.remove(goal);
+                            } else {
+                              _selectedGoals.add(goal);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
           ],
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+          child: const Text('取消'),
+        ),
+        TextButton(
+          onPressed: _isSubmitting ? null : _submit,
+          child: Text(
+            _isSubmitting ? '創建中...' : '確認創建',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }

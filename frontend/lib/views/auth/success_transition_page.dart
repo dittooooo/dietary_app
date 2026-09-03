@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,14 +33,28 @@ class SuccessTransitionPage extends StatefulWidget {
 class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   final DogStateController _dogController = DogStateController.instance;
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
+  final Random _tipRandom = Random();
 
   String _statusText = '正在確認資料...';
+  String _tipText = '您可以向小精靈尋求飲食建議喔～';
   Timer? _delayTimer;
+  Timer? _tipTimer;
+
+  static const List<String> _transitionTips = [
+    '您可以向小精靈尋求飲食建議喔～',
+    '請記得每天都要均衡飲食',
+    '記錄餐點越清楚，小精靈給的建議會越準確',
+    '請避免輸入過於抽象的餐點，例如：冷路歐雷',
+    '餐點名稱可以寫具體一點，例如：雞腿便當、鮭魚沙拉',
+    '若有特殊疾病，記得在個人資料中更新健康狀況',
+    '飲食建議僅供參考，身體不適時請優先諮詢專業人員',
+  ];
 
   /// 初始化 Widget 狀態與訂閱生命週期。
   @override
   void initState() {
     super.initState();
+    _startTipRotation();
     _runTransition();
   }
 
@@ -46,7 +62,29 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   @override
   void dispose() {
     _delayTimer?.cancel();
+    _tipTimer?.cancel();
     super.dispose();
+  }
+
+  void _startTipRotation() {
+    _tipText = _transitionTips[_tipRandom.nextInt(_transitionTips.length)];
+    _tipTimer?.cancel();
+    _tipTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (!mounted) return;
+      setState(() {
+        _tipText = _pickNextTip();
+      });
+    });
+  }
+
+  String _pickNextTip() {
+    if (_transitionTips.length <= 1) return _transitionTips.first;
+
+    String nextTip = _tipText;
+    while (nextTip == _tipText) {
+      nextTip = _transitionTips[_tipRandom.nextInt(_transitionTips.length)];
+    }
+    return nextTip;
   }
 
   /// 執行過渡頁面核心傳輸、資料確認與結算流程。
@@ -198,7 +236,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
     final completer = Completer<void>();
     _delayTimer?.cancel();
-    _delayTimer = Timer(const Duration(milliseconds: 1500), () {
+    _delayTimer = Timer(const Duration(milliseconds: 4600), () {
       if (!completer.isCompleted) completer.complete();
     });
     await completer.future;
@@ -224,6 +262,36 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
                     scale: 1.35,
                     cameraOrbit: '0deg 75deg auto',
                     instanceId: 'login-transition-dog',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    key: ValueKey(_tipText),
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.secondary.withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: Text(
+                      _tipText,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        height: 1.45,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),

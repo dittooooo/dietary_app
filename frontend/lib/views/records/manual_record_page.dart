@@ -666,7 +666,12 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             name: item.name,
             unitLabel: item.unitLabel,
             isManual: false,
-            nutrition: _NutritionValues(calories: item.calories),
+            nutrition: _NutritionValues(
+              calories: item.calories,
+              protein: item.protein,
+              fat: item.fat,
+              carbohydrates: item.carbohydrates,
+            ),
           ),
         );
       }
@@ -1501,10 +1506,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           final index = entry.key;
           final item = entry.value;
           final selected = _selectedFor(item.id);
-          final calories = selected?.totalNutrition.calories ?? item.calories;
-          final calorieText = calories == null
-              ? '約略熱量暫無資料'
-              : '約 ${calories.round()} 大卡';
+          final nutrition = selected?.totalNutrition ??
+              _NutritionValues(
+                calories: item.calories,
+                protein: item.protein,
+                fat: item.fat,
+                carbohydrates: item.carbohydrates,
+              );
+          final nutritionText = nutrition.toNutritionText().isEmpty
+              ? '營養資訊暫無資料'
+              : nutrition.toNutritionText();
           return Column(
             children: [
               ListTile(
@@ -1523,7 +1534,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 5),
                   child: Text(
-                    '${item.unitLabel}  ·  $calorieText',
+                    '${item.unitLabel}  ·  $nutritionText',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppColors.success,
                       fontSize: 15,
