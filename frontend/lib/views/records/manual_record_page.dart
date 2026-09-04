@@ -56,6 +56,8 @@ class _SelectedFood {
     required this.unitLabel,
     required this.isManual,
     required this.nutrition,
+    required this.recordDate,
+    required this.mealType,
     this.amount = 1,
     this.selectedImage,
     this.imageBytes,
@@ -66,6 +68,8 @@ class _SelectedFood {
   final String unitLabel;
   final bool isManual;
   final _NutritionValues nutrition;
+  final DateTime recordDate;
+  final String mealType;
   final double amount;
   final XFile? selectedImage;
   final Uint8List? imageBytes;
@@ -75,6 +79,8 @@ class _SelectedFood {
   _SelectedFood copyWith({
     double? amount,
     _NutritionValues? nutrition,
+    DateTime? recordDate,
+    String? mealType,
     XFile? selectedImage,
     Uint8List? imageBytes,
     bool clearImage = false,
@@ -85,6 +91,8 @@ class _SelectedFood {
       unitLabel: unitLabel,
       isManual: isManual,
       nutrition: nutrition ?? this.nutrition,
+      recordDate: recordDate ?? this.recordDate,
+      mealType: mealType ?? this.mealType,
       amount: amount ?? this.amount,
       selectedImage: clearImage ? null : selectedImage ?? this.selectedImage,
       imageBytes: clearImage ? null : imageBytes ?? this.imageBytes,
@@ -682,6 +690,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               fat: item.fat,
               carbohydrates: item.carbohydrates,
             ),
+            recordDate: _selectedDate,
+            mealType: _mealType,
           ),
         );
       }
@@ -715,6 +725,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             unitLabel: dish.unitLabel,
             isManual: true,
             nutrition: dish.nutrition,
+            recordDate: _selectedDate,
+            mealType: _mealType,
           ),
         );
       }
@@ -822,7 +834,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  '可編輯份數、營養成分與餐點照片',
+                  '每個餐點都可設定不同的日期、餐別、份數與照片',
                   style: TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(height: 16),
@@ -913,6 +925,41 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                                 Expanded(
                                   child: OutlinedButton.icon(
                                     onPressed: () async {
+                                      await _pickDateFor(item);
+                                      setSheetState(() {});
+                                    },
+                                    icon: const Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      _formatRecordDate(item.recordDate),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      await _pickMealTypeFor(item);
+                                      setSheetState(() {});
+                                    },
+                                    icon: const Icon(
+                                      Icons.restaurant_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(item.mealType),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
                                       await _editSelectedItem(item);
                                       setSheetState(() {});
                                     },
@@ -971,9 +1018,21 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
   // === 7. 日期選擇與飲食紀錄儲存提交邏輯 ===
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
+    final picked = await _showRecordDatePicker(_selectedDate);
+    if (picked != null && mounted) setState(() => _selectedDate = picked);
+  }
+
+  Future<void> _pickDateFor(_SelectedFood item) async {
+    final picked = await _showRecordDatePicker(item.recordDate);
+    if (picked != null && mounted) {
+      _replaceSelectedItem(item.copyWith(recordDate: picked));
+    }
+  }
+
+  Future<DateTime?> _showRecordDatePicker(DateTime initialDate) {
+    return showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: initialDate,
       firstDate: DateTime(2023),
       lastDate: DateTime.now(),
       builder: (context, child) => Theme(
@@ -983,7 +1042,17 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
         child: child!,
       ),
     );
-    if (picked != null && mounted) setState(() => _selectedDate = picked);
+  }
+
+  String _formatRecordDate(DateTime date) {
+    return '${date.year}/${date.month}/${date.day}';
+  }
+
+  Future<void> _pickMealTypeFor(_SelectedFood item) async {
+    final selectedMeal = await _showMealTypePicker();
+    if (selectedMeal != null && mounted) {
+      _replaceSelectedItem(item.copyWith(mealType: selectedMeal));
+    }
   }
 
   void _changeDateBy(int days) {
@@ -1019,6 +1088,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           unitLabel: unitLabel,
           isManual: true,
           nutrition: result.nutrition,
+          recordDate: _selectedDate,
+          mealType: _mealType,
         ),
       );
     });
@@ -1048,11 +1119,11 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       for (final item in _selectedItems) {
         final result = await _dietService.createDietRecord(
           dishName: item.name,
-          mealType: _mealType,
+          mealType: item.mealType,
           amount: item.amount,
           nutrition: item.totalNutrition.toNutritionText(),
           description: '${item.isManual ? '手動新增' : '系統搜尋'}（${item.unitLabel}）',
-          mealDate: _selectedDate,
+          mealDate: item.recordDate,
           fetchNutritionIfMissing: false,
           type: item.isManual ? 'MANUAL' : null,
         );
@@ -1088,7 +1159,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             builder: (context) => ElfFeedingPage(
               imagePath: firstImagePath ?? '',
               items: elfItems,
-              recordDate: _selectedDate,
+              recordDate: _selectedItems.first.recordDate,
             ),
           ),
         );
@@ -1576,8 +1647,15 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
   }
 
-  void _showMealPicker() {
-    showModalBottomSheet<void>(
+  Future<void> _showMealPicker() async {
+    final selectedMeal = await _showMealTypePicker();
+    if (selectedMeal != null && mounted) {
+      setState(() => _mealType = selectedMeal);
+    }
+  }
+
+  Future<String?> _showMealTypePicker() {
+    return showModalBottomSheet<String>(
       context: context,
       builder: (context) => SafeArea(
         child: Column(
@@ -1586,10 +1664,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               .map(
                 (meal) => ListTile(
                   title: Text(meal, textAlign: TextAlign.center),
-                  onTap: () {
-                    setState(() => _mealType = meal);
-                    Navigator.pop(context);
-                  },
+                  onTap: () => Navigator.pop(context, meal),
                 ),
               )
               .toList(),
