@@ -63,7 +63,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       navigatorKey: ApiClient.navigatorKey,
       debugShowCheckedModeBanner: false,
-      title: 'Food App',
+      title: '食伴',
       theme: ThemeData(
         appBarTheme: const AppBarTheme(
           systemOverlayStyle: SystemUiOverlayStyle(
