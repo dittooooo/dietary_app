@@ -163,8 +163,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       }
     }
 
-    // 1. 智慧判斷語音辨識 Locale 語系（優先尋找台灣/繁體中文 TW / Hant / HK）
-    String localeId = 'zh_TW';
+    // 1. 智慧判斷語音辨識 Locale 語系（優先尋找台灣/繁體中文 TW / Hant / HK，並規範使用 Android BCP-47 - 劃線格式）
+    String localeId = 'zh-TW';
     try {
       final availableLocales = await _speech.locales();
       // 第一優先：尋找包含 tw (台灣)、hant (繁體) 或 hk (香港) 的標籤
@@ -179,15 +179,16 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             final id = loc.localeId.toLowerCase();
             return id.contains('zh') || id.contains('cmn');
           },
-          orElse: () => stt.LocaleName('zh_TW', '繁體中文'),
+          orElse: () => stt.LocaleName('zh-TW', '繁體中文'),
         ),
       );
-      localeId = twLocale.localeId;
+      // 將底線 _ 轉換為 Android BCP-47 標準連字號 - (例如 zh_TW -> zh-TW, cmn_CN -> cmn-CN)，避免 Android 原生拒絕
+      localeId = twLocale.localeId.replaceAll('_', '-');
       debugPrint('🗣️ [SpeechToText] 優先選用台灣/繁體中文語系 Tag: $localeId');
     } catch (e) {
-      // 若查詢失敗，強制保留 zh_TW 讓 Google 開啟線上雲端中文辨識
-      localeId = 'zh_TW';
-      debugPrint('取得 SpeechToText Locales 失敗，強制使用預設 zh_TW: $e');
+      // 若查詢失敗，強制保留 zh-TW 讓 Google 開啟線上雲端中文辨識
+      localeId = 'zh-TW';
+      debugPrint('取得 SpeechToText Locales 失敗，強制使用預設 zh-TW: $e');
     }
 
     try {
@@ -196,7 +197,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用 Locale: $localeId');
       await _speech.listen(
         listenOptions: stt.SpeechListenOptions(
-          localeId: localeId, // 設定中文語系代碼
+          localeId: localeId, // 設定標準連字號 BCP-47 中文語系代碼 (如 zh-TW)
           partialResults: true, // 允許實時邊講邊回傳文字片段
           cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
           listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
@@ -220,15 +221,40 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         },
       );
     } catch (e) {
-      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗: $e');
-      if (mounted) {
-        setState(() => _isListening = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('語音輸入失敗，請重新再試一次。'),
-            duration: Duration(seconds: 2),
+      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗，嘗試退回系統預設語言: $e');
+      // 雙層降級保護：若指定語系失敗，退回使用 null (手機系統預設語言)
+      try {
+        await _speech.listen(
+          listenOptions: const stt.SpeechListenOptions(
+            localeId: null, // 退回手機系統預設語言（台灣手機預設即為繁體中文）
+            partialResults: true,
+            cancelOnError: false,
+            listenMode: stt.ListenMode.dictation,
           ),
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 6),
+          onResult: (result) {
+            if (!mounted || !_isListening) return;
+            if (result.recognizedWords.isNotEmpty) {
+              setState(() {
+                _inputController.text = result.recognizedWords;
+                _inputController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _inputController.text.length),
+                );
+              });
+            }
+          },
         );
+      } catch (e2) {
+        if (mounted) {
+          setState(() => _isListening = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('語音輸入失敗，請重新再試一次。'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
     }
   }
