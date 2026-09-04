@@ -8,6 +8,7 @@ import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.UnauthorizedException;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.ProblemFeedbackRepository;
+import com.tku.dietary_app.repository.UserCustomDishRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AuthService {
     private final UserProfileRepository userProfileRepository;
     private final DietRecordRepository dietRecordRepository;
     private final ProblemFeedbackRepository problemFeedbackRepository;
+    private final UserCustomDishRepository userCustomDishRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -104,8 +106,10 @@ public class AuthService {
 
         dietRecordRepository.deleteByUserId(user.getId());
         problemFeedbackRepository.deleteByUserId(user.getId());
+        userCustomDishRepository.deleteByUserId(user.getId());
         dietRecordRepository.flush();
         problemFeedbackRepository.flush();
+        userCustomDishRepository.flush();
 
         userProfileRepository.findByUser(user)
                 .ifPresent(profile -> {

@@ -6,6 +6,7 @@ import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.ProblemFeedbackRepository;
+import com.tku.dietary_app.repository.UserCustomDishRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import com.tku.dietary_app.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,7 @@ public class AdminService {
     private final UserProfileRepository userProfileRepository;
     private final DietRecordRepository dietRecordRepository;
     private final ProblemFeedbackRepository problemFeedbackRepository;
+    private final UserCustomDishRepository userCustomDishRepository;
     private final PasswordEncoder passwordEncoder;
     private final BodyMetricsService bodyMetricsService;
 
@@ -151,8 +153,10 @@ public class AdminService {
         if (user != null) {
             dietRecordRepository.deleteByUserId(user.getId());
             problemFeedbackRepository.deleteByUserId(user.getId());
+            userCustomDishRepository.deleteByUserId(user.getId());
             dietRecordRepository.flush();
             problemFeedbackRepository.flush();
+            userCustomDishRepository.flush();
         }
 
         userProfileRepository.delete(profile);

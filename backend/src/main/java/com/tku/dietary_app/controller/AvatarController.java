@@ -46,13 +46,13 @@ public class AvatarController {
     @PostMapping("/api/admin/users/{userId}/avatar")
     public ResponseEntity<ApiResponse<String>> uploadUserAvatar(@PathVariable Long userId,
                                                                 @RequestParam("file") MultipartFile file) {
-        return saveAvatar(file, userId);
+        UserProfile profile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料 (userId: " + userId + ")"));
+        return saveAvatar(file, profile);
     }
 
-    private ResponseEntity<ApiResponse<String>> saveAvatar(MultipartFile file, Long userId) {
-        UserProfile profile = userProfileRepository.findByUserId(userId)
-                .or(() -> userProfileRepository.findById(userId))
-                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料 (id/userId: " + userId + ")"));
+    private ResponseEntity<ApiResponse<String>> saveAvatar(MultipartFile file, UserProfile profile) {
+        Long userId = profile.getUser().getId();
 
         try {
             Path dir = Paths.get(uploadDir);
@@ -63,6 +63,13 @@ public class AvatarController {
         } catch (IOException e) {
             throw new IllegalStateException("頭像儲存失敗", e);
         }
+    }
+
+    private ResponseEntity<ApiResponse<String>> saveAvatar(MultipartFile file, Long userId) {
+        UserProfile profile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料 (userId: " + userId + ")"));
+
+        return saveAvatar(file, profile);
     }
 
     private User getAuthenticatedUser() {
