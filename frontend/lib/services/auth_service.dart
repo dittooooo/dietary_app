@@ -78,9 +78,9 @@ class AuthService {
           ? data['data'] as Map<String, dynamic>
           : data;
 
-      if (response.statusCode == 200 &&
-          userData is Map<String, dynamic> &&
-          userData.isNotEmpty) {
+      // 註解說明：原先此處包含 `userData is Map<String, dynamic>`，但因上方已推導 userData 為 Map<String, dynamic> 型態，
+      // 導致該型別檢查恆為 true (flutter analyze: unnecessary_type_check)，故已簡化保留 `userData.isNotEmpty`。
+      if (response.statusCode == 200 && userData.isNotEmpty) {
         await _cacheUserProfile(userData);
         await prefs.setBool(needsOnboardingKey, false);
         return {'success': true, 'data': userData};

@@ -268,14 +268,37 @@ class DietService {
     }
 
     Map<String, double?> parsedNutrition = _parseNutrition(nutrition);
+    bool fetchedFromAgent = false;
+
+    // 若未傳入營養資訊且允許自動補全，向後端 Agent 查詢單份營養數值 (1份的熱量與三大營養素)
     if (fetchNutritionIfMissing && parsedNutrition['calories'] == null) {
       final fetchedNut = await fetchDishNutrition(dishName);
       if (fetchedNut['calories'] != null) {
         parsedNutrition = fetchedNut;
+        fetchedFromAgent = true;
       }
     }
 
     final int intAmount = _parseAmount(amount);
+
+    // 當輸入份量大於 1，且營養數值來自 Agent 查詢 (1份標準量) 或傳入字串未預先換算時，
+    // 將熱量與三大營養素乘以份量 (intAmount)，避免後端少算營養價值
+    if (intAmount > 1 && (fetchedFromAgent || nutrition.trim().isEmpty)) {
+      parsedNutrition = {
+        'calories': parsedNutrition['calories'] != null
+            ? parsedNutrition['calories']! * intAmount
+            : null,
+        'protein': parsedNutrition['protein'] != null
+            ? parsedNutrition['protein']! * intAmount
+            : null,
+        'fat': parsedNutrition['fat'] != null
+            ? parsedNutrition['fat']! * intAmount
+            : null,
+        'carbohydrates': parsedNutrition['carbohydrates'] != null
+            ? parsedNutrition['carbohydrates']! * intAmount
+            : null,
+      };
+    }
 
     String apiMealType = _mealTypeForApi(mealType);
     String apiDescription = description;
@@ -496,10 +519,19 @@ class DietService {
       questionType = 'single_dish';
     }
 
+    // 提取使用者問題中的菜色名稱，轉為包含 dish_name 與 amount (預設1份) 的結構化物件陣列
+    final dishInfoList = dishNames
+        .map((name) => {
+              'dish_name': name,
+              'amount': 1,
+            })
+        .toList();
+
     final Map<String, dynamic> payload = {
       'question': normalizedQuestion,
       'question_type': questionType,
-      'dish_names': dishNames,
+      'dish_info_list': dishInfoList, // 後端要求的菜色資訊清單 (含 dish_name 與 amount)
+      'dish_names': dishNames,        // 保留舊欄位以向下相容
       'user_profile': {
         'height_cm': prefs.getDouble('user_height'),
         'weight_kg': prefs.getDouble('user_weight'),
@@ -520,23 +552,36 @@ class DietService {
 
     final records = await _buildWeeklyDietRecords();
     if (records.isNotEmpty) {
-      payload['weekly_diet_records'] = records;
+      payload['weekly_records'] = records;       // 後端要求的新版每週紀錄欄位名稱
+      payload['weekly_diet_records'] = records;  // 保留舊欄位以向下相容
     }
 
     return payload;
   }
 
+  /// 建立每週飲食紀錄格式，包含結構化菜色資訊 (含 dish_name 與 amount)
   Future<List<Map<String, dynamic>>> _buildWeeklyDietRecords() async {
     final records = await getMyDietRecords();
     return records.take(7).map((record) {
       final rawDate =
           record['date'] ?? record['mealDate'] ?? record['createdAt'];
+      final dishName = (record['dishName'] ?? record['dish_name'] ?? '').toString();
+      final recordAmount = _parseAmount(record['amount']);
       return {
         'date': _normalizeRecordDate(rawDate),
         'meal': _mealTypeForApi(
           '${record['mealType'] ?? record['meal'] ?? ''}',
         ),
-        'dish_name': record['dishName'] ?? record['dish_name'] ?? '',
+        'dish_name': dishName,
+        'amount': recordAmount,
+        'dish_info_list': dishName.isNotEmpty
+            ? [
+                {
+                  'dish_name': dishName,
+                  'amount': recordAmount,
+                }
+              ]
+            : [],
         'note': record['description'] ?? record['note'] ?? '',
       }..removeWhere((key, value) => value == null || value == '');
     }).toList();

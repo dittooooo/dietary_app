@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_project/color/app_colors.dart';
 import 'package:my_project/core/api_client.dart';
 import 'package:my_project/services/auth_service.dart';
-import 'package:my_project/views/auth/initial_info_page.dart';
 import 'package:my_project/views/auth/login_page.dart';
 import 'package:my_project/views/home/home_page.dart';
 
