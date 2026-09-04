@@ -157,7 +157,7 @@ public class DietRecordController {
                 if (!(item instanceof Map<?, ?> itemMap)) {
                     throw new IllegalArgumentException("陣列中的每筆飲食紀錄格式不正確");
                 }
-                requests.addAll(parseSingleRequestWithSplit(itemMap));
+                requests.add(parseSingleRequest(itemMap, null));
             }
             return requests;
         }
@@ -170,41 +170,14 @@ public class DietRecordController {
                     if (!(item instanceof Map<?, ?> itemMap)) {
                         throw new IllegalArgumentException("dish_info_list 中的每筆紀錄格式不正確");
                     }
-                    requests.addAll(parseSingleRequestWithSplit(itemMap));
+                    requests.add(parseSingleRequest(itemMap, null));
                 }
                 return requests;
             }
-            return parseSingleRequestWithSplit(map);
+            return List.of(parseSingleRequest(map, null));
         }
 
         throw new IllegalArgumentException("請提供正確的飲食紀錄資料格式");
-    }
-
-    private List<DietRecordRequest> parseSingleRequestWithSplit(Map<?, ?> item) {
-        if (item == null || item.isEmpty()) {
-            throw new IllegalArgumentException("飲食紀錄資料不可為空");
-        }
-
-        String rawDishName = readText(item, "dish_name", "dishName");
-        if (rawDishName == null || rawDishName.isBlank()) {
-            return List.of(parseSingleRequest(item, null));
-        }
-
-        String[] dishNames = rawDishName.split("[,，]");
-        List<DietRecordRequest> requests = new ArrayList<>();
-
-        for (String name : dishNames) {
-            String trimmedName = name.trim();
-            if (!trimmedName.isEmpty()) {
-                requests.add(parseSingleRequest(item, trimmedName));
-            }
-        }
-
-        if (requests.isEmpty()) {
-            return List.of(parseSingleRequest(item, null));
-        }
-
-        return requests;
     }
 
     private DietRecordRequest parseSingleRequest(Map<?, ?> item, String overrideDishName) {
