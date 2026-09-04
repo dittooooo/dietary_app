@@ -1,13 +1,25 @@
 # 前端對接 Companion Agent 修改規劃說明書 (connect_frontend_to_companion.md)
 
-本文件依據 [frontendConnectcompanion.md](file:///c:/Users/User/Documents/Github_Repo/dietary_app/companion/doc/frontendConnectcompanion.md) 與 [connect.md](file:///c:/Users/User/Documents/Github_Repo/dietary_app/connect.md) 規格撰寫，**僅作為改碼依據說明檔案，未經確認不會更動任何程式碼**。
+> 本文件是 Companion Agent 的對接規格與實作備忘錄，不是服務程式碼；已由 `services/` 移至 `lib/文件/` 保存。內容中的行號、原始碼片段與批次狀態屬於歷史規劃，重新開發前必須以目前原始碼和後端契約重新驗證。
+
+本文件依據專案外部的 `companion/doc/frontendConnectcompanion.md` 與 `connect.md` 規格撰寫；這兩份來源目前不在本 checkout，使用前需重新取得並驗證。**本文件僅作為改碼依據說明檔案，未經確認不會更動任何程式碼**。
 以下詳細列出連線至 Companion Agent (Port 3000) 預計修改的 **4 個檔案**、**修改行號範圍**、**原程式碼與預計更動程式碼**，以及 **`meal_record` 飲食草稿彈窗 (Dialog) 互動與持久化儲存流程**。
+
+## 文件待作清單
+
+| 狀態 | 待作項目 | 優先度 | 實作難易度 |
+| :--- | :--- | :--- | :--- |
+| [ ] | 重新取得並確認外部 Companion 規格文件 | 優先度中 | 難易度簡單 |
+| [ ] | 以目前 API 與 Dart 程式重新核對本文行號及程式碼片段 | 優先度中 | 難易度中 |
+| [ ] | 確認 Companion 對話、飲食草稿與主後端寫入流程的資料契約 | 優先度中 | 難易度中 |
+
+本文件是歷史對接說明，不是目前已核准的改碼清單；在上述確認完成前，不應直接依本文修改程式。
 
 ---
 
 ## 📁 修改檔案 1: `frontend/lib/config/api_config.dart`
 
-* **檔案路徑**：[api_config.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/config/api_config.dart)
+* **檔案路徑**：[api_config.dart](../config/api_config.dart)
 * **修改目的**：新增 Companion Agent 後端服務 (Port 3000) 的動態 Base URL 取得邏輯（相容 Web、Android 模擬器與桌面版）。
 
 ### 📍 修改位置與逐行程式碼對照：
@@ -31,7 +43,7 @@
 
 ## 📁 修改檔案 2: `frontend/lib/core/api_client.dart`
 
-* **檔案路徑**：[api_client.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/core/api_client.dart)
+* **檔案路徑**：[api_client.dart](../core/api_client.dart)
 * **修改目的**：
   1. 允許 `_resolveUrl` 接收完整 `http://` / `https://` 開頭的 URL，以便發送請求至 Port 3000。
   2. 調整 `_checkResponse`，當 Companion API (Port 3000 或 `/companion/`) 回傳 401/403 時不觸發全域強迫登出彈窗，改由業務層自行處理。
@@ -108,7 +120,7 @@
 
 ## 📁 修改檔案 3: `frontend/lib/services/diet_service.dart`
 
-* **檔案路徑**：[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)
+* **檔案路徑**：[diet_service.dart](../services/diet_service.dart)
 * **修改目的**：
   1. 匯入 `api_config.dart`。
   2. 新增與 Companion Agent (`POST /companion/ask`) 發送對話的 service 方法 `sendCompanionUserPrompt`。
@@ -280,7 +292,7 @@ import '../utils/profile_value_mapper.dart';
 
 ## 📁 修改檔案 4: `frontend/lib/views/home/home_view.dart`
 
-* **檔案路徑**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
+* **檔案路徑**：[home_view.dart](../views/home/home_view.dart)
 * **修改目的**：
   1. 將首頁對話面板的訊息傳送邏輯（`_handleMessage`），切換為呼叫 `DietService().sendCompanionUserPrompt(text)`，並將回傳的 `companion_reply` 渲染至精靈對話氣泡中。
   2. 新增 `intent_category == "meal_record"` 判斷，若包含草稿陣列則自動呼叫 `_showMealRecordDraftDialog()` 跳出飲食草稿確認卡片彈窗。
@@ -442,7 +454,7 @@ import '../utils/profile_value_mapper.dart';
 
 ### 2. 在 `_HomeViewState` 內預計新增之 `_showMealRecordDraftDialog` 方法程式碼
 
-此可編輯版彈窗方法將替換原本 [home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart) 的唯讀版本：
+此可編輯版彈窗方法將替換原本 [home_view.dart](../views/home/home_view.dart) 的唯讀版本：
 
 ```dart
   /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者自行修正餐期、餐點名稱與數量
@@ -750,15 +762,15 @@ import '../utils/profile_value_mapper.dart';
 ## 🚀 階段性實作批次規劃總覽 (Batch Implementation Roadmap)
 
 - **✅ 批次一 (已完成實作)**：基礎 API 連線與 Service 方法建置
-  - **[api_config.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/config/api_config.dart)**：新增 `companionBaseUrl` 靜態 Getter。
-  - **[api_client.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/core/api_client.dart)**：支援完整 URL 解析，並過濾 Port 3000 全域登出彈窗。
-  - **[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)**：新增 `sendCompanionUserPrompt` 對接 `/companion/ask`。
+  - **[api_config.dart](../config/api_config.dart)**：新增 `companionBaseUrl` 靜態 Getter。
+  - **[api_client.dart](../core/api_client.dart)**：支援完整 URL 解析，並過濾 Port 3000 全域登出彈窗。
+  - **[diet_service.dart](../services/diet_service.dart)**：新增 `sendCompanionUserPrompt` 對接 `/companion/ask`。
 
 - **✅ 批次二 (已完成實作)**：基礎 UI 與彈窗互動層對接
-  - **[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)**：`_handleMessage` 訊息發送、氣泡渲染與 `_showMealRecordDraftDialog` 基礎彈窗流程。
+  - **[home_view.dart](../views/home/home_view.dart)**：`_handleMessage` 訊息發送、氣泡渲染與 `_showMealRecordDraftDialog` 基礎彈窗流程。
 
 - **✅ 批次三 (待確認後執行)**：處理「可編輯草稿模式 (Editable Draft Mode)」
-  - **目標檔案**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
+  - **目標檔案**：[home_view.dart](../views/home/home_view.dart)
   - **細節說明**：
     1. 將 `_showMealRecordDraftDialog` 升級為動態可編輯草稿彈窗。
     2. 加入親切語氣提示文字：`'陪伴精靈已為您整理出以下飲食草稿啦~\n請確認紀錄是否正確\n修正完畢後，請按下確認儲存'`。
@@ -769,11 +781,11 @@ import '../utils/profile_value_mapper.dart';
     7. **本地狀態同步**：建立 `editableRecords` 深拷貝本地狀態，使用者修正時即時覆蓋狀態，按下「確認儲存」時讀取最新修正數據寫入 DB。
 
 - **✅ 批次四 (已完成實作)**：處理 `DietService` 後續 `createDietRecord` 重構與呼叫端調整
-  - **目標檔案 1**：[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)
+  - **目標檔案 1**：[diet_service.dart](../services/diet_service.dart)
     - 將 `createDietRecord` 參數重新定義為三大核心必填欄位：`dishName` (必填), `mealType` (必填), `amount` (必填)，並將 `description` 設為選填（預設 `''`）。
-  - **目標檔案 2**：[home_view.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/home/home_view.dart)
+  - **目標檔案 2**：[home_view.dart](../views/home/home_view.dart)
     - 更新 `_showMealRecordDraftDialog` 中的 API 呼叫，將引數 `portions:` 改為 `amount: '$qty $unit'.trim()`。
-  - **目標檔案 3**：[manual_record_page.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/views/records/manual_record_page.dart)
+  - **目標檔案 3**：[manual_record_page.dart](../views/records/manual_record_page.dart)
     - 更新第 190 行手動記錄頁面中的 `createDietRecord` 引數，將 `portions:` 改為 `amount:`。
 
 ---
@@ -781,17 +793,17 @@ import '../utils/profile_value_mapper.dart';
 ## 🔗 延伸檔案與補充說明 (Extended File References & Explanation)
 
 ### 1. 為何是 `DietService().createDietRecord(...)`？
-在 Flutter 前端專案中，所有的飲食紀錄資料庫操作（包含新增、查詢、修改、刪除紀錄）都被統一封裝在 [diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart) 的 `DietService` 類別中。
+在 Flutter 前端專案中，所有的飲食紀錄資料庫操作（包含新增、查詢、修改、刪除紀錄）都被統一封裝在 [diet_service.dart](../services/diet_service.dart) 的 `DietService` 類別中。
 當使用者在草稿彈窗點擊「確認儲存」時，前端直接調用 `DietService().createDietRecord(...)` 即可將使用者核對修正後的草稿資料傳送給主後端寫入資料庫。
 ---
 ### 2. 真的有 `POST /api/diet-records` 這個 Endpoint 嗎？在哪些檔案可以看到？
 **是的，`POST /api/diet-records` 是前端與 Spring Boot 主後端 (Port 8080) 之間正式定義並使用的持久化寫入 API 端點。**
 您可以在以下檔案中看到完整的定義與拼裝邏輯：
-1. **[diet_service.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/services/diet_service.dart)（第 119~188 行）**
+1. **[diet_service.dart](../services/diet_service.dart)（第 119~188 行）**
    - 在 `createDietRecord` 方法中，呼叫 `_client.post('/diet-records', ...)` 發送新增飲食紀錄的請求。
-2. **[api_config.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/config/api_config.dart)（第 14、20、23 行）**
+2. **[api_config.dart](../config/api_config.dart)（第 14、20、23 行）**
    - 定義主後端 (Port 8080) 的 API Base URL 為 `'http://localhost:8080/api'`。
-3. **[api_client.dart](file:///c:/Users/User/Documents/Github_Repo/dietary_app/frontend/lib/core/api_client.dart)（第 15~21 行）**
+3. **[api_client.dart](../core/api_client.dart)（第 15~21 行）**
    - `_resolveUrl('/diet-records')` 會自動將 `ApiConfig.baseUrl` (`http://localhost:8080/api`) 與 `/diet-records` 組合，拼出完整的 Endpoint URL：**`http://localhost:8080/api/diet-records`**。
-4. **[connect.md](file:///c:/Users/User/Documents/Github_Repo/dietary_app/connect.md)（第 68、222、235、271 行）**
+4. **`connect.md`（專案外部規格檔，原第 68、222、235、271 行；需重新取得）**
    - 專案對接規格清單中，詳細記載了 Companion Agent 解析出草稿後，前端最終透過呼叫 `DietService.createDietRecord()` 將資料傳入 `POST /api/diet-records` 並持久化至 PostgreSQL 資料庫。

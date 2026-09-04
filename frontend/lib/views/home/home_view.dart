@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // [代碼清理/Lint修正] 移除重複匯入的 dart:ui，因為 material.dart 已涵蓋相關 UI 元素與型態定義
 import 'dart:convert';
@@ -28,7 +28,8 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver {
+class _HomeViewState extends State<HomeView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   static bool _hasCheckedBodyTransitionOnStartup = false;
   static const Set<String> _dietRecordRelatedIntents = {
     'daily_diet_report',
@@ -45,7 +46,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   final AuthService _authService = AuthService();
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
-  
+
   late stt.SpeechToText _speech; // 語音轉文字 (SpeechToText) 服務實例
   bool _isListening = false; // 紀錄目前是否正處於語音收聽/錄音狀態
   bool _speechAvailable = false; // 紀錄語音辨識服務是否已被順利初始化且可用
@@ -55,9 +56,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   String _userNickname = '使用者';
   String _petType = '米粒(Mili)';
   // String _dietGoal = '養生'; // 未使用，先註解
-  
+
   List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
-  List<Map<String, String>> _tempStory = []; // 前端託管最近最多 3 則訊息 ([{role: 'user'|'assistant', content: '...'}])
+  List<Map<String, String>> _tempStory =
+      []; // 前端託管最近最多 3 則訊息 ([{role: 'user'|'assistant', content: '...'}])
   DateTime? _lastUpdateTime; // 最後互動時間戳，供 24h 閒置檢測比對
 
   String _stripEmojis(String text) {
@@ -66,7 +68,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       unicode: true,
     );
     String result = text.replaceAll(regex, '');
-    result = result.replaceAll(RegExp(r'[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF]'), '');
+    result = result.replaceAll(
+      RegExp(r'[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF]'),
+      '',
+    );
     return result.trim();
   }
 
@@ -81,7 +86,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
 
     _speech = stt.SpeechToText(); // 建立語音轉文字元件實例
     // 語音引擎延遲至點擊時初始化，避免在 initState 阻塞主 UI 執行緒造成 ANR 凍結
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       SystemChannels.textInput.invokeMethod('TextInput.hide');
       FocusManager.instance.primaryFocus?.unfocus();
@@ -105,26 +110,30 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   // === 2. 語音辨識與文字輸入邏輯 (SpeechToText & Text Input) ===
   Future<bool> _initSpeech() async {
     try {
-      _speechAvailable = await _speech.initialize(
-        onStatus: (status) {
-          debugPrint('🗣️ [SpeechToText Status] $status');
-          // 語音辨識結束或停止收聽時，自動更新 UI 狀態
-          if (status == 'done' || status == 'notListening') {
-            if (mounted) setState(() => _isListening = false);
-          }
-        },
-        onError: (errorNotification) {
-          debugPrint('⚠️ [SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})');
-          // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
-          if (mounted) setState(() => _isListening = false);
-        },
-      ).timeout(
-        const Duration(seconds: 4),
-        onTimeout: () {
-          debugPrint('⚠️ [SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
-          return false;
-        },
-      );
+      _speechAvailable = await _speech
+          .initialize(
+            onStatus: (status) {
+              debugPrint('🗣️ [SpeechToText Status] $status');
+              // 語音辨識結束或停止收聽時，自動更新 UI 狀態
+              if (status == 'done' || status == 'notListening') {
+                if (mounted) setState(() => _isListening = false);
+              }
+            },
+            onError: (errorNotification) {
+              debugPrint(
+                '⚠️ [SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})',
+              );
+              // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
+              if (mounted) setState(() => _isListening = false);
+            },
+          )
+          .timeout(
+            const Duration(seconds: 4),
+            onTimeout: () {
+              debugPrint('⚠️ [SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
+              return false;
+            },
+          );
       debugPrint('🗣️ [SpeechToText] 初始化成功狀態: $_speechAvailable');
     } catch (e) {
       debugPrint('❌ [SpeechToText] 初始化失敗: $e');
@@ -174,13 +183,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           return id.contains('tw') || id.contains('hant') || id.contains('hk');
         },
         // 第二優先：退回尋找一般中文標籤 (如 zh 或 cmn)
-        orElse: () => availableLocales.firstWhere(
-          (loc) {
-            final id = loc.localeId.toLowerCase();
-            return id.contains('zh') || id.contains('cmn');
-          },
-          orElse: () => stt.LocaleName('zh-TW', '繁體中文'),
-        ),
+        orElse: () => availableLocales.firstWhere((loc) {
+          final id = loc.localeId.toLowerCase();
+          return id.contains('zh') || id.contains('cmn');
+        }, orElse: () => stt.LocaleName('zh-TW', '繁體中文')),
       );
       // 將底線 _ 轉換為 Android BCP-47 標準連字號 - (例如 zh_TW -> zh-TW, cmn_CN -> cmn-CN)，避免 Android 原生拒絕
       localeId = twLocale.localeId.replaceAll('_', '-');
@@ -203,9 +209,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
         ),
         listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
-        pauseFor: const Duration(seconds: 6),   // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
+        pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
         onResult: (result) {
-          debugPrint('🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})');
+          debugPrint(
+            '🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
+          );
           // 若已非收聽狀態（例如已關閉或已送出訊息），忽略殘餘非同步回傳，避免覆蓋已清空的輸入框
           if (!mounted || !_isListening) return;
           if (result.recognizedWords.isNotEmpty) {
@@ -222,11 +230,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       );
     } catch (e) {
       debugPrint('❌ [SpeechToText] 啟動語音收聽失敗，嘗試退回系統預設語言: $e');
-      // 雙層降級保護：若指定語系失敗，退回使用 null (手機系統預設語言)
       try {
         await _speech.listen(
-          listenOptions: const stt.SpeechListenOptions(
-            localeId: null, // 退回手機系統預設語言（台灣手機預設即為繁體中文）
+          listenOptions: stt.SpeechListenOptions(
+            localeId: null,
             partialResults: true,
             cancelOnError: false,
             listenMode: stt.ListenMode.dictation,
@@ -273,8 +280,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final rawKey = (email != null && email.trim().isNotEmpty)
         ? email.trim().toLowerCase()
         : ((nickname != null && nickname.trim().isNotEmpty)
-            ? nickname.trim().toLowerCase()
-            : 'default');
+              ? nickname.trim().toLowerCase()
+              : 'default');
     return rawKey;
   }
 
@@ -292,7 +299,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     if (storyJson != null) {
       try {
         final List<dynamic> decoded = jsonDecode(storyJson);
-        _tempStory = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+        _tempStory = decoded
+            .map((e) => Map<String, String>.from(e as Map))
+            .toList();
       } catch (e) {
         debugPrint('載入 temp_story_$userKey 快取失敗: $e');
         _tempStory = [];
@@ -337,7 +346,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       _messages = [
         {
           'isElf': true,
-          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'
+          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！',
         },
       ];
       _tempStory.clear();
@@ -356,7 +365,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final prefs = await SharedPreferences.getInstance();
     final userKey = await _getUserStorageKey();
     await prefs.setString('temp_story_$userKey', jsonEncode(_tempStory));
-    await prefs.setInt('last_update_time_$userKey', _lastUpdateTime!.millisecondsSinceEpoch);
+    await prefs.setInt(
+      'last_update_time_$userKey',
+      _lastUpdateTime!.millisecondsSinceEpoch,
+    );
   }
 
   /// 內嵌於 home_view.dart 中的「開啟新話題」按鈕 UI
@@ -395,8 +407,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
     final cachedEmail = prefs.getString('user_email') ?? '';
-    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN' || cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
-    String nick = prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
+    final bool isCachedAdmin =
+        cachedRole == 'ROLE_ADMIN' ||
+        cachedRole == 'ADMIN' ||
+        cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
+    String nick =
+        prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
     if (isCachedAdmin && (nick == 'aaa' || nick == '使用者')) {
       nick = '系統管理員';
     }
@@ -407,13 +423,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       _messages = [
         {
-          'isElf': true, 
-          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！'
+          'isElf': true,
+          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！',
         },
       ];
     });
     await _loadTempStoryFromStorage();
- 
+
     // 2. 向後端請求最新資料 (後端為主，保持同步)
     await _syncBodyStatus(prefs);
     if (!mounted) return;
@@ -424,12 +440,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       final String g = userData['dietGoal'] ?? userData['diet_goal'] ?? '養生';
       await prefs.setString('user_diet_goal', g);
 
-      final String? userRole = userData['user']?['role'] ?? userData['role'] ?? cachedRole;
-      final String userEmail = userData['email'] ?? userData['user']?['email'] ?? cachedEmail;
-      final bool isUserAdmin = userRole == 'ROLE_ADMIN' || userRole == 'ADMIN' || userEmail.trim().toLowerCase() == 'admin@gmail.com';
-      
+      final String? userRole =
+          userData['user']?['role'] ?? userData['role'] ?? cachedRole;
+      final String userEmail =
+          userData['email'] ?? userData['user']?['email'] ?? cachedEmail;
+      final bool isUserAdmin =
+          userRole == 'ROLE_ADMIN' ||
+          userRole == 'ADMIN' ||
+          userEmail.trim().toLowerCase() == 'admin@gmail.com';
+
       String fetchedNick = userData['nickname'] ?? '';
-      if (isUserAdmin && (fetchedNick.isEmpty || fetchedNick == 'aaa' || fetchedNick == '使用者')) {
+      if (isUserAdmin &&
+          (fetchedNick.isEmpty ||
+              fetchedNick == 'aaa' ||
+              fetchedNick == '使用者')) {
         fetchedNick = '系統管理員';
       } else if (fetchedNick.isEmpty) {
         fetchedNick = _userNickname;
@@ -441,7 +465,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         // _dietGoal = g; // 未使用，先註解
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) {
-          _messages[0]['text'] = '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！';
+          _messages[0]['text'] =
+              '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！';
         }
       });
       prefs.setString('user_nickname', _userNickname);
@@ -450,7 +475,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
 
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
-    
+
     // 0. Try date first (from backend record_date field)
     final dateVal = record['date'];
     if (dateVal != null) {
@@ -468,14 +493,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         } catch (_) {}
       } else if (dateVal is Map) {
         try {
-          final y = int.parse((dateVal['year'] ?? dateVal['yearValue']).toString());
-          final m = int.parse((dateVal['month'] ?? dateVal['monthValue']).toString());
-          final d = int.parse((dateVal['day'] ?? dateVal['dayOfMonth']).toString());
+          final y = int.parse(
+            (dateVal['year'] ?? dateVal['yearValue']).toString(),
+          );
+          final m = int.parse(
+            (dateVal['month'] ?? dateVal['monthValue']).toString(),
+          );
+          final d = int.parse(
+            (dateVal['day'] ?? dateVal['dayOfMonth']).toString(),
+          );
           return DateTime(y, m, d);
         } catch (_) {}
       }
     }
-    
+
     // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
@@ -493,14 +524,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         } catch (_) {}
       } else if (mealDateVal is Map) {
         try {
-          final y = int.parse((mealDateVal['year'] ?? mealDateVal['yearValue']).toString());
-          final m = int.parse((mealDateVal['month'] ?? mealDateVal['monthValue']).toString());
-          final d = int.parse((mealDateVal['day'] ?? mealDateVal['dayOfMonth']).toString());
+          final y = int.parse(
+            (mealDateVal['year'] ?? mealDateVal['yearValue']).toString(),
+          );
+          final m = int.parse(
+            (mealDateVal['month'] ?? mealDateVal['monthValue']).toString(),
+          );
+          final d = int.parse(
+            (mealDateVal['day'] ?? mealDateVal['dayOfMonth']).toString(),
+          );
           return DateTime(y, m, d);
         } catch (_) {}
       }
     }
-    
+
     // 2. Fallback to createdAt
     final createdAtVal = record['createdAt'];
     if (createdAtVal != null) {
@@ -513,9 +550,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           final y = int.parse(createdAtVal[0].toString());
           final m = int.parse(createdAtVal[1].toString());
           final d = int.parse(createdAtVal[2].toString());
-          final h = createdAtVal.length > 3 ? int.parse(createdAtVal[3].toString()) : 0;
-          final min = createdAtVal.length > 4 ? int.parse(createdAtVal[4].toString()) : 0;
-          final s = createdAtVal.length > 5 ? int.parse(createdAtVal[5].toString()) : 0;
+          final h = createdAtVal.length > 3
+              ? int.parse(createdAtVal[3].toString())
+              : 0;
+          final min = createdAtVal.length > 4
+              ? int.parse(createdAtVal[4].toString())
+              : 0;
+          final s = createdAtVal.length > 5
+              ? int.parse(createdAtVal[5].toString())
+              : 0;
           return DateTime(y, m, d, h, min, s);
         } catch (_) {}
       }
@@ -525,13 +568,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
 
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0.0;
-    
+
     final nutrition = record['nutrition'];
     if (nutrition != null) {
       if (nutrition is Map) {
         final calVal = nutrition['calories'];
         if (calVal != null) {
-          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(calVal.toString());
+          final numMatch = RegExp(
+            r'(\d+(?:\.\d+)?)',
+          ).firstMatch(calVal.toString());
           if (numMatch != null) {
             return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
           }
@@ -543,7 +588,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             if (nutritionStr.startsWith('{') && nutritionStr.endsWith('}')) {
               final parsed = jsonDecode(nutritionStr);
               if (parsed is Map && parsed.containsKey('calories')) {
-                final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(parsed['calories'].toString());
+                final numMatch = RegExp(
+                  r'(\d+(?:\.\d+)?)',
+                ).firstMatch(parsed['calories'].toString());
                 if (numMatch != null) {
                   return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
                 }
@@ -551,7 +598,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             }
           } catch (_) {}
 
-          final numRegExp = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?', caseSensitive: false);
+          final numRegExp = RegExp(
+            r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)?',
+            caseSensitive: false,
+          );
           final match = numRegExp.firstMatch(nutritionStr);
           if (match != null) {
             final val = double.tryParse(match.group(1) ?? '');
@@ -564,7 +614,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final dishName = record['dishName'] ?? '';
     final desc = record['description'] ?? '';
     final combined = '$dishName $desc';
-    final kcalMatch = RegExp(r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)', caseSensitive: false).firstMatch(combined);
+    final kcalMatch = RegExp(
+      r'(\d+(?:\.\d+)?)\s*(?:kcal|千卡|卡)',
+      caseSensitive: false,
+    ).firstMatch(combined);
     if (kcalMatch != null) {
       final val = double.tryParse(kcalMatch.group(1) ?? '');
       if (val != null) return val;
@@ -583,7 +636,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       englishKey = 'protein';
     } else if (pattern.contains('脂肪') || pattern.contains('fat')) {
       englishKey = 'fat';
-    } else if (pattern.contains('碳水') || pattern.contains('carbohydrate') || pattern.contains('carb')) {
+    } else if (pattern.contains('碳水') ||
+        pattern.contains('carbohydrate') ||
+        pattern.contains('carb')) {
       englishKey = 'carbohydrates';
     }
 
@@ -591,7 +646,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       if (englishKey.isNotEmpty) {
         final val = nutrition[englishKey];
         if (val != null) {
-          final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(val.toString());
+          final numMatch = RegExp(
+            r'(\d+(?:\.\d+)?)',
+          ).firstMatch(val.toString());
           if (numMatch != null) {
             return double.tryParse(numMatch.group(1) ?? '') ?? 0.0;
           }
@@ -600,7 +657,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     } else {
       final nutritionStr = nutrition.toString().trim();
       if (nutritionStr.isNotEmpty) {
-        final regExp = RegExp(pattern + r':\s*(\d+(?:\.\d+)?)', caseSensitive: false);
+        final regExp = RegExp(
+          pattern + r':\s*(\d+(?:\.\d+)?)',
+          caseSensitive: false,
+        );
         final match = regExp.firstMatch(nutritionStr);
         if (match != null) {
           return double.tryParse(match.group(1) ?? '') ?? 0.0;
@@ -632,7 +692,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final normalizedPrompt = prompt.trim().toLowerCase();
     final normalizedIntent = intent.trim().toLowerCase();
 
-    final asksAboutDate = normalizedPrompt.contains('今天') ||
+    final asksAboutDate =
+        normalizedPrompt.contains('今天') ||
         normalizedPrompt.contains('今日') ||
         normalizedPrompt.contains('當天') ||
         normalizedPrompt.contains('這天') ||
@@ -641,8 +702,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         normalizedPrompt.contains('前天');
     final intentNeedsDietRecord =
         _dietRecordRelatedIntents.contains(normalizedIntent) ||
-            normalizedIntent.contains('record') ||
-            normalizedIntent.contains('analysis');
+        normalizedIntent.contains('record') ||
+        normalizedIntent.contains('analysis');
     if (!asksAboutDate && !intentNeedsDietRecord) return false;
 
     return normalizedPrompt.contains('吃') ||
@@ -703,7 +764,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       final records = await DietService().getMyDietRecords();
       final reportDate = _dietReportDateForPrompt(prompt);
       final isToday = _isSameDate(reportDate, DateTime.now());
-      final dateLabel = isToday ? '今天' : '${reportDate.month}/${reportDate.day}';
+      final dateLabel = isToday
+          ? '今天'
+          : '${reportDate.month}/${reportDate.day}';
       final summary = _buildDietSummaryForDate(records, reportDate);
 
       if (!mounted) return;
@@ -727,12 +790,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   Future<void> _checkAndShowDietSummaryDialog() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now();
-    final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
     final userEmail = prefs.getString('user_email')?.trim().toLowerCase() ?? '';
     final userNick = prefs.getString('user_nickname')?.trim() ?? '';
-    final userKey = userEmail.isNotEmpty ? userEmail : (userNick.isNotEmpty ? userNick : 'default');
+    final userKey = userEmail.isNotEmpty
+        ? userEmail
+        : (userNick.isNotEmpty ? userNick : 'default');
     final summaryKey = 'last_shown_summary_date_$userKey';
-    
+
     // 檢查今天是否已經顯示過飲食總結彈窗（每人每天僅第一次開啟 app 時跳出）
     final lastShownDate = prefs.getString(summaryKey);
     if (lastShownDate == todayStr) {
@@ -743,7 +809,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     try {
       final records = await DietService().getMyDietRecords();
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      
+
       double totalCalories = 0;
       double totalProtein = 0;
       double totalFat = 0;
@@ -756,12 +822,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         if (rDate.year == yesterday.year &&
             rDate.month == yesterday.month &&
             rDate.day == yesterday.day) {
-          
           totalCalories += _getCaloriesFromRecord(record);
           totalProtein += _getNutrientFromRecord(record, r'(?:蛋白質|protein)');
           totalFat += _getNutrientFromRecord(record, r'(?:脂肪|fat)');
-          totalCarbs += _getNutrientFromRecord(record, r'(?:碳水化合物|碳水|carbohydrate|carbs)');
-          
+          totalCarbs += _getNutrientFromRecord(
+            record,
+            r'(?:碳水化合物|碳水|carbohydrate|carbs)',
+          );
+
           if (record['dishName'] != null) {
             yesterdayDishes.add(record['dishName'].toString());
           }
@@ -772,7 +840,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       debugPrint('=============================================');
       debugPrint('準備跳出昨日飲食總結彈窗！ User: $userKey, Dishes: $yesterdayDishes');
       debugPrint('=============================================');
-      
+
       // 紀錄今日已跳出飲食總結彈窗
       await prefs.setString(summaryKey, todayStr);
 
@@ -797,7 +865,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     try {
       final records = await DietService().getMyDietRecords();
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
-      
+
       double totalCalories = 0;
       double totalProtein = 0;
       double totalFat = 0;
@@ -866,7 +934,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           backgroundColor: AppColors.background,
           elevation: 10,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 16.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -879,9 +950,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     color: AppColors.textPrimary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // 小精靈 3D 動畫展示 (巨大化 3.2 Scale, 270px)
                 Center(
                   child: SizedBox(
@@ -913,7 +984,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     ),
                     child: const Text(
                       '太棒了，我知道了！',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -939,7 +1013,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     final String comment = dishes.isEmpty
         ? emptyComment ?? '昨天沒有記錄任何飲食。記得補記錄，我才能為您做評估喔。'
         : filledCommentBuilder?.call(dishes, calories) ??
-            '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
+              '昨天記錄了：${dishes.join('、')}。總熱量為 ${calories.toStringAsFixed(0)} kcal。請繼續保持健康飲食！';
 
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     FocusManager.instance.primaryFocus?.unfocus();
@@ -971,7 +1045,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           backgroundColor: AppColors.background,
           elevation: 10,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 16.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -984,9 +1061,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     color: AppColors.textPrimary,
                   ),
                 ),
-                
+
                 const SizedBox(height: 10),
-                
+
                 // 小精靈 (巨大化 3.2 Scale, 完整無裁剪 270px)
                 Center(
                   child: SizedBox(
@@ -1018,14 +1095,19 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 ),
 
                 const SizedBox(height: 8),
-                
+
                 // 精靈評語
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1035,7 +1117,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                           comment,
                           style: TextStyle(
                             fontSize: 11.5,
-                            color: AppColors.textPrimary.withValues(alpha: 0.85),
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.85,
+                            ),
                             height: 1.3,
                           ),
                         ),
@@ -1044,7 +1128,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   ),
                 ),
                 const SizedBox(height: 10),
-                
+
                 // 按鈕區
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
@@ -1128,8 +1212,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   // 根據小精靈名稱獲取對應圖標
   Future<void> _syncBodyStatus(SharedPreferences prefs) async {
     try {
-      final status = await _bodyStatusApi.getBodyStatus()
-          .timeout(const Duration(seconds: 6));
+      final status = await _bodyStatusApi.getBodyStatus().timeout(
+        const Duration(seconds: 6),
+      );
       await prefs.setString('dog_body_type', status.bodyType);
       if (!mounted) return;
       _dogController.setBodyTypeFromBackend(status.bodyType);
@@ -1148,10 +1233,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       }
 
       _hasCheckedBodyTransitionOnStartup = true;
-      final settlement = await _bodyStatusApi.settleDailyScores()
-          .timeout(const Duration(seconds: 8));
-      final oldBodyType = DogStateController.parseBodyType(settlement.oldBodyType);
-      final newBodyType = DogStateController.parseBodyType(settlement.newBodyType);
+      final settlement = await _bodyStatusApi.settleDailyScores().timeout(
+        const Duration(seconds: 8),
+      );
+      final oldBodyType = DogStateController.parseBodyType(
+        settlement.oldBodyType,
+      );
+      final newBodyType = DogStateController.parseBodyType(
+        settlement.newBodyType,
+      );
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('dog_body_type', settlement.bodyType);
@@ -1213,10 +1303,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String petType) {
     switch (petType) {
-      case '奶油皮丘': return const Color(0xFFD4A373); // Muted orange (retro)
-      case '薄荷兔兔': return const Color(0xFF8A9A5B); // Muted sage (retro)
-      case '草莓狐狸': return const Color(0xFFB07D62); // Muted terracotta (retro)
-      default: return AppColors.secondary;
+      case '奶油皮丘':
+        return const Color(0xFFD4A373); // Muted orange (retro)
+      case '薄荷兔兔':
+        return const Color(0xFF8A9A5B); // Muted sage (retro)
+      case '草莓狐狸':
+        return const Color(0xFFB07D62); // Muted terracotta (retro)
+      default:
+        return AppColors.secondary;
     }
   }
 
@@ -1230,7 +1324,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     }
   }
 
-  void _scrollToBottom() { // 新增：自動滾動對話清單到底部
+  void _scrollToBottom() {
+    // 新增：自動滾動對話清單到底部
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_chatScrollController.hasClients) {
         _chatScrollController.animateTo(
@@ -1245,10 +1340,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   void _showDogResponseThenIdle() {
     _dogController.setState(DogAnimationState.response);
     Future.delayed(const Duration(milliseconds: 1800), () {
-      if (!mounted || _dogController.state != DogAnimationState.response) return;
+      if (!mounted || _dogController.state != DogAnimationState.response)
+        return;
       _dogController.setState(DogAnimationState.idle);
     });
   }
+
   // === 5. AI 聊天訊息發送與 API 呼叫 (Chat API & Voice Processing) ===
   void _handleMessage(String text) {
     FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
@@ -1276,66 +1373,76 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     // 模擬回覆
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
-        _messages.add({
-          'isElf': true,
-          'text': '米粒正在思考中....',
-        });
+        _messages.add({'isElf': true, 'text': '米粒正在思考中....'});
       });
       _scrollToBottom();
-      
-      DietService().sendCompanionUserPrompt(text, tempStory: payloadHistory).then((res) {
-        _showDogResponseThenIdle();
-        setState(() {
-          if (_messages.isNotEmpty && _messages.last['text'] == '米粒正在思考中....') {
-            _messages.removeLast();
-          }
 
-          final reply = res['companion_reply'] ??
-              (res['data'] is Map ? res['data']['companion_reply'] : null);
+      DietService()
+          .sendCompanionUserPrompt(text, tempStory: payloadHistory)
+          .then((res) {
+            _showDogResponseThenIdle();
+            setState(() {
+              if (_messages.isNotEmpty &&
+                  _messages.last['text'] == '米粒正在思考中....') {
+                _messages.removeLast();
+              }
 
-          if (res['success'] == true && reply != null && reply.toString().isNotEmpty) {
-            final replyStr = reply.toString();
-            // 取得 AI 助手識別的意圖類別 (intent_category) 與歷史查詢日期 (query_date)
-            final intent = (res['intent_category'] ?? '').toString();
-            final queryDate = res['query_date']?.toString();
+              final reply =
+                  res['companion_reply'] ??
+                  (res['data'] is Map ? res['data']['companion_reply'] : null);
 
-            // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
-            final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
-            if (intent == 'meal_record' && mealRecords.isNotEmpty) {
-              _showMealRecordDraftDialog(context, mealRecords, userPrompt: text, delayedReply: replyStr);
-            } else {
+              if (res['success'] == true &&
+                  reply != null &&
+                  reply.toString().isNotEmpty) {
+                final replyStr = reply.toString();
+                // 取得 AI 助手識別的意圖類別 (intent_category) 與歷史查詢日期 (query_date)
+                final intent = (res['intent_category'] ?? '').toString();
+                final queryDate = res['query_date']?.toString();
+
+                // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
+                final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
+                if (intent == 'meal_record' && mealRecords.isNotEmpty) {
+                  _showMealRecordDraftDialog(
+                    context,
+                    mealRecords,
+                    userPrompt: text,
+                    delayedReply: replyStr,
+                  );
+                } else {
+                  _messages.add({
+                    'isElf': true,
+                    'text': replyStr,
+                    'intentCategory': intent,
+                    'queryDate': queryDate,
+                  });
+                  _appendTempStory('assistant', replyStr);
+                  if (_shouldShowDietReportForPrompt(text, intent)) {
+                    Future.microtask(() => _showDietReportFromCompanion(text));
+                  }
+                }
+              } else {
+                _messages.add({
+                  'isElf': true,
+                  'text': FriendlyErrorMessage.companionReply(res['message']),
+                });
+              }
+            });
+            _scrollToBottom();
+          })
+          .catchError((e) {
+            _showDogResponseThenIdle();
+            setState(() {
+              if (_messages.isNotEmpty &&
+                  _messages.last['text'] == '米粒正在思考中....') {
+                _messages.removeLast();
+              }
               _messages.add({
                 'isElf': true,
-                'text': replyStr,
-                'intentCategory': intent,
-                'queryDate': queryDate,
+                'text': FriendlyErrorMessage.companionReply(e),
               });
-              _appendTempStory('assistant', replyStr);
-              if (_shouldShowDietReportForPrompt(text, intent)) {
-                Future.microtask(() => _showDietReportFromCompanion(text));
-              }
-            }
-          } else {
-            _messages.add({
-              'isElf': true,
-              'text': FriendlyErrorMessage.companionReply(res['message']),
             });
-          }
-        });
-        _scrollToBottom();
-      }).catchError((e) {
-        _showDogResponseThenIdle();
-        setState(() {
-          if (_messages.isNotEmpty && _messages.last['text'] == '米粒正在思考中....') {
-            _messages.removeLast();
-          }
-          _messages.add({
-            'isElf': true,
-            'text': FriendlyErrorMessage.companionReply(e),
+            _scrollToBottom();
           });
-        });
-        _scrollToBottom();
-      });
     });
   }
 
@@ -1353,7 +1460,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           children: [
             // === 7. 頂部 Bar 與寵物狀態卡片組件 (Header Bar & Pet Status Card) ===
             Positioned(
-              top: 0, left: 0, right: 0,
+              top: 0,
+              left: 0,
+              right: 0,
               child: SafeArea(
                 child: Container(
                   height: 80,
@@ -1361,10 +1470,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   child: const Text(
                     "精靈助手",
                     style: TextStyle(
-                      fontSize: 22, 
-                      fontWeight: FontWeight.bold, 
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
                       letterSpacing: 1.5,
-                      color: AppColors.textPrimary
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -1376,7 +1485,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               child: SingleChildScrollView(
                 child: Builder(
                   builder: (context) {
-                    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+                    final isKeyboardVisible =
+                        MediaQuery.of(context).viewInsets.bottom > 0;
                     final elfSize = isKeyboardVisible ? 160.0 : 280.0;
                     return Column(
                       mainAxisSize: MainAxisSize.min,
@@ -1387,22 +1497,29 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                           child: Hero(
                             tag: 'elf',
                             child: Container(
-                              width: elfSize, height: elfSize,
+                              width: elfSize,
+                              height: elfSize,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.background,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _getPetColor(_petType).withValues(alpha: 0.15), 
-                                    blurRadius: 15, 
+                                    color: _getPetColor(
+                                      _petType,
+                                    ).withValues(alpha: 0.15),
+                                    blurRadius: 15,
                                     spreadRadius: 2,
-                                  )
+                                  ),
                                 ],
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(elfSize / 2),
+                                borderRadius: BorderRadius.circular(
+                                  elfSize / 2,
+                                ),
                                 child: Padding(
-                                  padding: EdgeInsets.all(isKeyboardVisible ? 15.0 : 25.0),
+                                  padding: EdgeInsets.all(
+                                    isKeyboardVisible ? 15.0 : 25.0,
+                                  ),
                                   child: AbsorbPointer(
                                     child: DogAvatar(
                                       controller: _dogController,
@@ -1419,21 +1536,35 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                         // 精靈說話框 (初始狀態)
                         if (!_isChatOpen && !isKeyboardVisible) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 15,
+                            ),
                             margin: const EdgeInsets.symmetric(horizontal: 20),
                             decoration: BoxDecoration(
                               color: AppColors.background,
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.1), blurRadius: 1.95)],
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  blurRadius: 1.95,
+                                ),
+                              ],
                             ),
                             child: Text(
-                              _stripEmojis(_messages.isNotEmpty ? _messages[0]['text'] : "載入中..."),
+                              _stripEmojis(
+                                _messages.isNotEmpty
+                                    ? _messages[0]['text']
+                                    : "載入中...",
+                              ),
                               textAlign: TextAlign.left,
                               style: const TextStyle(
-                                fontSize: 15, 
+                                fontSize: 15,
                                 fontWeight: FontWeight.normal,
                                 height: 1.4,
-                                color: AppColors.textPrimary
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -1441,20 +1572,28 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                         ],
                       ],
                     );
-                  }
+                  },
                 ),
               ),
             ),
 
             // 3. 底部輸入框
             Positioned(
-              bottom: 20, left: 20, right: 20,
+              bottom: 20,
+              left: 20,
+              right: 20,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(30),
-                  boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 2.925, offset: const Offset(0, 0.975))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.05),
+                      blurRadius: 2.925,
+                      offset: const Offset(0, 0.975),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -1469,9 +1608,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                       child: TextField(
                         controller: _inputController,
                         decoration: InputDecoration(
-                          hintText: _isListening ? "收聽中，請說話..." : "輸入訊息...", 
+                          hintText: _isListening ? "收聽中，請說話..." : "輸入訊息...",
                           border: InputBorder.none,
-                          hintStyle: const TextStyle(color: AppColors.textPrimary)
+                          hintStyle: const TextStyle(
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                         onSubmitted: _handleMessage,
                       ),
@@ -1492,7 +1633,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
                 transform: Matrix4.translationValues(
-                  MediaQuery.of(context).size.width * _chatPanelX, 0, 0
+                  MediaQuery.of(context).size.width * _chatPanelX,
+                  0,
+                  0,
                 ),
                 child: _buildChatPanel(),
               ),
@@ -1519,10 +1662,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      color: AppColors.textPrimary,
+                    ),
                     onPressed: () => _toggleChat(false),
                   ),
-                  const Text("與精靈對話", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  const Text(
+                    "與精靈對話",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                   const Spacer(),
                   _buildNewTopicButton(),
                 ],
@@ -1535,7 +1688,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               behavior: HitTestBehavior.opaque,
               child: ListView.builder(
                 controller: _chatScrollController, // 新增：連結滾動控制器
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 127), // 新增：底部預留 127 像素，防止文字被小精靈 3D 模型遮擋
+                padding: const EdgeInsets.fromLTRB(
+                  20,
+                  20,
+                  20,
+                  127,
+                ), // 新增：底部預留 127 像素，防止文字被小精靈 3D 模型遮擋
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
@@ -1555,13 +1713,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               ),
             ),
           ),
-            SafeArea(
-              top: false,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    top: -130,
+          SafeArea(
+            top: false,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  top: -130,
                   left: 0,
                   right: 0,
                   child: Center(
@@ -1585,23 +1743,33 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   ),
                   child: Row(
                     children: [
-                      IconButton( // 麥克風語音輸入按鈕
+                      IconButton(
+                        // 麥克風語音輸入按鈕
                         icon: Icon(
-                          _isListening ? Icons.mic : Icons.mic_none, // 依收聽狀態動態切換圖示
-                          color: _isListening ? Colors.red : AppColors.primary, // 錄音中顯示紅色
+                          _isListening
+                              ? Icons.mic
+                              : Icons.mic_none, // 依收聽狀態動態切換圖示
+                          color: _isListening
+                              ? Colors.red
+                              : AppColors.primary, // 錄音中顯示紅色
                         ),
                         onPressed: _toggleListening, // 點擊切換語音收聽狀態
                       ),
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 15),
-                          decoration: BoxDecoration(color: const Color(0xFFFCF8EC), borderRadius: BorderRadius.circular(20)),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFCF8EC),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
                           child: TextField(
                             controller: _inputController,
                             decoration: InputDecoration(
                               hintText: _isListening ? "收聽中，請說話..." : "詢問建議...",
                               border: InputBorder.none,
-                              hintStyle: const TextStyle(color: AppColors.textPrimary)
+                              hintStyle: const TextStyle(
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                             onSubmitted: _handleMessage,
                           ),
@@ -1611,8 +1779,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                       CircleAvatar(
                         backgroundColor: AppColors.primary,
                         child: IconButton(
-                          icon: const Icon(Icons.send, color: AppColors.background, size: 20),
-                          onPressed: () => _handleMessage(_inputController.text),
+                          icon: const Icon(
+                            Icons.send,
+                            color: AppColors.background,
+                            size: 20,
+                          ),
+                          onPressed: () =>
+                              _handleMessage(_inputController.text),
                         ),
                       ),
                     ],
@@ -1636,16 +1809,25 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     return Align(
       alignment: isElf ? Alignment.centerLeft : Alignment.centerRight,
       child: Column(
-        crossAxisAlignment: isElf ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        crossAxisAlignment: isElf
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
         children: [
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
             decoration: BoxDecoration(
               color: isElf ? AppColors.background : AppColors.secondary,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 0.975)],
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                  blurRadius: 0.975,
+                ),
+              ],
               border: isElf ? Border.all(color: AppColors.border) : null,
             ),
             child: Column(
@@ -1660,38 +1842,53 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     height: 1.4,
                   ),
                 ),
-                // TODO: 這個部分是甚麼呀? 
+                // TODO: 這個部分是甚麼呀?
                 // 若米粒回應含有推薦餐點選項 (options)，於泡泡內繪製可點擊的營養成分按鈕
                 if (isElf && options != null) ...[
                   const SizedBox(height: 15),
                   const Divider(height: 1),
                   const SizedBox(height: 10),
                   // [代碼清理/Lint修正] 在 Spread 運算子 (...) 中直接展開 Iterable，移除贅餘的 .toList()
-                  ...options.map((opt) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _showNutrientDetail(opt['name'], opt['nutrients']),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.textPrimary,
-                          elevation: 0,
-                          side: const BorderSide(color: AppColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ...options.map(
+                    (opt) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => _showNutrientDetail(
+                            opt['name'],
+                            opt['nutrients'],
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.surface,
+                            foregroundColor: AppColors.textPrimary,
+                            elevation: 0,
+                            side: const BorderSide(color: AppColors.border),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            opt['name'],
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
-                        child: Text(opt['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
-                  )),
+                  ),
                 ],
               ],
             ),
           ),
           // 當意圖為「歷史飲食紀錄查詢 (meal_query)」且含有合法日期時，於對話泡泡下方動態掛載卡片
-          if (isElf && intentCategory == 'meal_query' && queryDate != null && queryDate.isNotEmpty)
+          if (isElf &&
+              intentCategory == 'meal_query' &&
+              queryDate != null &&
+              queryDate.isNotEmpty)
             Container(
-              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.75,
+              ),
               child: MealRecordCard(
                 queryDate: queryDate,
                 onClose: () {},
@@ -1713,7 +1910,8 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ManualRecordPage(initialDate: targetDate),
+                      builder: (context) =>
+                          ManualRecordPage(initialDate: targetDate),
                     ),
                   );
                   if (mounted) {
@@ -1742,18 +1940,51 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
             const SizedBox(height: 25),
-            Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 10),
-            Text("預估攝取熱量: ${nutrients['calories']} kcal", style: const TextStyle(fontSize: 16, color: AppColors.secondary, fontWeight: FontWeight.w600)),
+            Text(
+              "預估攝取熱量: ${nutrients['calories']} kcal",
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.secondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const Divider(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NutrientInfo(label: "蛋白質", value: "${nutrients['protein']}", unit: "g"),
-                _NutrientInfo(label: "脂肪", value: "${nutrients['fat']}", unit: "g"),
-                _NutrientInfo(label: "碳水", value: "${nutrients['carbs']}", unit: "g"),
+                _NutrientInfo(
+                  label: "蛋白質",
+                  value: "${nutrients['protein']}",
+                  unit: "g",
+                ),
+                _NutrientInfo(
+                  label: "脂肪",
+                  value: "${nutrients['fat']}",
+                  unit: "g",
+                ),
+                _NutrientInfo(
+                  label: "碳水",
+                  value: "${nutrients['carbs']}",
+                  unit: "g",
+                ),
               ],
             ),
             const Spacer(),
@@ -1766,7 +1997,13 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                   MaterialPageRoute(
                     builder: (context) => ElfFeedingPage(
                       imagePath: "",
-                      items: [{'name': name, 'portion': '1份', 'calories': '${nutrients['calories']} kcal'}],
+                      items: [
+                        {
+                          'name': name,
+                          'portion': '1份',
+                          'calories': '${nutrients['calories']} kcal',
+                        },
+                      ],
                       recordDate: DateTime.now(),
                     ),
                   ),
@@ -1775,10 +2012,19 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 minimumSize: const Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
                 elevation: 2,
               ),
-              child: const Text("確認食用", style: TextStyle(color: AppColors.background, fontSize: 18, fontWeight: FontWeight.bold)),
+              child: const Text(
+                "確認食用",
+                style: TextStyle(
+                  color: AppColors.background,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -1794,7 +2040,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         color: AppColors.background,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppColors.border),
-        boxShadow: [BoxShadow(color: AppColors.primary.withValues(alpha: 0.05), blurRadius: 1.95)],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.05),
+            blurRadius: 1.95,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1803,11 +2054,22 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             children: [
               const Icon(Icons.restaurant, color: AppColors.secondary),
               const SizedBox(width: 10),
-              Expanded(child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary))),
+              Expanded(
+                child: Text(
+                  text,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
-          const Text("點擊查看詳細地址與評價", style: TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+          const Text(
+            "點擊查看詳細地址與評價",
+            style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
+          ),
         ],
       ),
     );
@@ -1820,11 +2082,19 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(25),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 2.925)],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 2.925,
+          ),
+        ],
       ),
       child: Column(
         children: [
-          const Text("薯條 (大份)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text(
+            "薯條 (大份)",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
           const Divider(height: 30),
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -1842,7 +2112,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 MaterialPageRoute(
                   builder: (context) => ElfFeedingPage(
                     imagePath: "",
-                    items: const [{'name': '薯條', 'portion': '大份', 'calories': '380 kcal'}],
+                    items: const [
+                      {'name': '薯條', 'portion': '大份', 'calories': '380 kcal'},
+                    ],
                     recordDate: DateTime.now(),
                   ),
                 ),
@@ -1850,10 +2122,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               minimumSize: const Size(double.infinity, 45),
             ),
-            child: const Text("進行餵食", style: TextStyle(color: AppColors.background, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "進行餵食",
+              style: TextStyle(
+                color: AppColors.background,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -1887,7 +2167,12 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
   }
 
   /// 彈出「飲食紀錄草稿」可編輯確認視窗，允許使用者針對每個餐點卡片獨立點擊展開/收合修改餐點名稱、日期、餐別與份量
-  void _showMealRecordDraftDialog(BuildContext context, List<dynamic> mealRecords, {String userPrompt = '', String? delayedReply}) {
+  void _showMealRecordDraftDialog(
+    BuildContext context,
+    List<dynamic> mealRecords, {
+    String userPrompt = '',
+    String? delayedReply,
+  }) {
     final DateTime defaultDate = _parseDateFromPrompt(userPrompt);
     final ScrollController draftScrollController = ScrollController();
 
@@ -1900,7 +2185,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         flatCards.add({
           'name': item['name']?.toString() ?? '',
           'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
-          'unit': (item['unit']?.toString() ?? '').isEmpty ? '份' : item['unit']?.toString(),
+          'unit': (item['unit']?.toString() ?? '').isEmpty
+              ? '份'
+              : item['unit']?.toString(),
           'meal_period': period,
           'date': defaultDate,
           'is_expanded': flatCards.isEmpty, // 第一張預設展開，其餘預設收合
@@ -1929,7 +2216,10 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 24,
+              ),
               titlePadding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
               contentPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
               actionsPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
@@ -1963,375 +2253,614 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                     controller: draftScrollController,
                     padding: const EdgeInsets.only(right: 6),
                     child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '請核對或修改以下草稿內容：',
-                      style: TextStyle(fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // [代碼清理/Lint修正] 在 Spread 運算子 (...) 中直接展開 Iterable，移除贅餘的 .toList()
-                    // 每個餐點獨立成可點擊展開/收合的折疊卡片
-                    ...flatCards.asMap().entries.map((cardEntry) {
-                      final cardIdx = cardEntry.key;
-                      final card = cardEntry.value;
-                      final cardQty = card['quantity'] as int;
-                      final cardUnit = card['unit'].toString();
-                      final cardDate = card['date'] as DateTime;
-                      final currentPeriod = card['meal_period'].toString();
-                      final bool isExpanded = card['is_expanded'] as bool? ?? (cardIdx == 0);
-                      final String dishDisplayName = card['name'].toString().trim().isEmpty
-                          ? '餐點 ${cardIdx + 1}'
-                          : card['name'].toString().trim();
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.border),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '請核對或修改以下草稿內容：',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        child: Column(
-                          children: [
-                            // === 卡片 Header (可點擊切換 展開 / 收合) ===
-                            InkWell(
-                              onTap: () {
-                                setDialogState(() {
-                                  flatCards[cardIdx]['is_expanded'] = !isExpanded;
-                                });
-                              },
+                        const SizedBox(height: 12),
+
+                        // [代碼清理/Lint修正] 在 Spread 運算子 (...) 中直接展開 Iterable，移除贅餘的 .toList()
+                        // 每個餐點獨立成可點擊展開/收合的折疊卡片
+                        ...flatCards.asMap().entries.map((cardEntry) {
+                          final cardIdx = cardEntry.key;
+                          final card = cardEntry.value;
+                          final cardQty = card['quantity'] as int;
+                          final cardUnit = card['unit'].toString();
+                          final cardDate = card['date'] as DateTime;
+                          final currentPeriod = card['meal_period'].toString();
+                          final bool isExpanded =
+                              card['is_expanded'] as bool? ?? (cardIdx == 0);
+                          final String dishDisplayName =
+                              card['name'].toString().trim().isEmpty
+                              ? '餐點 ${cardIdx + 1}'
+                              : card['name'].toString().trim();
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
                               borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                child: Row(
-                                  children: [
-                                    // 展開 / 收合 箭頭 (放最左側)
-                                    Icon(
-                                      isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                      color: AppColors.primary,
-                                      size: 24,
-                                    ),
-                                    const SizedBox(width: 8),
-
-                                    // 餐點標籤 Badge
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(alpha: 0.15),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.restaurant, size: 14, color: AppColors.primary),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            dishDisplayName,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-
-                                    // 收合狀態時顯示摘要文字 (例如: (早餐 • 1瓶))
-                                    if (!isExpanded) ...[
-                                      Expanded(
-                                        child: Text(
-                                          '($currentPeriod • $cardQty$cardUnit)',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ] else
-                                      const Spacer(),
-
-                                    // 刪除卡片按鈕 (最右側)
-                                    if (flatCards.length > 1)
-                                      InkWell(
-                                        onTap: isSaving
-                                            ? null
-                                            : () {
-                                                setDialogState(() {
-                                                  flatCards.removeAt(cardIdx);
-                                                });
-                                              },
-                                        child: const Padding(
-                                          padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                          child: Icon(Icons.delete_outline, size: 22, color: AppColors.danger),
-                                        ),
-                                      ),
-                                  ],
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                              ),
+                              ],
                             ),
-
-                            // === 卡片展開詳細內容 ===
-                            if (isExpanded) ...[
-                              const Divider(height: 1, color: AppColors.border),
-                              Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // 1. 餐點名稱
-                                    const Text(
-                                      '餐點名稱',
-                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            child: Column(
+                              children: [
+                                // === 卡片 Header (可點擊切換 展開 / 收合) ===
+                                InkWell(
+                                  onTap: () {
+                                    setDialogState(() {
+                                      flatCards[cardIdx]['is_expanded'] =
+                                          !isExpanded;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
                                     ),
-                                    const SizedBox(height: 6),
-                                    TextFormField(
-                                      initialValue: card['name'].toString(),
-                                      enabled: !isSaving,
-                                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                      decoration: InputDecoration(
-                                        hintText: '請輸入餐點名稱',
-                                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400, fontWeight: FontWeight.normal),
-                                        filled: true,
-                                        fillColor: AppColors.background,
-                                        isDense: true,
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.border)),
-                                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                                      ),
-                                      onChanged: (val) {
-                                        setDialogState(() {
-                                          flatCards[cardIdx]['name'] = val;
-                                        });
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // 2. 紀錄日期
-                                    const Text(
-                                      '紀錄日期',
-                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    InkWell(
-                                      onTap: isSaving
-                                          ? null
-                                          : () async {
-                                              final picked = await showDatePicker(
-                                                context: context,
-                                                initialDate: cardDate,
-                                                firstDate: DateTime(2023),
-                                                lastDate: DateTime.now().add(const Duration(days: 365)),
-                                              );
-                                              if (picked != null) {
-                                                setDialogState(() {
-                                                  flatCards[cardIdx]['date'] = picked;
-                                                });
-                                              }
-                                            },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.background,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: AppColors.border),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.calendar_today, size: 16, color: AppColors.primary),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '${cardDate.year}-${cardDate.month.toString().padLeft(2, '0')}-${cardDate.day.toString().padLeft(2, '0')}',
-                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.textPrimary),
-                                            ),
-                                            const Spacer(),
-                                            const Icon(Icons.arrow_drop_down, color: Colors.grey),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // 3. 餐別與份量 (雙欄)
-                                    Row(
+                                    child: Row(
                                       children: [
-                                        // (A) 餐別選擇
-                                        Expanded(
-                                          flex: 5,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                        // 展開 / 收合 箭頭 (放最左側)
+                                        Icon(
+                                          isExpanded
+                                              ? Icons.keyboard_arrow_up
+                                              : Icons.keyboard_arrow_down,
+                                          color: AppColors.primary,
+                                          size: 24,
+                                        ),
+                                        const SizedBox(width: 8),
+
+                                        // 餐點標籤 Badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Text(
-                                                '餐別',
-                                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                              const Icon(
+                                                Icons.restaurant,
+                                                size: 14,
+                                                color: AppColors.primary,
                                               ),
-                                              const SizedBox(height: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.background,
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(color: AppColors.border),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                dishDisplayName,
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppColors.primary,
                                                 ),
-                                                child: DropdownButtonHideUnderline(
-                                                  child: DropdownButton<String>(
-                                                    value: mealPeriodOptions.contains(currentPeriod) ? currentPeriod : '早餐',
-                                                    isExpanded: true,
-                                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                                    onChanged: isSaving
-                                                        ? null
-                                                        : (newPeriod) {
-                                                            if (newPeriod != null) {
-                                                              setDialogState(() {
-                                                                flatCards[cardIdx]['meal_period'] = newPeriod;
-                                                              });
-                                                            }
-                                                          },
-                                                    items: mealPeriodOptions.map((period) {
-                                                      return DropdownMenuItem<String>(
-                                                        value: period,
-                                                        child: Text(period),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+
+                                        // 收合狀態時顯示摘要文字 (例如: (早餐 • 1瓶))
+                                        if (!isExpanded) ...[
+                                          Expanded(
+                                            child: Text(
+                                              '($currentPeriod • $cardQty$cardUnit)',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ] else
+                                          const Spacer(),
+
+                                        // 刪除卡片按鈕 (最右側)
+                                        if (flatCards.length > 1)
+                                          InkWell(
+                                            onTap: isSaving
+                                                ? null
+                                                : () {
+                                                    setDialogState(() {
+                                                      flatCards.removeAt(
+                                                        cardIdx,
                                                       );
-                                                    }).toList(),
+                                                    });
+                                                  },
+                                            child: const Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                horizontal: 4.0,
+                                              ),
+                                              child: Icon(
+                                                Icons.delete_outline,
+                                                size: 22,
+                                                color: AppColors.danger,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                                // === 卡片展開詳細內容 ===
+                                if (isExpanded) ...[
+                                  const Divider(
+                                    height: 1,
+                                    color: AppColors.border,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(14),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // 1. 餐點名稱
+                                        const Text(
+                                          '餐點名稱',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        TextFormField(
+                                          initialValue: card['name'].toString(),
+                                          enabled: !isSaving,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: '請輸入餐點名稱',
+                                            hintStyle: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey.shade400,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                            filled: true,
+                                            fillColor: AppColors.background,
+                                            isDense: true,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 10,
+                                                ),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.border,
+                                              ),
+                                            ),
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.border,
+                                              ),
+                                            ),
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              borderSide: const BorderSide(
+                                                color: AppColors.primary,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                          onChanged: (val) {
+                                            setDialogState(() {
+                                              flatCards[cardIdx]['name'] = val;
+                                            });
+                                          },
+                                        ),
+                                        const SizedBox(height: 12),
+
+                                        // 2. 紀錄日期
+                                        const Text(
+                                          '紀錄日期',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        InkWell(
+                                          onTap: isSaving
+                                              ? null
+                                              : () async {
+                                                  final picked =
+                                                      await showDatePicker(
+                                                        context: context,
+                                                        initialDate: cardDate,
+                                                        firstDate: DateTime(
+                                                          2023,
+                                                        ),
+                                                        lastDate: DateTime.now()
+                                                            .add(
+                                                              const Duration(
+                                                                days: 365,
+                                                              ),
+                                                            ),
+                                                      );
+                                                  if (picked != null) {
+                                                    setDialogState(() {
+                                                      flatCards[cardIdx]['date'] =
+                                                          picked;
+                                                    });
+                                                  }
+                                                },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 10,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.background,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              border: Border.all(
+                                                color: AppColors.border,
+                                              ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.calendar_today,
+                                                  size: 16,
+                                                  color: AppColors.primary,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  '${cardDate.year}-${cardDate.month.toString().padLeft(2, '0')}-${cardDate.day.toString().padLeft(2, '0')}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color:
+                                                        AppColors.textPrimary,
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                                const Spacer(),
+                                                const Icon(
+                                                  Icons.arrow_drop_down,
+                                                  color: Colors.grey,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                        const SizedBox(width: 12),
+                                        const SizedBox(height: 12),
 
-                                        // (B) 份量調節
-                                        Expanded(
-                                          flex: 6,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                '份量',
-                                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                                decoration: BoxDecoration(
-                                                  color: AppColors.background,
-                                                  borderRadius: BorderRadius.circular(10),
-                                                  border: Border.all(color: AppColors.border),
-                                                ),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: (isSaving || cardQty <= 1)
-                                                          ? null
-                                                          : () {
-                                                              setDialogState(() {
-                                                                flatCards[cardIdx]['quantity'] = cardQty - 1;
-                                                              });
-                                                            },
-                                                      borderRadius: BorderRadius.circular(6),
-                                                      child: Container(
-                                                        padding: const EdgeInsets.all(4),
-                                                        decoration: BoxDecoration(
-                                                          color: (cardQty <= 1 || isSaving) ? Colors.grey.shade300 : AppColors.primary.withValues(alpha: 0.15),
-                                                          borderRadius: BorderRadius.circular(6),
+                                        // 3. 餐別與份量 (雙欄)
+                                        Row(
+                                          children: [
+                                            // (A) 餐別選擇
+                                            Expanded(
+                                              flex: 5,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    '餐別',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 10,
                                                         ),
-                                                        child: const Icon(Icons.remove, size: 16, color: AppColors.primary),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          AppColors.background,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors.border,
                                                       ),
                                                     ),
-                                                    Text(
-                                                      '$cardQty',
-                                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: isSaving
-                                                          ? null
-                                                          : () {
-                                                              setDialogState(() {
-                                                                flatCards[cardIdx]['quantity'] = cardQty + 1;
-                                                              });
-                                                            },
-                                                      borderRadius: BorderRadius.circular(6),
-                                                      child: Container(
-                                                        padding: const EdgeInsets.all(4),
-                                                        decoration: BoxDecoration(
-                                                          color: isSaving ? Colors.grey.shade300 : AppColors.primary.withValues(alpha: 0.15),
-                                                          borderRadius: BorderRadius.circular(6),
+                                                    child: DropdownButtonHideUnderline(
+                                                      child: DropdownButton<String>(
+                                                        value:
+                                                            mealPeriodOptions
+                                                                .contains(
+                                                                  currentPeriod,
+                                                                )
+                                                            ? currentPeriod
+                                                            : '早餐',
+                                                        isExpanded: true,
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: AppColors
+                                                              .textPrimary,
                                                         ),
-                                                        child: const Icon(Icons.add, size: 16, color: AppColors.primary),
+                                                        onChanged: isSaving
+                                                            ? null
+                                                            : (newPeriod) {
+                                                                if (newPeriod !=
+                                                                    null) {
+                                                                  setDialogState(() {
+                                                                    flatCards[cardIdx]['meal_period'] =
+                                                                        newPeriod;
+                                                                  });
+                                                                }
+                                                              },
+                                                        items: mealPeriodOptions
+                                                            .map((period) {
+                                                              return DropdownMenuItem<
+                                                                String
+                                                              >(
+                                                                value: period,
+                                                                child: Text(
+                                                                  period,
+                                                                ),
+                                                              );
+                                                            })
+                                                            .toList(),
                                                       ),
                                                     ),
-                                                    Text(
-                                                      cardUnit,
-                                                      style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
-                                                    ),
-                                                  ],
-                                                ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            const SizedBox(width: 12),
+
+                                            // (B) 份量調節
+                                            Expanded(
+                                              flex: 6,
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text(
+                                                    '份量',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color:
+                                                          AppColors.textPrimary,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 6),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          AppColors.background,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: AppColors.border,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
+                                                      children: [
+                                                        InkWell(
+                                                          onTap:
+                                                              (isSaving ||
+                                                                  cardQty <= 1)
+                                                              ? null
+                                                              : () {
+                                                                  setDialogState(() {
+                                                                    flatCards[cardIdx]['quantity'] =
+                                                                        cardQty -
+                                                                        1;
+                                                                  });
+                                                                },
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                6,
+                                                              ),
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  4,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color:
+                                                                  (cardQty <=
+                                                                          1 ||
+                                                                      isSaving)
+                                                                  ? Colors
+                                                                        .grey
+                                                                        .shade300
+                                                                  : AppColors
+                                                                        .primary
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.15,
+                                                                        ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.remove,
+                                                              size: 16,
+                                                              color: AppColors
+                                                                  .primary,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          '$cardQty',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                        InkWell(
+                                                          onTap: isSaving
+                                                              ? null
+                                                              : () {
+                                                                  setDialogState(() {
+                                                                    flatCards[cardIdx]['quantity'] =
+                                                                        cardQty +
+                                                                        1;
+                                                                  });
+                                                                },
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                6,
+                                                              ),
+                                                          child: Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  4,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: isSaving
+                                                                  ? Colors
+                                                                        .grey
+                                                                        .shade300
+                                                                  : AppColors
+                                                                        .primary
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.15,
+                                                                        ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    6,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.add,
+                                                              size: 16,
+                                                              color: AppColors
+                                                                  .primary,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          cardUnit,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors.grey,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    }),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
 
-                    // 新增餐點卡片按鈕
-                    Center(
-                      child: OutlinedButton.icon(
-                        onPressed: isSaving
-                            ? null
-                            : () {
-                                setDialogState(() {
-                                  flatCards.add({
-                                    'name': '',
-                                    'quantity': 1,
-                                    'unit': '份',
-                                    'meal_period': '早餐',
-                                    'date': defaultDate,
-                                    'is_expanded': true,
-                                  });
-                                });
-                              },
-                        icon: const Icon(Icons.add, size: 16, color: AppColors.primary),
-                        label: const Text('新增餐點卡片', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        // 新增餐點卡片按鈕
+                        Center(
+                          child: OutlinedButton.icon(
+                            onPressed: isSaving
+                                ? null
+                                : () {
+                                    setDialogState(() {
+                                      flatCards.add({
+                                        'name': '',
+                                        'quantity': 1,
+                                        'unit': '份',
+                                        'meal_period': '早餐',
+                                        'date': defaultDate,
+                                        'is_expanded': true,
+                                      });
+                                    });
+                                  },
+                            icon: const Icon(
+                              Icons.add,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            label: const Text(
+                              '新增餐點卡片',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              ),
               ),
               actions: [
                 TextButton(
                   onPressed: isSaving
                       ? null
                       : () {
-                          SystemChannels.textInput.invokeMethod('TextInput.hide');
+                          SystemChannels.textInput.invokeMethod(
+                            'TextInput.hide',
+                          );
                           FocusManager.instance.primaryFocus?.unfocus();
                           Navigator.of(ctx).pop();
                         },
@@ -2350,33 +2879,40 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                           setDialogState(() => isSaving = true);
                           try {
                             for (var card in flatCards) {
-                              final name = card['name']?.toString().trim() ?? '';
-                              final period = card['meal_period']?.toString() ?? '早餐';
+                              final name =
+                                  card['name']?.toString().trim() ?? '';
+                              final period =
+                                  card['meal_period']?.toString() ?? '早餐';
                               final qty = card['quantity']?.toString() ?? '1';
                               final unit = card['unit']?.toString() ?? '';
-                              final cardDate = card['date'] as DateTime? ?? defaultDate;
+                              final cardDate =
+                                  card['date'] as DateTime? ?? defaultDate;
 
                               if (name.isNotEmpty) {
-                                final res = await DietService().createDietRecord(
-                                  dishName: name,
-                                  mealType: period,
-                                  amount: '$qty $unit'.trim(),
-                                  description: '陪伴精靈解析並經使用者核對修正',
-                                  mealDate: cardDate,
-                                );
+                                final res = await DietService()
+                                    .createDietRecord(
+                                      dishName: name,
+                                      mealType: period,
+                                      amount: '$qty $unit'.trim(),
+                                      description: '陪伴精靈解析並經使用者核對修正',
+                                      mealDate: cardDate,
+                                    );
                                 if (res['success'] != true) {
                                   throw Exception(res['message'] ?? '寫入資料庫失敗');
                                 }
                               }
                             }
-                            SystemChannels.textInput.invokeMethod('TextInput.hide');
+                            SystemChannels.textInput.invokeMethod(
+                              'TextInput.hide',
+                            );
                             FocusManager.instance.primaryFocus?.unfocus();
                             if (ctx.mounted) Navigator.of(ctx).pop();
                             if (context.mounted) {
                               FocusScope.of(context).unfocus();
 
                               // 延遲渲染 Companion 成功對話泡泡至對話紀錄中
-                              if (delayedReply != null && delayedReply.trim().isNotEmpty) {
+                              if (delayedReply != null &&
+                                  delayedReply.trim().isNotEmpty) {
                                 setState(() {
                                   _messages.add({
                                     'isElf': true,
@@ -2401,7 +2937,9 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('儲存失敗：${e.toString().replaceAll('Exception: ', '')}'),
+                                  content: Text(
+                                    '儲存失敗：${e.toString().replaceAll('Exception: ', '')}',
+                                  ),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );
@@ -2412,9 +2950,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('確認儲存', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      : const Text(
+                          '確認儲存',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ],
             );
@@ -2438,7 +2985,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         children: [
           const Text(
             "昨日熱量",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
 
           const SizedBox(height: 6),
@@ -2452,19 +3003,43 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                 children: [
                   CustomPaint(
                     size: const Size(190, 95),
-                    painter: CalorieGaugeArcPainter(currentCalories: currentCalories.toDouble()),
+                    painter: CalorieGaugeArcPainter(
+                      currentCalories: currentCalories.toDouble(),
+                    ),
                   ),
                   Positioned(
                     bottom: 6,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("約", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
-                        Text(
-                          currentCalories.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},'),
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary, height: 1.1),
+                        const Text(
+                          "約",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                        const Text("kcal", style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500)),
+                        Text(
+                          currentCalories.toString().replaceAllMapped(
+                            RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+                            (m) => '${m[1]},',
+                          ),
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                            height: 1.1,
+                          ),
+                        ),
+                        const Text(
+                          "kcal",
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -2478,9 +3053,21 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildGaugeZoneLabel("偏低", "< 1,700 kcal", const Color(0xFF7C83FD)),
-              _buildGaugeZoneLabel("適量", "1,700 - 2,000 kcal", const Color(0xFF52C41A)),
-              _buildGaugeZoneLabel("偏高", "> 2,000 kcal", const Color(0xFFFF7A45)),
+              _buildGaugeZoneLabel(
+                "偏低",
+                "< 1,700 kcal",
+                const Color(0xFF7C83FD),
+              ),
+              _buildGaugeZoneLabel(
+                "適量",
+                "1,700 - 2,000 kcal",
+                const Color(0xFF52C41A),
+              ),
+              _buildGaugeZoneLabel(
+                "偏高",
+                "> 2,000 kcal",
+                const Color(0xFFFF7A45),
+              ),
             ],
           ),
         ],
@@ -2493,12 +3080,20 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       children: [
         Text(
           zoneTitle,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
         const SizedBox(height: 1),
         Text(
           rangeStr,
-          style: const TextStyle(fontSize: 9, color: Colors.black54, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontSize: 9,
+            color: Colors.black54,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -2524,7 +3119,11 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         children: [
           const Text(
             "昨日三大營養素比例",
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
           ),
 
           const SizedBox(height: 8),
@@ -2551,9 +3150,18 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          _buildSingleBarItem(carbsPercent, const Color(0xFF7C83FD)),
-                          _buildSingleBarItem(proteinPercent, const Color(0xFFFF7A45)),
-                          _buildSingleBarItem(fatPercent, const Color(0xFFFFB800)),
+                          _buildSingleBarItem(
+                            carbsPercent,
+                            const Color(0xFF7C83FD),
+                          ),
+                          _buildSingleBarItem(
+                            proteinPercent,
+                            const Color(0xFFFF7A45),
+                          ),
+                          _buildSingleBarItem(
+                            fatPercent,
+                            const Color(0xFFFFB800),
+                          ),
                         ],
                       ),
                     ),
@@ -2626,7 +3234,14 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       children: [
         SizedBox(
           width: 34,
-          child: Text(label, style: const TextStyle(fontSize: 9, color: Colors.black45, fontWeight: FontWeight.w500)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              color: Colors.black45,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ),
         Expanded(
           child: Container(
@@ -2656,9 +3271,15 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
               height: barHeight,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(6),
+                ),
                 boxShadow: [
-                  BoxShadow(color: color.withValues(alpha: 0.25), blurRadius: 3, offset: const Offset(0, 1)),
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.25),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
                 ],
               ),
             ),
@@ -2710,22 +3331,36 @@ class CalorieGaugeArcPainter extends CustomPainter {
     canvas.drawArc(rect, startAngle + seg1Angle, seg2Angle, false, paint);
 
     paint.color = const Color(0xFFFF7A45);
-    canvas.drawArc(rect, startAngle + seg1Angle + seg2Angle, seg3Angle, false, paint);
+    canvas.drawArc(
+      rect,
+      startAngle + seg1Angle + seg2Angle,
+      seg3Angle,
+      false,
+      paint,
+    );
 
     double progressRatio;
     if (currentCalories < 1700) {
       progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
     } else if (currentCalories <= 2000) {
-      progressRatio = 0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
+      progressRatio =
+          0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
     } else {
-      progressRatio = 0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
+      progressRatio =
+          0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
     }
 
     final double knobAngle = startAngle + progressRatio * totalAngle;
     final double knobX = center.dx + radius * math.cos(knobAngle);
     final double knobY = center.dy + radius * math.sin(knobAngle);
 
-    canvas.drawCircle(Offset(knobX, knobY), 11, Paint()..color = Colors.black26..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    canvas.drawCircle(
+      Offset(knobX, knobY),
+      11,
+      Paint()
+        ..color = Colors.black26
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
     canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
 
     Color dotColor;
@@ -2746,21 +3381,37 @@ class CalorieGaugeArcPainter extends CustomPainter {
 
 class _NutrientInfo extends StatelessWidget {
   final String label, value, unit;
-  const _NutrientInfo({required this.label, required this.value, required this.unit});
+  const _NutrientInfo({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textPrimary, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+        ),
         const SizedBox(height: 5),
-        Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textPrimary)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        Text(
+          unit,
+          style: const TextStyle(fontSize: 10, color: AppColors.textPrimary),
+        ),
       ],
     );
   }
 }
-
 
 class MacronutrientValuesDisplay extends StatelessWidget {
   final double protein;
@@ -2783,7 +3434,11 @@ class MacronutrientValuesDisplay extends StatelessWidget {
         child: Center(
           child: Text(
             '昨日無三大營養素數據',
-            style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
@@ -2793,17 +3448,11 @@ class MacronutrientValuesDisplay extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(
-              child: _buildValueItem('蛋白質', protein, total, 'g'),
-            ),
+            Expanded(child: _buildValueItem('蛋白質', protein, total, 'g')),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildValueItem('脂肪', fat, total, 'g'),
-            ),
+            Expanded(child: _buildValueItem('脂肪', fat, total, 'g')),
             const SizedBox(width: 8),
-            Expanded(
-              child: _buildValueItem('碳水', carbs, total, 'g'),
-            ),
+            Expanded(child: _buildValueItem('碳水', carbs, total, 'g')),
           ],
         ),
         const SizedBox(height: 8),
