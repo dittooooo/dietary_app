@@ -157,7 +157,7 @@ public class DietRecordController {
                 if (!(item instanceof Map<?, ?> itemMap)) {
                     throw new IllegalArgumentException("陣列中的每筆飲食紀錄格式不正確");
                 }
-                requests.addAll(parseSingleRequestWithSplit(itemMap));
+                requests.add(parseSingleRequest(itemMap, null));
             }
             return requests;
         }
@@ -170,75 +170,14 @@ public class DietRecordController {
                     if (!(item instanceof Map<?, ?> itemMap)) {
                         throw new IllegalArgumentException("dish_info_list 中的每筆紀錄格式不正確");
                     }
-                    requests.addAll(parseSingleRequestWithSplit(itemMap));
+                    requests.add(parseSingleRequest(itemMap, null));
                 }
                 return requests;
             }
-            return parseSingleRequestWithSplit(map);
+            return List.of(parseSingleRequest(map, null));
         }
 
         throw new IllegalArgumentException("請提供正確的飲食紀錄資料格式");
-    }
-
-    private List<DietRecordRequest> parseSingleRequestWithSplit(Map<?, ?> item) {
-        if (item == null || item.isEmpty()) {
-            throw new IllegalArgumentException("飲食紀錄資料不可為空");
-        }
-
-        String rawDishName = readText(item, "dish_name", "dishName");
-        if (rawDishName == null || rawDishName.isBlank()) {
-            return List.of(parseSingleRequest(item, null));
-        }
-
-        List<DietRecordRequest> requests = new ArrayList<>();
-        for (String dishName : splitDishNames(rawDishName)) {
-            requests.add(parseSingleRequest(item, dishName));
-        }
-
-        if (requests.isEmpty()) {
-            return List.of(parseSingleRequest(item, null));
-        }
-
-        return requests;
-    }
-
-    private List<String> splitDishNames(String rawDishName) {
-        List<String> dishNames = new ArrayList<>();
-        StringBuilder currentName = new StringBuilder();
-        int halfWidthParenthesisDepth = 0;
-        int fullWidthParenthesisDepth = 0;
-
-        for (int index = 0; index < rawDishName.length(); index++) {
-            char character = rawDishName.charAt(index);
-            if (character == '(') {
-                halfWidthParenthesisDepth++;
-            } else if (character == ')' && halfWidthParenthesisDepth > 0) {
-                halfWidthParenthesisDepth--;
-            } else if (character == '（') {
-                fullWidthParenthesisDepth++;
-            } else if (character == '）' && fullWidthParenthesisDepth > 0) {
-                fullWidthParenthesisDepth--;
-            }
-
-            boolean isTopLevelSeparator = (character == ',' || character == '，')
-                    && halfWidthParenthesisDepth == 0
-                    && fullWidthParenthesisDepth == 0;
-            if (isTopLevelSeparator) {
-                addDishName(dishNames, currentName);
-            } else {
-                currentName.append(character);
-            }
-        }
-        addDishName(dishNames, currentName);
-        return dishNames;
-    }
-
-    private void addDishName(List<String> dishNames, StringBuilder currentName) {
-        String trimmedName = currentName.toString().trim();
-        if (!trimmedName.isEmpty()) {
-            dishNames.add(trimmedName);
-        }
-        currentName.setLength(0);
     }
 
     private DietRecordRequest parseSingleRequest(Map<?, ?> item, String overrideDishName) {
