@@ -1181,65 +1181,63 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F4),
+      backgroundColor: AppColors.surface,
       appBar: AppBar(
-        toolbarHeight: 88,
-        backgroundColor: const Color(0xFFF7F7F4),
+        backgroundColor: AppColors.background,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.secondary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            TextButton.icon(
-              onPressed: _showMealPicker,
-              icon: const Icon(Icons.arrow_drop_down, size: 20),
-              label: Text(
-                _mealType,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+            IconButton(
+              tooltip: '前一天',
+              onPressed: () => _changeDateBy(-1),
+              icon: const Icon(Icons.chevron_left, color: AppColors.secondary),
+              visualDensity: VisualDensity.compact,
+            ),
+            InkWell(
+              onTap: _pickDate,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 18,
+                      color: AppColors.secondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.secondary,
-                padding: EdgeInsets.zero,
               ),
             ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  tooltip: '前一天',
-                  onPressed: () => _changeDateBy(-1),
-                  icon: const Icon(Icons.chevron_left),
-                  visualDensity: VisualDensity.compact,
-                ),
-                TextButton.icon(
-                  onPressed: _pickDate,
-                  icon: const Icon(Icons.calendar_today_outlined, size: 14),
-                  label: Text(
-                    '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black54,
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    textStyle: const TextStyle(fontSize: 13),
-                  ),
-                ),
-                IconButton(
-                  tooltip: '後一天',
-                  onPressed: _isTodaySelected ? null : () => _changeDateBy(1),
-                  icon: const Icon(Icons.chevron_right),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
+            IconButton(
+              tooltip: '後一天',
+              onPressed: _isTodaySelected ? null : () => _changeDateBy(1),
+              icon: Icon(
+                Icons.chevron_right,
+                color: _isTodaySelected
+                    ? Colors.black26
+                    : AppColors.secondary,
+              ),
+              visualDensity: VisualDensity.compact,
             ),
           ],
         ),
-        titleSpacing: 0,
       ),
       body: Column(
         children: [
@@ -1255,7 +1253,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
               onSubmitted: _search,
               decoration: InputDecoration(
                 hintText: '搜尋料理',
-                prefixIcon: const Icon(Icons.search, color: Colors.black),
+                prefixIcon: const Icon(Icons.search, color: AppColors.secondary),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
                     : IconButton(
@@ -1263,22 +1261,25 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                           _searchController.clear();
                           _onSearchChanged('');
                         },
-                        icon: const Icon(Icons.cancel, color: Colors.black54),
+                        icon: Icon(
+                          Icons.cancel,
+                          color: AppColors.secondary.withValues(alpha: 0.6),
+                        ),
                       ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.background,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(28),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD0D0D0),
-                    width: 2,
+                  borderSide: BorderSide(
+                    color: AppColors.secondary.withValues(alpha: 0.25),
+                    width: 1.5,
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(28),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD0D0D0),
-                    width: 2,
+                  borderSide: BorderSide(
+                    color: AppColors.secondary.withValues(alpha: 0.25),
+                    width: 1.5,
                   ),
                 ),
               ),
@@ -1287,7 +1288,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
           _buildDishSourceTabs(),
           Expanded(
             child: Container(
-              color: Colors.white,
+              color: AppColors.surface,
               child: _buildResultArea(),
             ),
           ),
@@ -1305,6 +1306,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 child: OutlinedButton(
                   onPressed: _showSelectedItemsSheet,
                   style: OutlinedButton.styleFrom(
+                    backgroundColor: AppColors.background,
                     foregroundColor: AppColors.secondary,
                     side: const BorderSide(color: AppColors.secondary),
                     shape: const StadiumBorder(),
@@ -1349,7 +1351,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                     : _saveSelectedItems,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
-                  disabledBackgroundColor: const Color(0xFFD9D9D3),
+                  disabledBackgroundColor: const Color(0xFFD5C7AE),
+                  disabledForegroundColor: const Color(0xFF8E7E6C),
                   shape: const StadiumBorder(),
                 ),
                 child: _isSaving
@@ -1363,8 +1366,10 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                       )
                     : Text(
                         _selectedItems.isEmpty ? '請選擇食物' : '完成紀錄並餵食',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: _selectedItems.isEmpty
+                              ? const Color(0xFF8E7E6C)
+                              : Colors.white,
                           fontWeight: FontWeight.w700,
                           fontSize: 16,
                         ),
@@ -1566,7 +1571,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       ),
       trailing: Icon(
         selected ? Icons.check_circle : Icons.radio_button_unchecked,
-        color: selected ? AppColors.success : Colors.black26,
+        color: selected
+            ? AppColors.success
+            : AppColors.secondary.withValues(alpha: 0.35),
         size: 28,
       ),
     );
@@ -1632,7 +1639,9 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                   selected == null
                       ? Icons.radio_button_unchecked
                       : Icons.check_circle,
-                  color: selected == null ? Colors.black26 : AppColors.success,
+                  color: selected == null
+                      ? AppColors.secondary.withValues(alpha: 0.35)
+                      : AppColors.success,
                   size: 28,
                 ),
               ),
@@ -1645,12 +1654,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
   }
 
-  Future<void> _showMealPicker() async {
-    final selectedMeal = await _showMealTypePicker();
-    if (selectedMeal != null && mounted) {
-      setState(() => _mealType = selectedMeal);
-    }
-  }
 
   Future<String?> _showMealTypePicker() {
     return showModalBottomSheet<String>(
