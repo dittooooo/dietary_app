@@ -190,14 +190,9 @@ public class DietRecordController {
             return List.of(parseSingleRequest(item, null));
         }
 
-        String[] dishNames = rawDishName.split("[,，]");
         List<DietRecordRequest> requests = new ArrayList<>();
-
-        for (String name : dishNames) {
-            String trimmedName = name.trim();
-            if (!trimmedName.isEmpty()) {
-                requests.add(parseSingleRequest(item, trimmedName));
-            }
+        for (String dishName : splitDishNames(rawDishName)) {
+            requests.add(parseSingleRequest(item, dishName));
         }
 
         if (requests.isEmpty()) {
@@ -205,6 +200,45 @@ public class DietRecordController {
         }
 
         return requests;
+    }
+
+    private List<String> splitDishNames(String rawDishName) {
+        List<String> dishNames = new ArrayList<>();
+        StringBuilder currentName = new StringBuilder();
+        int halfWidthParenthesisDepth = 0;
+        int fullWidthParenthesisDepth = 0;
+
+        for (int index = 0; index < rawDishName.length(); index++) {
+            char character = rawDishName.charAt(index);
+            if (character == '(') {
+                halfWidthParenthesisDepth++;
+            } else if (character == ')' && halfWidthParenthesisDepth > 0) {
+                halfWidthParenthesisDepth--;
+            } else if (character == '（') {
+                fullWidthParenthesisDepth++;
+            } else if (character == '）' && fullWidthParenthesisDepth > 0) {
+                fullWidthParenthesisDepth--;
+            }
+
+            boolean isTopLevelSeparator = (character == ',' || character == '，')
+                    && halfWidthParenthesisDepth == 0
+                    && fullWidthParenthesisDepth == 0;
+            if (isTopLevelSeparator) {
+                addDishName(dishNames, currentName);
+            } else {
+                currentName.append(character);
+            }
+        }
+        addDishName(dishNames, currentName);
+        return dishNames;
+    }
+
+    private void addDishName(List<String> dishNames, StringBuilder currentName) {
+        String trimmedName = currentName.toString().trim();
+        if (!trimmedName.isEmpty()) {
+            dishNames.add(trimmedName);
+        }
+        currentName.setLength(0);
     }
 
     private DietRecordRequest parseSingleRequest(Map<?, ?> item, String overrideDishName) {
