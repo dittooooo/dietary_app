@@ -198,7 +198,7 @@ class _HomeViewState extends State<HomeView>
     }
 
     try {
-      // 2. 開始聽取語音，設定中文辨識與停頓時間
+      // 2. 開始聽取語音，設定中文辨識與停頓時間（注意：避免設定 ListenMode.dictation 以預防部分實體手機原生 C++ 崩潰）
       if (mounted) setState(() => _isListening = true);
       debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用 Locale: $localeId');
       await _speech.listen(
@@ -206,9 +206,8 @@ class _HomeViewState extends State<HomeView>
           localeId: localeId, // 設定標準連字號 BCP-47 中文語系代碼 (如 zh-TW)
           partialResults: true, // 允許實時邊講邊回傳文字片段
           cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
-          listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
           listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
-          pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
+          pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒
         ),
         onResult: (result) {
           debugPrint(
@@ -236,7 +235,6 @@ class _HomeViewState extends State<HomeView>
             localeId: null,
             partialResults: true,
             cancelOnError: false,
-            listenMode: stt.ListenMode.dictation,
             listenFor: const Duration(seconds: 30),
             pauseFor: const Duration(seconds: 6),
           ),
@@ -623,7 +621,8 @@ class _HomeViewState extends State<HomeView>
       if (val != null) return val;
     }
 
-    return dishName.toString().trim().isNotEmpty ? 400.0 : 0.0;
+    // 若無數值且無法自文字解析出熱量，預設以 0.0 kcal 估算（與後端缺漏數據算式保持一致，避免前後端昨日總結與體態計算不符合）
+    return 0.0;
   }
 
   double _getNutrientFromRecord(dynamic record, String pattern) {
