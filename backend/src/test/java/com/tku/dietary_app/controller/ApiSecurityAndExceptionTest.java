@@ -197,6 +197,74 @@ class ApiSecurityAndExceptionTest {
     }
 
     @Test
+    void dietRecordCreateKeepsCommaInsideParenthesesInOneDishName() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietRecordService.create(eq(1L), any())).thenAnswer(invocation -> {
+            var request = invocation.getArgument(1, com.tku.dietary_app.dto.DietRecordRequest.class);
+            return DietRecord.builder()
+                    .id(70L)
+                    .user(loginUser)
+                    .dishName(request.getDishName())
+                    .date(request.getDate())
+                    .mealType(request.getMealType())
+                    .amount(request.getAmount() == null ? 1 : request.getAmount())
+                    .build();
+        });
+
+        mockMvc.perform(post("/api/diet-records")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dishName": "珍珠奶茶(去冰,全糖)",
+                                  "mealType": "LUNCH",
+                                  "calories": 94.02,
+                                  "protein": 0.24,
+                                  "fat": 2.39,
+                                  "carbohydrates": 17.89
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.dishName").value("珍珠奶茶(去冰,全糖)"));
+    }
+
+    @Test
+    void dietRecordCreateKeepsTopLevelCommaInOneDishName() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietRecordService.create(eq(1L), any())).thenAnswer(invocation -> {
+            var request = invocation.getArgument(1, com.tku.dietary_app.dto.DietRecordRequest.class);
+            return DietRecord.builder()
+                    .id(71L)
+                    .user(loginUser)
+                    .dishName(request.getDishName())
+                    .date(request.getDate())
+                    .mealType(request.getMealType())
+                    .amount(request.getAmount() == null ? 1 : request.getAmount())
+                    .build();
+        });
+
+        mockMvc.perform(post("/api/diet-records")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "dishName": "冷凍,水晶餃",
+                                  "mealType": "LUNCH",
+                                  "calories": 190.19,
+                                  "protein": 2.83,
+                                  "fat": 3.51,
+                                  "carbohydrates": 36.83
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.dishName").value("冷凍,水晶餃"));
+    }
+
+    @Test
     void dietRecordForbiddenOperationMapsTo403() throws Exception {
         User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
