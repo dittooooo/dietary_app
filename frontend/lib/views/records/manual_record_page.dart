@@ -12,6 +12,11 @@ import 'simple_camera_page.dart';
 
 // === 1. 資料模型與輔助類別 (Data Models & Auxiliary Classes) ===
 
+String _formatNumber(double? value) {
+  if (value == null) return '';
+  return value.toStringAsFixed(2).replaceFirst(RegExp(r'\.?0+$'), '');
+}
+
 class _NutritionValues {
   const _NutritionValues({
     this.calories,
@@ -26,11 +31,12 @@ class _NutritionValues {
   final double? carbohydrates;
 
   String toNutritionText() => [
-    if (calories != null) '熱量 $calories kcal',
-    if (protein != null) '蛋白質 $protein g',
-    if (fat != null) '脂肪 $fat g',
-    if (carbohydrates != null) '碳水化合物 $carbohydrates g',
-  ].join('，');
+        if (calories != null) '熱量 ${_formatNumber(calories)} kcal',
+        if (protein != null) '蛋白質 ${_formatNumber(protein)} g',
+        if (fat != null) '脂肪 ${_formatNumber(fat)} g',
+        if (carbohydrates != null)
+          '碳水化合物 ${_formatNumber(carbohydrates)} g',
+      ].join('，');
 
   _NutritionValues scaledBy(double multiplier) => _NutritionValues(
         calories: calories == null ? null : calories! * multiplier,
@@ -218,10 +224,7 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
   }
 
   String _numberText(double? value) {
-    if (value == null) return '';
-    return value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
+    return _formatNumber(value);
   }
 
   void _recalculateUneditedNutrition() {
@@ -416,10 +419,7 @@ class _NutritionEditorDialogState extends State<_NutritionEditorDialog> {
   }
 
   String _numberText(double? value) {
-    if (value == null) return '';
-    return value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
+    return _formatNumber(value);
   }
 
   Widget _field(String label, TextEditingController controller) {
@@ -734,9 +734,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   }
 
   String _formatAmount(double amount) {
-    return amount == amount.roundToDouble()
-        ? amount.toInt().toString()
-        : amount.toString();
+    return _formatNumber(amount);
   }
 
   Future<void> _editSelectedItem(_SelectedFood item) async {
@@ -1146,7 +1144,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
             'portion': '${_formatAmount(item.amount)} × ${item.unitLabel}',
             'calories': item.totalNutrition.calories == null
                 ? '-- kcal'
-                : '${item.totalNutrition.calories} kcal',
+                : '${_formatNumber(item.totalNutrition.calories)} kcal',
           });
         }
       }
