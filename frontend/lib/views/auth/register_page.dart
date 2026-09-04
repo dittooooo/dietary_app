@@ -28,6 +28,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   /// 處理使用者註冊流程，執行信箱與密碼格式檢驗並呼叫註冊 API。
   Future<void> _handleRegister() async {
+    FocusManager.instance.primaryFocus?.unfocus();
     bool hasLocalError = false;
     setState(() {
       _emailError = null;

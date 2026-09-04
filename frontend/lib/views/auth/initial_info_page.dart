@@ -172,6 +172,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     await prefs.remove(AuthService.needsOnboardingKey);
     await prefs.remove('user_role');
     await prefs.remove('user_email');
+    await prefs.remove('user_avatar_url');
     if (mounted) {
       Navigator.pushReplacement(
         context,

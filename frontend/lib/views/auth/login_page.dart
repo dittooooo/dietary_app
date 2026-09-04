@@ -102,6 +102,7 @@ class _LoginPageState extends State<LoginPage> {
 
   /// 處理點擊登入按鈕事件，執行輸入欄位本機格式驗證。
   void _handleLoginClick() {
+    FocusManager.instance.primaryFocus?.unfocus();
     bool hasLocalError = false;
     setState(() {
       _emailError = null;

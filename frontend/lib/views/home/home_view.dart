@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // [代碼清理/Lint修正] 移除重複匯入的 dart:ui，因為 material.dart 已涵蓋相關 UI 元素與型態定義
 import 'dart:convert';
@@ -202,8 +202,8 @@ class _HomeViewState extends State<HomeView>
       if (mounted) setState(() => _isListening = true);
       debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用 Locale: $localeId');
       await _speech.listen(
+        localeId: localeId,
         listenOptions: stt.SpeechListenOptions(
-          localeId: localeId, // 設定標準連字號 BCP-47 中文語系代碼 (如 zh-TW)
           partialResults: true, // 允許實時邊講邊回傳文字片段
           cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
           listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
@@ -233,7 +233,6 @@ class _HomeViewState extends State<HomeView>
       try {
         await _speech.listen(
           listenOptions: stt.SpeechListenOptions(
-            localeId: null,
             partialResults: true,
             cancelOnError: false,
             listenMode: stt.ListenMode.dictation,
@@ -1233,20 +1232,36 @@ class _HomeViewState extends State<HomeView>
       }
 
       _hasCheckedBodyTransitionOnStartup = true;
-      final settlement = await _bodyStatusApi.settleDailyScores().timeout(
-        const Duration(seconds: 8),
-      );
-      final oldBodyType = DogStateController.parseBodyType(
-        settlement.oldBodyType,
-      );
-      final newBodyType = DogStateController.parseBodyType(
-        settlement.newBodyType,
-      );
-
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('dog_body_type', settlement.bodyType);
 
-      if (!settlement.bodyTypeChanged || oldBodyType == newBodyType) {
+      DogBodyType oldBodyType;
+      DogBodyType newBodyType;
+      bool shouldShowDialog = false;
+
+      final bool pendingShow =
+          prefs.getBool('pending_body_transition_show') ?? false;
+      if (pendingShow) {
+        final pendingOldStr = prefs.getString('pending_old_body_type');
+        final pendingNewStr = prefs.getString('pending_new_body_type');
+        await prefs.remove('pending_body_transition_show');
+        await prefs.remove('pending_old_body_type');
+        await prefs.remove('pending_new_body_type');
+
+        oldBodyType = DogStateController.parseBodyType(pendingOldStr);
+        newBodyType = DogStateController.parseBodyType(pendingNewStr);
+        shouldShowDialog = oldBodyType != newBodyType;
+      } else {
+        final settlement = await _bodyStatusApi.settleDailyScores().timeout(
+          const Duration(seconds: 8),
+        );
+        await prefs.setString('dog_body_type', settlement.bodyType);
+        oldBodyType = DogStateController.parseBodyType(settlement.oldBodyType);
+        newBodyType = DogStateController.parseBodyType(settlement.newBodyType);
+        shouldShowDialog =
+            settlement.bodyTypeChanged && oldBodyType != newBodyType;
+      }
+
+      if (!shouldShowDialog) {
         _dogController.setBodyType(newBodyType);
         _dogController.setState(DogAnimationState.idle);
         return;

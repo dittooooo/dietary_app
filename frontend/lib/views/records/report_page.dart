@@ -19,11 +19,13 @@ class ReportPage extends StatefulWidget {
   final DateTime? initialDate;
   final ValueListenable<DateTime>? selectedDateListenable;
   final ValueChanged<DateTime>? onDateChanged;
+  final ValueListenable<int>? avatarRefreshListenable;
   const ReportPage({
     super.key,
     this.initialDate,
     this.selectedDateListenable,
     this.onDateChanged,
+    this.avatarRefreshListenable,
   });
 
   @override
@@ -48,11 +50,22 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   bool _sharedDateUpdateQueued = false;
 
   // === 2. 使用者頭像與飲食紀錄 API 載入 ===
+  String? _resolveAvatarUrl(dynamic avatarPath) {
+    final path = avatarPath?.toString().trim();
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) return path;
+
+    final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
+    return '$serverBase$path';
+  }
+
   Future<void> _loadAvatar() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
 
-    final cachedAvatarUrl = prefs.getString('user_avatar_url');
+    final cachedAvatarUrl = _resolveAvatarUrl(
+      prefs.getString('user_avatar_url'),
+    );
     if (cachedAvatarUrl != _avatarUrl) {
       setState(() {
         _avatarUrl = cachedAvatarUrl;
@@ -66,11 +79,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       final userData = result['data'];
       final avatarPath =
           userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
-      if (avatarPath != null && avatarPath.isNotEmpty) {
-        final serverBase = ApiConfig.baseUrl.replaceAll('/api', '');
-        final fullUrl = avatarPath.startsWith('http')
-            ? avatarPath
-            : '$serverBase$avatarPath';
+      final fullUrl = _resolveAvatarUrl(avatarPath);
+      if (fullUrl != null) {
         if (fullUrl != _avatarUrl) {
           setState(() {
             _avatarUrl = fullUrl;
@@ -81,6 +91,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     }
   }
 
+  void _handleAvatarRefresh() {
+    _loadAvatar();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -89,6 +103,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         widget.initialDate ??
         DateTime.now();
     widget.selectedDateListenable?.addListener(_handleSharedDateChanged);
+    widget.avatarRefreshListenable?.addListener(_handleAvatarRefresh);
 
     // 初始化小精靈呼吸與懸浮浮動動畫
     _hoverController = AnimationController(
@@ -309,6 +324,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override
   void dispose() {
     widget.selectedDateListenable?.removeListener(_handleSharedDateChanged);
+    widget.avatarRefreshListenable?.removeListener(_handleAvatarRefresh);
     _hoverController.dispose();
     super.dispose();
   }

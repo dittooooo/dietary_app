@@ -28,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   late int _selectedIndex;
   late List<Widget> _pages;
   late final ValueNotifier<DateTime> _selectedReportDate;
+  late final ValueNotifier<int> _avatarRefreshNotifier;
   bool _isRoleChecked = false;
   bool _hasShownAdminDialog = false;
 
@@ -38,6 +39,7 @@ class _HomePageState extends State<HomePage> {
     _selectedReportDate = ValueNotifier(
       widget.initialReportDate ?? DateTime.now(),
     );
+    _avatarRefreshNotifier = ValueNotifier(0);
     _pages = [];
     _checkAdminRole();
   }
@@ -91,12 +93,16 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _pages = [
           HomeView(initialOpenChat: widget.showChat),
-          DietaryRecordPage(onDateSelected: _updateSelectedReportDate),
+          DietaryRecordPage(
+            onDateSelected: _updateSelectedReportDate,
+            avatarRefreshListenable: _avatarRefreshNotifier,
+          ),
           ReportPage(
             selectedDateListenable: _selectedReportDate,
             onDateChanged: _updateSelectedReportDate,
+            avatarRefreshListenable: _avatarRefreshNotifier,
           ),
-          const ProfilePage(),
+          ProfilePage(onAvatarChanged: _notifyAvatarChanged),
         ];
         _isRoleChecked = true;
       });
@@ -108,12 +114,16 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _pages = [
           HomeView(initialOpenChat: widget.showChat),
-          DietaryRecordPage(onDateSelected: _updateSelectedReportDate),
+          DietaryRecordPage(
+            onDateSelected: _updateSelectedReportDate,
+            avatarRefreshListenable: _avatarRefreshNotifier,
+          ),
           ReportPage(
             selectedDateListenable: _selectedReportDate,
             onDateChanged: _updateSelectedReportDate,
+            avatarRefreshListenable: _avatarRefreshNotifier,
           ),
-          const ProfilePage(),
+          ProfilePage(onAvatarChanged: _notifyAvatarChanged),
         ];
         _isRoleChecked = true;
       });
@@ -227,9 +237,14 @@ class _HomePageState extends State<HomePage> {
     _selectedReportDate.value = DateTime(date.year, date.month, date.day);
   }
 
+  void _notifyAvatarChanged() {
+    _avatarRefreshNotifier.value++;
+  }
+
   @override
   void dispose() {
     _selectedReportDate.dispose();
+    _avatarRefreshNotifier.dispose();
     super.dispose();
   }
 

@@ -9,7 +9,6 @@ import '../../controllers/dog_state_controller.dart';
 import '../../models/body_status_models.dart';
 import '../../services/auth_service.dart';
 import '../../services/body_status_api_service.dart';
-import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
 import '../home/home_page.dart';
 import 'initial_info_page.dart';
@@ -189,34 +188,19 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
   }
 
-  /// 當寵物體態改變時彈出變化慶祝動畫對話框。
+  /// 當寵物體態改變時，紀錄待彈出的慶祝動畫旗標，延遲至進入 HomeView 後再播放。
   Future<void> _playBodyTypeChangeIfNeeded(SettlementResponse settlement) async {
     final oldType = DogStateController.parseBodyType(settlement.oldBodyType);
     final newType = DogStateController.parseBodyType(settlement.newBodyType);
 
-    if (!settlement.bodyTypeChanged || oldType == newType) {
-      _dogController.setBodyType(newType);
-      _dogController.setState(DogAnimationState.idle);
-      return;
+    final prefs = await SharedPreferences.getInstance();
+    if (settlement.bodyTypeChanged && oldType != newType) {
+      await prefs.setBool('pending_body_transition_show', true);
+      await prefs.setString('pending_old_body_type', settlement.oldBodyType);
+      await prefs.setString('pending_new_body_type', settlement.newBodyType);
+    } else {
+      await prefs.remove('pending_body_transition_show');
     }
-
-    if (mounted) {
-      setState(() => _statusText = '正在同步寵物狀態...');
-    }
-
-    _dogController.setBodyType(oldType);
-    _dogController.setState(DogAnimationState.idle);
-    await showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) {
-        return BodyTransitionAnimationDialog(
-          oldBodyType: oldType,
-          newBodyType: newType,
-        );
-      },
-    );
-    if (!mounted) return;
 
     _dogController.setBodyType(newType);
     _dogController.setState(DogAnimationState.idle);
@@ -246,13 +230,16 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(40),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox(
                   width: 220,

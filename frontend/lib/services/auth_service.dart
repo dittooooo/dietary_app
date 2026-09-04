@@ -436,6 +436,8 @@ class AuthService {
         userData['birthday']?.toString();
     final role = userData['user']?['role']?.toString() ??
         userData['role']?.toString();
+    final avatarUrl = userData['avatarUrl']?.toString() ??
+        userData['user']?['avatarUrl']?.toString();
     final dietGoal = userData['dietGoal']?.toString() ??
         userData['diet_goal']?.toString();
     final age = _asInt(userData['age']);
@@ -468,6 +470,11 @@ class AuthService {
     }
     if (role != null) {
       await prefs.setString('user_role', role);
+    }
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+      await prefs.setString('user_avatar_url', avatarUrl.trim());
+    } else {
+      await prefs.remove('user_avatar_url');
     }
     if (dietGoal != null) {
       await prefs.setString(
@@ -506,6 +513,7 @@ class AuthService {
     await prefs.remove('user_role');
     await prefs.remove('user_email');
     await prefs.remove('user_nickname');
+    await prefs.remove('user_avatar_url');
     await prefs.remove('user_password');
   }
 

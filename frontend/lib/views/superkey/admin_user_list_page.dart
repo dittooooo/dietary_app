@@ -327,7 +327,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
 
   String? _gender;
   bool _isSubmitting = false;
-  List<String> _validationMessages = [];
+  bool _showValidationPrompt = false;
   final Set<String> _selectedDiseases = {};
   final Set<String> _selectedGoals = {};
 
@@ -366,8 +366,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     String hint,
     int maxLength,
   ) {
-    return SizedBox(
-      width: maxLength == 4 ? 64 : 42,
+    return Expanded(
       child: TextField(
         controller: controller,
         keyboardType: TextInputType.number,
@@ -375,6 +374,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
         maxLength: maxLength,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         decoration: InputDecoration(
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
           counterText: '',
           hintText: hint,
           border: const UnderlineInputBorder(),
@@ -391,7 +392,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
 
     if (_emailController.text.trim().isEmpty) missing.add('請填寫電子郵件');
     if (_passwordController.text.isEmpty) missing.add('請填寫密碼');
-    if (_nameController.text.trim().isEmpty) missing.add('請填寫暱稱 / 姓名');
+    if (_nameController.text.trim().isEmpty) missing.add('請填寫暱稱');
     if (_birthYearController.text.trim().isEmpty ||
         _birthMonthController.text.trim().isEmpty ||
         _birthDayController.text.trim().isEmpty) {
@@ -414,7 +415,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
     if (_selectedGoals.isEmpty) missing.add('請選擇飲食目標');
 
     if (missing.isNotEmpty) {
-      setState(() => _validationMessages = missing);
+      setState(() => _showValidationPrompt = true);
       return;
     }
 
@@ -436,7 +437,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
 
     setState(() {
       _isSubmitting = true;
-      _validationMessages = [];
+      _showValidationPrompt = false;
     });
     messenger.showSnackBar(const SnackBar(content: Text('正在創建帳戶...')));
 
@@ -471,6 +472,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColors.background,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       title: const Text(
         '新增使用者帳戶 (管理員特權)',
         style: TextStyle(fontWeight: FontWeight.bold),
@@ -479,9 +481,42 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+              child: _showValidationPrompt
+                  ? Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.white, size: 20),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '請完整填寫必填欄位',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
             TextField(
               controller: _emailController,
-              decoration: const InputDecoration(labelText: '電子郵件 (帳號)'),
+              decoration: const InputDecoration(labelText: '電子郵件'),
             ),
             TextField(
               controller: _passwordController,
@@ -490,7 +525,7 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
             ),
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: '暱稱 / 姓名'),
+              decoration: const InputDecoration(labelText: '暱稱'),
             ),
             const SizedBox(height: 14),
             Row(
@@ -502,20 +537,25 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                _buildBirthField(_birthYearController, 'YYYY', 4),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
-                  child: Text('年'),
+                _buildBirthField(_birthYearController, '', 4),
+                const SizedBox(width: 4),
+                const Text(
+                  '年',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                _buildBirthField(_birthMonthController, 'MM', 2),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 5),
-                  child: Text('月'),
+                const SizedBox(width: 4),
+                _buildBirthField(_birthMonthController, '', 2),
+                const SizedBox(width: 4),
+                const Text(
+                  '月',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                _buildBirthField(_birthDayController, 'DD', 2),
-                const Padding(
-                  padding: EdgeInsets.only(left: 5),
-                  child: Text('日'),
+                const SizedBox(width: 4),
+                _buildBirthField(_birthDayController, '', 2),
+                const SizedBox(width: 4),
+                const Text(
+                  '日',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -531,27 +571,6 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),
-            if (_validationMessages.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: AppColors.danger.withValues(alpha: 0.28),
-                  ),
-                ),
-                child: Text(
-                  _validationMessages.join('\n'),
-                  style: const TextStyle(
-                    color: AppColors.danger,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
             const SizedBox(height: 10),
             Row(
               children: [
@@ -582,7 +601,19 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 4,
-                    children: ['無疾病', '糖尿病', '高血壓'].map((disease) {
+                    children: [
+                      '無疾病',
+                      '高血壓',
+                      '高血脂',
+                      '糖尿病',
+                      '心血管疾病',
+                      '慢性腎臟病',
+                      '腦中風',
+                      '代謝症候群',
+                      '痛風',
+                      '高尿酸血症',
+                      '胃食道逆流',
+                    ].map((disease) {
                       final isSelected = _selectedDiseases.contains(disease);
                       return FilterChip(
                         label: Text(disease),

@@ -20,7 +20,13 @@ import '../../utils/friendly_error_message.dart';
 /// 個人中心主頁面 Widget，展示用戶頭像、暱稱、熱量目標與設定功能選單。
 class ProfilePage extends StatefulWidget {
   final int returnIndex;
-  const ProfilePage({super.key, this.returnIndex = 0});
+  final VoidCallback? onAvatarChanged;
+
+  const ProfilePage({
+    super.key,
+    this.returnIndex = 0,
+    this.onAvatarChanged,
+  });
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -135,6 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
           if (uploadResult['success'] == true) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('頭像上傳成功！')));
             _loadUserData();
+            widget.onAvatarChanged?.call();
           } else {
             setState(() {
               _imageBytes = null;

@@ -38,11 +38,11 @@ class UserDetailPage extends StatelessWidget {
               userData['id']!,
             ), // 建立並顯示使用者 ID 的唯讀輸入框欄位
             _buildDetailField(
-              '姓名 / 別名',
+              '暱稱',
               userData['name']!,
-            ), // 建立並顯示使用者姓名的唯讀輸入框欄位
+            ), // 建立並顯示使用者暱稱的唯讀輸入框欄位
             _buildDetailField(
-              '電子郵件 (帳號)',
+              '電子郵件',
               userData['email']!,
             ), // 建立並顯示使用者電子信箱的唯讀輸入框欄位
             _buildDetailField(

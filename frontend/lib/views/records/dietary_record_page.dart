@@ -2,6 +2,7 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,7 +18,13 @@ import 'manual_record_page.dart';
 // === 2. 飲食紀錄主頁面 ===
 class DietaryRecordPage extends StatefulWidget {
   final ValueChanged<DateTime>? onDateSelected;
-  const DietaryRecordPage({super.key, this.onDateSelected});
+  final ValueListenable<int>? avatarRefreshListenable;
+
+  const DietaryRecordPage({
+    super.key,
+    this.onDateSelected,
+    this.avatarRefreshListenable,
+  });
 
   @override
   State<DietaryRecordPage> createState() => _DietaryRecordPageState();
@@ -77,9 +84,14 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
     }
   }
 
+  void _handleAvatarRefresh() {
+    _loadAvatar();
+  }
+
   @override
   void initState() {
     super.initState();
+    widget.avatarRefreshListenable?.addListener(_handleAvatarRefresh);
     _loadAvatar();
     _loadDietRecords();
     _scrollController.addListener(() {
@@ -777,6 +789,13 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    widget.avatarRefreshListenable?.removeListener(_handleAvatarRefresh);
+    _scrollController.dispose();
+    super.dispose();
   }
 }
 
