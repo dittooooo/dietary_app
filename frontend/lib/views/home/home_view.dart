@@ -107,24 +107,27 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     try {
       _speechAvailable = await _speech.initialize(
         onStatus: (status) {
+          debugPrint('🗣️ [SpeechToText Status] $status');
           // 語音辨識結束或停止收聽時，自動更新 UI 狀態
           if (status == 'done' || status == 'notListening') {
             if (mounted) setState(() => _isListening = false);
           }
         },
         onError: (errorNotification) {
+          debugPrint('⚠️ [SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})');
           // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
           if (mounted) setState(() => _isListening = false);
         },
       ).timeout(
-        const Duration(seconds: 3),
+        const Duration(seconds: 4),
         onTimeout: () {
-          debugPrint('初始化 SpeechToText 超時（模擬器可能無語音服務）');
+          debugPrint('⚠️ [SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
           return false;
         },
       );
+      debugPrint('🗣️ [SpeechToText] 初始化成功狀態: $_speechAvailable');
     } catch (e) {
-      debugPrint('初始化 SpeechToText 失敗: $e');
+      debugPrint('❌ [SpeechToText] 初始化失敗: $e');
       _speechAvailable = false;
     }
     if (mounted) setState(() {});
@@ -151,7 +154,7 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('無法啟動語音辨識，請確認手機設定中已允許麥克風權限且啟用 Google 語音服務。'),
+              content: Text('無法啟動語音辨識，請確認手機已啟用 Google 語音服務。'),
               duration: Duration(seconds: 3),
             ),
           );
@@ -160,27 +163,64 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
       }
     }
 
+    // 1. 智慧判斷語音辨識 Locale 語系（優先尋找台灣/繁體中文 TW / Hant / HK）
+    String localeId = 'zh_TW';
     try {
-      // 開始聽取語音，並指定為繁體中文 (zh_TW) 辨識
+      final availableLocales = await _speech.locales();
+      // 第一優先：尋找包含 tw (台灣)、hant (繁體) 或 hk (香港) 的標籤
+      final twLocale = availableLocales.firstWhere(
+        (loc) {
+          final id = loc.localeId.toLowerCase();
+          return id.contains('tw') || id.contains('hant') || id.contains('hk');
+        },
+        // 第二優先：退回尋找一般中文標籤 (如 zh 或 cmn)
+        orElse: () => availableLocales.firstWhere(
+          (loc) {
+            final id = loc.localeId.toLowerCase();
+            return id.contains('zh') || id.contains('cmn');
+          },
+          orElse: () => stt.LocaleName('zh_TW', '繁體中文'),
+        ),
+      );
+      localeId = twLocale.localeId;
+      debugPrint('🗣️ [SpeechToText] 優先選用台灣/繁體中文語系 Tag: $localeId');
+    } catch (e) {
+      // 若查詢失敗，強制保留 zh_TW 讓 Google 開啟線上雲端中文辨識
+      localeId = 'zh_TW';
+      debugPrint('取得 SpeechToText Locales 失敗，強制使用預設 zh_TW: $e');
+    }
+
+    try {
+      // 2. 開始聽取語音，設定中文辨識與停頓時間
       if (mounted) setState(() => _isListening = true);
+      debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用 Locale: $localeId');
       await _speech.listen(
-        // [API更新/Lint修正] 使用 SpeechListenOptions 設定 localeId 替代已過時的直接帶入 localeId 參數
-        listenOptions: stt.SpeechListenOptions(localeId: 'zh_TW'),
+        listenOptions: stt.SpeechListenOptions(
+          localeId: localeId, // 設定中文語系代碼
+          partialResults: true, // 允許實時邊講邊回傳文字片段
+          cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
+          listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
+        ),
+        listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
+        pauseFor: const Duration(seconds: 6),   // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
         onResult: (result) {
+          debugPrint('🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})');
           // 若已非收聽狀態（例如已關閉或已送出訊息），忽略殘餘非同步回傳，避免覆蓋已清空的輸入框
           if (!mounted || !_isListening) return;
-          setState(() {
-            // 將辨識出的文字即時更新寫入輸入框控制器
-            _inputController.text = result.recognizedWords;
-            // 將輸入框游標移動至文字最後方，方便使用者手動修改
-            _inputController.selection = TextSelection.fromPosition(
-              TextPosition(offset: _inputController.text.length),
-            );
-          });
+          if (result.recognizedWords.isNotEmpty) {
+            setState(() {
+              // 將辨識出的文字即時更新寫入輸入框控制器
+              _inputController.text = result.recognizedWords;
+              // 將輸入框游標移動至文字最後方，方便使用者手動修改
+              _inputController.selection = TextSelection.fromPosition(
+                TextPosition(offset: _inputController.text.length),
+              );
+            });
+          }
         },
       );
     } catch (e) {
-      debugPrint('啟動語音收聽失敗: $e');
+      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗: $e');
       if (mounted) {
         setState(() => _isListening = false);
         ScaffoldMessenger.of(context).showSnackBar(
