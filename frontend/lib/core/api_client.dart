@@ -147,7 +147,8 @@ class ApiClient {
           ...?headers,
         };
         if (!_isPublicEndpoint(path)) {
-          await _attachLatestAccessToken(resolvedHeaders);
+          // 刷新成功後必須覆蓋原本的 Authorization，避免重試仍使用過期 Token。
+          await _attachLatestAccessToken(resolvedHeaders, force: true);
         }
         response = await send(resolvedHeaders);
         _logResponse('$path (retried)', response);
@@ -163,9 +164,15 @@ class ApiClient {
     return publicPaths.contains(path);
   }
 
-  Future<void> _attachLatestAccessToken(Map<String, String> headers) async {
+  Future<void> _attachLatestAccessToken(
+    Map<String, String> headers, {
+    bool force = false,
+  }) async {
     final existingAuth = headers['Authorization'];
-    if (existingAuth != null && existingAuth.startsWith('Bearer ') && existingAuth.length > 10) {
+    if (!force &&
+        existingAuth != null &&
+        existingAuth.startsWith('Bearer ') &&
+        existingAuth.length > 10) {
       return;
     }
 
