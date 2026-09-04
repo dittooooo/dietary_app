@@ -87,9 +87,11 @@ public class DietRecordService {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到使用者 (ID: " + userId + ")"));
 
         boolean manualCustomDish = isManualCustomDish(request);
-        DietaryAgentService.NutritionValues nutritionValues = manualCustomDish
-                ? new DietaryAgentService.NutritionValues(null, null, null, null)
-                : dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
+        boolean hasCompleteRequestedNutrition = hasCompleteNutrition(request);
+        DietaryAgentService.NutritionValues nutritionValues =
+                manualCustomDish || hasCompleteRequestedNutrition
+                        ? new DietaryAgentService.NutritionValues(null, null, null, null)
+                        : dietaryAgentService.fetchDishNutrition(request.getDishName().trim());
 
         LocalDate recordDate = resolveRecordDateForCreate(request);
 
@@ -302,6 +304,13 @@ public class DietRecordService {
             throw new IllegalArgumentException("手動新增料理時 " + fieldName + " 為必填欄位");
         }
         return value;
+    }
+
+    private boolean hasCompleteNutrition(DietRecordRequest request) {
+        return request.getCalories() != null
+                && request.getProtein() != null
+                && request.getFat() != null
+                && request.getCarbohydrates() != null;
     }
 
     private boolean hasText(String value) {

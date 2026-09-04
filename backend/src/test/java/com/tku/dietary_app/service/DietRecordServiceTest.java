@@ -100,6 +100,30 @@ class DietRecordServiceTest {
     }
 
     @Test
+    void createUsesCompleteRequestNutritionWithoutCallingPartnerService() {
+        User user = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(dietRecordRepository.save(any(DietRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DietRecordRequest request = new DietRecordRequest();
+        request.setDishName("珍珠奶茶(去冰,全糖)");
+        request.setMealType("DINNER");
+        request.setCalories(94.02);
+        request.setProtein(0.24);
+        request.setFat(2.39);
+        request.setCarbohydrates(17.89);
+
+        DietRecord result = service.create(1L, request);
+
+        assertThat(result.getCalories()).isEqualTo(94.02);
+        assertThat(result.getProtein()).isEqualTo(0.24);
+        assertThat(result.getFat()).isEqualTo(2.39);
+        assertThat(result.getCarbohydrates()).isEqualTo(17.89);
+        verify(dietaryAgentService, never()).fetchDishNutrition(any());
+    }
+
+    @Test
     void createStoresManualCustomDishWhenDescriptionMarksManual() {
         User user = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
