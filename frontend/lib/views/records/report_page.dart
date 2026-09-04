@@ -1,21 +1,21 @@
-import 'package:flutter/material.dart'; // 匯入 material.dart 元件庫或套件
-import 'dart:ui'; // 匯入 dart:ui 元件庫或套件
-import 'dart:math' as math; // 匯入 dart:math 元件庫或套件
-import 'dart:convert'; // 匯入 json 處理套件
-import '../auth/profile_page.dart'; // 匯入 profile_page.dart 元件庫或套件
-import '../home/home_page.dart';
-import '../../color/app_colors.dart'; // 匯入 app_colors.dart 元件庫或套件
-import '../../controllers/dog_state_controller.dart';
-import '../../widgets/dog_avatar.dart';
-import '../../services/diet_service.dart'; // 匯入 diet_service.dart
-
+import 'package:flutter/material.dart';
+// [代碼清理] 移除多餘的 dart:ui 匯入（已包含於 material.dart）
+import 'dart:math' as math;
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../services/auth_service.dart';
-import '../../config/api_config.dart';
 import 'package:flutter/foundation.dart';
 
+// [代碼清理] 移除未使用的 profile_page.dart 匯入
+import '../home/home_page.dart';
+import '../../color/app_colors.dart';
+import '../../controllers/dog_state_controller.dart';
+import '../../widgets/dog_avatar.dart';
+import '../../services/diet_service.dart';
+import '../../services/auth_service.dart';
+import '../../config/api_config.dart';
+
+// === 1. 飲食報告主頁面與狀態定義 (Report Page & State) ===
 class ReportPage extends StatefulWidget {
-  // 定義 ReportPage 類別，繼承自 StatefulWidget
   final DateTime? initialDate;
   final ValueListenable<DateTime>? selectedDateListenable;
   final ValueChanged<DateTime>? onDateChanged;
@@ -26,19 +26,18 @@ class ReportPage extends StatefulWidget {
     this.onDateChanged,
   });
 
-  @override // 標記此方法為覆寫父類別之方法
-  State<ReportPage> createState() => _ReportPageState(); // 執行相對應的邏輯計算或設定屬性參數
-} // 程式碼區塊或元件結構結束
+  @override
+  State<ReportPage> createState() => _ReportPageState();
+}
 
 class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
-  // 定義 _ReportPageState 類別，繼承自 State
   late DateTime _selectedDate;
   int _viewType = 0; // 0: 今日, 1: 一週
   int? _hoveredIdx; // 用於追蹤圖表上被點擊/懸停的點
 
-  late AnimationController _hoverController; // 宣告類別成員或方法內部的區域變數
-  late Animation<double> _hoverScaleAnimation; // 宣告類別成員或方法內部的區域變數
-  late Animation<double> _hoverOffsetAnimation; // 宣告類別成員或方法內部的區域變數
+  late AnimationController _hoverController;
+  late Animation<double> _hoverScaleAnimation;
+  late Animation<double> _hoverOffsetAnimation;
   final DogStateController _dogController = DogStateController.instance;
 
   List<dynamic> _allRecords = [];
@@ -48,6 +47,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   String? _avatarUrl;
   bool _sharedDateUpdateQueued = false;
 
+  // === 2. 使用者頭像與飲食紀錄 API 載入 ===
   Future<void> _loadAvatar() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -81,38 +81,34 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     }
   }
 
-  @override // 標記此方法為覆寫父類別之方法
+  @override
   void initState() {
-    // 初始化狀態生命週期方法，頁面建立時執行一次
-    super.initState(); // 執行相對應的邏輯計算或設定屬性參數
+    super.initState();
     _selectedDate =
         widget.selectedDateListenable?.value ??
         widget.initialDate ??
         DateTime.now();
     widget.selectedDateListenable?.addListener(_handleSharedDateChanged);
 
-    // 初始化呼吸與懸浮動畫
+    // 初始化小精靈呼吸與懸浮浮動動畫
     _hoverController = AnimationController(
-      // 執行相對應的邏輯計算或設定屬性參數
-      duration: const Duration(milliseconds: 2000), // 建立編譯期常數，優化 Flutter 渲染效能
-      vsync: this, // 執行相對應的邏輯計算或設定屬性參數
-    )..repeat(reverse: true); // 執行相對應的邏輯計算或設定屬性參數
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
 
     _hoverScaleAnimation = Tween<double>(begin: 0.97, end: 1.03).animate(
-      // 執行相對應的邏輯計算或設定屬性參數
       CurvedAnimation(
         parent: _hoverController,
         curve: Curves.easeInOut,
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+      ),
+    );
 
     _hoverOffsetAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
-      // 執行相對應的邏輯計算或設定屬性參數
       CurvedAnimation(
         parent: _hoverController,
         curve: Curves.easeInOut,
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
+      ),
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -140,6 +136,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     }
   }
 
+  // === 3. 營養熱量解析與數據處理工具 (Nutrition Parsers & Processing) ===
   double _getCaloriesFromRecord(dynamic record) {
     if (record == null) return 0.0;
 
@@ -268,7 +265,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   }
 
   void _processRecords() {
-    // 1. Weekly data: Sunday to Saturday of the week containing the selected date.
+    // 1. 週數據：以選擇日期所在週的週日至週六
     final sundayOffset = _selectedDate.weekday % 7;
     final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
     List<double> weekly = [];
@@ -287,7 +284,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       weekly.add(dailyTotal);
     }
 
-    // 2. Monthly data: from the selected date - 29 days to the selected date.
+    // 2. 月數據：選擇日期的近 30 天歷史紀錄
     List<double> monthly = [];
     for (int i = 29; i >= 0; i--) {
       final targetDate = _selectedDate.subtract(Duration(days: i));
@@ -308,34 +305,30 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     _monthlyData = monthly;
   }
 
-  @override // 標記此方法為覆寫父類別之方法
+  // === 4. 日期切換與狀態監聽邏輯 ===
+  @override
   void dispose() {
-    // 銷毀狀態生命週期方法，釋放頁面資源與控制器
     widget.selectedDateListenable?.removeListener(_handleSharedDateChanged);
-    _hoverController.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-    super.dispose(); // 執行相對應的邏輯計算或設定屬性參數
-  } // 程式碼區塊或元件結構結束
+    _hoverController.dispose();
+    super.dispose();
+  }
 
   String get _viewLabel {
-    // 宣告類別成員或方法內部的區域變數
-    if (_viewType == 1) return "本週"; // 回傳建構完成的元件或方法計算結果
-    return "今日"; // 回傳建構完成的元件或方法計算結果
-  } // 程式碼區塊或元件結構結束
+    if (_viewType == 1) return "本週";
+    return "今日";
+  }
 
   String get _dateDisplay {
-    // 宣告類別成員或方法內部的區域變數
     if (_viewType == 0) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      return "${_selectedDate.year}年 ${_selectedDate.month.toString().padLeft(2, '0')}月 ${_selectedDate.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
+      return "${_selectedDate.year}年 ${_selectedDate.month.toString().padLeft(2, '0')}月 ${_selectedDate.day.toString().padLeft(2, '0')}日";
     } else {
-      // 程式碼區塊或元件結構結束
       DateTime startDate = _selectedDate.subtract(
         Duration(days: _selectedDate.weekday % 7),
       );
       DateTime endDate = startDate.add(const Duration(days: 6));
-      return "${startDate.year}年 ${startDate.month.toString().padLeft(2, '0')}月 ${startDate.day.toString().padLeft(2, '0')}日 - ${endDate.year == startDate.year ? '' : '${endDate.year}年 '}${endDate.month.toString().padLeft(2, '0')}月 ${endDate.day.toString().padLeft(2, '0')}日"; // 回傳建構完成的元件或方法計算結果
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+      return "${startDate.year}年 ${startDate.month.toString().padLeft(2, '0')}月 ${startDate.day.toString().padLeft(2, '0')}日 - ${endDate.year == startDate.year ? '' : '${endDate.year}年 '}${endDate.month.toString().padLeft(2, '0')}月 ${endDate.day.toString().padLeft(2, '0')}日";
+    }
+  }
 
   void _handleSharedDateChanged() {
     if (_sharedDateUpdateQueued) return;
@@ -388,60 +381,44 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     widget.onDateChanged?.call(picked);
   }
 
+  // === 5. UI 畫面建構主體 (Scaffold & Build) ===
   Widget _buildTabButton(String label, bool isSelected) {
-    // 定義用於重複使用的 UI 封裝建構方法
     return Container(
-      // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
       padding: const EdgeInsets.symmetric(
         horizontal: 20,
         vertical: 8,
-      ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+      ),
       decoration: BoxDecoration(
-        // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-        color: isSelected
-            ? AppColors.primary
-            : Colors.transparent, // 設定顏色數值（Color）
-        borderRadius: BorderRadius.circular(20), // 設定容器的圓角弧度半徑大小
-      ), // 執行相對應的邏輯計算或設定屬性參數
+        color: isSelected ? AppColors.primary : Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
-        // 建立文字顯示元件（Text）
-        label, // 執行相對應的邏輯計算或設定屬性參數
+        label,
         style: TextStyle(
-          // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-          color: isSelected
-              ? AppColors.background
-              : AppColors.textPrimary, // 設定顏色數值（Color）
-          fontWeight: FontWeight.bold, // 執行相對應的邏輯計算或設定屬性參數
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+          color: isSelected ? AppColors.background : AppColors.textPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
 
-  @override // 標記此方法為覆寫父類別之方法
+  @override
   Widget build(BuildContext context) {
-    // 建立畫面的主要 build 方法，返回元件樹
     return Scaffold(
-      // 建立頁面的基礎 Scaffold 骨架，提供頁面基本版面佈局
-      backgroundColor: const Color(0xFFE7D9B1), // 設定顏色數值（Color）
+      backgroundColor: const Color(0xFFE7D9B1),
       body: Stack(
-        // 設定頁面的主要內容區域（body）
         children: [
-          // 執行相對應的邏輯計算或設定屬性參數
           Positioned.fill(
-            // 執行相對應的邏輯計算或設定屬性參數
             child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: AppColors.primary),
                   )
                 : SingleChildScrollView(
-                    // 建立單一元件滾動視圖（SingleChildScrollView），防止內容超出螢幕時溢出
                     child: Column(
-                      // 建立垂直排列元件（Column），縱向排列多個子元件
                       children: [
-                        // 執行相對應的邏輯計算或設定屬性參數
                         SizedBox(
                           height: 80 + MediaQuery.of(context).padding.top + 16,
-                        ), // 動態計算：網底標題高度(80) + 狀態列高度 + 間距(16)
+                        ),
                         Text(
                           _dateDisplay,
                           style: const TextStyle(
@@ -449,144 +426,105 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
                           ),
-                        ), // 建立文字顯示元件（Text）
+                        ),
                         if (_viewType == 0) ...[
-                          // 執行相對應的邏輯計算或設定屬性參數
-                          const SizedBox(
-                            height: 20,
-                          ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                          const SizedBox(height: 20),
                           AnimatedBuilder(
-                            // 建立動畫建構器（AnimatedBuilder），依照動畫進度重新整理局部 UI
-                            animation: _hoverController, // 執行相對應的邏輯計算或設定屬性參數
+                            animation: _hoverController,
                             builder: (context, child) {
-                              // 執行相對應的邏輯計算或設定屬性參數
                               return Transform.translate(
-                                // 回傳建構完成的元件或方法計算結果
                                 offset: Offset(
                                   0,
                                   _hoverOffsetAnimation.value,
-                                ), // 執行相對應的邏輯計算或設定屬性參數
+                                ),
                                 child: Transform.scale(
-                                  // 執行相對應的邏輯計算或設定屬性參數
-                                  scale: _hoverScaleAnimation
-                                      .value, // 執行相對應的邏輯計算或設定屬性參數
+                                  scale: _hoverScaleAnimation.value,
                                   child: Container(
-                                    // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                                    width: 240, // 執行相對應的邏輯計算或設定屬性參數
-                                    height: 240, // 執行相對應的邏輯計算或設定屬性參數
+                                    width: 240,
+                                    height: 240,
                                     decoration: BoxDecoration(
-                                      // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                                      shape:
-                                          BoxShape.circle, // 執行相對應的邏輯計算或設定屬性參數
-                                      color: Colors.white, // 設定顏色數值（Color）
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
                                       boxShadow: [
-                                        // 執行相對應的邏輯計算或設定屬性參數
                                         BoxShadow(
-                                          // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                                          color: Colors.black.withOpacity(
-                                            0.05,
-                                          ), // 設定顏色數值（Color）
-                                          blurRadius: 10, // 執行相對應的邏輯計算或設定屬性參數
-                                          spreadRadius: 1, // 執行相對應的邏輯計算或設定屬性參數
-                                        ), // 執行相對應的邏輯計算或設定屬性參數
-                                      ], // 執行相對應的邏輯計算或設定屬性參數
-                                    ), // 執行相對應的邏輯計算或設定屬性參數
+                                          // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                                          color: Colors.black.withValues(alpha: 0.05),
+                                          blurRadius: 10,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
                                     child: Padding(
-                                      // 建立間距容器（Padding），用於設定內部邊距
-                                      padding: const EdgeInsets.all(
-                                        20.0,
-                                      ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                                      padding: const EdgeInsets.all(20.0),
                                       child: DogAvatar(
                                         controller: _dogController,
                                         scale: 1.5,
                                         instanceId: 'report-idle-dog',
                                       ),
-                                    ), // 執行相對應的邏輯計算或設定屬性參數
-                                  ), // 執行相對應的邏輯計算或設定屬性參數
-                                ), // 執行相對應的邏輯計算或設定屬性參數
-                              ); // 程式碼區塊或元件結構結束
-                            }, // 程式碼區塊或元件結構結束
-                          ), // 執行相對應的邏輯計算或設定屬性參數
-                          const SizedBox(
-                            height: 15,
-                          ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                        ], // 執行相對應的邏輯計算或設定屬性參數
-                        const SizedBox(
-                          height: 30,
-                        ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                        ],
+                        const SizedBox(height: 30),
                         Container(
-                          // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
-                          padding: const EdgeInsets.all(
-                            20,
-                          ), // 設定外邊距或內邊距的數值大小（EdgeInsets）
+                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
-                            color:
-                                AppColors.background, // 建立編譯期常數，優化 Flutter 渲染效能
-                            borderRadius: BorderRadius.circular(
-                              25,
-                            ), // 設定容器的圓角弧度半徑大小
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(25),
                             boxShadow: [
-                              // 執行相對應的邏輯計算或設定屬性參數
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 2.925,
                                 offset: const Offset(0, 1.56),
-                              ), // 設定容器的陰影效果，包括顏色、模糊半徑與偏移量
-                            ], // 執行相對應的邏輯計算或設定屬性參數
-                          ), // 執行相對應的邏輯計算或設定屬性參數
+                              ),
+                            ],
+                          ),
                           child: Column(
-                            // 建立垂直排列元件（Column），縱向排列多個子元件
                             children: [
-                              // 執行相對應的邏輯計算或設定屬性參數
                               Row(
-                                // 建立水平排列元件（Row），橫向排列多個子元件
-                                mainAxisAlignment: MainAxisAlignment
-                                    .center, // 執行相對應的邏輯計算或設定屬性參數
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  // 執行相對應的邏輯計算或設定屬性參數
                                   GestureDetector(
                                     onTap: () => setState(() {
                                       _viewType = 0;
                                       _hoveredIdx = null;
                                     }),
                                     child: _buildTabButton("日", _viewType == 0),
-                                  ), // 更新狀態數據並通知 UI 重新渲染畫面
+                                  ),
                                   GestureDetector(
                                     onTap: () => setState(() {
                                       _viewType = 1;
                                       _hoveredIdx = null;
                                     }),
                                     child: _buildTabButton("週", _viewType == 1),
-                                  ), // 更新狀態數據並通知 UI 重新渲染畫面
-                                ], // 執行相對應的邏輯計算或設定屬性參數
-                              ), // 執行相對應的邏輯計算或設定屬性參數
-                              const SizedBox(
-                                height: 20,
-                              ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
                               _viewType == 0
                                   ? _buildTodayStats()
-                                  : _buildTrendChart(), // 執行相對應的邏輯計算或設定屬性參數
-                            ], // 執行相對應的邏輯計算或設定屬性參數
-                          ), // 執行相對應的邏輯計算或設定屬性參數
-                        ), // 執行相對應的邏輯計算或設定屬性參數
-                        const SizedBox(
-                          height: 20,
-                        ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                        // 2.5 總結數據區域 (僅限週/月)
+                                  : _buildTrendChart(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        // 總結數據區域 (僅限週/月)
                         if (_viewType != 0) ...[
                           _buildAggregatedStats(),
                           const SizedBox(height: 20),
                         ],
 
-                        // 3. 總結數據卡片
+                        // 總結數據卡片
                         _buildSummaryCard(),
                         const SizedBox(height: 25),
 
-                        // 新增：飲食明細 Grid 呈現
+                        // 飲食明細與清單
                         _buildEatenFoodGrid(),
                         const SizedBox(height: 40),
                       ],
@@ -599,6 +537,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     );
   }
 
+  // === 6. 動態總結評語與數據卡片 (Dynamic Summary & Header Cards) ===
   String _buildDynamicSummaryComment() {
     if (_viewType == 0) {
       double todayCal = 0.0;
@@ -705,7 +644,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     }
   }
 
-  // 3. 總結數據卡片
   Widget _buildSummaryCard() {
     return Container(
       width: double.infinity,
@@ -716,7 +654,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 2.925,
             offset: const Offset(0, 1.56),
           ),
@@ -726,7 +665,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "${_viewLabel}總結",
+            // [代碼清理] 簡化字串插值，移除不必要的單一變數花括號
+            "$_viewLabel總結",
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -808,45 +748,44 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     );
   }
 
+  // [代碼清理] 註解未使用的私有 UI 建構元件以消除 Lint 警告（保留程式碼作為備用參考）
+  /*
   Widget _buildProfileAvatar(BuildContext context) {
-    // 定義用於重複使用的 UI 封裝建構方法
     return GestureDetector(
-      // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
       onTap: () => Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => HomePage(initialIndex: 3)),
         (route) => false,
       ),
       child: Container(
-        // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               blurRadius: 2.925,
               offset: const Offset(0, 1.56),
             ),
           ],
-        ), // 建立盒子裝飾元件（BoxDecoration），用來設定圓角、背景色、陰影等樣式
+        ),
         child: CircleAvatar(
-          radius: 25, // 執行相對應的邏輯計算或設定屬性參數
-          backgroundColor: AppColors.background, // 設定顏色數值（Color）
+          radius: 25,
+          backgroundColor: AppColors.background,
           backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
               ? NetworkImage(_avatarUrl!)
               : null,
           child: _avatarUrl == null || _avatarUrl!.isEmpty
               ? const Icon(
-                  // 顯示預設的圖示元件（Icon）
-                  Icons.person, // 執行相對應的邏輯計算或設定屬性參數
-                  color: AppColors.textPrimary, // 設定顏色數值（Color）
-                  size: 35, // 執行相對應的邏輯計算或設定屬性參數
+                  Icons.person,
+                  color: AppColors.textPrimary,
+                  size: 35,
                 )
-              : null, // 執行相對應的邏輯計算或設定屬性參數
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ), // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+              : null,
+        ),
+      ),
+    );
+  }
+  */
 
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
@@ -1117,7 +1056,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 2.925,
             offset: const Offset(0, 1.56),
           ),
@@ -1200,30 +1140,27 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     String calories,
     Color color,
   ) {
-    // 建立水平排列元件（Row），橫向排列多個子元件
     return Row(
-      // 建立水平排列元件（Row），橫向排列多個子元件
       children: [
-        // 執行相對應的邏輯計算或設定屬性參數
         Container(
           width: 10,
           height: 10,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ), // 建立多功能樣式容器（Container），可自訂尺寸、間距與背景樣式
-        const SizedBox(width: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+        ),
+        const SizedBox(width: 10),
         SizedBox(
           width: 50,
           child: Text(
             label,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
           ),
-        ), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-        const SizedBox(width: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+        ),
+        const SizedBox(width: 10),
         Text(
           percentage,
           style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-        ), // 建立文字顯示元件（Text）
-        const Spacer(), // 建立編譯期常數，優化 Flutter 渲染效能
+        ),
+        const Spacer(),
         Text(
           calories,
           style: const TextStyle(
@@ -1231,11 +1168,12 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
-        ), // 建立文字顯示元件（Text）
-      ], // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+        ),
+      ],
+    );
+  }
 
+  // === 7. 今日熱量與三大營養素圖表組件 (Gauge & Macronutrients) ===
   Widget _buildTodayStats() {
     double todayCal = 0.0;
     double todayProtein = 0.0;
@@ -1320,7 +1258,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1423,9 +1362,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+              color: statusColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: statusColor.withOpacity(0.3)),
+              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+              border: Border.all(color: statusColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1500,7 +1441,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border.withOpacity(0.6)),
+        // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1589,9 +1531,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.08),
+              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+              color: Colors.amber.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+              border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1659,7 +1603,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
           ),
         ),
         Expanded(
-          child: Container(height: 1, color: Colors.black.withOpacity(0.06)),
+          // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+          child: Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
         ),
       ],
     );
@@ -1695,7 +1640,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.25),
+                // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                color: color.withValues(alpha: 0.25),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -1724,37 +1670,27 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         ),
       ],
     );
-  } // 程式碼區塊或元件結構結束
+  }
 
-  /*
-  Widget _buildNutrientLegendItem(String label, String value, Color color) { // 定義用於重複使用的 UI 封裝建構方法
-    return Row(children: [Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 8), Text("$label $value", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary))]); // 建立水平排列元件（Row），橫向排列多個子元件
-  } // 程式碼區塊或元件結構結束
-  */
-
+  // === 8. 折線圖與飲食明細清單組件 (Trend Chart & Eaten Food List) ===
   Widget _buildTrendChart() {
-    // 定義用於重複使用的 UI 封裝建構方法
-    List<double> data = _viewType == 1
-        ? _weeklyData
-        : _monthlyData; // 執行相對應的邏輯計算或設定屬性參數
-    if (data.isEmpty)
+    List<double> data = _viewType == 1 ? _weeklyData : _monthlyData;
+    if (data.isEmpty) {
       return const SizedBox(
         height: 200,
         child: Center(child: Text("暫無資料")),
-      ); // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+      );
+    }
 
-    double sum = 0; // 宣告類別成員或方法內部的區域變數
+    double sum = 0;
     for (double v in data) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      sum += v; // 執行相對應的邏輯計算或設定屬性參數
-    } // 程式碼區塊或元件結構結束
-    double avg = sum / data.length; // 宣告類別成員或方法內部的區域變數
+      sum += v;
+    }
+    double avg = sum / data.length;
 
     return Column(
-      // 建立垂直排列元件（Column），縱向排列多個子元件
-      crossAxisAlignment: CrossAxisAlignment.start, // 執行相對應的邏輯計算或設定屬性參數
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 執行相對應的邏輯計算或設定屬性參數
         Text(
           "平均攝取卡路里 ${avg.toInt()}",
           style: const TextStyle(
@@ -1762,12 +1698,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
-        ), // 建立文字顯示元件（Text）
-        const SizedBox(height: 10), // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
+        ),
+        const SizedBox(height: 10),
         LayoutBuilder(
-          // 執行相對應的邏輯計算或設定屬性參數
           builder: (context, constraints) {
-            // 執行相對應的邏輯計算或設定屬性參數
             final sundayOffset = _selectedDate.weekday % 7;
             final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
             final weekdaysZh = ["日", "一", "二", "三", "四", "五", "六"];
@@ -1778,54 +1712,49 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             }
 
             return MouseRegion(
-              // 回傳建構完成的元件或方法計算結果
               onHover: (event) => _handleTouch(
                 event.localPosition,
                 constraints.maxWidth,
                 data.length,
-              ), // 執行相對應的邏輯計算或設定屬性參數
+              ),
               onExit: (_) {
                 if (mounted && _hoveredIdx != null) {
                   setState(() => _hoveredIdx = null);
                 }
-              }, // 更新狀態數據並通知 UI 重新渲染畫面
+              },
               child: GestureDetector(
-                // 建立手勢偵測器（GestureDetector），用於監聽點擊、拖動等觸控事件
                 onPanUpdate: (details) => _handleTouch(
                   details.localPosition,
                   constraints.maxWidth,
                   data.length,
-                ), // 執行相對應的邏輯計算或設定屬性參數
+                ),
                 onTapDown: (details) => _handleTouch(
                   details.localPosition,
                   constraints.maxWidth,
                   data.length,
-                ), // 執行相對應的邏輯計算或設定屬性參數
+                ),
                 child: SizedBox(
-                  // 建立固定尺寸的空白區塊或限制寬高的容器（SizedBox）
-                  height: 220, // 執行相對應的邏輯計算或設定屬性參數
-                  width: double.infinity, // 執行相對應的邏輯計算或設定屬性參數
+                  height: 220,
+                  width: double.infinity,
                   child: CustomPaint(
-                    // 執行相對應的邏輯計算或設定屬性參數
                     painter: MockLineChartPainter(
                       data: data,
                       hoveredIdx: _hoveredIdx,
                       labels: labels,
                       avg: avg,
                       target: 2000.0,
-                    ), // 執行相對應的邏輯計算或設定屬性參數
-                  ), // 執行相對應的邏輯計算或設定屬性參數
-                ), // 執行相對應的邏輯計算或設定屬性參數
-              ), // 執行相對應的邏輯計算或設定屬性參數
-            ); // 程式碼區塊或元件結構結束
-          }, // 程式碼區塊或元件結構結束
-        ), // 執行相對應的邏輯計算或設定屬性參數
-      ], // 執行相對應的邏輯計算或設定屬性參數
-    ); // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
 
   void _handleTouch(Offset localPosition, double width, int count) {
-    // 執行相對應的邏輯計算或設定屬性參數
     if (!mounted || count <= 0 || width <= 0) return;
 
     final int idx;
@@ -1838,8 +1767,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     if (idx == _hoveredIdx) return;
     setState(() {
       _hoveredIdx = idx;
-    }); // 更新狀態數據並通知 UI 重新渲染畫面
-  } // 程式碼區塊或元件結構結束
+    });
+  }
 
   Widget _buildEatenFoodGrid() {
     if (_viewType == 0) {
@@ -1991,13 +1920,15 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
+                        // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                        color: Colors.black.withValues(alpha: 0.02),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
                     border: Border.all(
-                      color: AppColors.border.withOpacity(0.5),
+                      // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                      color: AppColors.border.withValues(alpha: 0.5),
                     ),
                   ),
                   child: Column(
@@ -2103,6 +2034,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   }
 }
 
+// === 9. 畫筆 Painter 工具元件 (Gauge, Diagonal, NutrientPie & LineChart Painters) ===
 class CalorieGaugeArcPainter extends CustomPainter {
   final double currentCalories;
   CalorieGaugeArcPainter({required this.currentCalories});
@@ -2189,9 +2121,9 @@ class CalorieGaugeArcPainter extends CustomPainter {
 }
 
 class DiagonalLinesPainter extends CustomPainter {
-  // 定義 DiagonalLinesPainter 類別，繼承自 CustomPainter
   final Color color;
-  DiagonalLinesPainter({required this.color}); // 宣告類別成員或方法內部的區域變數
+  DiagonalLinesPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
@@ -2204,11 +2136,11 @@ class DiagonalLinesPainter extends CustomPainter {
         paint,
       );
     }
-  } // 標記此方法為覆寫父類別之方法
+  }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false; // 標記此方法為覆寫父類別之方法
-} // 程式碼區塊或元件結構結束
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
 
 class NutrientPiePainter extends CustomPainter {
   final double fat;
@@ -2296,9 +2228,8 @@ class NutrientPiePainter extends CustomPainter {
 }
 
 class MockLineChartPainter extends CustomPainter {
-  // 定義 MockLineChartPainter 類別，繼承自 CustomPainter
-  final List<double> data; // 宣告類別成員或方法內部的區域變數
-  final int? hoveredIdx; // 宣告類別成員或方法內部的區域變數
+  final List<double> data;
+  final int? hoveredIdx;
   final List<String> labels;
   final double avg;
   final double target;
@@ -2309,22 +2240,20 @@ class MockLineChartPainter extends CustomPainter {
     required this.labels,
     required this.avg,
     required this.target,
-  }); // 執行相對應的邏輯計算或設定屬性參數
+  });
 
-  @override // 標記此方法為覆寫父類別之方法
+  @override
   void paint(Canvas canvas, Size size) {
-    // 執行相對應的邏輯計算或設定屬性參數
-    if (data.isEmpty) return; // 執行相對應的邏輯計算或設定屬性參數
-    final double stepX = size.width / (data.length - 1); // 宣告類別成員或方法內部的區域變數
+    if (data.isEmpty) return;
+    final double stepX = size.width / (data.length - 1);
 
     // 手動找出最大最小值，避免 reduce 報錯
-    double maxVal = data[0]; // 宣告類別成員或方法內部的區域變數
-    double minVal = data[0]; // 宣告類別成員或方法內部的區域變數
+    double maxVal = data[0];
+    double minVal = data[0];
     for (double v in data) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      if (v > maxVal) maxVal = v; // 執行相對應的邏輯計算或設定屬性參數
-      if (v < minVal) minVal = v; // 執行相對應的邏輯計算或設定屬性參數
-    } // 程式碼區塊或元件結構結束
+      if (v > maxVal) maxVal = v;
+      if (v < minVal) minVal = v;
+    }
 
     // 將建議攝取與平均值納入邊界計算，確保虛線總是能正常顯示在圖表中
     if (target > maxVal) maxVal = target;
@@ -2332,10 +2261,8 @@ class MockLineChartPainter extends CustomPainter {
     if (target < minVal) minVal = target;
     if (avg < minVal) minVal = avg;
 
-    minVal = minVal * 0.8; // 執行相對應的邏輯計算或設定屬性參數
-    final double range = (maxVal - minVal) == 0
-        ? 1.0
-        : (maxVal - minVal); // 宣告類別成員或方法內部的區域變數
+    minVal = minVal * 0.8;
+    final double range = (maxVal - minVal) == 0 ? 1.0 : (maxVal - minVal);
 
     final double chartHeight = size.height - 45; // 預留底部空間給兩行 X 軸標籤
 
@@ -2349,7 +2276,8 @@ class MockLineChartPainter extends CustomPainter {
     final avgY = yForValue(avg);
 
     final targetPaint = Paint()
-      ..color = Colors.green.withOpacity(0.6)
+      // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+      ..color = Colors.green.withValues(alpha: 0.6)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     _drawDashedLine(
@@ -2362,7 +2290,8 @@ class MockLineChartPainter extends CustomPainter {
     );
 
     final avgPaint = Paint()
-      ..color = Colors.orange.withOpacity(0.6)
+      // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+      ..color = Colors.orange.withValues(alpha: 0.6)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     _drawDashedLine(
@@ -2402,38 +2331,36 @@ class MockLineChartPainter extends CustomPainter {
     avgTextPainter.paint(canvas, Offset(5, avgY - 16));
 
     final paint = Paint()
-      ..color = Colors.blue.withOpacity(0.5)
+      // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+      ..color = Colors.blue.withValues(alpha: 0.5)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0; // 設定顏色數值（Color）
-    final path = Path(); // 宣告類別成員或方法內部的區域變數
+      ..strokeWidth = 3.0;
+    final path = Path();
 
-    List<Offset> points = []; // 執行相對應的邏輯計算或設定屬性參數
+    List<Offset> points = [];
     for (int i = 0; i < data.length; i++) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      double x = i * stepX; // 宣告類別成員或方法內部的區域變數
+      double x = i * stepX;
       double y = yForValue(data[i]);
-      points.add(Offset(x, y)); // 執行相對應的邏輯計算或設定屬性參數
-      if (i == 0)
+      points.add(Offset(x, y));
+      if (i == 0) {
         path.moveTo(x, y);
-      else
-        path.lineTo(x, y); // 執行相對應的邏輯計算或設定屬性參數
-    } // 程式碼區塊或元件結構結束
-    canvas.drawPath(path, paint); // 執行相對應的邏輯計算或設定屬性參數
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    canvas.drawPath(path, paint);
 
-    final dotPaint = Paint()..color = AppColors.secondary; // 設定顏色數值（Color）
+    final dotPaint = Paint()..color = AppColors.secondary;
     for (int i = 0; i < points.length; i++) {
-      // 執行相對應的邏輯計算或設定屬性參數
-      bool isHovered = hoveredIdx == i; // 宣告類別成員或方法內部的區域變數
+      bool isHovered = hoveredIdx == i;
       canvas.drawCircle(
         points[i],
         isHovered ? 8 : 4,
         isHovered ? (Paint()..color = Colors.red) : dotPaint,
-      ); // 設定顏色數值（Color）
+      );
 
       if (isHovered) {
-        // 執行相對應的邏輯計算或設定屬性參數
         final textPainter = TextPainter(
-          // 宣告類別成員或方法內部的區域變數
           text: TextSpan(
             text: data[i].round().toString(),
             style: const TextStyle(
@@ -2442,14 +2369,14 @@ class MockLineChartPainter extends CustomPainter {
               fontWeight: FontWeight.bold,
               backgroundColor: Colors.white70,
             ),
-          ), // 設定文字字體大小、顏色與粗細等字型樣式（TextStyle）
-          textDirection: TextDirection.ltr, // 執行相對應的邏輯計算或設定屬性參數
-        )..layout(); // 執行相對應的邏輯計算或設定屬性參數
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
         textPainter.paint(
           canvas,
           Offset(points[i].dx - textPainter.width / 2, points[i].dy - 25),
-        ); // 執行相對應的邏輯計算或設定屬性參數
-      } // 程式碼區塊或元件結構結束
+        );
+      }
 
       // 繪製 X 軸日期與星期標籤
       if (i < labels.length) {
@@ -2471,8 +2398,8 @@ class MockLineChartPainter extends CustomPainter {
           Offset(points[i].dx - labelPainter.width / 2, size.height - 30),
         );
       }
-    } // 程式碼區塊或元件結構結束
-  } // 程式碼區塊或元件結構結束
+    }
+  }
 
   @override
   bool shouldRepaint(covariant MockLineChartPainter oldDelegate) =>
@@ -2480,7 +2407,7 @@ class MockLineChartPainter extends CustomPainter {
       oldDelegate.data != data ||
       oldDelegate.labels != labels ||
       oldDelegate.avg != avg ||
-      oldDelegate.target != target; // 標記此方法為覆寫父類別之方法
+      oldDelegate.target != target;
 
   void _drawDashedLine(
     Canvas canvas,
@@ -2500,8 +2427,9 @@ class MockLineChartPainter extends CustomPainter {
       currentX += dashWidth + dashSpace;
     }
   }
-} // 程式碼區塊或元件結構結束
+}
 
+// === 10. 飲食紀錄卡片與細項折疊元件 (Diet Record Tile Widget) ===
 class DietRecordTile extends StatefulWidget {
   final dynamic record;
   final String meal;
@@ -2539,12 +2467,14 @@ class _DietRecordTileState extends State<DietRecordTile> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: AppColors.border.withOpacity(0.4)),
+        // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.4)),
       ),
       child: Material(
         color: Colors.white,
@@ -2571,7 +2501,8 @@ class _DietRecordTileState extends State<DietRecordTile> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: widget.mealColor.withOpacity(0.15),
+                    // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+                    color: widget.mealColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -2729,7 +2660,8 @@ class _DietRecordTileState extends State<DietRecordTile> {
         if (val == val.toInt()) {
           return "${val.toInt()}份";
         }
-        return "${val}份";
+        // [代碼清理] 簡化字串插值，移除不必要的單一變數花括號
+        return "$val份";
       }
     }
     if (part.contains("份")) {
@@ -2740,7 +2672,8 @@ class _DietRecordTileState extends State<DietRecordTile> {
           if (val == val.toInt()) {
             return "${val.toInt()}份";
           }
-          return "${val}份";
+          // [代碼清理] 簡化字串插值，移除不必要的單一變數花括號
+          return "$val份";
         }
       }
       return part;

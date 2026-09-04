@@ -10,6 +10,8 @@ import '../../utils/friendly_error_message.dart';
 import 'elf_feeding_page.dart';
 import 'simple_camera_page.dart';
 
+// === 1. 資料模型與輔助類別 (Data Models & Auxiliary Classes) ===
+
 class _NutritionValues {
   const _NutritionValues({
     this.calories,
@@ -139,6 +141,8 @@ class _SelectedFoodEditorResult {
   final double amount;
   final _NutritionValues nutrition;
 }
+
+// === 2. 已選食物編輯對話框 (Selected Food Editor Dialog) ===
 
 class _SelectedFoodEditorDialog extends StatefulWidget {
   const _SelectedFoodEditorDialog({required this.item});
@@ -317,7 +321,7 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
             const SizedBox(height: 4),
             Text(
               '以下為依目前份數換算的總營養，並非單份；沒有資料請填 0。',
-              style: TextStyle(color: Colors.black.withOpacity(0.6)),
+              style: TextStyle(color: Colors.black.withValues(alpha: 0.6)), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.6)
             ),
             const SizedBox(height: 14),
             _field(
@@ -351,6 +355,8 @@ class _SelectedFoodEditorDialogState extends State<_SelectedFoodEditorDialog> {
     );
   }
 }
+
+// === 3. 手動新增營養資訊對話框 (Nutrition Editor Dialog) ===
 
 class _NutritionEditorDialog extends StatefulWidget {
   const _NutritionEditorDialog({
@@ -490,6 +496,8 @@ class _NutritionEditorDialogState extends State<_NutritionEditorDialog> {
   }
 }
 
+// === 4. 手動紀錄主頁面 (Manual Record Page Widget & State) ===
+
 class ManualRecordPage extends StatefulWidget {
   const ManualRecordPage({super.key, this.initialDate});
 
@@ -534,6 +542,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     super.dispose();
   }
 
+  // === 5. 料理搜尋與自訂料理載入邏輯 ===
   String _automaticMealType() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 11) return '早餐';
@@ -645,6 +654,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     }
   }
 
+  // === 6. 已選料理項目管理邏輯（選擇、編輯、相片） ===
   _SelectedFood? _selectedFor(String id) {
     for (final item in _selectedItems) {
       if (item.id == id) return item;
@@ -959,6 +969,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     );
   }
 
+  // === 7. 日期選擇與飲食紀錄儲存提交邏輯 ===
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -1097,6 +1108,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     }
   }
 
+  // === 8. UI 介面建構與組件拆分 (Main Layout & UI Sub-views) ===
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1300,17 +1312,21 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     if (_dishSource == _DishSource.custom) {
       return _buildCustomDishesArea();
     }
-    if (_isSearching)
+    if (_isSearching) {
+      // [格式修復] if 語句補全大括號
       return const Center(
         child: CircularProgressIndicator(color: AppColors.secondary),
       );
-    if (_searchError != null)
+    }
+    if (_searchError != null) {
+      // [格式修復] if 語句補全大括號
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(_searchError!, textAlign: TextAlign.center),
         ),
       );
+    }
     if (_searchController.text.trim().isEmpty) return _buildCatalogPrompt();
 
     final results = _visibleResults;
@@ -1453,7 +1469,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
       itemCount: dishes.length,
-      separatorBuilder: (_, __) => const Divider(height: 1),
+      separatorBuilder: (_, _) => const Divider(height: 1), // [Lint修復] 簡化未使用的回呼參數 (__ 改為 _)
       itemBuilder: (context, index) => _buildSavedDishTile(dishes[index]),
     );
   }
