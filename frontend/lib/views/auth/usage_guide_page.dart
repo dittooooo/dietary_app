@@ -6,9 +6,6 @@ import '../../color/app_colors.dart';
 class UsageGuidePage extends StatelessWidget {
   const UsageGuidePage({super.key});
 
-  static const Color _guideBrown = Color(0xFF4A2A08);
-  static const Color _guideBrownSoft = Color(0xFF6B4A21);
-
   static const List<_GuideSectionData> _sections = [
     _GuideSectionData(
       title: '詢問小精靈',
@@ -83,9 +80,9 @@ class UsageGuidePage extends StatelessWidget {
           elevation: 0,
           iconTheme: const IconThemeData(color: AppColors.textPrimary),
           bottom: TabBar(
-            labelColor: _guideBrown,
-            unselectedLabelColor: Colors.black54,
-            indicatorColor: _guideBrown,
+            labelColor: AppColors.primary,
+            unselectedLabelColor: AppColors.textPrimary.withValues(alpha: 0.5),
+            indicatorColor: AppColors.primary,
             indicatorSize: TabBarIndicatorSize.label,
             labelPadding: EdgeInsets.zero,
             tabs: _sections
@@ -154,11 +151,14 @@ class _GuideTextCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: UsageGuidePage._guideBrownSoft,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.secondary.withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -167,7 +167,7 @@ class _GuideTextCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.background, size: 24),
+          Icon(icon, color: AppColors.secondary, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -176,7 +176,7 @@ class _GuideTextCard extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: AppColors.background,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -185,7 +185,7 @@ class _GuideTextCard extends StatelessWidget {
                 Text(
                   text,
                   style: const TextStyle(
-                    color: AppColors.background,
+                    color: AppColors.textPrimary,
                     fontSize: 14,
                     height: 1.55,
                   ),
@@ -248,11 +248,14 @@ class _GuideScreenshotCaption extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: UsageGuidePage._guideBrown,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.secondary.withValues(alpha: 0.3),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.12),
+            color: AppColors.primary.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -262,7 +265,7 @@ class _GuideScreenshotCaption extends StatelessWidget {
         label,
         textAlign: TextAlign.center,
         style: const TextStyle(
-          color: Colors.white,
+          color: AppColors.textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.bold,
         ),

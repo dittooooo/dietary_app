@@ -50,6 +50,7 @@ class _HomeViewState extends State<HomeView>
   late stt.SpeechToText _speech; // 語音轉文字 (SpeechToText) 服務實例
   bool _isListening = false; // 紀錄目前是否正處於語音收聽/錄音狀態
   bool _speechAvailable = false; // 紀錄語音辨識服務是否已被順利初始化且可用
+  bool _speechActionInProgress = false; // 避免初始化或啟動流程重複執行
 
   late bool _isChatOpen;
   late double _chatPanelX;
@@ -112,6 +113,11 @@ class _HomeViewState extends State<HomeView>
     try {
       _speechAvailable = await _speech
           .initialize(
+            // ASUS 裝置目前會在藍牙耳機路徑建立辨識連線後立即斷線，
+            // 語音輸入先固定走手機麥克風，避免音訊路由造成原生服務卡死。
+            options: <stt.SpeechConfigOption>[
+              stt.SpeechToText.androidNoBluetooth,
+            ],
             onStatus: (status) {
               debugPrint('🗣️ [SpeechToText Status] $status');
               // 語音辨識結束或停止收聽時，自動更新 UI 狀態
@@ -144,83 +150,59 @@ class _HomeViewState extends State<HomeView>
   }
 
   /// 切換語音收聽狀態（開始錄音 / 停止錄音）
-  void _toggleListening() async {
-    if (_isListening) {
-      // 若目前正在收聽，先更新狀態為 false，並呼叫 cancel 丟棄殘餘 callback
-      if (mounted) setState(() => _isListening = false);
-      try {
-        await _speech.cancel();
-      } catch (e) {
-        debugPrint('取消語音收聽失敗: $e');
-      }
-      return;
-    }
+  Future<void> _toggleListening() async {
+    // 初始化、取消與啟動都涉及原生語音辨識器，不能同時執行。
+    if (_speechActionInProgress) return;
+    _speechActionInProgress = true;
 
-    // 若尚未初始化，重新嘗試初始化
-    if (!_speechAvailable) {
-      final initialized = await _initSpeech();
-      if (!initialized) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('無法啟動語音辨識，請確認手機已啟用 Google 語音服務。'),
-              duration: Duration(seconds: 3),
-            ),
-          );
+    try {
+      if (_isListening) {
+        if (mounted) setState(() => _isListening = false);
+        try {
+          await _speech.cancel();
+        } catch (e) {
+          debugPrint('取消語音收聽失敗: $e');
         }
         return;
       }
-    }
 
-    // 1. 智慧判斷語音辨識 Locale 語系（優先尋找台灣/繁體中文 TW / Hant / HK，並規範使用 Android BCP-47 - 劃線格式）
-    String localeId = 'zh-TW';
-    try {
-      final availableLocales = await _speech.locales();
-      // 第一優先：尋找包含 tw (台灣)、hant (繁體) 或 hk (香港) 的標籤
-      final twLocale = availableLocales.firstWhere(
-        (loc) {
-          final id = loc.localeId.toLowerCase();
-          return id.contains('tw') || id.contains('hant') || id.contains('hk');
-        },
-        // 第二優先：退回尋找一般中文標籤 (如 zh 或 cmn)
-        orElse: () => availableLocales.firstWhere((loc) {
-          final id = loc.localeId.toLowerCase();
-          return id.contains('zh') || id.contains('cmn');
-        }, orElse: () => stt.LocaleName('zh-TW', '繁體中文')),
-      );
-      // 將底線 _ 轉換為 Android BCP-47 標準連字號 - (例如 zh_TW -> zh-TW, cmn_CN -> cmn-CN)，避免 Android 原生拒絕
-      localeId = twLocale.localeId.replaceAll('_', '-');
-      debugPrint('🗣️ [SpeechToText] 優先選用台灣/繁體中文語系 Tag: $localeId');
-    } catch (e) {
-      // 若查詢失敗，強制保留 zh-TW 讓 Google 開啟線上雲端中文辨識
-      localeId = 'zh-TW';
-      debugPrint('取得 SpeechToText Locales 失敗，強制使用預設 zh-TW: $e');
-    }
+      if (!_speechAvailable) {
+        final initialized = await _initSpeech();
+        if (!initialized) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('無法啟動語音辨識，請確認手機已啟用 Google 語音服務。'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+      }
 
-    try {
-      // 2. 開始聽取語音，設定中文辨識與停頓時間
       if (mounted) setState(() => _isListening = true);
-      debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用 Locale: $localeId');
+      // 不再先呼叫 locales()，也不手動傳 localeId：該查詢會在部分
+      // Android 語音服務上開第二個 session，導致真正 listen 前連線被關閉。
+      debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用裝置預設語系');
       await _speech.listen(
-        localeId: localeId,
         listenOptions: stt.SpeechListenOptions(
-          partialResults: true, // 允許實時邊講邊回傳文字片段
-          cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
-          listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
+          partialResults: true,
+          cancelOnError: true,
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 6),
         ),
-        listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
-        pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
         onResult: (result) {
           debugPrint(
             '🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
           );
-          // 若已非收聽狀態（例如已關閉或已送出訊息），忽略殘餘非同步回傳，避免覆蓋已清空的輸入框
-          if (!mounted || !_isListening) return;
+          // Android 可能先回傳 notListening/done，再非同步送出最後一筆
+          // finalResult；不能用 _isListening 阻擋這筆結果，否則使用者說完
+          // 話後文字已辨識成功，卻會被 UI 狀態競速直接丟掉。
+          if (!mounted) return;
           if (result.recognizedWords.isNotEmpty) {
             setState(() {
-              // 將辨識出的文字即時更新寫入輸入框控制器
               _inputController.text = result.recognizedWords;
-              // 將輸入框游標移動至文字最後方，方便使用者手動修改
               _inputController.selection = TextSelection.fromPosition(
                 TextPosition(offset: _inputController.text.length),
               );
@@ -229,39 +211,23 @@ class _HomeViewState extends State<HomeView>
         },
       );
     } catch (e) {
-      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗，嘗試退回系統預設語言: $e');
-      try {
-        await _speech.listen(
-          listenOptions: stt.SpeechListenOptions(
-            partialResults: true,
-            cancelOnError: false,
-            listenMode: stt.ListenMode.dictation,
+      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗: $e');
+      if (mounted) {
+        setState(() => _isListening = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('語音輸入失敗，請重新再試一次。'),
+            duration: Duration(seconds: 2),
           ),
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 6),
-          onResult: (result) {
-            if (!mounted || !_isListening) return;
-            if (result.recognizedWords.isNotEmpty) {
-              setState(() {
-                _inputController.text = result.recognizedWords;
-                _inputController.selection = TextSelection.fromPosition(
-                  TextPosition(offset: _inputController.text.length),
-                );
-              });
-            }
-          },
         );
-      } catch (e2) {
-        if (mounted) {
-          setState(() => _isListening = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('語音輸入失敗，請重新再試一次。'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
       }
+      try {
+        await _speech.cancel();
+      } catch (cancelError) {
+        debugPrint('清理語音辨識器失敗: $cancelError');
+      }
+    } finally {
+      _speechActionInProgress = false;
     }
   }
 
