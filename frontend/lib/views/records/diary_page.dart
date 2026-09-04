@@ -1162,203 +1162,44 @@ class _DiaryPageState extends State<DiaryPage> {
 
     final rawAmount = (record['amount'] ?? record['portion'] ?? '1').toString();
     final amountDigits = rawAmount.replaceAll(RegExp(r'[^\d.]'), '');
-    final amountController = TextEditingController(
-      text: amountDigits.isEmpty ? '1' : amountDigits,
-    );
-    final dishNameController = TextEditingController(
-      text: (record['dishName'] ?? '未命名料理').toString(),
-    );
-    final calController = TextEditingController(text: calVal);
-    final proController = TextEditingController(text: proVal);
-    final fatController = TextEditingController(text: fatVal);
-    final carbController = TextEditingController(text: carbVal);
-    final initialAmount = double.tryParse(amountController.text) ?? 1;
-    final perServingCalories = (double.tryParse(calVal) ?? 0) / initialAmount;
-    final perServingProtein = (double.tryParse(proVal) ?? 0) / initialAmount;
-    final perServingFat = (double.tryParse(fatVal) ?? 0) / initialAmount;
-    final perServingCarbohydrates =
-        (double.tryParse(carbVal) ?? 0) / initialAmount;
-    var isUpdatingCalculatedValues = false;
-    var caloriesEdited = false;
-    var proteinEdited = false;
-    var fatEdited = false;
-    var carbohydratesEdited = false;
-
-    String numberText(double value) => value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
-
-    void recalculateUneditedNutrition() {
-      final amount = double.tryParse(amountController.text.trim());
-      if (amount == null || amount <= 0) return;
-
-      isUpdatingCalculatedValues = true;
-      if (!caloriesEdited) {
-        calController.text = numberText(perServingCalories * amount);
-      }
-      if (!proteinEdited) {
-        proController.text = numberText(perServingProtein * amount);
-      }
-      if (!fatEdited) fatController.text = numberText(perServingFat * amount);
-      if (!carbohydratesEdited) {
-        carbController.text = numberText(perServingCarbohydrates * amount);
-      }
-      isUpdatingCalculatedValues = false;
-    }
-
-    amountController.addListener(recalculateUneditedNutrition);
-    calController.addListener(
-      () => caloriesEdited = !isUpdatingCalculatedValues,
-    );
-    proController.addListener(() => proteinEdited = !isUpdatingCalculatedValues);
-    fatController.addListener(() => fatEdited = !isUpdatingCalculatedValues);
-    carbController.addListener(
-      () => carbohydratesEdited = !isUpdatingCalculatedValues,
-    );
-
-    await showDialog<void>(
+    final result = await showDialog<_EditDietRecordFormData>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('編輯餐點資訊'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: dishNameController,
-                enabled: false,
-                decoration: const InputDecoration(labelText: '料理名稱'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: '份數',
-                  hintText: '例：1',
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '以下為依目前份數換算的總營養，並非單份；沒有資料請填 0。',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: calController,
-                decoration: const InputDecoration(labelText: '熱量 (kcal)'),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: proController,
-                decoration: const InputDecoration(labelText: '蛋白質 (g)'),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: fatController,
-                decoration: const InputDecoration(labelText: '脂肪 (g)'),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: carbController,
-                decoration: const InputDecoration(labelText: '碳水化合物 (g)'),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final double? parsedAmount = double.tryParse(
-                amountController.text.trim(),
-              );
-              if (parsedAmount == null ||
-                  parsedAmount <= 0 ||
-                  parsedAmount != parsedAmount.roundToDouble()) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('份數需為大於 0 的整數')),
-                );
-                return;
-              }
-              final calories = double.tryParse(calController.text.trim());
-              final protein = double.tryParse(proController.text.trim());
-              final fat = double.tryParse(fatController.text.trim());
-              final carbohydrates = double.tryParse(
-                carbController.text.trim(),
-              );
-              if ([calories, protein, fat, carbohydrates].any(
-                (value) => value == null || value < 0,
-              )) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('請填寫四項營養數值；沒有資料請填 0。'),
-                  ),
-                );
-                return;
-              }
-
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('正在更新餐點資訊...')),
-              );
-
-              final res = await DietService().updateDietRecord(
-                record['id'],
-                amount: parsedAmount,
-                calories: calories,
-                protein: protein,
-                fat: fat,
-                carbohydrates: carbohydrates,
-              );
-              // [Lint修復] API 異步請求結束後，存取 context (ScaffoldMessenger) 前需檢查 mounted 避免崩潰
-              if (!mounted) return;
-              if (res['success'] == true) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('更新成功！')));
-                _fetchRecords();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(FriendlyErrorMessage.dietRecord),
-                  ),
-                );
-              }
-            },
-            child: const Text(
-              '儲存',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+      builder: (ctx) => _EditDietRecordDialog(
+        dishName: (record['dishName'] ?? '未命名料理').toString(),
+        initialAmountText: amountDigits.isEmpty ? '1' : amountDigits,
+        initialCaloriesText: calVal,
+        initialProteinText: proVal,
+        initialFatText: fatVal,
+        initialCarbohydratesText: carbVal,
       ),
     );
-    amountController.dispose();
-    dishNameController.dispose();
-    calController.dispose();
-    proController.dispose();
-    fatController.dispose();
-    carbController.dispose();
+    if (result == null || !mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('正在更新餐點資訊...')));
+
+    final res = await DietService().updateDietRecord(
+      record['id'],
+      amount: result.amount,
+      calories: result.calories,
+      protein: result.protein,
+      fat: result.fat,
+      carbohydrates: result.carbohydrates,
+    );
+    if (!mounted) return;
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('更新成功！')));
+      _fetchRecords();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(FriendlyErrorMessage.dietRecord),
+        ),
+      );
+    }
   }
 
   // 2. 上傳相片
@@ -1446,6 +1287,271 @@ class _DiaryPageState extends State<DiaryPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _EditDietRecordFormData {
+  const _EditDietRecordFormData({
+    required this.amount,
+    required this.calories,
+    required this.protein,
+    required this.fat,
+    required this.carbohydrates,
+  });
+
+  final double amount;
+  final double calories;
+  final double protein;
+  final double fat;
+  final double carbohydrates;
+}
+
+class _EditDietRecordDialog extends StatefulWidget {
+  const _EditDietRecordDialog({
+    required this.dishName,
+    required this.initialAmountText,
+    required this.initialCaloriesText,
+    required this.initialProteinText,
+    required this.initialFatText,
+    required this.initialCarbohydratesText,
+  });
+
+  final String dishName;
+  final String initialAmountText;
+  final String initialCaloriesText;
+  final String initialProteinText;
+  final String initialFatText;
+  final String initialCarbohydratesText;
+
+  @override
+  State<_EditDietRecordDialog> createState() => _EditDietRecordDialogState();
+}
+
+class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
+  late final TextEditingController _dishNameController;
+  late final TextEditingController _amountController;
+  late final TextEditingController _caloriesController;
+  late final TextEditingController _proteinController;
+  late final TextEditingController _fatController;
+  late final TextEditingController _carbohydratesController;
+
+  late final double _perServingCalories;
+  late final double _perServingProtein;
+  late final double _perServingFat;
+  late final double _perServingCarbohydrates;
+
+  var _isUpdatingCalculatedValues = false;
+  var _caloriesEdited = false;
+  var _proteinEdited = false;
+  var _fatEdited = false;
+  var _carbohydratesEdited = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _dishNameController = TextEditingController(text: widget.dishName);
+    _amountController = TextEditingController(text: widget.initialAmountText);
+    _caloriesController = TextEditingController(text: widget.initialCaloriesText);
+    _proteinController = TextEditingController(text: widget.initialProteinText);
+    _fatController = TextEditingController(text: widget.initialFatText);
+    _carbohydratesController = TextEditingController(
+      text: widget.initialCarbohydratesText,
+    );
+
+    final initialAmount = double.tryParse(widget.initialAmountText) ?? 1;
+    _perServingCalories =
+        (double.tryParse(widget.initialCaloriesText) ?? 0) / initialAmount;
+    _perServingProtein =
+        (double.tryParse(widget.initialProteinText) ?? 0) / initialAmount;
+    _perServingFat =
+        (double.tryParse(widget.initialFatText) ?? 0) / initialAmount;
+    _perServingCarbohydrates =
+        (double.tryParse(widget.initialCarbohydratesText) ?? 0) / initialAmount;
+
+    _amountController.addListener(_recalculateUneditedNutrition);
+    _caloriesController.addListener(_handleCaloriesChanged);
+    _proteinController.addListener(_handleProteinChanged);
+    _fatController.addListener(_handleFatChanged);
+    _carbohydratesController.addListener(_handleCarbohydratesChanged);
+  }
+
+  @override
+  void dispose() {
+    _amountController.removeListener(_recalculateUneditedNutrition);
+    _caloriesController.removeListener(_handleCaloriesChanged);
+    _proteinController.removeListener(_handleProteinChanged);
+    _fatController.removeListener(_handleFatChanged);
+    _carbohydratesController.removeListener(_handleCarbohydratesChanged);
+
+    _dishNameController.dispose();
+    _amountController.dispose();
+    _caloriesController.dispose();
+    _proteinController.dispose();
+    _fatController.dispose();
+    _carbohydratesController.dispose();
+    super.dispose();
+  }
+
+  String _numberText(double value) => value == value.roundToDouble()
+      ? value.toInt().toString()
+      : value.toString();
+
+  void _handleCaloriesChanged() {
+    _caloriesEdited = !_isUpdatingCalculatedValues;
+  }
+
+  void _handleProteinChanged() {
+    _proteinEdited = !_isUpdatingCalculatedValues;
+  }
+
+  void _handleFatChanged() {
+    _fatEdited = !_isUpdatingCalculatedValues;
+  }
+
+  void _handleCarbohydratesChanged() {
+    _carbohydratesEdited = !_isUpdatingCalculatedValues;
+  }
+
+  void _recalculateUneditedNutrition() {
+    final amount = double.tryParse(_amountController.text.trim());
+    if (amount == null || amount <= 0) return;
+
+    _isUpdatingCalculatedValues = true;
+    if (!_caloriesEdited) {
+      _caloriesController.text = _numberText(_perServingCalories * amount);
+    }
+    if (!_proteinEdited) {
+      _proteinController.text = _numberText(_perServingProtein * amount);
+    }
+    if (!_fatEdited) {
+      _fatController.text = _numberText(_perServingFat * amount);
+    }
+    if (!_carbohydratesEdited) {
+      _carbohydratesController.text =
+          _numberText(_perServingCarbohydrates * amount);
+    }
+    _isUpdatingCalculatedValues = false;
+  }
+
+  void _submit() {
+    final parsedAmount = double.tryParse(_amountController.text.trim());
+    if (parsedAmount == null ||
+        parsedAmount <= 0 ||
+        parsedAmount != parsedAmount.roundToDouble()) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('份數需為大於 0 的整數')));
+      return;
+    }
+
+    final calories = double.tryParse(_caloriesController.text.trim());
+    final protein = double.tryParse(_proteinController.text.trim());
+    final fat = double.tryParse(_fatController.text.trim());
+    final carbohydrates = double.tryParse(
+      _carbohydratesController.text.trim(),
+    );
+    if ([calories, protein, fat, carbohydrates].any(
+      (value) => value == null || value < 0,
+    )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('請填寫四項營養數值；沒有資料請填 0。'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).pop(
+      _EditDietRecordFormData(
+        amount: parsedAmount,
+        calories: calories!,
+        protein: protein!,
+        fat: fat!,
+        carbohydrates: carbohydrates!,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('編輯餐點資訊'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _dishNameController,
+              enabled: false,
+              decoration: const InputDecoration(labelText: '料理名稱'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: '份數',
+                hintText: '例：1',
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '以下為依目前份數換算的總營養，並非單份；沒有資料請填 0。',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _caloriesController,
+              decoration: const InputDecoration(labelText: '熱量 (kcal)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _proteinController,
+              decoration: const InputDecoration(labelText: '蛋白質 (g)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _fatController,
+              decoration: const InputDecoration(labelText: '脂肪 (g)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _carbohydratesController,
+              decoration: const InputDecoration(labelText: '碳水化合物 (g)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        TextButton(
+          onPressed: _submit,
+          child: const Text(
+            '儲存',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
     );
   }
 }
