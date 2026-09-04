@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // [代碼清理/Lint修正] 移除重複匯入的 dart:ui，因為 material.dart 已涵蓋相關 UI 元素與型態定義
 import 'dart:convert';
@@ -207,9 +207,9 @@ class _HomeViewState extends State<HomeView>
           partialResults: true, // 允許實時邊講邊回傳文字片段
           cancelOnError: false, // 遭遇短暫雜訊不強制中斷收聽
           listenMode: stt.ListenMode.dictation, // 設定為連續聽寫模式
+          listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
+          pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
         ),
-        listenFor: const Duration(seconds: 30), // 設定單次語音輸入最長可聽取 30 秒
-        pauseFor: const Duration(seconds: 6), // 允許說話前思考或中途停頓最多 6 秒，不會太快過期
         onResult: (result) {
           debugPrint(
             '🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
@@ -237,9 +237,9 @@ class _HomeViewState extends State<HomeView>
             partialResults: true,
             cancelOnError: false,
             listenMode: stt.ListenMode.dictation,
+            listenFor: const Duration(seconds: 30),
+            pauseFor: const Duration(seconds: 6),
           ),
-          listenFor: const Duration(seconds: 30),
-          pauseFor: const Duration(seconds: 6),
           onResult: (result) {
             if (!mounted || !_isListening) return;
             if (result.recognizedWords.isNotEmpty) {
