@@ -14,6 +14,7 @@
         android:label="食伴"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
         <!-- 停用 Impeller 渲染引擎以解決 Android 模擬器黑屏問題:因為 Impeller 引擎與 Android 模擬器的 Vulkan / OpenGL 模擬介面可能會有相容性問題。 -->
         <!-- <meta-data
