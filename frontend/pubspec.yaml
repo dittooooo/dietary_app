@@ -52,6 +52,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -104,8 +105,17 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "assets/images/app_icon.jpg"
-  image_path: "assets/images/app_icon.jpg"
+    image_path: "assets/images/app_icon_round.png"
+  image_path: "assets/images/app_icon_round.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/app_icon_foreground.png"
   min_sdk_android: 21
   remove_alpha_ios: true
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/splash_icon.png
+  android_12:
+    color: "#FFFFFF"
+    image: assets/images/splash_icon.png
 
