@@ -123,7 +123,7 @@
 * **檔案路徑**：[diet_service.dart](../services/diet_service.dart)
 * **修改目的**：
   1. 匯入 `api_config.dart`。
-  2. 新增與 Companion Agent (`POST /companion/ask`) 發送對話的 service 方法 `sendCompanionUserPrompt`。
+  2. 新增與 MAF Workflow (`POST /maf/ask`) 發送對話的 service 方法 `sendCompanionUserPrompt`。
 
 ### 📍 修改位置 1: 檔案頂點 import 區塊 (第 1~6 行)
 
@@ -146,7 +146,7 @@ import '../utils/profile_value_mapper.dart';
 
 **預計新增程式碼**：
 ```dart
-  /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
+  /// 發送使用者訊息至 MAF Workflow (Port 3001 /maf/ask)
   Future<Map<String, dynamic>> sendCompanionUserPrompt(String userPrompt) async {
     final normalizedPrompt = userPrompt.trim();
     if (normalizedPrompt.isEmpty) {
@@ -156,7 +156,7 @@ import '../utils/profile_value_mapper.dart';
     final token = await _token();
     try {
       final response = await _client.post(
-        '${ApiConfig.companionBaseUrl}/companion/ask',
+        '${ApiConfig.companionBaseUrl}/maf/ask',
         {'user_prompt': normalizedPrompt},
         headers: {
           if (token != null) 'Authorization': 'Bearer $token',
@@ -763,8 +763,8 @@ import '../utils/profile_value_mapper.dart';
 
 - **✅ 批次一 (已完成實作)**：基礎 API 連線與 Service 方法建置
   - **[api_config.dart](../config/api_config.dart)**：新增 `companionBaseUrl` 靜態 Getter。
-  - **[api_client.dart](../core/api_client.dart)**：支援完整 URL 解析，並過濾 Port 3000 全域登出彈窗。
-  - **[diet_service.dart](../services/diet_service.dart)**：新增 `sendCompanionUserPrompt` 對接 `/companion/ask`。
+  - **[api_client.dart](../core/api_client.dart)**：支援完整 URL 解析，並過濾對話端點全域登出彈窗。
+  - **[diet_service.dart](../services/diet_service.dart)**：新增 `sendCompanionUserPrompt` 對接 `/maf/ask`。
 
 - **✅ 批次二 (已完成實作)**：基礎 UI 與彈窗互動層對接
   - **[home_view.dart](../views/home/home_view.dart)**：`_handleMessage` 訊息發送、氣泡渲染與 `_showMealRecordDraftDialog` 基礎彈窗流程。

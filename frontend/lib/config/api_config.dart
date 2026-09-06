@@ -41,24 +41,24 @@ class ApiConfig {
     return serverUri.replace(port: 8000, path: '').toString();
   }
 
-  /// 陪伴精靈 Companion Agent 的 Base URL (Port 3000)
+  /// 對話共用入口 MAF Workflow 的 Base URL (Port 3001)
   static String get companionBaseUrl {
     if (kIsWeb) {
-      return 'http://localhost:3000';
+      return 'http://localhost:3001';
     }
 
     try {
       final uri = Uri.parse(serverBaseUrl);
       if (uri.host.isNotEmpty && uri.host != 'localhost' && uri.host != '127.0.0.1') {
-        return uri.replace(port: 3000).toString();
+        return uri.replace(port: 3001).toString();
       }
     } catch (_) {}
 
     if (Platform.isAndroid) {
-      return 'http://127.0.0.1:3000';
+      return 'http://127.0.0.1:3001';
     }
 
-    return 'http://localhost:3000';
+    return 'http://localhost:3001';
   }
 
   /// 陪伴精靈候選連線 URL 列表（自動容錯與多 IP 輪詢嘗試）
@@ -71,21 +71,21 @@ class ApiConfig {
     }
 
     if (Platform.isAndroid) {
-      if (!candidates.contains('http://localhost:3000')) {
-        candidates.add('http://localhost:3000');
+      if (!candidates.contains('http://localhost:3001')) {
+        candidates.add('http://localhost:3001');
       }
-      if (!candidates.contains('http://10.0.2.2:3000')) {
-        candidates.add('http://10.0.2.2:3000');
+      if (!candidates.contains('http://10.0.2.2:3001')) {
+        candidates.add('http://10.0.2.2:3001');
       }
-      if (!candidates.contains('http://127.0.0.1:3000')) {
-        candidates.add('http://127.0.0.1:3000');
+      if (!candidates.contains('http://127.0.0.1:3001')) {
+        candidates.add('http://127.0.0.1:3001');
       }
     } else {
-      if (!candidates.contains('http://localhost:3000')) {
-        candidates.add('http://localhost:3000');
+      if (!candidates.contains('http://localhost:3001')) {
+        candidates.add('http://localhost:3001');
       }
-      if (!candidates.contains('http://127.0.0.1:3000')) {
-        candidates.add('http://127.0.0.1:3000');
+      if (!candidates.contains('http://127.0.0.1:3001')) {
+        candidates.add('http://127.0.0.1:3001');
       }
     }
 

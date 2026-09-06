@@ -642,7 +642,7 @@ class DietService {
     };
   }
 
-  /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
+  /// 發送使用者訊息至 MAF Workflow 共用入口 (Port 3001 /maf/ask)
   ///
   /// [userPrompt]：使用者輸入的最新對話內容。
   /// [tempStory]：前端快取的最近最多 3 則歷史對話，供後端無狀態微服務作為 LLM 推理上下文。
@@ -661,7 +661,7 @@ class DietService {
     for (final baseUrl in candidateUrls) {
       try {
         final response = await _client.post(
-          '$baseUrl/companion/ask',
+          '$baseUrl/maf/ask',
           {
             'user_prompt': normalizedPrompt,
             'temp_story': tempStory, // 打包近 3 則歷史對話傳送至無狀態後端
