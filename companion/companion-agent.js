@@ -29,7 +29,7 @@ if (loadedEnvPath) {
 }
 
 if (!process.env.OPENAI_API_KEY) {
-  console.error("❌ [FATAL] 缺少必要的環境變數: OPENAI_API_KEY");
+  console.error("[FATAL] 缺少必要的環境變數: OPENAI_API_KEY");
   process.exit(1);
 }
 

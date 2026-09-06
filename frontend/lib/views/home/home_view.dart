@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // [代碼清理/Lint修正] 移除重複匯入的 dart:ui，因為 material.dart 已涵蓋相關 UI 元素與型態定義
 import 'dart:convert';
@@ -31,15 +31,6 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   static bool _hasCheckedBodyTransitionOnStartup = false;
-  static const Set<String> _dietRecordRelatedIntents = {
-    'daily_diet_report',
-    'diet_analysis',
-    'diet_record',
-    'diet_record_query',
-    'diet_question',
-    'record_query',
-    'weekly_analysis',
-  };
 
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
@@ -119,7 +110,7 @@ class _HomeViewState extends State<HomeView>
               stt.SpeechToText.androidNoBluetooth,
             ],
             onStatus: (status) {
-              debugPrint('🗣️ [SpeechToText Status] $status');
+              debugPrint('[SpeechToText Status] $status');
               // 語音辨識結束或停止收聽時，自動更新 UI 狀態
               if (status == 'done' || status == 'notListening') {
                 if (mounted) setState(() => _isListening = false);
@@ -127,7 +118,7 @@ class _HomeViewState extends State<HomeView>
             },
             onError: (errorNotification) {
               debugPrint(
-                '⚠️ [SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})',
+                '[SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})',
               );
               // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
               if (mounted) setState(() => _isListening = false);
@@ -136,13 +127,13 @@ class _HomeViewState extends State<HomeView>
           .timeout(
             const Duration(seconds: 4),
             onTimeout: () {
-              debugPrint('⚠️ [SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
+              debugPrint('[SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
               return false;
             },
           );
-      debugPrint('🗣️ [SpeechToText] 初始化成功狀態: $_speechAvailable');
+      debugPrint('[SpeechToText] 初始化成功狀態: $_speechAvailable');
     } catch (e) {
-      debugPrint('❌ [SpeechToText] 初始化失敗: $e');
+      debugPrint('[SpeechToText] 初始化失敗: $e');
       _speechAvailable = false;
     }
     if (mounted) setState(() {});
@@ -184,7 +175,7 @@ class _HomeViewState extends State<HomeView>
       if (mounted) setState(() => _isListening = true);
       // 不再先呼叫 locales()，也不手動傳 localeId：該查詢會在部分
       // Android 語音服務上開第二個 session，導致真正 listen 前連線被關閉。
-      debugPrint('🗣️ [SpeechToText] 開始監聽語音，使用裝置預設語系');
+      debugPrint('[SpeechToText] 開始監聽語音，使用裝置預設語系');
       await _speech.listen(
         listenOptions: stt.SpeechListenOptions(
           partialResults: true,
@@ -194,7 +185,7 @@ class _HomeViewState extends State<HomeView>
         ),
         onResult: (result) {
           debugPrint(
-            '🗣️ [SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
+            '[SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
           );
           // Android 可能先回傳 notListening/done，再非同步送出最後一筆
           // finalResult；不能用 _isListening 阻擋這筆結果，否則使用者說完
@@ -211,7 +202,7 @@ class _HomeViewState extends State<HomeView>
         },
       );
     } catch (e) {
-      debugPrint('❌ [SpeechToText] 啟動語音收聽失敗: $e');
+      debugPrint('[SpeechToText] 啟動語音收聽失敗: $e');
       if (mounted) {
         setState(() => _isListening = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -294,7 +285,7 @@ class _HomeViewState extends State<HomeView>
     if (_lastUpdateTime != null) {
       final difference = DateTime.now().difference(_lastUpdateTime!);
       if (difference.inHours >= 24) {
-        debugPrint('⏱️ 超過 24 小時未互動，自動清空歷史');
+        debugPrint('超過 24 小時未互動，自動清空歷史');
         await resetChat();
       }
     }
@@ -641,50 +632,8 @@ class _HomeViewState extends State<HomeView>
         date.day == targetDate.day;
   }
 
-  DateTime _dietReportDateForPrompt(String prompt) {
-    final normalizedPrompt = prompt.trim().toLowerCase();
-    final today = DateTime.now();
-    if (normalizedPrompt.contains('前天')) {
-      return today.subtract(const Duration(days: 2));
-    }
-    if (normalizedPrompt.contains('昨天') || normalizedPrompt.contains('昨日')) {
-      return today.subtract(const Duration(days: 1));
-    }
-    return today;
-  }
-
-  bool _shouldShowDietReportForPrompt(String prompt, String intent) {
-    final normalizedPrompt = prompt.trim().toLowerCase();
-    final normalizedIntent = intent.trim().toLowerCase();
-
-    final asksAboutDate =
-        normalizedPrompt.contains('今天') ||
-        normalizedPrompt.contains('今日') ||
-        normalizedPrompt.contains('當天') ||
-        normalizedPrompt.contains('這天') ||
-        normalizedPrompt.contains('昨天') ||
-        normalizedPrompt.contains('昨日') ||
-        normalizedPrompt.contains('前天');
-    final intentNeedsDietRecord =
-        _dietRecordRelatedIntents.contains(normalizedIntent) ||
-        normalizedIntent.contains('record') ||
-        normalizedIntent.contains('analysis');
-    if (!asksAboutDate && !intentNeedsDietRecord) return false;
-
-    return normalizedPrompt.contains('吃') ||
-        normalizedPrompt.contains('飲食') ||
-        normalizedPrompt.contains('餐') ||
-        normalizedPrompt.contains('紀錄') ||
-        normalizedPrompt.contains('記錄') ||
-        normalizedPrompt.contains('熱量') ||
-        normalizedPrompt.contains('卡路里') ||
-        normalizedPrompt.contains('蛋白質') ||
-        normalizedPrompt.contains('脂肪') ||
-        normalizedPrompt.contains('碳水') ||
-        normalizedPrompt.contains('營養') ||
-        normalizedPrompt.contains('夠不夠') ||
-        normalizedPrompt.contains('過量') ||
-        intentNeedsDietRecord;
+  bool _shouldShowDietReportForIntent(String intent) {
+    return intent.trim().toLowerCase() == 'meal_query';
   }
 
   Map<String, dynamic> _buildDietSummaryForDate(
@@ -724,10 +673,10 @@ class _HomeViewState extends State<HomeView>
     };
   }
 
-  Future<void> _showDietReportFromCompanion(String prompt) async {
+  Future<void> _showDietReportFromCompanion(String? queryDate) async {
     try {
       final records = await DietService().getMyDietRecords();
-      final reportDate = _dietReportDateForPrompt(prompt);
+      final reportDate = DateTime.tryParse(queryDate ?? '') ?? DateTime.now();
       final isToday = _isSameDate(reportDate, DateTime.now());
       final dateLabel = isToday
           ? '今天'
@@ -1044,12 +993,12 @@ class _HomeViewState extends State<HomeView>
 
                 const SizedBox(height: 0),
 
-                // 1. 昨日熱量弧形表 (三區間: 偏低 / 適量 / 偏高)
+                // 1. 熱量弧形表 (三區間: 偏低 / 適量 / 偏高)
                 _buildCalorieArcGaugeCard(calories.round()),
 
                 const SizedBox(height: 8),
 
-                // 2. 昨日三大營養素比例柱狀圖
+                // 2. 三大營養素比例柱狀圖
                 _buildMacronutrientBarChartCard(
                   carbsPercent: carbsPercent,
                   proteinPercent: proteinPercent,
@@ -1381,7 +1330,7 @@ class _HomeViewState extends State<HomeView>
                 final queryDate = res['query_date']?.toString();
 
                 // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
-                  final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
+                final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
                 if (intent == 'meal_record' && mealRecords.isNotEmpty) {
                   _showMealRecordDraftDialog(
                     context,
@@ -1398,8 +1347,10 @@ class _HomeViewState extends State<HomeView>
                     'queryDate': queryDate,
                   });
                   _appendTempStory('assistant', replyStr);
-                  if (_shouldShowDietReportForPrompt(text, intent)) {
-                    Future.microtask(() => _showDietReportFromCompanion(text));
+                  if (_shouldShowDietReportForIntent(intent)) {
+                    Future.microtask(
+                      () => _showDietReportFromCompanion(queryDate),
+                    );
                   }
                 }
               } else {
@@ -2862,7 +2813,8 @@ class _HomeViewState extends State<HomeView>
                           setDialogState(() => isSaving = true);
                           try {
                             final mafConfirmationId = confirmationId;
-                            if (mafConfirmationId == null || mafConfirmationId.isEmpty) {
+                            if (mafConfirmationId == null ||
+                                mafConfirmationId.isEmpty) {
                               throw Exception('找不到 MAF 飲食紀錄確認編號');
                             }
 
@@ -2889,10 +2841,11 @@ class _HomeViewState extends State<HomeView>
                               }
                             }
 
-                            final res = await DietService().confirmMafMealRecord(
-                              mafConfirmationId,
-                              confirmedItems,
-                            );
+                            final res = await DietService()
+                                .confirmMafMealRecord(
+                                  mafConfirmationId,
+                                  confirmedItems,
+                                );
                             if (res['success'] != true) {
                               throw Exception(res['message'] ?? '寫入資料庫失敗');
                             }
@@ -2978,7 +2931,7 @@ class _HomeViewState extends State<HomeView>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "昨日熱量",
+            "熱量總計",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -3112,7 +3065,7 @@ class _HomeViewState extends State<HomeView>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "昨日三大營養素比例",
+            "三大營養素比例",
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,

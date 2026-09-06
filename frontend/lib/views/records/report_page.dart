@@ -112,17 +112,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     )..repeat(reverse: true);
 
     _hoverScaleAnimation = Tween<double>(begin: 0.97, end: 1.03).animate(
-      CurvedAnimation(
-        parent: _hoverController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut),
     );
 
     _hoverOffsetAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
-      CurvedAnimation(
-        parent: _hoverController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut),
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -400,10 +394,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   // === 5. UI 畫面建構主體 (Scaffold & Build) ===
   Widget _buildTabButton(String label, bool isSelected) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
         color: isSelected ? AppColors.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(20),
@@ -449,10 +440,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                             animation: _hoverController,
                             builder: (context, child) {
                               return Transform.translate(
-                                offset: Offset(
-                                  0,
-                                  _hoverOffsetAnimation.value,
-                                ),
+                                offset: Offset(0, _hoverOffsetAnimation.value),
                                 child: Transform.scale(
                                   scale: _hoverScaleAnimation.value,
                                   child: Container(
@@ -464,7 +452,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                                       boxShadow: [
                                         BoxShadow(
                                           // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-                                          color: Colors.black.withValues(alpha: 0.05),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.05,
+                                          ),
                                           blurRadius: 10,
                                           spreadRadius: 1,
                                         ),
@@ -1464,7 +1454,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "今日三大營養素比例",
+            "三大營養素比例",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -1620,7 +1610,10 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         ),
         Expanded(
           // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-          child: Container(height: 1, color: Colors.black.withValues(alpha: 0.06)),
+          child: Container(
+            height: 1,
+            color: Colors.black.withValues(alpha: 0.06),
+          ),
         ),
       ],
     );
@@ -1692,10 +1685,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   Widget _buildTrendChart() {
     List<double> data = _viewType == 1 ? _weeklyData : _monthlyData;
     if (data.isEmpty) {
-      return const SizedBox(
-        height: 200,
-        child: Center(child: Text("暫無資料")),
-      );
+      return const SizedBox(height: 200, child: Center(child: Text("暫無資料")));
     }
 
     double sum = 0;

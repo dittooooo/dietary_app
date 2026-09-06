@@ -5,7 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../core/api_client.dart';
 import '../utils/friendly_error_message.dart';
-import '../utils/profile_value_mapper.dart';
+// Legacy direct-DietaryAgent flow disabled; keep this import documented with it.
+// import '../utils/profile_value_mapper.dart';
 
 class DietService {
   final ApiClient _client = ApiClient();
@@ -56,9 +57,9 @@ class DietService {
     return prefs.getString('jwt_token');
   }
 
-  Future<SharedPreferences> _prefs() async {
-    return SharedPreferences.getInstance();
-  }
+  // Legacy askWeeklyAnalysis() helper; disabled together with the direct
+  // /dietary-agent/ask conversation path.
+  // Future<SharedPreferences> _prefs() async => SharedPreferences.getInstance();
 
   String _errorMessage(String action, int _statusCode, String _body) {
     if (action.toLowerCase().contains('companion')) {
@@ -467,6 +468,10 @@ class DietService {
     }
   }
 
+  /*
+   * Legacy conversation path disabled.
+   * This flow bypassed MAF and called /dietary-agent/ask directly. The active
+   * home conversation path is sendMafUserPrompt() below.
   Future<Map<String, dynamic>> askWeeklyAnalysis(String question) async {
     final token = await _token();
     if (token == null) {
@@ -586,6 +591,7 @@ class DietService {
       }..removeWhere((key, value) => value == null || value == '');
     }).toList();
   }
+  */
 
   String _normalizeRecordDate(dynamic value) {
     if (value == null) return '';
@@ -596,6 +602,8 @@ class DietService {
     return text;
   }
 
+  /*
+   * Legacy hard-coded parsing disabled with askWeeklyAnalysis().
   List<String> _extractDishNames(String question) {
     final cleaned = question.trim();
     if (cleaned.isEmpty) return ['general'];
@@ -641,6 +649,7 @@ class DietService {
       if (responseMap['message'] != null) 'message': responseMap['message'],
     };
   }
+  */
 
   /// 發送使用者訊息至 MAF Workflow (Port 3001 /maf/ask)
   ///
@@ -706,7 +715,7 @@ class DietService {
             'companion_reply': data['companion_reply'] ?? '',
             'intent_category': data['intent_category'] ?? 'general',
             'query_date': data['query_date'],
-            'meal_records': mealRecords,      // ✅ 前端 UI 現行彈窗立即可用之分組陣列
+            'meal_records': mealRecords,      // 前端 UI 現行彈窗立即可用之分組陣列
             'dietary_agent_error': data['dietary_agent_error'],
             'data': data,
           };

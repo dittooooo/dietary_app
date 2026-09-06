@@ -194,7 +194,7 @@ async function getCompanionReply({
   if (screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
       return dietaryAgentResponse
-        ? `已成功幫你將飲食存入紀錄庫囉！✨`
+        ? `已成功幫你將飲食存入紀錄庫囉！`
         : `我先整理好飲食紀錄草稿了，請確認內容後再儲存喔！`;
     } else {
       return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
@@ -208,7 +208,7 @@ async function getCompanionReply({
       const formattedDateStr = dateParts.length === 3
         ? `${parseInt(dateParts[1], 10)}/${parseInt(dateParts[2], 10)}`
         : screening.query_date;
-      return `幫你找到 ${formattedDateStr} 號的飲食紀錄囉！請在下方卡片確認當天記錄的內容吧！✨`;
+      return `幫你找到 ${formattedDateStr} 號的飲食紀錄囉！請在下方卡片確認當天記錄的內容吧！`;
     } else {
       return `收到你想查詢歷史飲食紀錄，但似乎沒有聽到具體的日期。你可以再跟我說一次你想看哪一天的紀錄喔！（例如：「我 6/19 吃了什麼」）`;
     }
