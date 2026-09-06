@@ -1,31 +1,131 @@
+# Python, Node.js and local secrets
 __pycache__/
 *.py[cod]
-
 .env
-**/.env
-*.env
-.env.example
+.env.*
+!.env.example
 .venv/
 node_modules/
-
 .cache/
 *.log
-.vscode/
-
-graphRag/.env
-graphRag/cache/
-graphRag/data/neo4J/
-graphRag/src/nutrition_agent_v2/test_area/output/
 *.dump
 
-# Local automation scripts (Personal dev & startup scripts)
-start_backends.bat
-start_backends.ps1
-start_backends.*
-monitor.ps1
+# IDE and editor settings
+.vscode/
+.idea/
+*.iws
+*.iml
+*.ipr
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.apt_generated/
 
-# Ignored test directory
-test/
-test
+# Backend build artifacts and local files
+/backend/HELP.md
+/backend/target/
+/backend/.mvn/wrapper/maven-wrapper.jar
+/backend/nbproject/private/
+/backend/nbbuild/
+/backend/dist/
+/backend/nbdist/
+/backend/.nb-gradle/
+/backend/build/
 
-/DOC
+# GraphRAG local data
+/graphRag/cache/
+/graphRag/data/neo4J/
+/graphRag/nutritionist_agent/test_area/
+
+# Flutter and Dart build artifacts
+/frontend/ios/
+/frontend/linux/
+/frontend/macos/
+/frontend/web/
+/frontend/windows/
+/frontend/.dart_tool/
+/frontend/.flutter-plugins-dependencies
+/frontend/.pub-cache/
+/frontend/.pub/
+/frontend/build/
+/frontend/coverage/
+/frontend/.build/
+/frontend/.buildlog/
+/frontend/.history/
+/frontend/.swiftpm/
+/frontend/migrate_working_dir/
+/frontend/**/doc/api/
+/frontend/**/ios/Flutter/.last_build_id
+/frontend/app.*.symbols
+/frontend/app.*.map.json
+/frontend/android/app/debug/
+/frontend/android/app/profile/
+/frontend/android/app/release/
+
+# Flutter Android local/generated files
+/frontend/android/gradle-wrapper.jar
+/frontend/android/.gradle/
+/frontend/android/captures/
+/frontend/android/gradlew
+/frontend/android/gradlew.bat
+/frontend/android/local.properties
+/frontend/android/GeneratedPluginRegistrant.java
+/frontend/android/.cxx/
+/frontend/android/build/
+/frontend/android/key.properties
+/frontend/android/**/*.keystore
+/frontend/android/**/*.jks
+
+# Flutter Apple-platform generated files
+/frontend/ios/**/dgph
+/frontend/ios/**/*.mode1v3
+/frontend/ios/**/*.mode2v3
+/frontend/ios/**/*.moved-aside
+/frontend/ios/**/*.pbxuser
+/frontend/ios/**/*.perspectivev3
+/frontend/ios/**/*sync/
+/frontend/ios/**/.vagrant/
+/frontend/ios/**/DerivedData/
+/frontend/ios/**/Pods/
+/frontend/ios/**/.symlinks/
+/frontend/ios/**/.generated/
+/frontend/ios/profile/
+/frontend/ios/xcuserdata/
+/frontend/ios/Flutter/App.framework/
+/frontend/ios/Flutter/Flutter.framework/
+/frontend/ios/Flutter/Flutter.podspec
+/frontend/ios/Flutter/Generated.xcconfig
+/frontend/ios/Flutter/ephemeral/
+/frontend/ios/Flutter/app.flx
+/frontend/ios/Flutter/app.zip
+/frontend/ios/Flutter/flutter_assets/
+/frontend/ios/Flutter/flutter_export_environment.sh
+/frontend/ios/ServiceDefinitions.json
+/frontend/ios/Runner/GeneratedPluginRegistrant.*
+/frontend/macos/**/Flutter/ephemeral/
+/frontend/macos/**/Pods/
+/frontend/macos/**/dgph
+/frontend/macos/**/xcuserdata/
+/frontend/linux/flutter/ephemeral/
+
+# Flutter Windows and Visual Studio generated files
+/frontend/windows/flutter/ephemeral/
+/frontend/windows/*.suo
+/frontend/windows/*.user
+/frontend/windows/*.userosscache
+/frontend/windows/*.sln.docstates
+/frontend/windows/x64/
+/frontend/windows/x86/
+/frontend/windows/*.[Cc]ache
+!/frontend/windows/*.[Cc]ache/
+
+# Local automation scripts and scratch directories
+/start_backends.bat
+/start_backends.ps1
+/start_backends.*
+/monitor.ps1
+/test/
+/DOC/
