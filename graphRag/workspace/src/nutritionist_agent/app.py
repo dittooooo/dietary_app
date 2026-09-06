@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import logging
 from typing import Dict
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query
+from fastapi import APIRouter, FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from neo4j.exceptions import Neo4jError
 
@@ -27,6 +28,12 @@ app = FastAPI(
 api = APIRouter(prefix="/nutritionist-agent")
 validate_required_config()
 agent = NutritionAgent()
+logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
+logger = logging.getLogger("nutritionist.agent")
+
+
+def trace(trace_id: str | None, state: str, message: str) -> None:
+    logger.info("[%s] [NutritionistAgent] [%s] %s", (trace_id or "-")[:12], state, message)
 
 # 提供最基本的服務存活檢查，不會連線 Neo4j 或 OpenAI。
 @api.get("/health")
@@ -60,9 +67,16 @@ def dish_search(
 
 # 接收使用者問題與個人/飲食資料，交給 NutritionAgent 完成 GraphRAG 流程。
 @api.post("/ask", response_model=NutritionAgentResponse)
-def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
+def ask(
+    req: NutritionAgentRequest,
+    x_trace_id: str | None = Header(default=None, alias="X-Trace-Id"),
+) -> NutritionAgentResponse:
+    dishes = [item.dish_name for item in req.dish_info_list]
+    trace(x_trace_id, "STARTED", f"執行 GraphRAG 飲食建議，料理={dishes} question_type={req.question_type}")
     try:
-        return agent.ask(req)
+        result = agent.ask(req)
+        trace(x_trace_id, "COMPLETED", f"飲食建議完成，料理數={len(result.dish_advice)}")
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
@@ -73,10 +87,16 @@ def ask(req: NutritionAgentRequest) -> NutritionAgentResponse:
 
 # 查詢單一道料理的營養成分，提供飲食紀錄新增資料時使用，不呼叫 OpenAI。
 @api.post("/dish-nutrition", response_model=DishNutritionResponse)
-def dish_nutrition(req: DishNutritionRequest) -> DishNutritionResponse:
+def dish_nutrition(
+    req: DishNutritionRequest,
+    x_trace_id: str | None = Header(default=None, alias="X-Trace-Id"),
+) -> DishNutritionResponse:
+    trace(x_trace_id, "STARTED", f"查詢單一料理營養：{req.dish_name[:50]}")
     try:
         # HTTP 層只負責接收 request 與轉換錯誤碼，實際圖譜檢索交給 NutritionAgent。
-        return agent.get_dish_nutrition(req)
+        result = agent.get_dish_nutrition(req)
+        trace(x_trace_id, "COMPLETED", f"營養查詢完成 matched={result.dish_nutrition.matched_name}")
+        return result
     except ValueError as exc:
         # 例如 dish_name 是空字串時回 400，表示呼叫端輸入不合法。
         raise HTTPException(status_code=400, detail=str(exc)) from exc

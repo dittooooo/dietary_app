@@ -10,6 +10,7 @@ import httpx
 
 from .config import Settings
 from .prompts import ANALYSIS_TOOLS, load_analysis_prompt, load_translation_prompt
+from .trace import TRACE_HEADER, get_trace_id, summarize, trace, trace_payload
 
 
 class OpenAIServiceError(RuntimeError):
@@ -113,19 +114,23 @@ class WorkflowServices:
         self._transport = transport
 
     async def prepare(self, user_prompt: str, temp_story: list[dict[str, str]]) -> dict[str, Any]:
+        trace("IntakeAgent", "OPENAI_ANALYSIS", "呼叫 OpenAI 分析意圖、情緒、料理與份量")
         analysis = await self._analyze(user_prompt, temp_story)
         screening = analysis["screening"]
+        trace_payload("IntakeAgent", "OUTPUT", "analysis", analysis)
 
         if (
             screening.get("intent_category") == "dish_advice"
             and isinstance(screening.get("dish_info_list"), dict)
             and screening["dish_info_list"]
         ):
+            trace("TranslationAgent", "OPENAI_TRANSLATION", "標準化料理名稱供下游營養查詢")
             original_entries = list(screening["dish_info_list"].items())
             translated = await asyncio.gather(
                 *(self._translate_single_dish(name, amount) for name, amount in original_entries)
             )
             screening["dish_info_list"] = dict(translated)
+            trace_payload("TranslationAgent", "OUTPUT", "dish_info_list", screening["dish_info_list"])
 
         return {
             "user_prompt": user_prompt,
@@ -138,9 +143,11 @@ class WorkflowServices:
     async def call_dietary_agent(
         self, request_body: dict[str, Any], authorization: str | None
     ) -> dict[str, Any]:
-        headers = {"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json", TRACE_HEADER: get_trace_id()}
         if authorization:
             headers["Authorization"] = authorization
+        trace_payload("DietaryAgent", "INPUT", "request", request_body)
+        trace("MAF", "CALL_DIETARY_AGENT", f"POST /dietary-agent/ask question={summarize(request_body.get('question'))}")
         async with httpx.AsyncClient(
             timeout=self.settings.request_timeout_seconds, transport=self._transport
         ) as client:
@@ -150,7 +157,66 @@ class WorkflowServices:
                 json=request_body,
             )
         response.raise_for_status()
+        trace_payload("DietaryAgent", "OUTPUT", "response", response.json())
+        trace("DietaryAgent", "RETURNED", f"飲食建議處理完成 HTTP {response.status_code}")
         return response.json()
+
+    async def create_diet_records(
+        self, records: list[dict[str, Any]], authorization: str | None
+    ) -> dict[str, Any]:
+        headers = {"Content-Type": "application/json", TRACE_HEADER: get_trace_id()}
+        if authorization:
+            headers["Authorization"] = authorization
+        trace("MAF", "SAVE_RECORDS", f"呼叫飲食紀錄 API，共 {len(records)} 筆")
+        async with httpx.AsyncClient(
+            timeout=self.settings.request_timeout_seconds, transport=self._transport
+        ) as client:
+            response = await client.post(
+                f"{self.settings.dietary_agent_api_url}/api/diet-records",
+                headers=headers,
+                json=records,
+            )
+        response.raise_for_status()
+        trace("DietaryAgent", "RECORDS_SAVED", f"資料庫寫入完成 HTTP {response.status_code}")
+        return response.json()
+
+    async def fetch_dish_nutrition(self, dish_name: str) -> dict[str, float]:
+        trace("MAF", "CALL_NUTRITION", f"查詢料理營養：{summarize(dish_name, 40)}")
+        async with httpx.AsyncClient(
+            timeout=self.settings.request_timeout_seconds, transport=self._transport
+        ) as client:
+            response = await client.post(
+                f"{self.settings.dietary_agent_api_url}/dietary-agent/dish-nutrition",
+                headers={"Content-Type": "application/json", TRACE_HEADER: get_trace_id()},
+                json={"dish_name": dish_name},
+            )
+        response.raise_for_status()
+        trace("NutritionistAgent", "RETURNED", f"營養查詢完成 HTTP {response.status_code}")
+        root = response.json()
+        data = root.get("data", root) if isinstance(root, dict) else {}
+        nutrition = data.get("dish_nutrition", {}) if isinstance(data, dict) else {}
+        nutrients = nutrition.get("nutrients", []) if isinstance(nutrition, dict) else []
+        values: dict[str, float] = {}
+        key_names = {
+            "calories": ("熱量", "calories", "kcal"),
+            "protein": ("蛋白質", "protein"),
+            "fat": ("脂肪", "fat"),
+            "carbohydrates": ("碳水", "carbohydrate", "carbs"),
+        }
+        for nutrient in nutrients:
+            if not isinstance(nutrient, dict):
+                continue
+            name = str(nutrient.get("name") or "").lower()
+            raw_amount = nutrient.get("amount_per_serving")
+            try:
+                amount = float(raw_amount)
+            except (TypeError, ValueError):
+                continue
+            for key, aliases in key_names.items():
+                if any(alias.lower() in name for alias in aliases):
+                    values[key] = amount
+                    break
+        return values
 
     async def call_companion_reply(
         self,
@@ -166,14 +232,20 @@ class WorkflowServices:
             "dietary_agent_error": dietary_agent_error,
             "temp_story": context["temp_story"],
         }
+        trace_payload("CompanionAgent", "INPUT", "request", body)
+        trace("MAF", "CALL_COMPANION", "呼叫 CompanionAgent 產生最終自然語言回覆")
         async with httpx.AsyncClient(
             timeout=self.settings.request_timeout_seconds, transport=self._transport
         ) as client:
             response = await client.post(
-                f"{self.settings.companion_api_url}/companion/reply", json=body
+                f"{self.settings.companion_api_url}/companion/reply",
+                headers={TRACE_HEADER: get_trace_id()},
+                json=body,
             )
         response.raise_for_status()
+        trace("CompanionAgent", "RETURNED", f"最終回覆完成 HTTP {response.status_code}")
         data = response.json()
+        trace_payload("CompanionAgent", "OUTPUT", "response", data)
         reply = data.get("companion_reply")
         if not isinstance(reply, str):
             raise RuntimeError("Companion Agent returned an invalid reply.")
@@ -251,12 +323,14 @@ class WorkflowServices:
             "Authorization": f"Bearer {self.settings.openai_api_key}",
         }
         try:
+            trace("OpenAI", "REQUEST", f"{path} model={body.get('model')}")
             async with httpx.AsyncClient(
                 timeout=self.settings.request_timeout_seconds, transport=self._transport
             ) as client:
                 response = await client.post(f"https://api.openai.com{path}", headers=headers, json=body)
             if response.is_error:
                 raise OpenAIServiceError(f"OpenAI API error {response.status_code}: {response.text}")
+            trace("OpenAI", "RETURNED", f"{path} HTTP {response.status_code}")
             return response.json()
         except OpenAIServiceError:
             raise

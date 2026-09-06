@@ -296,8 +296,11 @@ class ApiClient {
   void _checkResponse(http.Response response) {
     if (response.statusCode == 401 || response.statusCode == 403) {
       final requestUrlStr = response.request?.url.toString() ?? '';
-      // 若為陪伴精靈端點 (Port 3000 或 /companion/)，不跳出全域登入過期彈窗
-      if (requestUrlStr.contains(':3000') || requestUrlStr.contains('/companion/')) {
+      // MAF/Companion 的對話錯誤由對話流程自行處理，不觸發全域登出彈窗
+      if (requestUrlStr.contains(':3000') ||
+          requestUrlStr.contains(':3001') ||
+          requestUrlStr.contains('/companion/') ||
+          requestUrlStr.contains('/maf/')) {
         return;
       }
 

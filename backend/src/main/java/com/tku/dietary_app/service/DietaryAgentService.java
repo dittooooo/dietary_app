@@ -13,6 +13,7 @@ import com.tku.dietary_app.exception.UpstreamServiceException;
 import com.tku.dietary_app.repository.DietRecordRepository;
 import com.tku.dietary_app.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DietaryAgentService {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
 
@@ -56,15 +58,31 @@ public class DietaryAgentService {
     private String partnerApiDishNutritionPath;
 
     public Object ask(Long userId, DietaryAskRequest request) {
+        return ask(userId, request, null);
+    }
+
+    public Object ask(Long userId, DietaryAskRequest request, String traceId) {
+        String runId = normalizeTraceId(traceId);
+        log.info("[{}] [DietaryAgent] [STARTED] 整理使用者資料並呼叫 NutritionistAgent，questionType={}",
+                runId, request.getQuestionType());
         UserProfile userProfile = userProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料"));
 
         DietaryAgentPayload payload = buildPayload(userId, request, userProfile);
-        return callPartnerApi(partnerApiAskPath, payload);
+        Object result = callPartnerApi(partnerApiAskPath, payload, runId);
+        log.info("[{}] [DietaryAgent] [COMPLETED] NutritionistAgent 飲食建議已回傳", runId);
+        return result;
     }
 
     public Object dishNutrition(DietaryDishNutritionRequest request) {
-        return callPartnerApi(partnerApiDishNutritionPath, request);
+        return dishNutrition(request, null);
+    }
+
+    public Object dishNutrition(DietaryDishNutritionRequest request, String traceId) {
+        String runId = normalizeTraceId(traceId);
+        log.info("[{}] [DietaryAgent] [FORWARDING] 將料理營養查詢轉交 NutritionistAgent，dish={}",
+                runId, request.getDishName());
+        return callPartnerApi(partnerApiDishNutritionPath, request, runId);
     }
 
     public NutritionValues fetchDishNutrition(String dishName) {
@@ -185,7 +203,7 @@ public class DietaryAgentService {
                 .collect(Collectors.toList());
     }
 
-    private Object callPartnerApi(String apiPath, Object payload) {
+    private Object callPartnerApi(String apiPath, Object payload, String traceId) {
         if (partnerApiBaseUrl == null || partnerApiBaseUrl.isBlank()) {
             throw new IllegalStateException("未設定 dietary partner API base URL");
         }
@@ -199,6 +217,7 @@ public class DietaryAgentService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Trace-Id", normalizeTraceId(traceId));
 
         HttpEntity<Object> requestEntity = new HttpEntity<>(payload, headers);
         try {
@@ -208,6 +227,13 @@ public class DietaryAgentService {
         } catch (RestClientException ex) {
             throw new UpstreamServiceException("dietary partner API 呼叫失敗");
         }
+    }
+
+    private String normalizeTraceId(String traceId) {
+        if (traceId == null || traceId.isBlank()) {
+            return "-";
+        }
+        return traceId.trim().substring(0, Math.min(traceId.trim().length(), 12));
     }
 
     private NutritionValues parseNutritionValues(Object response) {

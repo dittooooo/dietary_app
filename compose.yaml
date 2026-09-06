@@ -56,7 +56,6 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OPENAI_API_KEY}
       OPENAI_MODEL: ${COMPANION_MODEL:-gpt-4o-mini}
-      DIETARY_AGENT_API_URL: http://backend:8080
       COMPANION_API_PORT: "3000"
     ports: ["127.0.0.1:3000:3000"]
     healthcheck:
