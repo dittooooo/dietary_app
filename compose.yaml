@@ -81,7 +81,7 @@ services:
       OPENAI_MODEL: ${COMPANION_MODEL:-gpt-4o-mini}
       COMPANION_AGENT_API_URL: http://companion:3000
       DIETARY_AGENT_API_URL: http://backend:8080
-      COMPANION_PROMPT_DIR: /app/companion/companion_js/prompts
+      COMPANION_PROMPT_DIR: /app/companion/prompts
     ports: ["127.0.0.1:3001:3001"]
     healthcheck:
       test:
