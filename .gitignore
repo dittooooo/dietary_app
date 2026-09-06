@@ -4,17 +4,18 @@ __pycache__/
 .env
 **/.env
 *.env
-!.env.example
+.env.example
 .venv/
+node_modules/
 
 .cache/
 *.log
 .vscode/
 
-graphRag/workspace/.env
-graphRag/workspace/cache/
-graphRag/workspace/data/neo4J/
-graphRag/workspace/src/nutrition_agent_v2/test_area/output/
+graphRag/.env
+graphRag/cache/
+graphRag/data/neo4J/
+graphRag/src/nutrition_agent_v2/test_area/output/
 *.dump
 
 # Local automation scripts (Personal dev & startup scripts)
@@ -26,3 +27,5 @@ monitor.ps1
 # Ignored test directory
 test/
 test
+
+/DOC
