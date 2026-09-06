@@ -95,6 +95,7 @@ class DishAdvice(BaseModel):
 class NutritionAgentResponse(BaseModel):
     question: str
     question_type: QuestionType
+    health_condition: HealthCondition
     dish_nutrition: List[DishNutrition]
     dish_advice: List[DishAdvice]
     conclusion: str

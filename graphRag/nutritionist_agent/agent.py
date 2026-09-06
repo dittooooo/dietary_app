@@ -201,7 +201,8 @@ class NutritionAgent:
             user_profile=profile, health_condition=health, dish_nutrition=dishes, evidence=evidence,
         )
         return NutritionAgentResponse(
-            question=request.question, question_type=request.question_type, dish_nutrition=dishes,
+            question=request.question, question_type=request.question_type,
+            health_condition=health, dish_nutrition=dishes,
             dish_advice=answer["dish_advice"], conclusion=answer["conclusion"],
         )
 

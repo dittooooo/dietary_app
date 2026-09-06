@@ -264,17 +264,35 @@ async function runOpenAIFlow(userPrompt, tempStory = []) {
 function minimizeDietaryResponse(response) {
   if (!response) return null;
 
+  // DietaryAgent 的 HTTP 回應會以 { success, message, data } 包裝；
+  // 也兼容直接傳入 NutritionistAgent 資料的呼叫方式。
+  const data = response.data && typeof response.data === "object"
+    ? response.data
+    : response;
   const minimized = {};
 
+  if (data.health_condition && typeof data.health_condition === "object") {
+    minimized.health_condition = {
+      has_chronic_disease: Boolean(data.health_condition.has_chronic_disease),
+      chronic_diseases: Array.isArray(data.health_condition.chronic_diseases)
+        ? data.health_condition.chronic_diseases.filter(name => typeof name === "string" && name.trim())
+        : []
+    };
+  }
+
   // 1. 【重點】將最高權重的整體結論置於 JSON 最頂層，強引導 LLM 注意力
-  if (response.conclusion) {
-    minimized.conclusion = response.conclusion;
+  if (data.conclusion) {
+    minimized.conclusion = data.conclusion;
   }
 
   // 2. 保留各料理的專業建議、適合度、關鍵理由 (key_reasons) 與建議處置 (suggestions)
-  if (Array.isArray(response.dish_advice)) {
-    minimized.dish_advice = response.dish_advice.map(advice => ({
+  if (Array.isArray(data.dish_advice)) {
+    minimized.dish_advice = data.dish_advice.map(advice => ({
       dish_name: advice.dish_name,
+      matched_name: advice.matched_name,
+      matched_type: advice.matched_type,
+      match_score: advice.match_score,
+      match_reason: advice.match_reason,
       suitability: advice.suitability,
       key_reasons: Array.isArray(advice.key_reasons) ? advice.key_reasons : [],
       suggestions: Array.isArray(advice.suggestions) ? advice.suggestions : []
@@ -282,9 +300,14 @@ function minimizeDietaryResponse(response) {
   }
 
   // 3. 保留餐點營養數據 (包含名稱、所有營養素項目如 Calories, Protein, Sodium 等、數值與單位)
-  if (Array.isArray(response.dish_nutrition)) {
-    minimized.dish_nutrition = response.dish_nutrition.map(dish => ({
+  if (Array.isArray(data.dish_nutrition)) {
+    minimized.dish_nutrition = data.dish_nutrition.map(dish => ({
       dish_name: dish.dish_name,
+      matched_name: dish.matched_name,
+      matched_type: dish.matched_type,
+      match_score: dish.match_score,
+      match_reason: dish.match_reason,
+      retrieval_strategy: dish.retrieval_strategy,
       nutrients: (dish.nutrients || []).map(n => ({
         name: n.name,
         amount_per_serving: n.amount_per_serving,
