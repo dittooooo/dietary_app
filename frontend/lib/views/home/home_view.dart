@@ -1359,7 +1359,7 @@ class _HomeViewState extends State<HomeView>
       _scrollToBottom();
 
       DietService()
-          .sendCompanionUserPrompt(text, tempStory: payloadHistory)
+          .sendMafUserPrompt(text, tempStory: payloadHistory)
           .then((res) {
             _showDogResponseThenIdle();
             setState(() {
@@ -1381,13 +1381,14 @@ class _HomeViewState extends State<HomeView>
                 final queryDate = res['query_date']?.toString();
 
                 // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
-                final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
+                  final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
                 if (intent == 'meal_record' && mealRecords.isNotEmpty) {
                   _showMealRecordDraftDialog(
                     context,
                     mealRecords,
                     userPrompt: text,
                     delayedReply: replyStr,
+                    confirmationId: res['confirmation_id']?.toString(),
                   );
                 } else {
                   _messages.add({
@@ -2153,6 +2154,7 @@ class _HomeViewState extends State<HomeView>
     List<dynamic> mealRecords, {
     String userPrompt = '',
     String? delayedReply,
+    String? confirmationId,
   }) {
     final DateTime defaultDate = _parseDateFromPrompt(userPrompt);
     final ScrollController draftScrollController = ScrollController();
@@ -2859,6 +2861,12 @@ class _HomeViewState extends State<HomeView>
                       : () async {
                           setDialogState(() => isSaving = true);
                           try {
+                            final mafConfirmationId = confirmationId;
+                            if (mafConfirmationId == null || mafConfirmationId.isEmpty) {
+                              throw Exception('找不到 MAF 飲食紀錄確認編號');
+                            }
+
+                            final confirmedItems = <Map<String, dynamic>>[];
                             for (var card in flatCards) {
                               final name =
                                   card['name']?.toString().trim() ?? '';
@@ -2870,18 +2878,23 @@ class _HomeViewState extends State<HomeView>
                                   card['date'] as DateTime? ?? defaultDate;
 
                               if (name.isNotEmpty) {
-                                final res = await DietService()
-                                    .createDietRecord(
-                                      dishName: name,
-                                      mealType: period,
-                                      amount: '$qty $unit'.trim(),
-                                      description: '陪伴精靈解析並經使用者核對修正',
-                                      mealDate: cardDate,
-                                    );
-                                if (res['success'] != true) {
-                                  throw Exception(res['message'] ?? '寫入資料庫失敗');
-                                }
+                                confirmedItems.add({
+                                  'name': name,
+                                  'quantity': int.tryParse(qty) ?? 1,
+                                  'unit': unit,
+                                  'meal_period': period,
+                                  'record_date':
+                                      '${cardDate.year}-${cardDate.month.toString().padLeft(2, '0')}-${cardDate.day.toString().padLeft(2, '0')}',
+                                });
                               }
+                            }
+
+                            final res = await DietService().confirmMafMealRecord(
+                              mafConfirmationId,
+                              confirmedItems,
+                            );
+                            if (res['success'] != true) {
+                              throw Exception(res['message'] ?? '寫入資料庫失敗');
                             }
                             SystemChannels.textInput.invokeMethod(
                               'TextInput.hide',

@@ -642,11 +642,11 @@ class DietService {
     };
   }
 
-  /// 發送使用者訊息至 Companion Agent (Port 3000 /companion/ask)
+  /// 發送使用者訊息至 MAF Workflow (Port 3001 /maf/ask)
   ///
   /// [userPrompt]：使用者輸入的最新對話內容。
   /// [tempStory]：前端快取的最近最多 3 則歷史對話，供後端無狀態微服務作為 LLM 推理上下文。
-  Future<Map<String, dynamic>> sendCompanionUserPrompt(
+  Future<Map<String, dynamic>> sendMafUserPrompt(
     String userPrompt, {
     List<Map<String, String>> tempStory = const [],
   }) async {
@@ -656,12 +656,12 @@ class DietService {
     }
 
     final token = await _token();
-    final candidateUrls = ApiConfig.companionCandidateBaseUrls;
+    final candidateUrls = ApiConfig.mafCandidateBaseUrls;
 
     for (final baseUrl in candidateUrls) {
       try {
         final response = await _client.post(
-          '$baseUrl/companion/ask',
+          '$baseUrl/maf/ask',
           {
             'user_prompt': normalizedPrompt,
             'temp_story': tempStory, // 打包近 3 則歷史對話傳送至無狀態後端
@@ -701,6 +701,8 @@ class DietService {
 
           return {
             'success': data['success'] ?? true,
+            'status': data['status'] ?? 'COMPLETED',
+            'confirmation_id': data['confirmation_id'],
             'companion_reply': data['companion_reply'] ?? '',
             'intent_category': data['intent_category'] ?? 'general',
             'query_date': data['query_date'],
@@ -722,6 +724,46 @@ class DietService {
     }
 
     return {'success': false, 'message': FriendlyErrorMessage.companion};
+  }
+
+  /// 將前端確認/修改後的飲食草稿交回 MAF Workflow。
+  Future<Map<String, dynamic>> confirmMafMealRecord(
+    String confirmationId,
+    List<Map<String, dynamic>> mealItems,
+  ) async {
+    if (confirmationId.trim().isEmpty || mealItems.isEmpty) {
+      return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
+    }
+
+    final token = await _token();
+    if (token == null) {
+      return {'success': false, 'message': '請重新登入。'};
+    }
+
+    for (final baseUrl in ApiConfig.mafCandidateBaseUrls) {
+      try {
+        final response = await _client.post(
+          '$baseUrl/maf/confirm',
+          {
+            'confirmation_id': confirmationId,
+            'meal_items': mealItems,
+          },
+          headers: {'Authorization': 'Bearer $token'},
+        );
+        final data = _decodeObject(response.body);
+        if (response.statusCode == 200) {
+          return data;
+        }
+        return {
+          'success': false,
+          'message': FriendlyErrorMessage.dietRecord,
+        };
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
   }
 }
 

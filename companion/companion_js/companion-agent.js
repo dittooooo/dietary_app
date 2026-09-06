@@ -1,40 +1,26 @@
-// Path: c:\Users\User\Documents\Github_Repo\dietary_app\companion\companion_js\companion-agent.js
-// Description: Main entry point for Express server, routing HTTP requests, and orchestrating flow
-
-// 匯入 Node.js 內建 path 與 fs 模組，用於路徑解析及檔案系統檢查
+// Companion Agent: final natural-language response generation only.
+// Request routing and intake/normalization are owned by the MAF Workflow.
 const path = require("path");
 const fs = require("fs");
-// 匯入 dotenv 用於讀取 .env 設定，Express 用於建立 Web API，Cors 用於跨來源資源共用
 const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
-// 匯入服務層 (services) 以呼叫各核心流程模組
-const {
-  runOpenAIFlow,
-  callDietaryAgent,
-  getCompanionReply
-} = require("./companion-agent-services");
+const { getCompanionReply } = require("./companion-agent-services");
 
-// 定義 .env 檔案可能的存放路徑 (依序往上層目錄搜尋)
 const envCandidates = [
   path.resolve(__dirname, "../../.env"),
   path.resolve(__dirname, "../.env"),
   path.resolve(__dirname, ".env")
 ];
 
-// 走訪候選路徑，載入第一個找到的 .env 設定檔
 let loadedEnvPath = null;
 for (const candidate of envCandidates) {
-  if (!fs.existsSync(candidate)) {
-    continue;
-  }
-
+  if (!fs.existsSync(candidate)) continue;
   dotenv.config({ path: candidate });
   loadedEnvPath = candidate;
   break;
 }
 
-// 輸出 .env 載入的狀態日誌
 if (loadedEnvPath) {
   console.log(`Loaded .env from: ${loadedEnvPath}`);
 } else {
@@ -42,38 +28,34 @@ if (loadedEnvPath) {
   console.log("No explicit .env file found. Falling back to process environment.");
 }
 
-/**
- * 伺服器啟動時環境變數嚴格預檢 (Boot Validation)
- * 確保必要環境變數均已正確設定，避免執行期拋出非預期的 500 錯誤。
- */
-function validateEnv() {
-  const required = ["OPENAI_API_KEY", "DIETARY_AGENT_API_URL"];
-  const missing = required.filter(key => !process.env[key]);
-  if (missing.length > 0) {
-    console.error(`❌ [FATAL] 缺少必要的環境變數: ${missing.join(", ")}`);
-    console.error("請在 .env 檔案中補充上述設定欄位後再重新啟動 Companion Agent。");
-    process.exit(1);
-  }
+if (!process.env.OPENAI_API_KEY) {
+  console.error("❌ [FATAL] 缺少必要的環境變數: OPENAI_API_KEY");
+  process.exit(1);
 }
 
-// 執行伺服器啟動環境變數預檢
-validateEnv();
-
-// 初始化 Express 應用程式並設定全域中間件 (Middleware)
 const app = express();
-app.use(cors()); // 啟用跨網域請求存取 (CORS)
-app.use(express.json()); // 解析請求主體 (Request Body) 為 JSON 格式
+app.use(cors());
+app.use(express.json());
 
-/**
- * 處理陪伴精靈對話請求的主路由邏輯
- * 實作流程：1. 意圖/情緒預檢 -> 2. (可選) 呼叫飲食助理服務 -> 3. LLM 重組回覆並回傳
- * @param {express.Request} req - Express 請求物件，預期包含 body.user_prompt 與 headers.authorization
- * @param {express.Response} res - Express 回應物件
- */
-async function handleCompanionAsk(req, res) {
-  // 1. 驗證請求參數 user_prompt 是否符合格式
-  const user_prompt = typeof req.body.user_prompt === "string" ? req.body.user_prompt.trim() : "";
-  if (!user_prompt) {
+function summarize(value, limit = 80) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  return text.length <= limit ? text : `${text.slice(0, limit)}…`;
+}
+
+function trace(req, state, message) {
+  const traceId = String(req.get("X-Trace-Id") || "-").slice(0, 12);
+  console.log(`[${traceId}] [CompanionAgent] [${state}] ${message}`);
+}
+
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.post("/companion/reply", async (req, res) => {
+  const userPrompt = typeof req.body.user_prompt === "string"
+    ? req.body.user_prompt.trim()
+    : "";
+  if (!userPrompt) {
     return res.status(400).json({
       success: false,
       error_code: "BAD_REQUEST",
@@ -81,119 +63,30 @@ async function handleCompanionAsk(req, res) {
     });
   }
 
-  // 安全解析與清洗前端傳入的 temp_story 歷史紀錄 (防 Prompt 注入、防爆 Token)
-  const rawTempStory = Array.isArray(req.body.temp_story) ? req.body.temp_story : [];
-  const sanitizedTempStory = rawTempStory
-    .filter(item => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string')
-    .map(item => ({
-      role: item.role,
-      content: item.content.trim().substring(0, 300) // 限制每筆最大 300 字
-    }))
-    .slice(-3); // 限制最多保留最近 3 則
-
-  console.log("\n======================================================================");
-  console.log(`[Companion Agent] 📥 收到使用者提問: "${user_prompt}" | 帶入歷史筆數: ${sanitizedTempStory.length}`);
-  console.log("======================================================================\n");
-
-  // 2. 執行第一階段 OpenAI 意圖及情緒分析流程
-  let openAiResult;
   try {
-    openAiResult = await runOpenAIFlow(user_prompt, sanitizedTempStory);
-
-    console.log("------------------ [LLM 階段 1：意圖與情緒分析] ------------------");
-    console.log("🎯 意圖預檢 (Screening):", JSON.stringify({
-      should_handle: openAiResult.screening.should_handle,
-      intent_category: openAiResult.screening.intent_category,
-      question_type: openAiResult.screening.question_type,
-      confidence: openAiResult.screening.confidence,
-      query_date: openAiResult.screening.query_date,
-      meal_items: openAiResult.screening.meal_items
-
-    }, null, 2));
-    console.log(" 提煉與翻譯後餐點 (Dish Info):", JSON.stringify(openAiResult.screening.dish_info_list, null, 2));
-    console.log(" 情緒分析 (Emotion):", JSON.stringify(openAiResult.emotion, null, 2));
-    console.log("");
+    const intent = req.body.screening?.intent_category || "general_chat";
+    trace(req, "STARTED", `產生最終回覆 intent=${intent} question=${summarize(userPrompt)}`);
+    const companionReply = await getCompanionReply({
+      userPrompt,
+      screening: req.body.screening || {},
+      emotion: req.body.emotion || {},
+      dietaryAgentResponse: req.body.dietary_agent_response || null,
+      dietaryAgentError: req.body.dietary_agent_error || null,
+      tempStory: Array.isArray(req.body.temp_story) ? req.body.temp_story : []
+    });
+    trace(req, "COMPLETED", `回覆生成完成 length=${companionReply.length}`);
+    trace(req, "OUTPUT", `companion_reply=${JSON.stringify(companionReply)}`);
+    return res.json({ success: true, companion_reply: companionReply });
   } catch (error) {
-    console.error("OpenAI flow failed:", error.message);
+    trace(req, "FAILED", `回覆生成失敗：${summarize(error.message)}`);
     return res.status(502).json({
       success: false,
       error_code: "OPENAI_SERVICE_ERROR",
-      error_message: "Failed to communicate with OpenAI API. Please try again later.",
-      debug_message: error.message
+      error_message: "Failed to generate the companion reply. Please try again later."
     });
   }
-
-  // 3. 根據預檢與分流結果決定是否呼叫飲食助理服務，並合成陪伴精靈回覆
-  try {
-    let dietaryAgentResponse = null;
-    let dietaryAgentError = null;
-
-    // 若預檢與分流判定需要呼叫後端飲食助理 (分流 C 且包含具體食物)
-    if (openAiResult.dietary_agent_request) {
-      console.log("------------------ [Dietary Agent 飲食後端服務] ------------------");
-      console.log("🚀 發送請求 Payload:", JSON.stringify(openAiResult.dietary_agent_request, null, 2));
-      try {
-        const authHeader = req.headers.authorization;
-        // 呼叫飲食助理 API，並代入身分驗證標頭
-        dietaryAgentResponse = await callDietaryAgent(openAiResult.dietary_agent_request, authHeader);
-        const adviceCount = Array.isArray(dietaryAgentResponse?.dish_advice) ? dietaryAgentResponse.dish_advice.length : 0;
-        const nutritionCount = Array.isArray(dietaryAgentResponse?.dish_nutrition) ? dietaryAgentResponse.dish_nutrition.length : 0;
-        console.log(`✅ 成功取得回應 (Dish Advice: ${adviceCount} 筆, Nutrition: ${nutritionCount} 筆)`);
-      } catch (error) {
-        // 捕獲飲食助理 API 錯誤，但不中斷流程，保留錯誤訊息以利降級回覆處理
-        console.error("⚠️ Dietary Agent 呼叫失敗:", error.message);
-        dietaryAgentError = error.message;
-      }
-      console.log("");
-    } else {
-      console.log("ℹ️ [分流判定] 跳過 Java Dietary Agent 與翻譯外掛（非諮詢類、飲食紀錄/查詢或無食物訊息）\n");
-    }
-
-    console.log("------------------ [LLM 階段 3：陪伴式回覆生成] ------------------");
-    // 呼叫 Stage 3 重組邏輯，生成最終親切對話文字 (100% Persona 靈魂集中注入)
-    const companionReply = await getCompanionReply({
-      userPrompt: user_prompt,
-      screening: openAiResult.screening,
-      emotion: openAiResult.emotion,
-      dietaryAgentResponse,
-      dietaryAgentError,
-      tempStory: sanitizedTempStory
-    });
-    console.log(`💬 生成最終對話: "${companionReply.substring(0, 80)}${companionReply.length > 80 ? "..." : ""}"\n`);
-
-    console.log("======================================================================");
-    console.log(`[Companion Agent] 📤 已成功回應前端 (Intent: ${openAiResult.screening.intent_category || "general_chat"})`);
-    console.log("======================================================================\n");
-
-    // 回傳符合規格合約的對話結果給客戶端 (包含一維 meal_items 與 query_date)
-    return res.json({
-      success: true,
-      companion_reply: companionReply,
-      intent_category: openAiResult.screening.intent_category || "general_chat",
-      meal_items: openAiResult.screening.meal_items || [],
-      query_date: openAiResult.screening.query_date || null,
-      dietary_agent_error: dietaryAgentError
-    });
-  } catch (error) {
-    // 捕獲伺服器端非預期的未處理錯誤，回傳 500 狀態碼
-    console.error("Server internal error:", error);
-    return res.status(500).json({
-      success: false,
-      error_code: "INTERNAL_SERVER_ERROR",
-      error_message: "An unexpected error occurred on the server."
-    });
-  }
-}
-
-// 註冊健康檢查 (Health Check) 路由，用來驗證伺服器是否正常運行
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
 });
 
-// 註冊陪伴助理詢問路由
-app.post("/companion/ask", handleCompanionAsk);
-
-// 設定監聽埠口並啟動 Express 伺服器服務
 const port = Number(process.env.COMPANION_API_PORT || 3000);
 app.listen(port, () => {
   console.log(`Companion Agent API listening on port ${port}`);

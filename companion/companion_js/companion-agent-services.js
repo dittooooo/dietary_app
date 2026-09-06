@@ -193,7 +193,9 @@ async function getCompanionReply({
   // 飲食紀錄意圖處理 (分流 B 極速卡片數據與成功對話組裝，由前端實作延遲渲染)
   if (screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
-      return `已成功幫你將飲食存入紀錄庫囉！✨`;
+      return dietaryAgentResponse
+        ? `已成功幫你將飲食存入紀錄庫囉！✨`
+        : `我先整理好飲食紀錄草稿了，請確認內容後再儲存喔！`;
     } else {
       return `收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！`;
     }
