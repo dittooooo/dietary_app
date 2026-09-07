@@ -5,8 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../config/api_config.dart';
 import '../core/api_client.dart';
 import '../utils/friendly_error_message.dart';
-// Legacy direct-DietaryAgent flow disabled; keep this import documented with it.
-// import '../utils/profile_value_mapper.dart';
 
 class DietService {
   final ApiClient _client = ApiClient();
@@ -56,10 +54,6 @@ class DietService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('jwt_token');
   }
-
-  // Legacy askWeeklyAnalysis() helper; disabled together with the direct
-  // /dietary-agent/ask conversation path.
-  // Future<SharedPreferences> _prefs() async => SharedPreferences.getInstance();
 
   String _errorMessage(String action, int _statusCode, String _body) {
     if (action.toLowerCase().contains('companion')) {
@@ -468,131 +462,6 @@ class DietService {
     }
   }
 
-  /*
-   * Legacy conversation path disabled.
-   * This flow bypassed MAF and called /dietary-agent/ask directly. The active
-   * home conversation path is sendMafUserPrompt() below.
-  Future<Map<String, dynamic>> askWeeklyAnalysis(String question) async {
-    final token = await _token();
-    if (token == null) {
-      return {'success': false, 'message': '請重新登入。'};
-    }
-
-    try {
-      final prefs = await _prefs();
-      final payload = await _buildAskPayload(question);
-      final response = await _client.post(
-        '/dietary-agent/ask',
-        payload,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      final decoded = _decodeObject(response.body);
-      if (response.statusCode != 200) {
-        return {
-          'success': false,
-          'message': FriendlyErrorMessage.companion,
-        };
-      }
-
-      return {
-        'success': decoded['success'] != false,
-        'data': _normalizeAskResponse(
-          payload: payload,
-          partnerData: decoded['data'],
-          goalDisplay:
-              prefs.getString('user_diet_goal') ??
-              ProfileValueMapper.defaultDietGoalDisplay,
-        ),
-      };
-    } catch (e) {
-      return {'success': false, 'message': FriendlyErrorMessage.companion};
-    }
-  }
-
-  Future<Map<String, dynamic>> _buildAskPayload(String question) async {
-    final prefs = await _prefs();
-    final normalizedQuestion = question.trim();
-    final dishNames = _extractDishNames(normalizedQuestion);
-
-    String questionType = 'unknown';
-    if (normalizedQuestion.contains('比較') ||
-        normalizedQuestion.contains('和') ||
-        dishNames.length > 1) {
-      questionType = 'dish_comparison';
-    } else if (dishNames.isNotEmpty && dishNames.first != 'general') {
-      questionType = 'single_dish';
-    }
-
-    // 提取使用者問題中的菜色名稱，轉為包含 dish_name 與 amount (預設1份) 的結構化物件陣列
-    final dishInfoList = dishNames
-        .map((name) => {
-              'dish_name': name,
-              'amount': 1,
-            })
-        .toList();
-
-    final Map<String, dynamic> payload = {
-      'question': normalizedQuestion,
-      'question_type': questionType,
-      'dish_info_list': dishInfoList, // 後端要求的菜色資訊清單 (含 dish_name 與 amount)
-      'dish_names': dishNames,        // 保留舊欄位以向下相容
-      'user_profile': {
-        'height_cm': prefs.getDouble('user_height'),
-        'weight_kg': prefs.getDouble('user_weight'),
-        'gender': prefs.getString('user_gender'),
-        'age': prefs.getInt('user_age'),
-      }..removeWhere((key, value) => value == null),
-    };
-
-    final healthConditions =
-        prefs.getStringList('user_health_conditions_raw') ?? const [];
-    payload['health_condition'] = {
-      'has_chronic_disease':
-          healthConditions.isNotEmpty && !healthConditions.contains('NONE'),
-      'chronic_diseases': healthConditions.isEmpty
-          ? ['NONE']
-          : healthConditions,
-    };
-
-    final records = await _buildWeeklyDietRecords();
-    if (records.isNotEmpty) {
-      payload['weekly_records'] = records;       // 後端要求的新版每週紀錄欄位名稱
-      payload['weekly_diet_records'] = records;  // 保留舊欄位以向下相容
-    }
-
-    return payload;
-  }
-
-  /// 建立每週飲食紀錄格式，包含結構化菜色資訊 (含 dish_name 與 amount)
-  Future<List<Map<String, dynamic>>> _buildWeeklyDietRecords() async {
-    final records = await getMyDietRecords();
-    return records.take(7).map((record) {
-      final rawDate =
-          record['date'] ?? record['mealDate'] ?? record['createdAt'];
-      final dishName = (record['dishName'] ?? record['dish_name'] ?? '').toString();
-      final recordAmount = _parseAmount(record['amount']);
-      return {
-        'date': _normalizeRecordDate(rawDate),
-        'meal': _mealTypeForApi(
-          '${record['mealType'] ?? record['meal'] ?? ''}',
-        ),
-        'dish_name': dishName,
-        'amount': recordAmount,
-        'dish_info_list': dishName.isNotEmpty
-            ? [
-                {
-                  'dish_name': dishName,
-                  'amount': recordAmount,
-                }
-              ]
-            : [],
-        'note': record['description'] ?? record['note'] ?? '',
-      }..removeWhere((key, value) => value == null || value == '');
-    }).toList();
-  }
-  */
-
   String _normalizeRecordDate(dynamic value) {
     if (value == null) return '';
     final text = value.toString();
@@ -601,55 +470,6 @@ class DietService {
     }
     return text;
   }
-
-  /*
-   * Legacy hard-coded parsing disabled with askWeeklyAnalysis().
-  List<String> _extractDishNames(String question) {
-    final cleaned = question.trim();
-    if (cleaned.isEmpty) return ['general'];
-
-    final candidates = cleaned
-        .split(RegExp(r'[,，、\n]'))
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
-
-    if (candidates.isEmpty) {
-      return ['general'];
-    }
-
-    if (candidates.length == 1) {
-      return [candidates.first];
-    }
-
-    return candidates;
-  }
-
-  Map<String, dynamic> _normalizeAskResponse({
-    required Map<String, dynamic> payload,
-    required dynamic partnerData,
-    required String goalDisplay,
-  }) {
-    final responseMap = partnerData is Map<String, dynamic>
-        ? Map<String, dynamic>.from(partnerData)
-        : {};
-    final profile = Map<String, dynamic>.from(
-      payload['user_profile'] is Map<String, dynamic>
-          ? payload['user_profile'] as Map<String, dynamic>
-          : const <String, dynamic>{},
-    );
-    profile['goal'] = goalDisplay;
-
-    return {
-      'user_profile': profile,
-      'health_condition': payload['health_condition'] ?? const {},
-      'weekly_diet_records': payload['weekly_diet_records'] ?? const [],
-      'partner_response': partnerData,
-      if (responseMap['answer'] != null) 'answer': responseMap['answer'],
-      if (responseMap['message'] != null) 'message': responseMap['message'],
-    };
-  }
-  */
 
   /// 發送使用者訊息至 MAF Workflow (Port 3001 /maf/ask)
   ///

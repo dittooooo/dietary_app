@@ -6,7 +6,6 @@ import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../services/auth_service.dart';
-// import '../../services/admin_service.dart';
 import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart';
 import '../../utils/friendly_error_message.dart';
@@ -47,7 +46,6 @@ class _HomeViewState extends State<HomeView>
   late double _chatPanelX;
   String _userNickname = '使用者';
   String _petType = '米粒(Mili)';
-  // String _dietGoal = '養生'; // 未使用，先註解
 
   List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
   List<Map<String, String>> _tempStory =
@@ -376,7 +374,6 @@ class _HomeViewState extends State<HomeView>
     setState(() {
       _userNickname = prefs.getString('user_nickname') ?? '使用者';
       _petType = '米粒(Mili)';
-      // _dietGoal = prefs.getString('user_diet_goal') ?? '養生'; // 未使用，先註解
       _messages = [
         {
           'isElf': true,
@@ -418,7 +415,6 @@ class _HomeViewState extends State<HomeView>
       setState(() {
         _userNickname = userData['nickname'] ?? '使用者';
         _petType = '米粒(Mili)';
-        // _dietGoal = g; // 未使用，先註解
         // 更新歡迎詞
         if (_messages.isNotEmpty && _messages[0]['isElf'] == true) {
           _messages[0]['text'] =
@@ -1068,61 +1064,6 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  /*
-  Widget _buildSummaryRow(String label, String value, IconData icon, Color iconColor) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: iconColor, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
-            ),
-          ],
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: iconColor,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNutrientItem(String name, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          name,
-          style: TextStyle(fontSize: 12, color: AppColors.textPrimary.withValues(alpha: 0.5)),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  */
-
   // 根據小精靈名稱獲取對應圖標
   Future<void> _syncBodyStatus(SharedPreferences prefs) async {
     try {
@@ -1203,32 +1144,6 @@ class _HomeViewState extends State<HomeView>
       debugPrint('首頁啟動體態變化檢查失敗: $e');
     }
   }
-
-  /*
-  IconData _getPetIcon(String petType) { // 顯示預設的圖示元件（Icon）
-    switch (petType) {
-      case '奶油皮丘': return Icons.pets; // 回傳建構完成的元件或方法計算結果
-      case '薄荷兔兔': return Icons.eco; // 回傳建構完成的元件或方法計算結果
-      case '草莓狐狸': return Icons.star;
-      default: return Icons.pets;
-    }
-  }
-
-  // 獲取 3D 渲染的柴犬精靈圖片路徑
-  String _getPetImagePath(String petType, String dietGoal) {
-    String path = 'assets/images/shiba_normal.png';
-    if (petType == '奶油皮丘' || petType.isNotEmpty) {
-      if (dietGoal.contains('減脂')) {
-        path = 'assets/images/shiba_fat.png';
-      } else if (dietGoal.contains('增肌')) {
-        path = 'assets/images/shiba_muscular.png';
-      } else if (dietGoal.contains('養生')) {
-        path = 'assets/images/shiba_thin.png';
-      }
-    }
-    return path;
-  }
-  */
 
   // 根據小精靈名稱獲取對應顏色
   Color _getPetColor(String petType) {
@@ -3162,19 +3077,6 @@ class _HomeViewState extends State<HomeView>
       ),
     );
   }
-
-  /*
-  Widget _buildLegendDot(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-      ],
-    );
-  }
-  */
 
   Widget _buildDashedGridLine(String label) {
     return Row(

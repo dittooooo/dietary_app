@@ -754,45 +754,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     );
   }
 
-  // [代碼清理] 註解未使用的私有 UI 建構元件以消除 Lint 警告（保留程式碼作為備用參考）
-  /*
-  Widget _buildProfileAvatar(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(initialIndex: 3)),
-        (route) => false,
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 2.925,
-              offset: const Offset(0, 1.56),
-            ),
-          ],
-        ),
-        child: CircleAvatar(
-          radius: 25,
-          backgroundColor: AppColors.background,
-          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-              ? NetworkImage(_avatarUrl!)
-              : null,
-          child: _avatarUrl == null || _avatarUrl!.isEmpty
-              ? const Icon(
-                  Icons.person,
-                  color: AppColors.textPrimary,
-                  size: 35,
-                )
-              : null,
-        ),
-      ),
-    );
-  }
-  */
-
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
 
