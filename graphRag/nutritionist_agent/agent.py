@@ -8,18 +8,22 @@ from .config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from .cypher_guard import validate_nutrition_rows
 from .disease_rules import retrieve_disease_rules
 from .dish_matcher import DishMatcher, normalize_name
-from .evidence_builder import UNITS, build_evidence
 from .models import (
     CalorieEstimate, DishInfo, DishNutrition, DishNutritionRequest, DishNutritionResponse,
     MacronutrientEstimate,
     DishSearchResponse, DishSearchResult,
     HealthCondition, NutrientAmount, NutritionAgentRequest, NutritionAgentResponse,
 )
-from .nutrition_calculator import COMMON_NUTRIENT_ALIASES, MACRO_FORMULA, NutritionCalculator, calculate_calories
+from .nutrition_calculator import (
+    COMMON_NUTRIENT_ALIASES, COMMON_NUTRIENT_ORDER, MACRO_FORMULA,
+    NutritionCalculator, calculate_calories,
+)
 from .retriever import GraphRetriever
 from .template_cypher import SUMMARY_NUTRIENT_NAMES, build_graph_retrieval_cypher
 
 logger = logging.getLogger(__name__)
+UNITS = {name: {"熱量": "kcal", "鈉": "mg"}.get(name, "g")
+         for name in COMMON_NUTRIENT_ORDER}
 
 
 class NutritionAgent:
@@ -183,22 +187,17 @@ class NutritionAgent:
         from .models import UserProfile
         health = request.health_condition or HealthCondition()
         profile = request.user_profile or UserProfile()
-        # Profile safety rules remain active; question mentions add discussion topics.
+        # Question-mentioned diseases define the topic; profile diseases are fallback context.
         rules = retrieve_disease_rules(self.retriever, health, request.question)
-        dishes, rows = self._lookup(
+        dishes, _ = self._lookup(
             question=request.question, question_type=request.question_type,
             dish_info=request.dish_info_list,
         )
-        evidence = build_evidence(profile, request.weekly_diet_records or [], dishes, rows, rules)
-        evidence["disease_context"] = [
-            {"name": group["requested"], "sources": group["context_sources"]}
-            for group in rules
-        ]
-        logger.info("Evidence disease_status=%s rules_evaluated=%s preferred=%s",
-                    evidence["disease_status"], evidence["rules_evaluated"], evidence["preferred_dish"])
         answer = self.answer_generator.generate(
             question=request.question, question_type=request.question_type,
-            user_profile=profile, health_condition=health, dish_nutrition=dishes, evidence=evidence,
+            user_profile=profile, health_condition=health,
+            weekly_diet_records=request.weekly_diet_records or [],
+            dish_nutrition=dishes, disease_groups=rules,
         )
         return NutritionAgentResponse(
             question=request.question, question_type=request.question_type,
