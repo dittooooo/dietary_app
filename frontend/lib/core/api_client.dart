@@ -13,6 +13,17 @@ class ApiClient {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
+  /// Keeps the in-memory token aligned with SharedPreferences after an
+  /// account switch. Without this, a request made immediately after login or
+  /// registration can still be authenticated as the previous account.
+  static void setLatestAccessToken(String token) {
+    _latestAccessToken = token;
+  }
+
+  static void clearLatestAccessToken() {
+    _latestAccessToken = null;
+  }
+
   MediaType _resolveMediaType(String filename) {
     final lower = filename.toLowerCase();
     if (lower.endsWith('.png')) return MediaType('image', 'png');
@@ -176,16 +187,18 @@ class ApiClient {
       return;
     }
 
-    var token = _latestAccessToken;
-    if (token == null || token.isEmpty) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        token = prefs.getString(AuthService.accessTokenKey) ?? prefs.getString('jwt_token');
-        if (token != null && token.isNotEmpty) {
-          _latestAccessToken = token;
-        }
-      } catch (_) {}
-    }
+    // SharedPreferences is the source of truth for the signed-in account.
+    // Do not prefer the process-wide cache here: it can belong to a previous
+    // user after logout/login or registration within the same app process.
+    String? token;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      token = prefs.getString(AuthService.accessTokenKey) ?? prefs.getString('jwt_token');
+      if (token != null && token.isNotEmpty) {
+        _latestAccessToken = token;
+      }
+    } catch (_) {}
+    token ??= _latestAccessToken;
 
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';

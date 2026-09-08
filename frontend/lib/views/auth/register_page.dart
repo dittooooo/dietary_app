@@ -80,6 +80,8 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
+      // 註冊新帳號前必須清除前一位使用者的 token 與個人資料快取。
+      await AuthService().clearSession();
       final result = await AuthService().register(
         _emailController.text,
         _passwordController.text,
@@ -90,7 +92,7 @@ class _RegisterPageState extends State<RegisterPage> {
           final prefs = await SharedPreferences.getInstance();
           final today = DateTime.now();
           final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-          final email = _emailController.text.trim();
+          final email = _emailController.text.trim().toLowerCase();
           await prefs.setString('user_email', email);
           await prefs.setString('last_shown_summary_date_$email', todayStr);
 

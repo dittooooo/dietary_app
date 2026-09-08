@@ -71,6 +71,15 @@ class _LoginPageState extends State<LoginPage> {
             await prefs.setString('user_role', 'ROLE_USER');
           }
 
+          // 登入回應中的 needsOnboarding 可能與既有 profile 的狀態不同步。
+          // 重新向後端讀取 profile，避免已完成資料填寫的使用者登出後再次進入 onboarding。
+          final profileResult = await AuthService().getUserProfile();
+          if (profileResult['success'] == true) {
+            await prefs.setBool(AuthService.needsOnboardingKey, false);
+          } else if (profileResult['statusCode'] == 404) {
+            await prefs.setBool(AuthService.needsOnboardingKey, true);
+          }
+
           if (!mounted) return;
           Navigator.pushReplacement(
             context,

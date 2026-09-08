@@ -86,7 +86,7 @@ class AuthService {
         return {'success': true, 'data': userData};
       }
 
-      return {'success': false, ...data};
+      return {'success': false, 'statusCode': response.statusCode, ...data};
     } catch (e) {
       final cachedNickname = prefs.getString('user_nickname');
       if (cachedNickname != null && cachedNickname.isNotEmpty) {
@@ -391,6 +391,7 @@ class AuthService {
     await prefs.setString(accessTokenKey, accessToken);
     await prefs.setString(refreshTokenKey, refreshToken);
     await prefs.setString(tokenTypeKey, data['tokenType']?.toString() ?? 'Bearer');
+    ApiClient.setLatestAccessToken(accessToken);
 
     final role = data['role']?.toString();
     if (role != null && role.isNotEmpty) {
@@ -504,6 +505,7 @@ class AuthService {
   }
 
   Future<void> _clearSession(SharedPreferences prefs) async {
+    ApiClient.clearLatestAccessToken();
     await prefs.remove(accessTokenKey);
     await prefs.remove(refreshTokenKey);
     await prefs.remove(tokenTypeKey);

@@ -8,6 +8,34 @@ import 'home_view.dart';
 import '../../color/app_colors.dart';
 import '../../services/auth_service.dart';
 
+bool shouldShowAdminMandatoryProfileDialog(
+  Map<String, dynamic> profileResult,
+) {
+  if (profileResult['isOffline'] == true) return false;
+
+  // A newly-created administrator has no profile yet. The profile endpoint
+  // correctly returns 404, and that is exactly when the mandatory form is
+  // required.
+  if (profileResult['statusCode'] == 404) return true;
+
+  final rawData = profileResult['data'];
+  if (profileResult['success'] != true || rawData is! Map) return false;
+
+  final profileData = Map<String, dynamic>.from(rawData);
+  final healthConditions = profileData['healthConditions'];
+  final hasHealthConditions = healthConditions is Iterable
+      ? healthConditions.isNotEmpty
+      : healthConditions?.toString().trim().isNotEmpty == true;
+
+  return profileData['nickname']?.toString().trim().isNotEmpty != true ||
+      profileData['gender']?.toString().trim().isNotEmpty != true ||
+      profileData['birthDate']?.toString().trim().isNotEmpty != true ||
+      (double.tryParse(profileData['height']?.toString() ?? '') ?? 0) <= 0 ||
+      (double.tryParse(profileData['weight']?.toString() ?? '') ?? 0) <= 0 ||
+      !hasHealthConditions ||
+      profileData['dietGoal']?.toString().trim().isNotEmpty != true;
+}
+
 // === 1. 主框架頁面與狀態定義 (HomePage & State) ===
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -48,43 +76,39 @@ class _HomePageState extends State<HomePage> {
   Future<void> _checkAdminRole() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
-    final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
+    var isAdmin = cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN';
 
-    final bool isCachedAdmin =
-        (cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN') ||
-        (cachedEmail == 'admin@gmail.com');
-
-    if (isCachedAdmin) {
+    if (isAdmin) {
       _applyAdminConfig();
     } else {
       _applyUserConfig();
     }
 
-    final result = await AuthService().getUserProfile();
-    if (mounted && result['success'] == true) {
-      final data = result['data'];
-      final String? role = data?['user']?['role'] ?? data?['role'];
-      final String? email =
-          (data?['email'] ?? data?['user']?['email'] ?? cachedEmail)
-              ?.toString()
-              .trim()
-              .toLowerCase();
-      final bool isBackendAdmin =
-          role == 'ROLE_ADMIN' ||
-          role == 'ADMIN' ||
-          (email == 'admin@gmail.com');
+    final profileResult = await AuthService().getUserProfile();
+    if (!mounted) return;
 
-      if (isBackendAdmin) {
-        await prefs.setString('user_role', 'ROLE_ADMIN');
-        if (!isCachedAdmin) {
-          _applyAdminConfig();
+    if (profileResult['success'] == true) {
+      final data = profileResult['data'];
+      final String? role = data?['user']?['role'] ?? data?['role'];
+      if (role != null) {
+        final isBackendAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN';
+        if (isBackendAdmin != isAdmin) {
+          isAdmin = isBackendAdmin;
+          if (isAdmin) {
+            _applyAdminConfig();
+          } else {
+            _applyUserConfig();
+          }
         }
-      } else {
-        await prefs.setString('user_role', 'ROLE_USER');
-        if (isCachedAdmin) {
-          _applyUserConfig();
-        }
+        await prefs.setString(
+          'user_role',
+          isAdmin ? 'ROLE_ADMIN' : 'ROLE_USER',
+        );
       }
+    }
+
+    if (isAdmin) {
+      await _showAdminMandatoryProfileDialog(profileResult);
     }
   }
 
@@ -127,104 +151,87 @@ class _HomePageState extends State<HomePage> {
         ];
         _isRoleChecked = true;
       });
-      _showAdminMandatoryProfileDialog();
     }
   }
 
   // === 3. 管理員強制補充資料彈窗組件 (Admin Profile Mandatory Dialog) ===
-  Future<void> _showAdminMandatoryProfileDialog() async {
+  Future<void> _showAdminMandatoryProfileDialog(
+    Map<String, dynamic> profileResult,
+  ) async {
     if (_hasShownAdminDialog) return;
     _hasShownAdminDialog = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
-      final profileResult = await AuthService().getUserProfile();
-      if (profileResult['success'] != true ||
-          profileResult['data'] == null ||
-          profileResult['isOffline'] == true) {
-        return;
-      }
+    if (!shouldShowAdminMandatoryProfileDialog(profileResult)) {
+      return;
+    }
 
-      final profileData = Map<String, dynamic>.from(profileResult['data']);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
 
-      final String? email = profileData['email']
-          ?.toString()
-          .trim()
-          .toLowerCase();
-      final bool isAlreadyOnboarded =
-          profileData['hasCompletedOnboarding'] == true;
-      final hasHeight =
-          profileData['height'] != null &&
-          (double.tryParse(profileData['height'].toString()) ?? 0) > 0;
-      final hasWeight =
-          profileData['weight'] != null &&
-          (double.tryParse(profileData['weight'].toString()) ?? 0) > 0;
-      final hasGender =
-          profileData['gender'] != null &&
-          profileData['gender'].toString().trim().isNotEmpty;
+    final prefs = await SharedPreferences.getInstance();
+    final rawProfileData = profileResult['data'];
+    final profileData = rawProfileData is Map
+        ? Map<String, dynamic>.from(rawProfileData)
+        : <String, dynamic>{
+            'email': prefs.getString('user_email'),
+            'role': prefs.getString('user_role'),
+          };
 
-      if (email == 'admin@gmail.com' ||
-          isAlreadyOnboarded ||
-          (hasHeight && hasWeight && hasGender)) {
-        return;
-      }
+    if (!mounted) return;
 
-      if (!mounted) return;
-
-      final editKey = GlobalKey<State<EditProfilePage>>();
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.transparent,
-        builder: (ctx) => Stack(
-          children: [
-            GestureDetector(
-              onTap: () {
-                final state = editKey.currentState;
-                if (state != null) {
-                  (state as dynamic).triggerValidationError('請輸入完整訊息');
-                }
-              },
-              behavior: HitTestBehavior.opaque,
-              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-              child: Container(color: Colors.black.withValues(alpha: 0.54)),
-            ),
-            Center(
-              child: Dialog(
-                insetPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
-                shape: RoundedRectangleBorder(
+    final editKey = GlobalKey<State<EditProfilePage>>();
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (ctx) => Stack(
+        children: [
+          GestureDetector(
+            onTap: () {
+              final state = editKey.currentState;
+              if (state != null) {
+                (state as dynamic).triggerValidationError('請輸入完整訊息');
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+            child: Container(color: Colors.black.withValues(alpha: 0.54)),
+          ),
+          Center(
+            child: Dialog(
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                height: MediaQuery.of(ctx).size.height * 0.85,
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                ),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: MediaQuery.of(ctx).size.height * 0.85,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: EditProfilePage(
-                      key: editKey,
-                      initialData: profileData,
-                      isMandatoryAdmin: true,
-                      onSaveSuccess: () {
-                        Navigator.of(ctx, rootNavigator: true).pop(true);
-                      },
-                    ),
+                  child: EditProfilePage(
+                    key: editKey,
+                    initialData: profileData,
+                    isMandatoryAdmin: true,
+                    onSaveSuccess: () {
+                      Navigator.of(ctx, rootNavigator: true).pop(true);
+                    },
                   ),
                 ),
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
 
-      if (mounted) {
-        setState(() {
-          _selectedIndex = 0;
-        });
-      }
-    });
+    if (mounted) {
+      setState(() {
+        _selectedIndex = 0;
+      });
+    }
   }
 
   void _onItemTapped(int index) {

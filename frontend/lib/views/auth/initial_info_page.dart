@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../home/home_page.dart';
 import 'login_page.dart';
@@ -9,7 +8,6 @@ import '../../color/app_colors.dart';
 import 'model_viewer_web_stub.dart'
     if (dart.library.html) 'model_viewer_web_impl.dart';
 import '../../services/auth_service.dart';
-import '../../core/api_client.dart';
 import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart';
 
@@ -337,23 +335,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
       debugPrint('提交資料至後端: $onboardingData');
 
-      final response = await ApiClient()
-          .post('/user/onboarding', onboardingData)
+      // AuthService 會帶入目前登入帳號的 token；不可直接使用可能殘留
+      // 上一個帳號 token 的共用 ApiClient。
+      final result = await AuthService()
+          .updateProfile(onboardingData)
           .timeout(const Duration(seconds: 15));
-
-      debugPrint('收到回應狀態碼: ${response.statusCode}');
-
-      Map<String, dynamic> result = {};
-      try {
-        result = jsonDecode(response.body) is Map<String, dynamic>
-            ? jsonDecode(response.body) as Map<String, dynamic>
-            : {};
-      } catch (_) {}
 
       debugPrint('API 回應內容: $result');
 
-      if (response.statusCode == 200 &&
-          (result['success'] == true || result['code'] == 200 || result.containsKey('data'))) {
+      if (result['success'] == true) {
         await prefs.setBool(AuthService.needsOnboardingKey, false);
         await prefs.setString('user_nickname', _name);
         await prefs.setString('user_pet_type', _defaultPetType);
@@ -367,7 +357,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           );
         }
       } else {
-        final errorMsg = result['message'] ?? '設定失敗 (狀態碼 ${response.statusCode})';
+        final errorMsg = result['message'] ?? '設定失敗';
         throw Exception(errorMsg);
       }
     } catch (e) {

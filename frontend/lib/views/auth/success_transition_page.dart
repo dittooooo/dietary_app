@@ -120,7 +120,6 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AuthService.accessTokenKey);
       final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
-      final cachedNickname = prefs.getString('user_nickname');
       final cachedRole = prefs.getString('user_role');
       final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
 
@@ -134,7 +133,10 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
 
       if (token == null || token.isEmpty) return false;
 
-      if (needsOnboarding == false || (cachedNickname != null && cachedNickname.isNotEmpty)) {
+      // 暱稱只代表註冊/登入時的快取資料，不能代表 onboarding 已完成。
+      // 是否完成必須以後端 profile 為準，否則新使用者可能跳過流程，
+      // 或因本地快取與資料庫不同步而反覆進入 onboarding。
+      if (needsOnboarding == false) {
         return true;
       }
 
@@ -150,8 +152,15 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         if (role != null) {
           await prefs.setString('user_role', role.toString());
         }
-        await prefs.setBool(AuthService.needsOnboardingKey, false);
-        return true;
+        final hasCompleted = userData['hasCompletedOnboarding'] == true;
+        final hasProfileData = userData['gender']?.toString().trim().isNotEmpty == true &&
+            (double.tryParse(userData['height']?.toString() ?? '') ?? 0) > 0 &&
+            (double.tryParse(userData['weight']?.toString() ?? '') ?? 0) > 0 &&
+            userData['birthDate'] != null &&
+            userData['dietGoal']?.toString().trim().isNotEmpty == true;
+        final completed = hasCompleted || hasProfileData;
+        await prefs.setBool(AuthService.needsOnboardingKey, !completed);
+        return completed;
       }
 
       if (profileResult['statusCode'] == 404) {
@@ -159,12 +168,12 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         return false;
       }
 
-      return needsOnboarding == false;
+      return false;
     } catch (e) {
       debugPrint('Check onboarding failed: $e');
       final prefs = await SharedPreferences.getInstance();
       final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
-      return needsOnboarding == false || prefs.getString('user_nickname') != null;
+      return needsOnboarding == false;
     }
   }
 

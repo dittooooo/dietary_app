@@ -269,7 +269,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
-    if (_gender.trim().isEmpty ||
+    if (_nameController.text.trim().isEmpty ||
+        _gender.trim().isEmpty ||
         heightText.isEmpty || heightVal == null || heightVal <= 0 ||
         weightText.isEmpty || weightVal == null || weightVal <= 0 ||
         _diseases.isEmpty ||
