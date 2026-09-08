@@ -60,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _email = cachedEmail;
       _isAdmin = isCachedAdmin;
-      if (isCachedAdmin && (cachedNickname == 'aaa' || cachedNickname == '載入中...' || cachedNickname == '使用者' || cachedNickname == '管理員')) {
+      if (isCachedAdmin && (cachedNickname == '載入中...' || cachedNickname == '使用者' || cachedNickname == '管理員')) {
         _nickname = '系統管理員';
       } else {
         _nickname = cachedNickname;
@@ -82,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || _email.trim().toLowerCase() == 'admin@gmail.com';
 
           final fetchedNickname = _fullUserData?['nickname']?.toString().trim();
-          if (_isAdmin && (fetchedNickname == null || fetchedNickname.isEmpty || fetchedNickname == 'aaa' || fetchedNickname == '使用者')) {
+          if (_isAdmin && (fetchedNickname == null || fetchedNickname.isEmpty || fetchedNickname == '使用者')) {
             _nickname = '系統管理員';
           } else if (fetchedNickname != null && fetchedNickname.isNotEmpty) {
             _nickname = fetchedNickname;
@@ -93,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (isCachedAdmin || _email.trim().toLowerCase() == 'admin@gmail.com') {
           setState(() {
             _isAdmin = true;
-            if (_nickname == '載入中...' || _nickname == 'aaa') _nickname = '系統管理員';
+            if (_nickname == '載入中...') _nickname = '系統管理員';
           });
         } else if (_nickname == '載入中...') {
           setState(() => _nickname = '連線失敗');

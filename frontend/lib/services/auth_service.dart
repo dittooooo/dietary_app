@@ -375,10 +375,7 @@ class AuthService {
       }
     }
 
-    var refreshToken = data['refreshToken']?.toString() ?? '';
-    if (refreshToken.isEmpty) {
-      refreshToken = 'mock_refresh_token_for_compatibility';
-    }
+    final refreshToken = data['refreshToken']?.toString() ?? '';
 
     if (accessToken.isEmpty) {
       return {
@@ -389,7 +386,11 @@ class AuthService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(accessTokenKey, accessToken);
-    await prefs.setString(refreshTokenKey, refreshToken);
+    if (refreshToken.isNotEmpty) {
+      await prefs.setString(refreshTokenKey, refreshToken);
+    } else {
+      await prefs.remove(refreshTokenKey);
+    }
     await prefs.setString(tokenTypeKey, data['tokenType']?.toString() ?? 'Bearer');
     ApiClient.setLatestAccessToken(accessToken);
 
@@ -451,7 +452,7 @@ class AuthService {
       await prefs.setString('user_email', email);
     }
     if (nickname != null && nickname.isNotEmpty) {
-      final finalNick = (isAdmin && (nickname == 'aaa' || nickname == '使用者')) ? '系統管理員' : nickname;
+      final finalNick = (isAdmin && nickname == '使用者') ? '系統管理員' : nickname;
       await prefs.setString('user_nickname', finalNick);
     } else if (isAdmin) {
       await prefs.setString('user_nickname', '系統管理員');

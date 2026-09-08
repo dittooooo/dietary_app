@@ -373,7 +373,7 @@ class _HomeViewState extends State<HomeView>
         cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
     String nick =
         prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
-    if (isCachedAdmin && (nick == 'aaa' || nick == '使用者')) {
+    if (isCachedAdmin && nick == '使用者') {
       nick = '系統管理員';
     }
 
@@ -411,7 +411,6 @@ class _HomeViewState extends State<HomeView>
       String fetchedNick = userData['nickname'] ?? '';
       if (isUserAdmin &&
           (fetchedNick.isEmpty ||
-              fetchedNick == 'aaa' ||
               fetchedNick == '使用者')) {
         fetchedNick = '系統管理員';
       } else if (fetchedNick.isEmpty) {
