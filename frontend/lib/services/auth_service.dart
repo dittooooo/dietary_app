@@ -73,7 +73,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> getUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return {'success': false, 'message': '未登入'};
@@ -119,7 +119,7 @@ class AuthService {
     Map<String, dynamic> profileData,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return {'success': false, 'message': '未登入'};
@@ -209,7 +209,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> deleteAccount() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return {'success': false, 'message': '未登入'};
@@ -249,7 +249,7 @@ class AuthService {
     String filename,
   ) async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return {'success': false, 'message': '未登入'};
@@ -279,8 +279,7 @@ class AuthService {
   }
 
   Future<Map<String, dynamic>> submitProblemFeedback(String content) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
     final trimmedContent = content.trim();
 
     if (token == null || token.isEmpty) {
@@ -313,8 +312,7 @@ class AuthService {
     List<int> fileBytes,
     String filename,
   ) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return {'success': false, 'message': '請重新登入。'};
@@ -340,8 +338,7 @@ class AuthService {
   }
 
   Future<List<dynamic>> listMyProblemFeedback() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString(accessTokenKey);
+    final token = await _tokenStorage.readAccessToken();
 
     if (token == null || token.isEmpty) {
       return [];
