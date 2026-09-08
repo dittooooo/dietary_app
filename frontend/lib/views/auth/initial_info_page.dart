@@ -292,7 +292,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       case 4:
         return '請選擇是否有特殊疾病';
       case 5:
-        return '請選擇至少一個飲食目標';
+        return '請選擇一個飲食目標';
       default:
         return '請完成本頁內容';
     }
@@ -1032,11 +1032,9 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       _goals.contains(goal),
                       () {
                         setState(() {
-                          if (_goals.contains(goal)) {
-                            _goals.remove(goal);
-                          } else {
-                            _goals.add(goal);
-                          }
+                          _goals
+                            ..clear()
+                            ..add(goal);
                           if (_goals.isNotEmpty) _pageErrors.remove(5);
                         });
                       },

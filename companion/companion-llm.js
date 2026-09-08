@@ -188,7 +188,7 @@ function sanitizeEmotion(raw) {
  * 執行第一階段的意圖篩選與情緒分析流程
  * 透過呼叫 OpenAI Response API 並行調用 screen_user_request 與 analyze_emotion 兩個 Function。
  * @param {string} userPrompt - 使用者原始輸入訊息
- * @param {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
+ * @param {Array<Object>} tempStory - 前端傳入的近 10 則對話歷史
  * @returns {Promise<Object>} 包含意圖預檢 (screening) 與情緒分析 (emotion) 結果的物件
  */
 async function runOpenAIFlow(userPrompt, tempStory = []) {
@@ -330,7 +330,7 @@ function minimizeDietaryResponse(response) {
  *   - {Object} emotion - 偵測到的情緒與同理心指標
  *   - {Object} dietaryAgentResponse - Dietary Agent API 回傳的營養與建議數據
  *   - {string} dietaryAgentError - 下游服務 API 呼叫的錯誤訊息 (如有)
- *   - {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
+ *   - {Array<Object>} tempStory - 前端傳入的近 10 則對話歷史
  * @returns {Promise<string>} LLM 重組潤飾後的對話文字
  */
 async function generateCompanionReply({

@@ -62,7 +62,7 @@ function buildDietaryAgentRequest(screening, message) {
  * - 分流 A (閒聊/非飲食) / 分流 B (飲食紀錄)：不安插翻譯與 Java 請求
  * - 分流 C (飲食諮詢)：包含具體食物才進行翻譯與 Java 請求；無食物時自動跳過
  * @param {string} userPrompt - 使用者原始輸入訊息
- * @param {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
+ * @param {Array<Object>} tempStory - 前端傳入的近 10 則對話歷史
  * @returns {Promise<Object>} 包含意圖預檢 (screening)、情緒分析 (emotion) 與飲食助理請求 Payload 的物件
  */
 async function runOpenAIFlow(userPrompt, tempStory = []) {

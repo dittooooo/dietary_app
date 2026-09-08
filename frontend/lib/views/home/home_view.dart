@@ -54,7 +54,7 @@ class _HomeViewState extends State<HomeView>
 
   List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
   List<Map<String, String>> _tempStory =
-      []; // 前端託管最近最多 3 則訊息 ([{role: 'user'|'assistant', content: '...'}])
+      []; // 前端託管最近最多 10 則訊息 ([{role: 'user'|'assistant', content: '...'}])
   DateTime? _lastUpdateTime; // 最後互動時間戳，供 24h 閒置檢測比對
 
   String _stripEmojis(String text) {
@@ -314,10 +314,10 @@ class _HomeViewState extends State<HomeView>
     });
   }
 
-  /// 將新對話推入 tempStory，維持最多 3 則訊息的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
+  /// 將新對話推入 tempStory，維持最多 10 則訊息的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
   void _appendTempStory(String role, String content) async {
     _tempStory.add({'role': role, 'content': content});
-    if (_tempStory.length > 3) {
+    if (_tempStory.length > 10) {
       _tempStory.removeAt(0);
     }
     _lastUpdateTime = DateTime.now();
@@ -1690,10 +1690,11 @@ class _HomeViewState extends State<HomeView>
                 Text(
                   isElf ? _stripEmojis(text) : text,
                   style: TextStyle(
+                    fontFamily: 'Roboto',
                     color: isElf ? AppColors.textPrimary : AppColors.background,
                     fontSize: 15,
                     fontWeight: FontWeight.normal,
-                    height: 1.4,
+                    height: 1.55,
                   ),
                 ),
                 // TODO: 這個部分是甚麼呀?
