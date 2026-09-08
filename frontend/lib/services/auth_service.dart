@@ -3,18 +3,26 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/api_client.dart';
+import 'token_storage.dart';
 import '../utils/friendly_error_message.dart';
 import '../utils/profile_value_mapper.dart';
 
 class AuthService {
-  static const String accessTokenKey = 'jwt_token';
-  static const String refreshTokenKey = 'refresh_token';
-  static const String tokenTypeKey = 'token_type';
+  static const String accessTokenKey = SecureTokenStorage.accessTokenKey;
+  static const String refreshTokenKey = SecureTokenStorage.refreshTokenKey;
+  static const String tokenTypeKey = SecureTokenStorage.tokenTypeKey;
   static const String needsOnboardingKey = 'needs_onboarding';
-  static const String accessTokenExpiresKey = 'access_token_expires_in_seconds';
-  static const String refreshTokenExpiresKey = 'refresh_token_expires_in_seconds';
+  static const String accessTokenExpiresKey =
+      SecureTokenStorage.accessTokenExpiresKey;
+  static const String refreshTokenExpiresKey =
+      SecureTokenStorage.refreshTokenExpiresKey;
 
   final ApiClient _client = ApiClient();
+  final TokenStore _tokenStorage = const SecureTokenStorage();
+
+  static Future<void> migrateLegacyTokenStorage() {
+    return const SecureTokenStorage().migrateLegacyTokens();
+  }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await _client.post('/login', {
@@ -23,7 +31,11 @@ class AuthService {
     });
 
     final data = _decodeBody(response.body);
-    return _handleAuthResponse(response.statusCode, data, rawBody: response.body);
+    return _handleAuthResponse(
+      response.statusCode,
+      data,
+      rawBody: response.body,
+    );
   }
 
   Future<Map<String, dynamic>> register(String email, String password) async {
@@ -33,18 +45,18 @@ class AuthService {
     });
 
     final data = _decodeBody(response.body);
-    return _handleAuthResponse(response.statusCode, data, rawBody: response.body);
+    return _handleAuthResponse(
+      response.statusCode,
+      data,
+      rawBody: response.body,
+    );
   }
 
   Future<Map<String, dynamic>> refreshAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString(refreshTokenKey);
+    final refreshToken = await _tokenStorage.readRefreshToken();
 
     if (refreshToken == null || refreshToken.isEmpty) {
-      return {
-        'success': false,
-        'message': 'No refresh token found.',
-      };
+      return {'success': false, 'message': 'No refresh token found.'};
     }
 
     final response = await _client.post('/refresh', {
@@ -134,15 +146,21 @@ class AuthService {
     return {'success': false, ...data};
   }
 
-  Map<String, dynamic> _normalizeProfilePayload(Map<String, dynamic> profileData) {
+  Map<String, dynamic> _normalizeProfilePayload(
+    Map<String, dynamic> profileData,
+  ) {
     final normalized = Map<String, dynamic>.from(profileData);
 
     // 性別轉譯
-    normalized['gender'] = ProfileValueMapper.genderToApi(normalized['gender']?.toString());
+    normalized['gender'] = ProfileValueMapper.genderToApi(
+      normalized['gender']?.toString(),
+    );
 
     // 生日 resolution (若無傳入 birthDate，根據年齡推算西元 YYYY-01-01)
-    if (normalized['birthDate'] == null || normalized['birthDate'].toString().isEmpty) {
-      if (normalized['birth_date'] != null && normalized['birth_date'].toString().isNotEmpty) {
+    if (normalized['birthDate'] == null ||
+        normalized['birthDate'].toString().isEmpty) {
+      if (normalized['birth_date'] != null &&
+          normalized['birth_date'].toString().isNotEmpty) {
         normalized['birthDate'] = normalized['birth_date'];
       } else {
         final age = int.tryParse(normalized['age']?.toString() ?? '') ?? 20;
@@ -152,12 +170,19 @@ class AuthService {
     }
 
     // 疾病條件轉譯
-    final rawHealth = normalized['healthConditions'] ?? normalized['health_conditions'];
+    final rawHealth =
+        normalized['healthConditions'] ?? normalized['health_conditions'];
     if (rawHealth is Iterable) {
-      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(rawHealth);
+      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(
+        rawHealth,
+      );
     } else if (rawHealth is String && rawHealth.isNotEmpty) {
-      final list = rawHealth.split(RegExp(r'[,\s]+')).where((e) => e.isNotEmpty);
-      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(list);
+      final list = rawHealth
+          .split(RegExp(r'[,\s]+'))
+          .where((e) => e.isNotEmpty);
+      normalized['healthConditions'] = ProfileValueMapper.healthConditionsToApi(
+        list,
+      );
     } else {
       normalized['healthConditions'] = ['NONE'];
     }
@@ -169,11 +194,15 @@ class AuthService {
         rawGoal.map((item) => item.toString()),
       );
     } else {
-      normalized['dietGoal'] = ProfileValueMapper.dietGoalToApi(rawGoal?.toString());
+      normalized['dietGoal'] = ProfileValueMapper.dietGoalToApi(
+        rawGoal?.toString(),
+      );
     }
 
     // 寵物類型轉譯
-    normalized['petType'] = ProfileValueMapper.petTypeToApi(normalized['petType']?.toString());
+    normalized['petType'] = ProfileValueMapper.petTypeToApi(
+      normalized['petType']?.toString(),
+    );
 
     return normalized;
   }
@@ -195,15 +224,12 @@ class AuthService {
 
       if (response.statusCode == 200) {
         await _clearSession(prefs);
-        return {
-          'success': true,
-          'message': data['message'] ?? '帳號已註銷',
-        };
+        return {'success': true, 'message': data['message'] ?? '帳號已註銷'};
       }
 
       return {'success': false, 'message': data['message'] ?? '註銷失敗'};
-    } catch (e) {
-      return {'success': false, 'message': '連線失敗：$e'};
+    } catch (_) {
+      return {'success': false, 'message': '連線失敗，請稍後再試'};
     }
   }
 
@@ -247,8 +273,8 @@ class AuthService {
       }
 
       return {'success': false, ...data};
-    } catch (e) {
-      return {'success': false, 'message': '上傳頭像失敗: $e'};
+    } catch (_) {
+      return {'success': false, 'message': '上傳頭像失敗，請稍後再試'};
     }
   }
 
@@ -339,8 +365,7 @@ class AuthService {
   }
 
   Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(accessTokenKey);
+    return _tokenStorage.readAccessToken();
   }
 
   Future<bool> getNeedsOnboarding() async {
@@ -384,13 +409,15 @@ class AuthService {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(accessTokenKey, accessToken);
-    if (refreshToken.isNotEmpty) {
-      await prefs.setString(refreshTokenKey, refreshToken);
-    } else {
-      await prefs.remove(refreshTokenKey);
-    }
-    await prefs.setString(tokenTypeKey, data['tokenType']?.toString() ?? 'Bearer');
+    await _tokenStorage.writeAuthTokens(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenType: data['tokenType']?.toString() ?? 'Bearer',
+      accessTokenExpiresInSeconds: _asInt(data['accessTokenExpiresInSeconds']),
+      refreshTokenExpiresInSeconds: _asInt(
+        data['refreshTokenExpiresInSeconds'],
+      ),
+    );
     ApiClient.setLatestAccessToken(accessToken);
 
     final role = data['role']?.toString();
@@ -405,15 +432,6 @@ class AuthService {
         : (data['needsOnboarding'] == true);
     await prefs.setBool(needsOnboardingKey, needsOnboarding);
 
-    await prefs.setInt(
-      accessTokenExpiresKey,
-      _asInt(data['accessTokenExpiresInSeconds']),
-    );
-    await prefs.setInt(
-      refreshTokenExpiresKey,
-      _asInt(data['refreshTokenExpiresInSeconds']),
-    );
-
     return {
       'success': true,
       'message': data['message'],
@@ -427,20 +445,22 @@ class AuthService {
 
   Future<void> _cacheUserProfile(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
-    final email = userData['email']?.toString() ??
-        userData['user']?['email']?.toString();
+    final email =
+        userData['email']?.toString() ?? userData['user']?['email']?.toString();
     final nickname = userData['nickname']?.toString();
     final petType = userData['petType']?.toString();
     final gender = userData['gender']?.toString();
-    final birthDate = userData['birthDate']?.toString() ??
+    final birthDate =
+        userData['birthDate']?.toString() ??
         userData['birth_date']?.toString() ??
         userData['birthday']?.toString();
-    final role = userData['user']?['role']?.toString() ??
-        userData['role']?.toString();
-    final avatarUrl = userData['avatarUrl']?.toString() ??
+    final role =
+        userData['user']?['role']?.toString() ?? userData['role']?.toString();
+    final avatarUrl =
+        userData['avatarUrl']?.toString() ??
         userData['user']?['avatarUrl']?.toString();
-    final dietGoal = userData['dietGoal']?.toString() ??
-        userData['diet_goal']?.toString();
+    final dietGoal =
+        userData['dietGoal']?.toString() ?? userData['diet_goal']?.toString();
     final age = _asInt(userData['age']);
     final height = _asDouble(userData['height']);
     final weight = _asDouble(userData['weight']);
@@ -461,7 +481,10 @@ class AuthService {
         'user_pet_type',
         ProfileValueMapper.petTypeToDisplay(petType),
       );
-      await prefs.setString('user_pet_type_raw', ProfileValueMapper.petTypeToApi(petType));
+      await prefs.setString(
+        'user_pet_type_raw',
+        ProfileValueMapper.petTypeToApi(petType),
+      );
     }
     if (gender != null) {
       await prefs.setString('user_gender', gender);
@@ -506,6 +529,8 @@ class AuthService {
 
   Future<void> _clearSession(SharedPreferences prefs) async {
     ApiClient.clearLatestAccessToken();
+    await _tokenStorage.clear();
+    // Remove legacy unencrypted keys left by older app versions.
     await prefs.remove(accessTokenKey);
     await prefs.remove(refreshTokenKey);
     await prefs.remove(tokenTypeKey);

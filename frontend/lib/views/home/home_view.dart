@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // [代碼清理/Lint修正] 移除重複匯入的 dart:ui，因為 material.dart 已涵蓋相關 UI 元素與型態定義
 import 'dart:convert';
@@ -136,8 +136,8 @@ class _HomeViewState extends State<HomeView>
             },
           );
       debugPrint('[SpeechToText] 初始化成功狀態: $_speechAvailable');
-    } catch (e) {
-      debugPrint('[SpeechToText] 初始化失敗: $e');
+    } catch (_) {
+      debugPrint('[SpeechToText] 初始化失敗');
       _speechAvailable = false;
     }
     if (mounted) setState(() {});
@@ -155,8 +155,8 @@ class _HomeViewState extends State<HomeView>
         if (mounted) setState(() => _isListening = false);
         try {
           await _speech.cancel();
-        } catch (e) {
-          debugPrint('取消語音收聽失敗: $e');
+        } catch (_) {
+          debugPrint('取消語音收聽失敗');
         }
         return;
       }
@@ -205,8 +205,8 @@ class _HomeViewState extends State<HomeView>
           }
         },
       );
-    } catch (e) {
-      debugPrint('[SpeechToText] 啟動語音收聽失敗: $e');
+    } catch (_) {
+      debugPrint('[SpeechToText] 啟動語音收聽失敗');
       if (mounted) {
         setState(() => _isListening = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -218,8 +218,8 @@ class _HomeViewState extends State<HomeView>
       }
       try {
         await _speech.cancel();
-      } catch (cancelError) {
-        debugPrint('清理語音辨識器失敗: $cancelError');
+      } catch (_) {
+        debugPrint('清理語音辨識器失敗');
       }
     } finally {
       _speechActionInProgress = false;
@@ -400,9 +400,7 @@ class _HomeViewState extends State<HomeView>
       final bool isUserAdmin = userRole == 'ROLE_ADMIN';
 
       String fetchedNick = userData['nickname'] ?? '';
-      if (isUserAdmin &&
-          (fetchedNick.isEmpty ||
-              fetchedNick == '使用者')) {
+      if (isUserAdmin && (fetchedNick.isEmpty || fetchedNick == '使用者')) {
         fetchedNick = '系統管理員';
       } else if (fetchedNick.isEmpty) {
         fetchedNick = _userNickname;
@@ -687,8 +685,8 @@ class _HomeViewState extends State<HomeView>
         filledCommentBuilder: (dishes, calories) =>
             '$dateLabel記錄了：${dishes.join('、')}。目前總熱量為 ${calories.toStringAsFixed(0)} kcal。',
       );
-    } catch (e) {
-      debugPrint('觸發飲食紀錄報告失敗: $e');
+    } catch (_) {
+      debugPrint('觸發飲食紀錄報告失敗');
     }
   }
 
@@ -760,8 +758,8 @@ class _HomeViewState extends State<HomeView>
         carbs: totalCarbs,
         dishes: yesterdayDishes,
       );
-    } catch (e) {
-      debugPrint('取得昨日飲食總結失敗: $e');
+    } catch (_) {
+      debugPrint('取得昨日飲食總結失敗');
     }
   }
 
@@ -801,8 +799,8 @@ class _HomeViewState extends State<HomeView>
         carbs: totalCarbs,
         dishes: yesterdayDishes,
       );
-    } catch (e) {
-      debugPrint('觸發昨日飲食總結失敗: $e');
+    } catch (_) {
+      debugPrint('觸發昨日飲食總結失敗');
       if (mounted) {
         _showDietSummaryDialog(
           date: DateTime.now().subtract(const Duration(days: 1)),
@@ -1069,8 +1067,8 @@ class _HomeViewState extends State<HomeView>
       await prefs.setString('dog_body_type', status.bodyType);
       if (!mounted) return;
       _dogController.setBodyTypeFromBackend(status.bodyType);
-    } catch (e) {
-      debugPrint('首頁同步 BodyStatus 失敗: $e');
+    } catch (_) {
+      debugPrint('首頁同步 BodyStatus 失敗');
     }
   }
 
@@ -1136,8 +1134,8 @@ class _HomeViewState extends State<HomeView>
       if (!mounted) return;
       _dogController.setBodyType(newBodyType);
       _dogController.setState(DogAnimationState.idle);
-    } catch (e) {
-      debugPrint('首頁啟動體態變化檢查失敗: $e');
+    } catch (_) {
+      debugPrint('首頁啟動體態變化檢查失敗');
     }
   }
 
@@ -2790,15 +2788,13 @@ class _HomeViewState extends State<HomeView>
                                 ),
                               );
                             }
-                          } catch (e) {
+                          } catch (_) {
                             setDialogState(() => isSaving = false);
-                            debugPrint('儲存飲食草稿失敗: $e');
+                            debugPrint('儲存飲食草稿失敗');
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    '儲存失敗：${e.toString().replaceAll('Exception: ', '')}',
-                                  ),
+                                const SnackBar(
+                                  content: Text('儲存失敗，請稍後再試。'),
                                   backgroundColor: Colors.redAccent,
                                 ),
                               );

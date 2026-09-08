@@ -1,10 +1,9 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../config/api_config.dart';
 import '../core/api_client.dart';
 import '../utils/friendly_error_message.dart';
+import 'token_storage.dart';
 
 class DietService {
   final ApiClient _client = ApiClient();
@@ -51,8 +50,7 @@ class DietService {
   }
 
   Future<String?> _token() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    return const SecureTokenStorage().readAccessToken();
   }
 
   String _errorMessage(String action, int _statusCode, String _body) {
@@ -109,8 +107,7 @@ class DietService {
         }).toList();
       }
       return [];
-    } catch (e) {
-      print('Load diet records failed: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -127,9 +124,7 @@ class DietService {
       if (response.statusCode == 200) {
         return _unwrapListResponse(response.body);
       }
-    } catch (e) {
-      print('Load custom dishes failed: $e');
-    }
+    } catch (_) {}
     return [];
   }
 
@@ -164,24 +159,29 @@ class DietService {
           final desc = (processedRecord['description'] ?? '').toString();
           if (desc.startsWith('[MealType:OTHER]')) {
             processedRecord['mealType'] = 'OTHER';
-            processedRecord['description'] = desc.replaceFirst('[MealType:OTHER]', '');
+            processedRecord['description'] = desc.replaceFirst(
+              '[MealType:OTHER]',
+              '',
+            );
           }
 
           // 正規化日期格式並進行比對
-          final rawDate = processedRecord['date'] ??
+          final rawDate =
+              processedRecord['date'] ??
               processedRecord['mealDate'] ??
               processedRecord['createdAt'];
           final normDate = _normalizeRecordDate(rawDate);
 
-          if (normDate.isEmpty || normDate.startsWith(targetDate) || normDate == targetDate) {
+          if (normDate.isEmpty ||
+              normDate.startsWith(targetDate) ||
+              normDate == targetDate) {
             result.add(processedRecord);
           }
         }
       }
 
       return result;
-    } catch (e) {
-      print('Load diet records by date failed: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -197,7 +197,12 @@ class DietService {
   Future<Map<String, double?>> fetchDishNutrition(String dishName) async {
     final token = await _token();
     if (token == null || dishName.trim().isEmpty) {
-      return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+      return {
+        'calories': null,
+        'protein': null,
+        'fat': null,
+        'carbohydrates': null,
+      };
     }
     try {
       final response = await _client.post(
@@ -207,7 +212,8 @@ class DietService {
       );
       if (response.statusCode == 200) {
         final decoded = _decodeObject(response.body);
-        final dishNut = decoded['data']?['dish_nutrition'] ?? decoded['dish_nutrition'];
+        final dishNut =
+            decoded['data']?['dish_nutrition'] ?? decoded['dish_nutrition'];
         if (dishNut != null && dishNut['nutrients'] is List) {
           final List nutrients = dishNut['nutrients'];
           double? calories;
@@ -218,15 +224,20 @@ class DietService {
           for (final n in nutrients) {
             if (n is Map) {
               final String name = (n['name'] ?? '').toString();
-              final double? amt = double.tryParse((n['amount_per_serving'] ?? '').toString());
+              final double? amt = double.tryParse(
+                (n['amount_per_serving'] ?? '').toString(),
+              );
               if (amt != null) {
-                if (name.contains('熱量') || name.contains('calories') || name.contains('kcal')) {
+                if (name.contains('熱量') ||
+                    name.contains('calories') ||
+                    name.contains('kcal')) {
                   calories = amt;
                 } else if (name.contains('蛋白質') || name.contains('protein')) {
                   protein = amt;
                 } else if (name.contains('脂肪') || name.contains('fat')) {
                   fat = amt;
-                } else if (name.contains('碳水') || name.contains('carbohydrate')) {
+                } else if (name.contains('碳水') ||
+                    name.contains('carbohydrate')) {
                   carbs = amt;
                 }
               }
@@ -240,10 +251,13 @@ class DietService {
           };
         }
       }
-    } catch (e) {
-      print('Fetch dish nutrition error: $e');
-    }
-    return {'calories': null, 'protein': null, 'fat': null, 'carbohydrates': null};
+    } catch (_) {}
+    return {
+      'calories': null,
+      'protein': null,
+      'fat': null,
+      'carbohydrates': null,
+    };
   }
 
   /// 新增飲食紀錄 (3 大核心必填欄位: dishName, mealType, amount)
@@ -310,10 +324,13 @@ class DietService {
           'mealType': apiMealType,
           'description': apiDescription,
           'amount': intAmount,
-          if (parsedNutrition['calories'] != null) 'calories': parsedNutrition['calories'],
-          if (parsedNutrition['protein'] != null) 'protein': parsedNutrition['protein'],
+          if (parsedNutrition['calories'] != null)
+            'calories': parsedNutrition['calories'],
+          if (parsedNutrition['protein'] != null)
+            'protein': parsedNutrition['protein'],
           if (parsedNutrition['fat'] != null) 'fat': parsedNutrition['fat'],
-          if (parsedNutrition['carbohydrates'] != null) 'carbohydrates': parsedNutrition['carbohydrates'],
+          if (parsedNutrition['carbohydrates'] != null)
+            'carbohydrates': parsedNutrition['carbohydrates'],
           if (mealDate != null) 'date': _formatDate(mealDate),
           if (type != null && type.trim().isNotEmpty) 'type': type.trim(),
         },
@@ -397,8 +414,7 @@ class DietService {
         headers: {'Authorization': 'Bearer $token'},
       );
       return response.statusCode == 200 || response.statusCode == 204;
-    } catch (e) {
-      print('Delete diet record failed: $e');
+    } catch (_) {
       return false;
     }
   }
@@ -495,9 +511,7 @@ class DietService {
             'user_prompt': normalizedPrompt,
             'temp_story': tempStory, // 打包近 10 則歷史對話傳送至無狀態後端
           },
-          headers: {
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         );
 
         if (response.statusCode == 200) {
@@ -514,19 +528,19 @@ class DietService {
               }
               groupedMap[period]!.add({
                 'name': item['name']?.toString() ?? '',
-                'quantity': int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
+                'quantity':
+                    int.tryParse(item['quantity']?.toString() ?? '1') ?? 1,
                 'unit': item['unit']?.toString() ?? '',
               });
             }
           }
 
           // 2. 組裝成前端 UI 彈窗現行相容的 meal_records 兩層巢狀陣列
-          final List<Map<String, dynamic>> mealRecords = groupedMap.entries.map((entry) {
-            return {
-              'meal_period': entry.key,
-              'meal_items': entry.value,
-            };
-          }).toList();
+          final List<Map<String, dynamic>> mealRecords = groupedMap.entries.map(
+            (entry) {
+              return {'meal_period': entry.key, 'meal_items': entry.value};
+            },
+          ).toList();
 
           return {
             'success': data['success'] ?? true,
@@ -535,17 +549,14 @@ class DietService {
             'companion_reply': data['companion_reply'] ?? '',
             'intent_category': data['intent_category'] ?? 'general',
             'query_date': data['query_date'],
-            'meal_records': mealRecords,      // 前端 UI 現行彈窗立即可用之分組陣列
+            'meal_records': mealRecords, // 前端 UI 現行彈窗立即可用之分組陣列
             'dietary_agent_error': data['dietary_agent_error'],
             'data': data,
           };
         }
-        
+
         // 若 Http Status 非 200 但能連通，保留錯誤訊息
-        return {
-          'success': false,
-          'message': FriendlyErrorMessage.companion,
-        };
+        return {'success': false, 'message': FriendlyErrorMessage.companion};
       } catch (e) {
         // 連線拒絕 (SocketException) 或逾時，自動切換至下一個候選 URL (如 10.0.2.2 或 127.0.0.1)
         continue;
@@ -573,20 +584,14 @@ class DietService {
       try {
         final response = await _client.post(
           '$baseUrl/maf/confirm',
-          {
-            'confirmation_id': confirmationId,
-            'meal_items': mealItems,
-          },
+          {'confirmation_id': confirmationId, 'meal_items': mealItems},
           headers: {'Authorization': 'Bearer $token'},
         );
         final data = _decodeObject(response.body);
         if (response.statusCode == 200) {
           return data;
         }
-        return {
-          'success': false,
-          'message': FriendlyErrorMessage.dietRecord,
-        };
+        return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
       } catch (_) {
         continue;
       }
@@ -595,4 +600,3 @@ class DietService {
     return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
   }
 }
-

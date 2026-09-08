@@ -10,7 +10,8 @@ final Map<String, VoidCallback?> _modelLoadedCallbacks =
 const String _modelViewerLoadingStyleId = 'model-viewer-loading-style';
 const String _modelViewerLoadingClass = 'model-viewer-loading';
 
-const String _modelViewerLoadingCss = '''
+const String _modelViewerLoadingCss =
+    '''
 .$_modelViewerLoadingClass {
   position: absolute;
   inset: 0;
@@ -72,8 +73,9 @@ Widget createWebModelView({
       ..style.outline = 'none'
       ..style.backgroundColor = 'transparent';
 
-    final resolvedSrc =
-        src?.isNotEmpty == true ? src! : 'assets/images/dog_rigged.glb';
+    final resolvedSrc = src?.isNotEmpty == true
+        ? src!
+        : 'assets/images/dog_rigged.glb';
     element.dataset['currentModelSrc'] = resolvedSrc;
     if (element.dataset['loadedModelSrc'] != resolvedSrc) {
       element.dataset['loadedModelSrc'] = '';
@@ -134,8 +136,8 @@ Widget createWebModelView({
         return element;
       });
       _registeredViewTypes.add(viewType);
-    } catch (e) {
-      debugPrint('View factory registration bypassed or already exists: $e');
+    } catch (_) {
+      debugPrint('View factory 已存在或無法註冊');
     }
   }
 
@@ -217,11 +219,14 @@ void _ensureModelViewerLoadingStyles() {
 }
 
 void _ensureModelViewerScriptLoaded() {
-  final existingScript = html.document.querySelector('script[src*="model-viewer"]');
+  final existingScript = html.document.querySelector(
+    'script[src*="model-viewer"]',
+  );
   if (existingScript != null) return;
 
   final script = html.ScriptElement()
-    ..src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.4.0/dist/model-viewer.min.js'
+    ..src =
+        'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.4.0/dist/model-viewer.min.js'
     ..type = 'module';
   html.document.head?.append(script);
 }

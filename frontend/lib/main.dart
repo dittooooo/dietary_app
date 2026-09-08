@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -20,9 +20,10 @@ void main() async {
   );
 
   final prefs = await SharedPreferences.getInstance();
+  await AuthService.migrateLegacyTokenStorage();
   // 移除舊版本可能保存的完整密碼；之後只使用 Access Token / Refresh Token。
   await prefs.remove('user_password');
-  final token = prefs.getString(AuthService.accessTokenKey);
+  final token = await AuthService().getAccessToken();
 
   Widget initialScreen = const LoginPage();
 
@@ -31,7 +32,10 @@ void main() async {
       final result = await AuthService().getUserProfile();
       if (result['success'] == true) {
         final data = result['data'];
-        final String? userRole = data?['user']?['role'] ?? data?['role'] ?? prefs.getString('user_role');
+        final String? userRole =
+            data?['user']?['role'] ??
+            data?['role'] ??
+            prefs.getString('user_role');
         final bool isAdmin = userRole == 'ROLE_ADMIN';
 
         if (isAdmin) {

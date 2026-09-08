@@ -3,17 +3,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
 import '../services/auth_service.dart';
+import '../services/token_storage.dart';
 import '../views/auth/login_page.dart';
 
 class ApiClient {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
+  static final http.Client _defaultHttpClient = http.Client();
 
-  /// Keeps the in-memory token aligned with SharedPreferences after an
+  final http.Client _httpClient;
+  final TokenStore _tokenStore;
+  Future<bool>? _refreshInFlight;
+
+  ApiClient({http.Client? httpClient, TokenStore? tokenStore})
+    : _httpClient = httpClient ?? _defaultHttpClient,
+      _tokenStore = tokenStore ?? const SecureTokenStorage();
+
+  /// Keeps the in-memory token aligned with secure storage after an
   /// account switch. Without this, a request made immediately after login or
   /// registration can still be authenticated as the previous account.
   static void setLatestAccessToken(String token) {
@@ -51,7 +60,7 @@ class ApiClient {
     final url = _resolveUrl(path);
     return _sendWithRefresh(
       path: path,
-      send: (resolvedHeaders) => http.post(
+      send: (resolvedHeaders) => _httpClient.post(
         url,
         headers: resolvedHeaders,
         body: jsonEncode(body),
@@ -61,14 +70,11 @@ class ApiClient {
     );
   }
 
-  Future<http.Response> get(
-    String path, {
-    Map<String, String>? headers,
-  }) async {
+  Future<http.Response> get(String path, {Map<String, String>? headers}) async {
     final url = _resolveUrl(path);
     return _sendWithRefresh(
       path: path,
-      send: (resolvedHeaders) => http.get(url, headers: resolvedHeaders),
+      send: (resolvedHeaders) => _httpClient.get(url, headers: resolvedHeaders),
       headers: headers,
       contentType: 'application/json',
     );
@@ -82,7 +88,7 @@ class ApiClient {
     final url = _resolveUrl(path);
     return _sendWithRefresh(
       path: path,
-      send: (resolvedHeaders) => http.put(
+      send: (resolvedHeaders) => _httpClient.put(
         url,
         headers: resolvedHeaders,
         body: jsonEncode(body),
@@ -112,7 +118,7 @@ class ApiClient {
             contentType: _resolveMediaType(filename),
           ),
         );
-        final streamedResponse = await request.send();
+        final streamedResponse = await _httpClient.send(request);
         return http.Response.fromStream(streamedResponse);
       },
       headers: headers,
@@ -126,7 +132,8 @@ class ApiClient {
     final url = _resolveUrl(path);
     return _sendWithRefresh(
       path: path,
-      send: (resolvedHeaders) => http.delete(url, headers: resolvedHeaders),
+      send: (resolvedHeaders) =>
+          _httpClient.delete(url, headers: resolvedHeaders),
       headers: headers,
       contentType: 'application/json',
     );
@@ -187,13 +194,12 @@ class ApiClient {
       return;
     }
 
-    // SharedPreferences is the source of truth for the signed-in account.
+    // SecureTokenStorage is the source of truth for the signed-in account.
     // Do not prefer the process-wide cache here: it can belong to a previous
     // user after logout/login or registration within the same app process.
     String? token;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      token = prefs.getString(AuthService.accessTokenKey) ?? prefs.getString('jwt_token');
+      token = await _tokenStore.readAccessToken();
       if (token != null && token.isNotEmpty) {
         _latestAccessToken = token;
       }
@@ -210,21 +216,31 @@ class ApiClient {
       return false;
     }
 
-    const excludedPaths = <String>{
-      '/login',
-      '/register',
-      '/refresh',
-    };
+    const excludedPaths = <String>{'/login', '/register', '/refresh'};
     return !excludedPaths.contains(path);
   }
 
   Future<bool> _refreshAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final refreshToken = prefs.getString(AuthService.refreshTokenKey);
+    final existingRefresh = _refreshInFlight;
+    if (existingRefresh != null) {
+      return existingRefresh;
+    }
+
+    final refreshFuture = _performRefreshAccessToken();
+    _refreshInFlight = refreshFuture;
+    return refreshFuture.whenComplete(() {
+      if (identical(_refreshInFlight, refreshFuture)) {
+        _refreshInFlight = null;
+      }
+    });
+  }
+
+  Future<bool> _performRefreshAccessToken() async {
+    final refreshToken = await _tokenStore.readRefreshToken();
 
     if (refreshToken != null && refreshToken.isNotEmpty) {
       try {
-        final response = await http.post(
+        final response = await _httpClient.post(
           Uri.parse('${ApiConfig.baseUrl}/refresh'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'refreshToken': refreshToken}),
@@ -238,24 +254,17 @@ class ApiClient {
                 decoded['refreshToken']?.toString() ?? refreshToken;
 
             if (accessToken.isNotEmpty) {
-              await prefs.setString(AuthService.accessTokenKey, accessToken);
-              await prefs.setString(AuthService.refreshTokenKey, newRefreshToken);
-              await prefs.setString(
-                AuthService.tokenTypeKey,
-                decoded['tokenType']?.toString() ?? 'Bearer',
+              await _tokenStore.writeAuthTokens(
+                accessToken: accessToken,
+                refreshToken: newRefreshToken,
+                tokenType: decoded['tokenType']?.toString() ?? 'Bearer',
+                accessTokenExpiresInSeconds: _asInt(
+                  decoded['accessTokenExpiresInSeconds'],
+                ),
+                refreshTokenExpiresInSeconds: _asInt(
+                  decoded['refreshTokenExpiresInSeconds'],
+                ),
               );
-              if (decoded.containsKey('accessTokenExpiresInSeconds')) {
-                await prefs.setInt(
-                  AuthService.accessTokenExpiresKey,
-                  _asInt(decoded['accessTokenExpiresInSeconds']),
-                );
-              }
-              if (decoded.containsKey('refreshTokenExpiresInSeconds')) {
-                await prefs.setInt(
-                  AuthService.refreshTokenExpiresKey,
-                  _asInt(decoded['refreshTokenExpiresInSeconds']),
-                );
-              }
 
               _latestAccessToken = accessToken;
               return true;
@@ -313,8 +322,8 @@ class ApiClient {
               isLogin
                   ? '帳號或密碼錯誤，請重新確認。'
                   : (response.statusCode == 403
-                      ? '你目前沒有權限執行這個操作。'
-                      : '登入狀態已過期，請重新登入。'),
+                        ? '你目前沒有權限執行這個操作。'
+                        : '登入狀態已過期，請重新登入。'),
             ),
             actions: [
               TextButton(

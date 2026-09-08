@@ -110,8 +110,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
       if (mounted) {
         setState(() => _dietRecords = records);
       }
-    } catch (e) {
-      debugPrint('載入飲食紀錄狀態失敗: $e');
+    } catch (_) {
+      debugPrint('載入飲食紀錄狀態失敗');
     } finally {
       if (mounted) {
         setState(() => _isLoadingRecords = false);
@@ -273,16 +273,10 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
           Positioned.fill(
             child: ListView.builder(
               controller: _scrollController,
-              padding: EdgeInsets.only(
-                top: 250 + statusBarHeight,
-                bottom: 200,
-              ),
+              padding: EdgeInsets.only(top: 250 + statusBarHeight, bottom: 200),
               itemCount: 20,
-              itemBuilder: (context, index) => _buildSPathSegment(
-                index,
-                pathWidth,
-                margin,
-              ),
+              itemBuilder: (context, index) =>
+                  _buildSPathSegment(index, pathWidth, margin),
             ),
           ),
 
@@ -387,12 +381,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                 bottom: BorderSide(color: AppColors.border, width: 0.5),
               ),
             ),
-            padding: EdgeInsets.fromLTRB(
-              16,
-              statusBarHeight + 20,
-              16,
-              10,
-            ),
+            padding: EdgeInsets.fromLTRB(16, statusBarHeight + 20, 16, 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -431,8 +420,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
                       backgroundColor: AppColors.background,
                       backgroundImage:
                           _avatarUrl != null && _avatarUrl!.isNotEmpty
-                              ? NetworkImage(_avatarUrl!)
-                              : null,
+                          ? NetworkImage(_avatarUrl!)
+                          : null,
                       child: _avatarUrl == null || _avatarUrl!.isEmpty
                           ? const Icon(
                               Icons.person,
@@ -618,11 +607,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
           ),
           const Spacer(),
           Padding(
-            padding: const EdgeInsets.only(
-              left: 20,
-              right: 20,
-              bottom: 50,
-            ),
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -704,15 +689,9 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
         children: [
           CustomPaint(
             size: const Size(double.infinity, 110),
-            painter: GeometricSPathPainter(
-              isLeftToRight: isLeftToRight,
-            ),
+            painter: GeometricSPathPainter(isLeftToRight: isLeftToRight),
           ),
-          ..._buildDotsOnGeometricPath(
-            index,
-            pathWidth,
-            isLeftToRight,
-          ),
+          ..._buildDotsOnGeometricPath(index, pathWidth, isLeftToRight),
         ],
       ),
     );
@@ -855,11 +834,7 @@ class RipplePainter extends CustomPainter {
         ..color = AppColors.accent.withValues(alpha: opacity * 0.7)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3.5;
-      canvas.drawCircle(
-        Offset(size.width / 2, size.height / 2),
-        radius,
-        paint,
-      );
+      canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
     }
   }
 
@@ -883,11 +858,7 @@ class GeometricSPathPainter extends CustomPainter {
     double pathWidth = size.width - (radius * 2);
 
     if (isLeftToRight) {
-      canvas.drawLine(
-        const Offset(50, 30),
-        Offset(50 + pathWidth, 30),
-        paint,
-      );
+      canvas.drawLine(const Offset(50, 30), Offset(50 + pathWidth, 30), paint);
       canvas.drawArc(
         Rect.fromLTWH(50 + pathWidth - radius, 30, radius * 2, 110),
         -math.pi / 2,
@@ -896,11 +867,7 @@ class GeometricSPathPainter extends CustomPainter {
         paint,
       );
     } else {
-      canvas.drawLine(
-        Offset(50 + pathWidth, 30),
-        const Offset(50, 30),
-        paint,
-      );
+      canvas.drawLine(Offset(50 + pathWidth, 30), const Offset(50, 30), paint);
       canvas.drawArc(
         Rect.fromLTWH(50 - radius, 30, radius * 2, 110),
         -math.pi / 2,
@@ -914,4 +881,3 @@ class GeometricSPathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

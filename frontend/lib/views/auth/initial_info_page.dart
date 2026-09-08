@@ -11,7 +11,6 @@ import '../../services/auth_service.dart';
 import '../../utils/friendly_error_message.dart';
 import '../../utils/profile_value_mapper.dart';
 
-
 /// 首次登入健康問卷與基本身體資料（暱稱、性別、生日、身高、體重、疾病史、飲食目標）收集頁面。
 class InitialInfoPage extends StatefulWidget {
   const InitialInfoPage({super.key});
@@ -65,12 +64,16 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   int? _selectedBirthDay;
 
   String get _birthDateString =>
-      (_selectedBirthYear != null && _selectedBirthMonth != null && _selectedBirthDay != null)
-          ? '${_selectedBirthYear!.toString().padLeft(4, '0')}-${_selectedBirthMonth!.toString().padLeft(2, '0')}-${_selectedBirthDay!.toString().padLeft(2, '0')}'
-          : '';
+      (_selectedBirthYear != null &&
+          _selectedBirthMonth != null &&
+          _selectedBirthDay != null)
+      ? '${_selectedBirthYear!.toString().padLeft(4, '0')}-${_selectedBirthMonth!.toString().padLeft(2, '0')}-${_selectedBirthDay!.toString().padLeft(2, '0')}'
+      : '';
 
   int get _calculatedAge {
-    if (_selectedBirthYear == null || _selectedBirthMonth == null || _selectedBirthDay == null) {
+    if (_selectedBirthYear == null ||
+        _selectedBirthMonth == null ||
+        _selectedBirthDay == null) {
       return 0;
     }
     final now = DateTime.now();
@@ -86,14 +89,14 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   int _daysInMonth(int year, int month) {
     return DateTime(year, month + 1, 0).day;
   }
-  
+
   late TextEditingController _nameController;
   late TextEditingController _ageController;
   late TextEditingController _heightController;
   late TextEditingController _weightController;
   Set<String> _diseases = {};
   Set<String> _goals = {};
-  
+
   static const String _defaultPetType = '米粒(Mili)';
   bool _isSubmitting = false;
 
@@ -121,7 +124,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       vsync: this,
       duration: const Duration(milliseconds: 300),
     )..repeat(reverse: true);
-    
+
     _peelController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -138,7 +141,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         }
       }
     });
-    
+
     _nameController = TextEditingController(text: _name);
     _ageController = TextEditingController(text: _age);
     _heightController = TextEditingController(text: _height);
@@ -191,17 +194,14 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   /// 處理問卷「下一步」動作：執行欄位資料校驗、觸發撕紙翻頁動畫並切換頁碼。
   void _nextPage() {
-    FocusManager.instance.primaryFocus?.unfocus(); 
-    print('DEBUG: [邏輯執行] _nextPage 啟動, 目前頁碼: $_currentPage');
+    FocusManager.instance.primaryFocus?.unfocus();
     if (!_canProceed()) {
       final msg = _validationMessage();
       debugPrint('校驗失敗: $msg');
       setState(() {
         _pageErrors[_currentPage] = msg;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       return;
     }
 
@@ -258,7 +258,9 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       case 1:
         return _gender.isNotEmpty;
       case 2:
-        return _selectedBirthYear != null && _selectedBirthMonth != null && _selectedBirthDay != null;
+        return _selectedBirthYear != null &&
+            _selectedBirthMonth != null &&
+            _selectedBirthDay != null;
       case 3:
         return _isNumeric(_height) && _isNumeric(_weight);
       case 4:
@@ -301,10 +303,13 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
     debugPrint('開始啟動提交流程...');
     setState(() => _isSubmitting = true);
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('正在連線伺服器，請稍候...'), duration: Duration(milliseconds: 1500)),
+        const SnackBar(
+          content: Text('正在連線伺服器，請稍候...'),
+          duration: Duration(milliseconds: 1500),
+        ),
       );
     }
 
@@ -344,17 +349,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
           debugPrint('提交成功，切換至首頁');
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const HomePage(),
-            ),
+            MaterialPageRoute(builder: (context) => const HomePage()),
           );
         }
       } else {
         final errorMsg = result['message'] ?? '設定失敗';
         throw Exception(errorMsg);
       }
-    } catch (e) {
-      debugPrint('提交過程發生例外: $e');
+    } catch (_) {
+      debugPrint('提交健康資料失敗');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text(FriendlyErrorMessage.generic)),
@@ -375,138 +378,155 @@ class _InitialInfoPageState extends State<InitialInfoPage>
       child: Scaffold(
         body: Container(
           color: AppColors.surface,
-        child: Stack(
-        children: [
-          Positioned(
-            top: topPadding + 10,
-            right: 20,
-            child: GestureDetector(
-              onTap: _logoutToLogin,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.primary),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+          child: Stack(
+            children: [
+              Positioned(
+                top: topPadding + 10,
+                right: 20,
+                child: GestureDetector(
+                  onTap: _logoutToLogin,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.logout, size: 16, color: AppColors.primary),
-                    SizedBox(width: 4),
-                    Text(
-                      '返回登入',
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.primary),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.logout, size: 16, color: AppColors.primary),
+                        SizedBox(width: 4),
+                        Text(
+                          '返回登入',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          AnimatedBuilder(
-            animation: Listenable.merge([
-              _pageController,
-              _pacmanController,
-            ]),
-            builder: (context, child) {
-              return CustomPaint(
-                painter: HandDrawnNotebookPainter(
-                  scrollProgress: _pageController.hasClients
-                      ? (_pageController.page ?? 0)
-                      : 0,
-                  mouthProgress: _pacmanController.value,
-                  topPadding: topPadding,
-                  bottomPadding: bottomPadding,
-                ),
-                size: Size.infinite,
-              );
-            },
-          ),
-          PageView.builder(
-            controller: _pageController,
-            scrollDirection: Axis.vertical,
-            onPageChanged: (index) {
-              setState(() {
-                _currentPage = index;
-              });
-            },
-            pageSnapping: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: 7,
-            itemBuilder: (context, index) {
-              return _buildPageByIndex(index, hideNavButtons: _isAnimatingPage);
-            },
-          ),
-          if (_isAnimatingPage)
-            AnimatedBuilder(
-              animation: _peelController,
-              builder: (context, child) {
-                final progress = _peelController.value;
-                return Stack(
-                  children: [
-                    if (_isBackAnimating) ...[
-                      _buildPageByIndex(_animatingFromPage, hideNavButtons: true),
-                      ClipPath(
-                        clipper: PagePeelClipper(progress: progress),
-                        child: _buildPageByIndex(_animatingToPage, hideNavButtons: false),
-                      ),
-                    ] else ...[
-                      _buildPageByIndex(_animatingToPage, hideNavButtons: true),
-                      ClipPath(
-                        clipper: PagePeelClipper(progress: progress),
-                        child: _buildPageByIndex(_animatingFromPage, hideNavButtons: false),
-                      ),
-                    ],
-                    CustomPaint(
-                      painter: PageFlipPainter(progress: progress),
-                      size: Size.infinite,
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _pageController,
+                  _pacmanController,
+                ]),
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: HandDrawnNotebookPainter(
+                      scrollProgress: _pageController.hasClients
+                          ? (_pageController.page ?? 0)
+                          : 0,
+                      mouthProgress: _pacmanController.value,
+                      topPadding: topPadding,
+                      bottomPadding: bottomPadding,
                     ),
-                  ],
-                );
-              },
-            ),
+                    size: Size.infinite,
+                  );
+                },
+              ),
+              PageView.builder(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentPage = index;
+                  });
+                },
+                pageSnapping: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: 7,
+                itemBuilder: (context, index) {
+                  return _buildPageByIndex(
+                    index,
+                    hideNavButtons: _isAnimatingPage,
+                  );
+                },
+              ),
+              if (_isAnimatingPage)
+                AnimatedBuilder(
+                  animation: _peelController,
+                  builder: (context, child) {
+                    final progress = _peelController.value;
+                    return Stack(
+                      children: [
+                        if (_isBackAnimating) ...[
+                          _buildPageByIndex(
+                            _animatingFromPage,
+                            hideNavButtons: true,
+                          ),
+                          ClipPath(
+                            clipper: PagePeelClipper(progress: progress),
+                            child: _buildPageByIndex(
+                              _animatingToPage,
+                              hideNavButtons: false,
+                            ),
+                          ),
+                        ] else ...[
+                          _buildPageByIndex(
+                            _animatingToPage,
+                            hideNavButtons: true,
+                          ),
+                          ClipPath(
+                            clipper: PagePeelClipper(progress: progress),
+                            child: _buildPageByIndex(
+                              _animatingFromPage,
+                              hideNavButtons: false,
+                            ),
+                          ),
+                        ],
+                        CustomPaint(
+                          painter: PageFlipPainter(progress: progress),
+                          size: Size.infinite,
+                        ),
+                      ],
+                    );
+                  },
+                ),
 
+              AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  if (_pageController.positions.isEmpty) {
+                    return Container();
+                  }
 
-          AnimatedBuilder(
-            animation: _pageController,
-            builder: (context, child) {
-              if (_pageController.positions.isEmpty) {
-                return Container();
-              }
+                  double pageValue =
+                      _pageController.page ?? _currentPage.toDouble();
 
-              double pageValue =
-                  _pageController.page ?? _currentPage.toDouble();
+                  if ((pageValue - pageValue.floor()).abs() > 0.01 &&
+                      (pageValue - pageValue.floor()).abs() < 0.99) {
+                    return CustomPaint(
+                      painter: PageFlipPainter(
+                        progress: pageValue - pageValue.floor(),
+                      ),
+                      size: Size.infinite,
+                    );
+                  }
 
-              if ((pageValue - pageValue.floor()).abs() > 0.01 &&
-                   (pageValue - pageValue.floor()).abs() < 0.99) {
-                return CustomPaint(
-                  painter: PageFlipPainter(
-                    progress: pageValue - pageValue.floor(),
-                  ),
-                  size: Size.infinite,
-                );
-              }
-
-              return Container();
-            },
+                  return Container();
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-    )));
+    );
   }
-
-
 
   /// 建立問卷步驟頁面之通用卡片容器與佈局架構。
   Widget _buildPageContainer({
@@ -520,7 +540,12 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
     final bool isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
     return Padding(
-      padding: EdgeInsets.fromLTRB(40, 140 + topPadding, 40, 30 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(
+        40,
+        140 + topPadding,
+        40,
+        30 + bottomPadding,
+      ),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -529,15 +554,11 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             children: [
               Material(
                 color: Colors.transparent,
-                child: Text(
-                  title,
-                  style: _titleStyle,
-                ),
+                child: Text(title, style: _titleStyle),
               ),
               const SizedBox(height: 20),
               Expanded(
-                child:
-                    scrollable
+                child: scrollable
                     ? SingleChildScrollView(child: content)
                     : content,
               ),
@@ -632,15 +653,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 40),
-            _buildHandDrawnTextField(
-              '輸入您的名字',
-              _nameController,
-              (value) => setState(() {
-                _name = value;
-                _pageErrors.remove(0);
-              }),
-              onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
-            ),
+          _buildHandDrawnTextField(
+            '輸入您的名字',
+            _nameController,
+            (value) => setState(() {
+              _name = value;
+              _pageErrors.remove(0);
+            }),
+            onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+          ),
         ],
       ),
     );
@@ -690,7 +711,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     required String Function(T) itemLabel,
     required ValueChanged<T> onSelected,
   }) async {
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
 
     final RelativeRect position = RelativeRect.fromRect(
       Rect.fromLTWH(
@@ -750,7 +772,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         final bool isSelected = value != null;
         return GestureDetector(
           onTap: () {
-            final RenderBox renderBox = btnContext.findRenderObject() as RenderBox;
+            final RenderBox renderBox =
+                btnContext.findRenderObject() as RenderBox;
             final Offset offset = renderBox.localToGlobal(Offset.zero);
             final Rect rect = offset & renderBox.size;
 
@@ -769,7 +792,10 @@ class _InitialInfoPageState extends State<InitialInfoPage>
               color: Colors.transparent,
               child: Container(
                 width: width,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 12,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -777,13 +803,19 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                       child: Text(
                         isSelected ? itemLabel(value) : placeholder,
                         style: _inputTextStyle.copyWith(
-                          color: isSelected ? AppColors.textPrimary : const Color(0xFF555555),
+                          color: isSelected
+                              ? AppColors.textPrimary
+                              : const Color(0xFF555555),
                           fontSize: isSelected ? 15 : 14,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.arrow_drop_down, color: AppColors.textPrimary, size: 18),
+                    const Icon(
+                      Icons.arrow_drop_down,
+                      color: AppColors.textPrimary,
+                      size: 18,
+                    ),
                   ],
                 ),
               ),
@@ -797,9 +829,15 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   /// 建立步驟 3：生日與年齡選擇視圖頁面 Widget。
   Widget _buildAgePage({bool hideNavButtons = false}) {
     final currentYear = DateTime.now().year;
-    final years = List<int>.generate(currentYear - 1940 + 1, (i) => currentYear - i);
+    final years = List<int>.generate(
+      currentYear - 1940 + 1,
+      (i) => currentYear - i,
+    );
     final months = List<int>.generate(12, (i) => i + 1);
-    final maxDays = _daysInMonth(_selectedBirthYear ?? 2000, _selectedBirthMonth ?? 1);
+    final maxDays = _daysInMonth(
+      _selectedBirthYear ?? 2000,
+      _selectedBirthMonth ?? 1,
+    );
     final days = List<int>.generate(maxDays, (i) => i + 1);
 
     if (_selectedBirthDay != null && _selectedBirthDay! > maxDays) {
@@ -822,7 +860,14 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('年 (西元)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const Text(
+                      '年 (西元)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     _buildHandDrawnDropdown<int>(
                       context: context,
@@ -848,7 +893,14 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('月', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const Text(
+                      '月',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     _buildHandDrawnDropdown<int>(
                       context: context,
@@ -874,7 +926,14 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('日', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary)),
+                    const Text(
+                      '日',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     _buildHandDrawnDropdown<int>(
                       context: context,
@@ -917,10 +976,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '身高',
-                      style: _buttonTextStyle.copyWith(fontSize: 22),
-                    ),
+                    Text('身高', style: _buttonTextStyle.copyWith(fontSize: 22)),
                     const SizedBox(height: 12),
                     _buildHandDrawnTextField(
                       'cm',
@@ -930,7 +986,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                         _pageErrors.remove(3);
                       }),
                       isNumber: true,
-                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+                      onSubmitted: () =>
+                          FocusManager.instance.primaryFocus?.unfocus(),
                     ),
                   ],
                 ),
@@ -940,10 +997,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '體重',
-                      style: _buttonTextStyle.copyWith(fontSize: 22),
-                    ),
+                    Text('體重', style: _buttonTextStyle.copyWith(fontSize: 22)),
                     const SizedBox(height: 12),
                     _buildHandDrawnTextField(
                       'kg',
@@ -953,7 +1007,8 @@ class _InitialInfoPageState extends State<InitialInfoPage>
                         _pageErrors.remove(3);
                       }),
                       isNumber: true,
-                      onSubmitted: () => FocusManager.instance.primaryFocus?.unfocus(),
+                      onSubmitted: () =>
+                          FocusManager.instance.primaryFocus?.unfocus(),
                     ),
                   ],
                 ),
@@ -979,26 +1034,28 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             spacing: 12,
             runSpacing: 12,
             children: _diseaseOptions
-                .map((disease) => _buildHandDrawnToggleButton(
-                      disease,
-                      _diseases.contains(disease),
-                      () {
-                        setState(() {
-                          if (_diseases.contains(disease)) {
-                            _diseases.remove(disease);
+                .map(
+                  (disease) => _buildHandDrawnToggleButton(
+                    disease,
+                    _diseases.contains(disease),
+                    () {
+                      setState(() {
+                        if (_diseases.contains(disease)) {
+                          _diseases.remove(disease);
+                        } else {
+                          if (disease == '無疾病') {
+                            _diseases.clear();
+                            _diseases.add('無疾病');
                           } else {
-                            if (disease == '無疾病') {
-                              _diseases.clear();
-                              _diseases.add('無疾病');
-                            } else {
-                              _diseases.remove('無疾病');
-                              _diseases.add(disease);
-                            }
+                            _diseases.remove('無疾病');
+                            _diseases.add(disease);
                           }
-                          if (_diseases.isNotEmpty) _pageErrors.remove(4);
-                        });
-                      },
-                    ))
+                        }
+                        if (_diseases.isNotEmpty) _pageErrors.remove(4);
+                      });
+                    },
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -1020,18 +1077,20 @@ class _InitialInfoPageState extends State<InitialInfoPage>
             spacing: 20,
             runSpacing: 20,
             children: _goalOptions
-                .map((goal) => _buildHandDrawnToggleButton(
-                      goal,
-                      _goals.contains(goal),
-                      () {
-                        setState(() {
-                          _goals
-                            ..clear()
-                            ..add(goal);
-                          if (_goals.isNotEmpty) _pageErrors.remove(5);
-                        });
-                      },
-                    ))
+                .map(
+                  (goal) => _buildHandDrawnToggleButton(
+                    goal,
+                    _goals.contains(goal),
+                    () {
+                      setState(() {
+                        _goals
+                          ..clear()
+                          ..add(goal);
+                        if (_goals.isNotEmpty) _pageErrors.remove(5);
+                      });
+                    },
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -1218,11 +1277,7 @@ class HandDrawnNotebookPainter extends CustomPainter {
     Offset paperOrigin = Offset(margin, topMargin);
 
     Paint paperPaint = Paint()..color = const Color(0xFFFCF8EC);
-    Path paperPath = _getHandDrawnRectPath(
-      paperOrigin,
-      paperW,
-      paperH,
-    );
+    Path paperPath = _getHandDrawnRectPath(paperOrigin, paperW, paperH);
 
     canvas.drawShadow(
       paperPath,
@@ -1232,11 +1287,9 @@ class HandDrawnNotebookPainter extends CustomPainter {
     );
     canvas.drawPath(paperPath, paperPaint);
 
-
     _drawBinderRings(canvas, paperOrigin, paperW);
 
     _drawPacManProgress(canvas, paperOrigin, paperW);
-
   }
 
   Path _getHandDrawnRectPath(Offset origin, double w, double h) {
@@ -1294,21 +1347,15 @@ class HandDrawnNotebookPainter extends CustomPainter {
     double yPos = origin.dy;
     double ringSpacing = w / (ringCount + 1);
 
-    Paint ringPaint =
-        Paint()
-          ..color =
-              const Color(0xFF707070)
-          ..style = PaintingStyle
-              .stroke
-          ..strokeWidth = 2.5;
+    Paint ringPaint = Paint()
+      ..color = const Color(0xFF707070)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
 
-    Paint shadowPaint =
-        Paint()
-          ..color = Colors.black
-              .withValues(alpha: 0.2)
-          ..style = PaintingStyle
-              .stroke
-          ..strokeWidth = 2.5;
+    Paint shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
 
     for (int i = 1; i <= ringCount; i++) {
       double cx = origin.dx + ringSpacing * i;
@@ -1326,13 +1373,7 @@ class HandDrawnNotebookPainter extends CustomPainter {
         width: 10,
         height: 24,
       );
-      canvas.drawArc(
-        ringRect,
-        -0.8 * pi,
-        1.6 * pi,
-        false,
-        ringPaint,
-      );
+      canvas.drawArc(ringRect, -0.8 * pi, 1.6 * pi, false, ringPaint);
 
       Paint holePaint = Paint()..color = Colors.black;
       canvas.drawCircle(Offset(cx, yPos + 15), 3, holePaint);
@@ -1364,10 +1405,7 @@ class HandDrawnNotebookPainter extends CustomPainter {
     Path pacPath = Path();
     pacPath.moveTo(pacX, yPos);
     pacPath.arcTo(
-      Rect.fromCircle(
-        center: Offset(pacX, yPos),
-        radius: 14,
-      ),
+      Rect.fromCircle(center: Offset(pacX, yPos), radius: 14),
       startAngle,
       sweepAngle,
       false,
@@ -1446,7 +1484,7 @@ class HandDrawnBoxPainter extends CustomPainter {
       boxPath.shift(const Offset(8, 10)),
       Paint()
         ..color = AppColors.primary.withValues(alpha: 0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12),
     );
 
     canvas.drawPath(boxPath, fillPaint);
@@ -1484,12 +1522,7 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
         2,
       );
     }
-    path.quadraticBezierTo(
-      size.width - 2,
-      2,
-      size.width - 3,
-      cornerRadius + 2,
-    );
+    path.quadraticBezierTo(size.width - 2, 2, size.width - 3, cornerRadius + 2);
     for (
       double y = cornerRadius + 2;
       y < size.height - cornerRadius - 2;
@@ -1553,7 +1586,7 @@ class HandDrawnRoundedBoxPainter extends CustomPainter {
       path.shift(const Offset(8, 10)),
       Paint()
         ..color = AppColors.primary.withValues(alpha: 0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.12),
     );
 
     canvas.drawPath(path, fillPaint);
@@ -1603,24 +1636,23 @@ class PageFlipPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double W = size.width;
     final double H = size.height;
-    
+
     final double curveProgress = Curves.easeInOut.transform(progress);
-    
+
     final double t = curveProgress * 2.0;
-    
+
     final Offset pBottom = Offset((W - t * W).clamp(0.0, W), H);
     final Offset pRight = Offset(W, (H - t * H).clamp(0.0, H));
-    
-    final Offset pCurl = Offset(
-      W - t * W * 1.25,
-      H - t * H * 1.25,
-    );
+
+    final Offset pCurl = Offset(W - t * W * 1.25, H - t * H * 1.25);
 
     final Path shadowPath = Path();
     shadowPath.moveTo(pBottom.dx, pBottom.dy);
     shadowPath.quadraticBezierTo(
-      pCurl.dx - 20 * (1 - progress), pCurl.dy - 20 * (1 - progress),
-      pRight.dx, pRight.dy,
+      pCurl.dx - 20 * (1 - progress),
+      pCurl.dy - 20 * (1 - progress),
+      pRight.dx,
+      pRight.dy,
     );
     shadowPath.lineTo(W, H);
     shadowPath.close();
@@ -1635,9 +1667,10 @@ class PageFlipPainter extends CustomPainter {
     unpeeledPath.lineTo(W, 0);
     unpeeledPath.lineTo(pRight.dx, pRight.dy);
     unpeeledPath.quadraticBezierTo(
-      pCurl.dx + (W - pCurl.dx) * 0.12, 
-      pCurl.dy + (H - pCurl.dy) * 0.12, 
-      pBottom.dx, pBottom.dy
+      pCurl.dx + (W - pCurl.dx) * 0.12,
+      pCurl.dy + (H - pCurl.dy) * 0.12,
+      pBottom.dx,
+      pBottom.dy,
     );
     unpeeledPath.lineTo(0, H);
     unpeeledPath.close();
@@ -1654,17 +1687,22 @@ class PageFlipPainter extends CustomPainter {
     final Path curlBackPath = Path();
     curlBackPath.moveTo(pBottom.dx, pBottom.dy);
     curlBackPath.quadraticBezierTo(
-      pCurl.dx + (W - pCurl.dx) * 0.12, 
-      pCurl.dy + (H - pCurl.dy) * 0.12, 
-      pRight.dx, pRight.dy
+      pCurl.dx + (W - pCurl.dx) * 0.12,
+      pCurl.dy + (H - pCurl.dy) * 0.12,
+      pRight.dx,
+      pRight.dy,
     );
     curlBackPath.quadraticBezierTo(
-      pCurl.dx + 30 * (1 - progress), pCurl.dy + 30 * (1 - progress),
-      pCurl.dx, pCurl.dy
+      pCurl.dx + 30 * (1 - progress),
+      pCurl.dy + 30 * (1 - progress),
+      pCurl.dx,
+      pCurl.dy,
     );
     curlBackPath.quadraticBezierTo(
-      pCurl.dx + 30 * (1 - progress), pCurl.dy + 30 * (1 - progress),
-      pBottom.dx, pBottom.dy
+      pCurl.dx + 30 * (1 - progress),
+      pCurl.dy + 30 * (1 - progress),
+      pBottom.dx,
+      pBottom.dy,
     );
     curlBackPath.close();
 
@@ -1679,7 +1717,12 @@ class PageFlipPainter extends CustomPainter {
         end: Alignment.bottomRight,
       ).createShader(Rect.fromPoints(pCurl, Offset(W, H)));
 
-    canvas.drawShadow(curlBackPath, Colors.black.withValues(alpha: 0.24), 8.0, true);
+    canvas.drawShadow(
+      curlBackPath,
+      Colors.black.withValues(alpha: 0.24),
+      8.0,
+      true,
+    );
     canvas.drawPath(curlBackPath, curlPaint);
   }
 
@@ -1720,7 +1763,7 @@ class WashiTapeButtonPainter extends CustomPainter {
       baseShape.shift(const Offset(10, 12)),
       Paint()
         ..color = Colors.black.withValues(alpha: 0.55)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.9)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.9),
     );
 
     canvas.drawPath(baseShape, Paint()..color = Colors.white);
@@ -1757,6 +1800,7 @@ class WashiPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
 /// PagePeelClipper 視圖頁面與狀態類別。
 class PagePeelClipper extends CustomClipper<Path> {
   final double progress;
@@ -1768,22 +1812,20 @@ class PagePeelClipper extends CustomClipper<Path> {
     final double H = size.height;
     final double curveProgress = Curves.easeInOut.transform(progress);
     final double t = curveProgress * 2.0;
-    
+
     final Offset pBottom = Offset((W - t * W).clamp(0.0, W), H);
     final Offset pRight = Offset(W, (H - t * H).clamp(0.0, H));
-    final Offset pCurl = Offset(
-      W - t * W * 1.25,
-      H - t * H * 1.25,
-    );
+    final Offset pCurl = Offset(W - t * W * 1.25, H - t * H * 1.25);
 
     final Path unpeeledPath = Path();
     unpeeledPath.moveTo(0, 0);
     unpeeledPath.lineTo(W, 0);
     unpeeledPath.lineTo(pRight.dx, pRight.dy);
     unpeeledPath.quadraticBezierTo(
-      pCurl.dx + (W - pCurl.dx) * 0.12, 
-      pCurl.dy + (H - pCurl.dy) * 0.12, 
-      pBottom.dx, pBottom.dy
+      pCurl.dx + (W - pCurl.dx) * 0.12,
+      pCurl.dy + (H - pCurl.dy) * 0.12,
+      pBottom.dx,
+      pBottom.dy,
     );
     unpeeledPath.lineTo(0, H);
     unpeeledPath.close();
@@ -1841,10 +1883,7 @@ class SinglePagePacmanProgressPainter extends CustomPainter {
     Path pacPath = Path();
     pacPath.moveTo(center.dx, center.dy);
     pacPath.arcTo(
-      Rect.fromCircle(
-        center: center,
-        radius: 14,
-      ),
+      Rect.fromCircle(center: center, radius: 14),
       startAngle,
       sweepAngle,
       false,

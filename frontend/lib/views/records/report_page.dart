@@ -138,8 +138,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         _processRecords();
         _isLoading = false;
       });
-    } catch (e) {
-      debugPrint('加載飲食報告失敗: $e');
+    } catch (_) {
+      debugPrint('加載飲食報告失敗');
       if (!mounted) return;
       setState(() => _isLoading = false);
     }

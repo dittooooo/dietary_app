@@ -1,9 +1,8 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../core/api_client.dart';
 import '../models/body_status_models.dart';
+import 'token_storage.dart';
 
 class BodyStatusApiService {
   final ApiClient _client;
@@ -48,8 +47,7 @@ class BodyStatusApiService {
   }
 
   Future<String?> _token() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    return const SecureTokenStorage().readAccessToken();
   }
 
   Map<String, dynamic> _decodeMap(String body) {

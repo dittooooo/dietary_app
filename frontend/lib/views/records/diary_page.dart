@@ -11,6 +11,7 @@ import '../../color/app_colors.dart';
 import '../../config/api_config.dart';
 import '../../services/auth_service.dart';
 import '../../services/diet_service.dart';
+import '../../services/token_storage.dart';
 import '../../utils/friendly_error_message.dart';
 import '../home/home_page.dart';
 import 'manual_record_page.dart';
@@ -19,11 +20,7 @@ import 'manual_record_page.dart';
 class DiaryPage extends StatefulWidget {
   final DateTime date;
   final ValueChanged<DateTime>? onDateChanged;
-  const DiaryPage({
-    super.key,
-    required this.date,
-    this.onDateChanged,
-  });
+  const DiaryPage({super.key, required this.date, this.onDateChanged});
 
   @override
   State<DiaryPage> createState() => _DiaryPageState();
@@ -58,7 +55,11 @@ class _DiaryPageState extends State<DiaryPage> {
       oldWidget.date.month,
       oldWidget.date.day,
     );
-    final newDate = DateTime(widget.date.year, widget.date.month, widget.date.day);
+    final newDate = DateTime(
+      widget.date.year,
+      widget.date.month,
+      widget.date.day,
+    );
     if (!oldDate.isAtSameMomentAs(newDate)) {
       setState(() {
         _selectedDate = newDate;
@@ -72,10 +73,10 @@ class _DiaryPageState extends State<DiaryPage> {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
       setState(() {
-        _jwtToken = prefs.getString('jwt_token');
         _avatarUrl = prefs.getString('user_avatar_url');
       });
     }
+    _jwtToken = await const SecureTokenStorage().readAccessToken();
     final result = await AuthService().getUserProfile();
     if (result['success'] == true) {
       final userData = result['data'];
@@ -169,8 +170,7 @@ class _DiaryPageState extends State<DiaryPage> {
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
+      final token = await const SecureTokenStorage().readAccessToken();
       final records = await DietService().getMyDietRecords();
       debugPrint('飲食紀錄載入完成，共 ${records.length} 筆');
       setState(() {
@@ -189,13 +189,13 @@ class _DiaryPageState extends State<DiaryPage> {
           );
           // [Lint修復] 異步操作(await)後使用 context 前需檢查 mounted，避免 Widget 銷毀後存取 context 造成錯誤
           if (!mounted) return;
-          precacheImage(provider, context).catchError((e) {
-            debugPrint("Precache image error: $e");
+          precacheImage(provider, context).catchError((_) {
+            debugPrint('飲食圖片預載入失敗');
           });
         }
       }
-    } catch (e) {
-      debugPrint('加載飲食紀錄失敗: $e');
+    } catch (_) {
+      debugPrint('加載飲食紀錄失敗');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -393,12 +393,7 @@ class _DiaryPageState extends State<DiaryPage> {
                             ),
                           )
                         : ListView(
-                            padding: const EdgeInsets.fromLTRB(
-                              16,
-                              16,
-                              16,
-                              16,
-                            ),
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                             children: [
                               _buildMealSection(
                                 "早餐",
@@ -430,12 +425,7 @@ class _DiaryPageState extends State<DiaryPage> {
               ),
             ),
           ),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildHeader(context),
-          ),
+          Positioned(top: 0, left: 0, right: 0, child: _buildHeader(context)),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -472,10 +462,7 @@ class _DiaryPageState extends State<DiaryPage> {
             icon: Icon(Icons.smart_toy_outlined),
             label: '米粒',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note),
-            label: '飲食紀錄',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.edit_note), label: '飲食紀錄'),
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_outlined),
             label: '飲食報告',
@@ -498,17 +485,14 @@ class _DiaryPageState extends State<DiaryPage> {
         child: Container(
           height: 80 + statusBarHeight,
           decoration: BoxDecoration(
-            color: AppColors.background.withValues(alpha: 0.5), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.5)
+            color: AppColors.background.withValues(
+              alpha: 0.5,
+            ), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.5)
             border: Border(
               bottom: BorderSide(color: AppColors.border, width: 0.5),
             ),
           ),
-          padding: EdgeInsets.fromLTRB(
-            16,
-            statusBarHeight + 20,
-            16,
-            10,
-          ),
+          padding: EdgeInsets.fromLTRB(16, statusBarHeight + 20, 16, 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -550,7 +534,9 @@ class _DiaryPageState extends State<DiaryPage> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.35), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.35)
+                        color: Colors.black.withValues(
+                          alpha: 0.35,
+                        ), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.35)
                         blurRadius: 2.925,
                         offset: const Offset(0, 1.56),
                       ),
@@ -561,8 +547,8 @@ class _DiaryPageState extends State<DiaryPage> {
                     backgroundColor: AppColors.background,
                     backgroundImage:
                         _avatarUrl != null && _avatarUrl!.isNotEmpty
-                            ? NetworkImage(_avatarUrl!)
-                            : null,
+                        ? NetworkImage(_avatarUrl!)
+                        : null,
                     child: _avatarUrl == null || _avatarUrl!.isEmpty
                         ? const Icon(
                             Icons.person,
@@ -600,7 +586,9 @@ class _DiaryPageState extends State<DiaryPage> {
         color: AppColors.background,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+            color: Colors.black.withValues(
+              alpha: 0.05,
+            ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
             blurRadius: 0.975,
             offset: const Offset(0, 0.39),
           ),
@@ -640,7 +628,9 @@ class _DiaryPageState extends State<DiaryPage> {
             icon: Icon(
               Icons.chevron_right,
               color: isLatest
-                  ? AppColors.textPrimary.withValues(alpha: 0.35) // [API更新] withOpacity 改用 withValues(alpha: 0.35)
+                  ? AppColors.textPrimary.withValues(
+                      alpha: 0.35,
+                    ) // [API更新] withOpacity 改用 withValues(alpha: 0.35)
                   : AppColors.textPrimary,
               size: 28,
             ),
@@ -661,7 +651,9 @@ class _DiaryPageState extends State<DiaryPage> {
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.05), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+              color: AppColors.primary.withValues(
+                alpha: 0.05,
+              ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -703,9 +695,7 @@ class _DiaryPageState extends State<DiaryPage> {
     List<String> items,
     dynamic record,
   ) {
-    bool isExpanded = _expandedMeals.contains(
-      record['id'].toString(),
-    );
+    bool isExpanded = _expandedMeals.contains(record['id'].toString());
     bool isSwiped = _swipedMeal == record['id'].toString();
     bool needsExpansion = true;
     final nutritionParts = _getNutritionParts(record['nutrition']);
@@ -717,9 +707,7 @@ class _DiaryPageState extends State<DiaryPage> {
             _dragExtent += details.delta.dx;
             // [格式修復] if 語句補全大括號，符合 Dart 代碼規範
             if (_dragExtent < -5) {
-              setState(
-                () => _swipedMeal = record['id'].toString(),
-              );
+              setState(() => _swipedMeal = record['id'].toString());
             } else if (_dragExtent > 5) {
               setState(() => _swipedMeal = null);
             }
@@ -728,9 +716,7 @@ class _DiaryPageState extends State<DiaryPage> {
             _dragExtent = 0;
             // [格式修復] if 語句補全大括號，符合 Dart 代碼規範
             if (details.primaryVelocity! < -300) {
-              setState(
-                () => _swipedMeal = record['id'].toString(),
-              );
+              setState(() => _swipedMeal = record['id'].toString());
             } else if (details.primaryVelocity! > 300) {
               setState(() => _swipedMeal = null);
             }
@@ -742,7 +728,9 @@ class _DiaryPageState extends State<DiaryPage> {
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.1), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
+                  color: AppColors.primary.withValues(
+                    alpha: 0.1,
+                  ), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
                   blurRadius: 1.95,
                   offset: const Offset(0, 0.78),
                 ),
@@ -912,7 +900,9 @@ class _DiaryPageState extends State<DiaryPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+                  color: Colors.black.withValues(
+                    alpha: 0.05,
+                  ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
                   blurRadius: 0.975,
                   offset: const Offset(0, 0.39),
                 ),
@@ -937,7 +927,9 @@ class _DiaryPageState extends State<DiaryPage> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.secondary.withValues(alpha: 0.08), // [API更新] withOpacity 改用 withValues(alpha: 0.08)
+                        color: AppColors.secondary.withValues(
+                          alpha: 0.08,
+                        ), // [API更新] withOpacity 改用 withValues(alpha: 0.08)
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -1047,7 +1039,9 @@ class _DiaryPageState extends State<DiaryPage> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.1), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
+                color: color.withValues(
+                  alpha: 0.1,
+                ), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
               ),
               child: Icon(icon, color: color, size: 20),
             ),
@@ -1190,9 +1184,7 @@ class _DiaryPageState extends State<DiaryPage> {
       _fetchRecords();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(FriendlyErrorMessage.dietRecord),
-        ),
+        const SnackBar(content: Text(FriendlyErrorMessage.dietRecord)),
       );
     }
   }
@@ -1347,7 +1339,9 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     super.initState();
     _dishNameController = TextEditingController(text: widget.dishName);
     _amountController = TextEditingController(text: widget.initialAmountText);
-    _caloriesController = TextEditingController(text: widget.initialCaloriesText);
+    _caloriesController = TextEditingController(
+      text: widget.initialCaloriesText,
+    );
     _proteinController = TextEditingController(text: widget.initialProteinText);
     _fatController = TextEditingController(text: widget.initialFatText);
     _carbohydratesController = TextEditingController(
@@ -1423,8 +1417,9 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
       _fatController.text = _numberText(_perServingFat * amount);
     }
     if (!_carbohydratesEdited) {
-      _carbohydratesController.text =
-          _numberText(_perServingCarbohydrates * amount);
+      _carbohydratesController.text = _numberText(
+        _perServingCarbohydrates * amount,
+      );
     }
     _isUpdatingCalculatedValues = false;
   }
@@ -1443,17 +1438,16 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     final calories = double.tryParse(_caloriesController.text.trim());
     final protein = double.tryParse(_proteinController.text.trim());
     final fat = double.tryParse(_fatController.text.trim());
-    final carbohydrates = double.tryParse(
-      _carbohydratesController.text.trim(),
-    );
-    if ([calories, protein, fat, carbohydrates].any(
-      (value) => value == null || value < 0,
-    )) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('請填寫四項營養數值；沒有資料請填 0。'),
-        ),
-      );
+    final carbohydrates = double.tryParse(_carbohydratesController.text.trim());
+    if ([
+      calories,
+      protein,
+      fat,
+      carbohydrates,
+    ].any((value) => value == null || value < 0)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('請填寫四項營養數值；沒有資料請填 0。')));
       return;
     }
 
@@ -1550,4 +1544,3 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     );
   }
 }
-

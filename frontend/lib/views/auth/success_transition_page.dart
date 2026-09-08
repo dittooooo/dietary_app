@@ -8,6 +8,7 @@ import '../../color/app_colors.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../models/body_status_models.dart';
 import '../../services/auth_service.dart';
+import '../../services/token_storage.dart';
 import '../../services/body_status_api_service.dart';
 import '../../widgets/dog_avatar.dart';
 import '../home/home_page.dart';
@@ -118,7 +119,7 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
   Future<bool> _checkOnboarding() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(AuthService.accessTokenKey);
+      final token = await const SecureTokenStorage().readAccessToken();
       final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
       final cachedRole = prefs.getString('user_role');
 
@@ -137,9 +138,9 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
         return true;
       }
 
-      final profileResult = await AuthService()
-          .getUserProfile()
-          .timeout(const Duration(seconds: 5));
+      final profileResult = await AuthService().getUserProfile().timeout(
+        const Duration(seconds: 5),
+      );
 
       if (profileResult['success'] == true) {
         final userData = profileResult['data'] is Map<String, dynamic>
@@ -150,7 +151,8 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
           await prefs.setString('user_role', role.toString());
         }
         final hasCompleted = userData['hasCompletedOnboarding'] == true;
-        final hasProfileData = userData['gender']?.toString().trim().isNotEmpty == true &&
+        final hasProfileData =
+            userData['gender']?.toString().trim().isNotEmpty == true &&
             (double.tryParse(userData['height']?.toString() ?? '') ?? 0) > 0 &&
             (double.tryParse(userData['weight']?.toString() ?? '') ?? 0) > 0 &&
             userData['birthDate'] != null &&
@@ -166,8 +168,8 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
       }
 
       return false;
-    } catch (e) {
-      debugPrint('Check onboarding failed: $e');
+    } catch (_) {
+      debugPrint('檢查 onboarding 失敗');
       final prefs = await SharedPreferences.getInstance();
       final needsOnboarding = prefs.getBool(AuthService.needsOnboardingKey);
       return needsOnboarding == false;
@@ -181,21 +183,24 @@ class _SuccessTransitionPageState extends State<SuccessTransitionPage> {
     }
 
     try {
-      return await _bodyStatusApi.settleDailyScores()
-          .timeout(const Duration(seconds: 8));
-    } catch (e) {
-      debugPrint('Settle daily scores failed: $e');
+      return await _bodyStatusApi.settleDailyScores().timeout(
+        const Duration(seconds: 8),
+      );
+    } catch (_) {
+      debugPrint('每日結算失敗');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('每日結算暫時失敗，但仍會繼續進入首頁。')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('每日結算暫時失敗，但仍會繼續進入首頁。')));
       }
       return null;
     }
   }
 
   /// 當寵物體態改變時，紀錄待彈出的慶祝動畫旗標，延遲至進入 HomeView 後再播放。
-  Future<void> _playBodyTypeChangeIfNeeded(SettlementResponse settlement) async {
+  Future<void> _playBodyTypeChangeIfNeeded(
+    SettlementResponse settlement,
+  ) async {
     final oldType = DogStateController.parseBodyType(settlement.oldBodyType);
     final newType = DogStateController.parseBodyType(settlement.newBodyType);
 

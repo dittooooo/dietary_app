@@ -36,7 +36,10 @@ class _LoginPageState extends State<LoginPage> {
           SnackBar(
             content: Text(
               widget.initialMessage!,
-              style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             backgroundColor: AppColors.secondary,
             duration: const Duration(seconds: 4),
@@ -62,7 +65,8 @@ class _LoginPageState extends State<LoginPage> {
           final prefs = await SharedPreferences.getInstance();
           final userEmail = _emailController.text.trim().toLowerCase();
           await prefs.setString('user_email', userEmail);
-          final role = result['role']?.toString() ?? result['data']?['role']?.toString();
+          final role =
+              result['role']?.toString() ?? result['data']?['role']?.toString();
           final bool isAdmin = role == 'ROLE_ADMIN';
           if (isAdmin) {
             await prefs.setString('user_role', 'ROLE_ADMIN');
@@ -83,25 +87,31 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const SuccessTransitionPage(title: '登入成功！', shouldNavigate: true),
+              builder: (context) => const SuccessTransitionPage(
+                title: '登入成功！',
+                shouldNavigate: true,
+              ),
             ),
           );
         } else {
           setState(() {
             _emailError = result['email'] != null ? '請確認帳號格式或內容' : null;
-            _passwordError = result['error'] != null || result['password'] != null ? '請確認密碼是否正確' : null;
+            _passwordError =
+                result['error'] != null || result['password'] != null
+                ? '請確認密碼是否正確'
+                : null;
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('登入失敗，請確認帳號密碼後再試。')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('登入失敗，請確認帳號密碼後再試。')));
         }
       }
-    } catch (e) {
-      debugPrint('Login exception: $e');
+    } catch (_) {
+      debugPrint('登入請求失敗');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('無法連線至伺服器，請確認網路連線或稍後再試。')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('無法連線至伺服器，請確認網路連線或稍後再試。')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -154,12 +164,20 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-              child: const Icon(Icons.person_outline, size: 60, color: AppColors.primary),
+              child: const Icon(
+                Icons.person_outline,
+                size: 60,
+                color: AppColors.primary,
+              ),
             ),
             const SizedBox(height: 10),
             const Text(
               '登入',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 30),
             _buildInputField(
@@ -200,16 +218,27 @@ class _LoginPageState extends State<LoginPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.background,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                   elevation: 0,
                 ),
                 child: _isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.background),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.background,
+                        ),
                       )
-                    : const Text('登入', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    : const Text(
+                        '登入',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 15),
@@ -230,16 +259,27 @@ class _LoginPageState extends State<LoginPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterPage()),
+                    MaterialPageRoute(
+                      builder: (context) => const RegisterPage(),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.background,
                   foregroundColor: AppColors.textPrimary,
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-                child: const Text('尚未註冊', style: TextStyle(color: AppColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                child: const Text(
+                  '尚未註冊',
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 50),
@@ -263,7 +303,13 @@ class _LoginPageState extends State<LoginPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 5),
         TextFormField(
           controller: controller,
@@ -274,12 +320,23 @@ class _LoginPageState extends State<LoginPage> {
           decoration: InputDecoration(
             errorText: errorText,
             hintText: hint,
-            hintStyle: TextStyle(color: AppColors.textPrimary.withValues(alpha: 0.4)),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            hintStyle: TextStyle(
+              color: AppColors.textPrimary.withValues(alpha: 0.4),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 15,
+              vertical: 15,
+            ),
             suffixIcon: isPassword
                 ? IconButton(
-                    icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    onPressed: () => setState(
+                      () => _isPasswordVisible = !_isPasswordVisible,
+                    ),
                   )
                 : null,
             enabledBorder: OutlineInputBorder(
@@ -288,7 +345,10 @@ class _LoginPageState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.secondary, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.secondary,
+                width: 1.5,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

@@ -1,15 +1,13 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
-
 import '../core/api_client.dart';
+import 'token_storage.dart';
 
 class AdminService {
   final ApiClient _client = ApiClient();
 
   Future<String?> _token() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    return const SecureTokenStorage().readAccessToken();
   }
 
   Map<String, dynamic> _decodeMap(String body) {
@@ -47,8 +45,7 @@ class AdminService {
         return data is List ? data : [];
       }
       return [];
-    } catch (e) {
-      print('Load users failed: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -68,8 +65,7 @@ class AdminService {
         return data is Map<String, dynamic> ? data : null;
       }
       return null;
-    } catch (e) {
-      print('Load user detail failed: $e');
+    } catch (_) {
       return null;
     }
   }
@@ -92,8 +88,8 @@ class AdminService {
         return {'success': true, 'data': data['data'] ?? data};
       }
       return {'success': false, ...data};
-    } catch (e) {
-      return {'success': false, 'message': 'Create user failed: $e'};
+    } catch (_) {
+      return {'success': false, 'message': '建立使用者失敗，請稍後再試'};
     }
   }
 
@@ -118,8 +114,8 @@ class AdminService {
         return {'success': true, 'data': data['data'] ?? data};
       }
       return {'success': false, ...data};
-    } catch (e) {
-      return {'success': false, 'message': 'Update user failed: $e'};
+    } catch (_) {
+      return {'success': false, 'message': '更新使用者失敗，請稍後再試'};
     }
   }
 
@@ -144,7 +140,10 @@ class AdminService {
       return {
         'success': false,
         ...data,
-        'message': data['message'] ?? data['error'] ?? '更新狀態失敗 (${response.statusCode})',
+        'message':
+            data['message'] ??
+            data['error'] ??
+            '更新狀態失敗 (${response.statusCode})',
       };
     } catch (e) {
       return {'success': false, 'message': '更新使用者狀態失敗，請稍後再試'};
@@ -168,8 +167,7 @@ class AdminService {
         return data is List ? data : [];
       }
       return [];
-    } catch (e) {
-      print('Load problem feedback failed: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -197,7 +195,8 @@ class AdminService {
       return {
         'success': false,
         ...data,
-        'message': data['message'] ?? data['error'] ?? '回覆失敗 (${response.statusCode})',
+        'message':
+            data['message'] ?? data['error'] ?? '回覆失敗 (${response.statusCode})',
       };
     } catch (e) {
       return {'success': false, 'message': '回覆失敗，請稍後再試'};
