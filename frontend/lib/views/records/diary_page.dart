@@ -172,12 +172,7 @@ class _DiaryPageState extends State<DiaryPage> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
       final records = await DietService().getMyDietRecords();
-      debugPrint("DEBUG: Fetched ${records.length} records: $records");
-      for (var r in records) {
-        debugPrint(
-          "DEBUG: record id=${r['id']}, dishName=${r['dishName']}, mealDate=${r['mealDate']}, createdAt=${r['createdAt']} -> parsed=${_getRecordDate(r)}",
-        );
-      }
+      debugPrint('飲食紀錄載入完成，共 ${records.length} 筆');
       setState(() {
         _jwtToken = token; // 確保 JWT Token 在 UI 載入前就緒，防止圖片 headers 變更觸發二次下載
         _allRecords = records;

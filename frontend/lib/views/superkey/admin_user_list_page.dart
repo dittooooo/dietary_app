@@ -72,14 +72,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> { // 定義 _Admi
         .toString()
         .trim()
         .toUpperCase();
-    final email = (userProfile is Map
-            ? userProfile['email'] ?? userObj['email'] ?? ''
-            : '')
-        .toString()
-        .trim()
-        .toLowerCase();
-
-    return role == 'ROLE_ADMIN' || role == 'ADMIN' || email == 'admin@gmail.com';
+    return role == 'ROLE_ADMIN';
   }
 
   @override // 標記此方法為覆寫父類別之方法

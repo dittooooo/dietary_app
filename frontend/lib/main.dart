@@ -20,6 +20,8 @@ void main() async {
   );
 
   final prefs = await SharedPreferences.getInstance();
+  // 移除舊版本可能保存的完整密碼；之後只使用 Access Token / Refresh Token。
+  await prefs.remove('user_password');
   final token = prefs.getString(AuthService.accessTokenKey);
 
   Widget initialScreen = const LoginPage();
@@ -30,8 +32,7 @@ void main() async {
       if (result['success'] == true) {
         final data = result['data'];
         final String? userRole = data?['user']?['role'] ?? data?['role'] ?? prefs.getString('user_role');
-        final String? userEmail = (data?['email'] ?? data?['user']?['email'] ?? prefs.getString('user_email'))?.toString().trim().toLowerCase();
-        final bool isAdmin = userRole == 'ROLE_ADMIN' || userRole == 'ADMIN' || userEmail == 'admin@gmail.com';
+        final bool isAdmin = userRole == 'ROLE_ADMIN';
 
         if (isAdmin) {
           initialScreen = const HomePage();

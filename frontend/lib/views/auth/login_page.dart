@@ -62,9 +62,8 @@ class _LoginPageState extends State<LoginPage> {
           final prefs = await SharedPreferences.getInstance();
           final userEmail = _emailController.text.trim().toLowerCase();
           await prefs.setString('user_email', userEmail);
-          await prefs.setString('user_password', _passwordController.text);
           final role = result['role']?.toString() ?? result['data']?['role']?.toString();
-          final bool isAdmin = (userEmail == 'admin@gmail.com' || role == 'ROLE_ADMIN' || role == 'ADMIN');
+          final bool isAdmin = role == 'ROLE_ADMIN';
           if (isAdmin) {
             await prefs.setString('user_role', 'ROLE_ADMIN');
           } else {

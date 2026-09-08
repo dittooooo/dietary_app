@@ -189,7 +189,7 @@ class _HomeViewState extends State<HomeView>
         ),
         onResult: (result) {
           debugPrint(
-            '[SpeechToText Result] 收到文字: "${result.recognizedWords}" (final: ${result.finalResult})',
+            '[SpeechToText Result] 已收到語音辨識結果 (final: ${result.finalResult})',
           );
           // Android 可能先回傳 notListening/done，再非同步送出最後一筆
           // finalResult；不能用 _isListening 阻擋這筆結果，否則使用者說完
@@ -263,7 +263,7 @@ class _HomeViewState extends State<HomeView>
             .map((e) => Map<String, String>.from(e as Map))
             .toList();
       } catch (e) {
-        debugPrint('載入 temp_story_$userKey 快取失敗: $e');
+        debugPrint('載入對話快取失敗');
         _tempStory = [];
       }
     }
@@ -366,11 +366,7 @@ class _HomeViewState extends State<HomeView>
     // 1. 先從本地快取讀取 (前端輔助，速度快)
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
-    final cachedEmail = prefs.getString('user_email') ?? '';
-    final bool isCachedAdmin =
-        cachedRole == 'ROLE_ADMIN' ||
-        cachedRole == 'ADMIN' ||
-        cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
+    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN';
     String nick =
         prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
     if (isCachedAdmin && nick == '使用者') {
@@ -401,12 +397,7 @@ class _HomeViewState extends State<HomeView>
 
       final String? userRole =
           userData['user']?['role'] ?? userData['role'] ?? cachedRole;
-      final String userEmail =
-          userData['email'] ?? userData['user']?['email'] ?? cachedEmail;
-      final bool isUserAdmin =
-          userRole == 'ROLE_ADMIN' ||
-          userRole == 'ADMIN' ||
-          userEmail.trim().toLowerCase() == 'admin@gmail.com';
+      final bool isUserAdmin = userRole == 'ROLE_ADMIN';
 
       String fetchedNick = userData['nickname'] ?? '';
       if (isUserAdmin &&
@@ -717,7 +708,7 @@ class _HomeViewState extends State<HomeView>
     // 檢查今天是否已經顯示過飲食總結彈窗（每人每天僅第一次開啟 app 時跳出）
     final lastShownDate = prefs.getString(summaryKey);
     if (lastShownDate == todayStr) {
-      debugPrint('今日 ($todayStr) 使用者 ($userKey) 已顯示過飲食總結彈窗，不再重複跳出。');
+      debugPrint('今日飲食總結已顯示過，不再重複跳出。');
       return;
     }
 
@@ -753,7 +744,7 @@ class _HomeViewState extends State<HomeView>
 
       if (!mounted) return;
       debugPrint('=============================================');
-      debugPrint('準備跳出昨日飲食總結彈窗！ User: $userKey, Dishes: $yesterdayDishes');
+      debugPrint('準備跳出昨日飲食總結彈窗。');
       debugPrint('=============================================');
 
       // 紀錄今日已跳出飲食總結彈窗

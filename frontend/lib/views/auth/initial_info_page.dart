@@ -150,10 +150,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   Future<void> _checkAdminRedirect() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
-    final cachedEmail = prefs.getString('user_email')?.trim().toLowerCase();
-    final bool isAdmin = cachedRole == 'ROLE_ADMIN' ||
-        cachedRole == 'ADMIN' ||
-        cachedEmail == 'admin@gmail.com';
+    final bool isAdmin = cachedRole == 'ROLE_ADMIN';
     if (isAdmin && mounted) {
       Navigator.pushReplacement(
         context,
@@ -333,15 +330,11 @@ class _InitialInfoPageState extends State<InitialInfoPage>
         'petType': ProfileValueMapper.petTypeToApi(_defaultPetType),
       };
 
-      debugPrint('提交資料至後端: $onboardingData');
-
       // AuthService 會帶入目前登入帳號的 token；不可直接使用可能殘留
       // 上一個帳號 token 的共用 ApiClient。
       final result = await AuthService()
           .updateProfile(onboardingData)
           .timeout(const Duration(seconds: 15));
-
-      debugPrint('API 回應內容: $result');
 
       if (result['success'] == true) {
         await prefs.setBool(AuthService.needsOnboardingKey, false);

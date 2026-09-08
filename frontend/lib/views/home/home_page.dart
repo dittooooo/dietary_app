@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _checkAdminRole() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
-    var isAdmin = cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN';
+    var isAdmin = cachedRole == 'ROLE_ADMIN';
 
     final profileResult = await AuthService().getUserProfile();
     if (!mounted) return;
@@ -92,7 +92,7 @@ class _HomePageState extends State<HomePage> {
       final data = profileResult['data'];
       final String? role = data?['user']?['role'] ?? data?['role'];
       if (role != null) {
-        final isBackendAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN';
+        final isBackendAdmin = role == 'ROLE_ADMIN';
         if (isBackendAdmin != isAdmin) {
           isAdmin = isBackendAdmin;
         }

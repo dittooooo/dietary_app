@@ -215,8 +215,7 @@ class AuthService {
   Future<bool> isAdmin() async {
     final prefs = await SharedPreferences.getInstance();
     final role = prefs.getString('user_role')?.trim().toUpperCase();
-    final email = prefs.getString('user_email')?.trim().toLowerCase();
-    return role == 'ROLE_ADMIN' || role == 'ADMIN' || email == 'admin@gmail.com';
+    return role == 'ROLE_ADMIN';
   }
 
   Future<Map<String, dynamic>> uploadAvatar(
@@ -447,7 +446,7 @@ class AuthService {
     final weight = _asDouble(userData['weight']);
     final healthConditions = userData['healthConditions'];
 
-    final isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || (email != null && email.trim().toLowerCase() == 'admin@gmail.com');
+    final isAdmin = role == 'ROLE_ADMIN';
     if (email != null && email.isNotEmpty) {
       await prefs.setString('user_email', email);
     }

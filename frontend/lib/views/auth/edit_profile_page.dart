@@ -64,11 +64,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   bool get _isUserAdmin {
     final role = widget.initialData['user']?['role'] ?? widget.initialData['role'];
-    final email = _emailController.text.trim().toLowerCase();
-    return widget.isMandatoryAdmin ||
-        role == 'ROLE_ADMIN' ||
-        role == 'ADMIN' ||
-        email == 'admin@gmail.com';
+    return widget.isMandatoryAdmin || role == 'ROLE_ADMIN';
   }
 
   /// 初始化 Widget 狀態與訂閱生命週期。
@@ -195,7 +191,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final savedEmail = prefs.getString('user_email');
       final emailToSet = (savedEmail != null && savedEmail.isNotEmpty)
           ? savedEmail
-          : (widget.isMandatoryAdmin ? 'admin@gmail.com' : '');
+          : '';
       if (emailToSet.isNotEmpty && mounted) {
         setState(() {
           _emailController.text = emailToSet;

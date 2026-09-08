@@ -53,9 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final cachedRole = prefs.getString('user_role');
     final cachedEmail = prefs.getString('user_email') ?? '...';
     final cachedNickname = prefs.getString('user_nickname') ?? '管理員';
-    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN' ||
-        cachedRole == 'ADMIN' ||
-        cachedEmail.trim().toLowerCase() == 'admin@gmail.com';
+    final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN';
 
     setState(() {
       _email = cachedEmail;
@@ -79,7 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _dogController.setState(DogAnimationState.idle);
 
           final String? role = _fullUserData?['user']?['role'] ?? _fullUserData?['role'];
-          _isAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN' || _email.trim().toLowerCase() == 'admin@gmail.com';
+          _isAdmin = role == 'ROLE_ADMIN';
 
           final fetchedNickname = _fullUserData?['nickname']?.toString().trim();
           if (_isAdmin && (fetchedNickname == null || fetchedNickname.isEmpty || fetchedNickname == '使用者')) {
@@ -90,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
         });
         prefs.setString('user_nickname', _nickname);
       } else {
-        if (isCachedAdmin || _email.trim().toLowerCase() == 'admin@gmail.com') {
+        if (isCachedAdmin) {
           setState(() {
             _isAdmin = true;
             if (_nickname == '載入中...') _nickname = '系統管理員';
