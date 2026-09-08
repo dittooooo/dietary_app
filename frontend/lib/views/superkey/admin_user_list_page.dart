@@ -426,13 +426,15 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
       'password': _passwordController.text,
       'role': 'ROLE_USER',
       'name': _nameController.text.trim(),
-      'gender': _gender,
+      'gender': ProfileValueMapper.genderToApi(_gender),
       'birthDate': birthDate,
       'height': height,
       'weight': weight,
-      'petType': '米粒(Mili)',
-      'dietGoal': _selectedGoals.join(', '),
-      'specialDisease': _selectedDiseases.join(', '),
+      'petType': ProfileValueMapper.petTypeToApi('米粒(Mili)'),
+      'dietGoal': ProfileValueMapper.firstDietGoalToApi(_selectedGoals),
+      'specialDisease': ProfileValueMapper.healthConditionsToApi(
+        _selectedDiseases,
+      ).join(','),
     };
 
     setState(() {
@@ -662,9 +664,8 @@ class _CreateUserDialogState extends State<_CreateUserDialog> {
                         selectedColor: AppColors.primary.withValues(alpha: 0.2),
                         onSelected: (bool selected) {
                           setState(() {
-                            if (_selectedGoals.contains(goal)) {
-                              _selectedGoals.remove(goal);
-                            } else {
+                            _selectedGoals.clear();
+                            if (selected) {
                               _selectedGoals.add(goal);
                             }
                           });

@@ -21,7 +21,12 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 // === 1. AI 主對話頁面與狀態定義 (HomeView & State) ===
 class HomeView extends StatefulWidget {
   final bool initialOpenChat;
-  const HomeView({super.key, this.initialOpenChat = false});
+  final bool enableStartupDialogs;
+  const HomeView({
+    super.key,
+    this.initialOpenChat = false,
+    this.enableStartupDialogs = true,
+  });
 
   @override
   State<HomeView> createState() => _HomeViewState();
@@ -80,6 +85,7 @@ class _HomeViewState extends State<HomeView>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       SystemChannels.textInput.invokeMethod('TextInput.hide');
       FocusManager.instance.primaryFocus?.unfocus();
+      if (!widget.enableStartupDialogs) return;
       await _checkAndShowDietSummaryDialog();
       if (!mounted) return;
       await _checkAndShowBodyTransitionOnStartup();

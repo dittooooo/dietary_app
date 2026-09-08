@@ -36,6 +36,13 @@ bool shouldShowAdminMandatoryProfileDialog(
       profileData['dietGoal']?.toString().trim().isNotEmpty != true;
 }
 
+bool shouldEnableHomeStartupDialogs(
+  bool isAdmin,
+  Map<String, dynamic> profileResult,
+) {
+  return !isAdmin || !shouldShowAdminMandatoryProfileDialog(profileResult);
+}
+
 // === 1. 主框架頁面與狀態定義 (HomePage & State) ===
 class HomePage extends StatefulWidget {
   final int initialIndex;
@@ -78,12 +85,6 @@ class _HomePageState extends State<HomePage> {
     final cachedRole = prefs.getString('user_role');
     var isAdmin = cachedRole == 'ROLE_ADMIN' || cachedRole == 'ADMIN';
 
-    if (isAdmin) {
-      _applyAdminConfig();
-    } else {
-      _applyUserConfig();
-    }
-
     final profileResult = await AuthService().getUserProfile();
     if (!mounted) return;
 
@@ -94,11 +95,6 @@ class _HomePageState extends State<HomePage> {
         final isBackendAdmin = role == 'ROLE_ADMIN' || role == 'ADMIN';
         if (isBackendAdmin != isAdmin) {
           isAdmin = isBackendAdmin;
-          if (isAdmin) {
-            _applyAdminConfig();
-          } else {
-            _applyUserConfig();
-          }
         }
         await prefs.setString(
           'user_role',
@@ -107,8 +103,18 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
+    final enableStartupDialogs = shouldEnableHomeStartupDialogs(
+      isAdmin,
+      profileResult,
+    );
+
     if (isAdmin) {
-      await _showAdminMandatoryProfileDialog(profileResult);
+      _applyAdminConfig(enableStartupDialogs: enableStartupDialogs);
+      if (!enableStartupDialogs) {
+        await _showAdminMandatoryProfileDialog(profileResult);
+      }
+    } else {
+      _applyUserConfig();
     }
   }
 
@@ -133,11 +139,14 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _applyAdminConfig() {
+  void _applyAdminConfig({required bool enableStartupDialogs}) {
     if (mounted) {
       setState(() {
         _pages = [
-          HomeView(initialOpenChat: widget.showChat),
+          HomeView(
+            initialOpenChat: widget.showChat,
+            enableStartupDialogs: enableStartupDialogs,
+          ),
           DietaryRecordPage(
             onDateSelected: _updateSelectedReportDate,
             avatarRefreshListenable: _avatarRefreshNotifier,
