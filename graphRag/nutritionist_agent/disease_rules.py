@@ -39,19 +39,20 @@ def retrieve_disease_rules(retriever: Any, health: HealthCondition, question: st
         if len(mentions) > 2000:
             raise RuntimeError("Disease mentions exceeded safety limit; refusing partial evidence.")
         question_names = [row["name"] for row in mentions]
-    names = list(dict.fromkeys(question_names + profile_names))
+    # A disease explicitly named in the question defines the current topic.
+    # Profile diseases are the fallback only when the question names none.
+    names = question_names or profile_names
+    selected_source = "question" if question_names else "profile"
     missing = ([{"requested": None, "status": "missing_disease_name", "rules": [],
                  "context_sources": ["profile"]}]
-               if health.has_chronic_disease and not profile_names else [])
+               if not question_names and health.has_chronic_disease and not profile_names else [])
     if not names:
         return missing
     rows = retriever.retrieve(RULE_QUERY, {"diseases": names})
     if len(rows) > 2000:
         raise RuntimeError("Disease rule result exceeded safety limit; refusing partial evidence.")
     groups = {name: {"requested": name, "status": "disease_not_found", "rules": [],
-                     "context_sources": [source for source, source_names in
-                                         (("question", question_names), ("profile", profile_names))
-                                         if name in source_names]} for name in names}
+                     "context_sources": [selected_source]} for name in names}
     for row in rows:
         group = groups[row["requested"]]
         if row.get("disease"):
