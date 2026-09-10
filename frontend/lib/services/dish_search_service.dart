@@ -74,15 +74,26 @@ class DishSearchService {
     final trimmedQuery = query.trim();
     if (trimmedQuery.isEmpty) return const [];
 
-    final baseUri = Uri.parse(
-      '${ApiConfig.nutritionistBaseUrl}/nutritionist-agent/dishes/search',
-    );
-    final uri = baseUri.replace(
-      queryParameters: {'q': trimmedQuery, 'limit': '20'},
-    );
+    http.Response? response;
+    for (final baseUrl in ApiConfig.nutritionistCandidateBaseUrls) {
+      final baseUri = Uri.parse(
+        '$baseUrl/nutritionist-agent/dishes/search',
+      );
+      final uri = baseUri.replace(
+        queryParameters: {'q': trimmedQuery, 'limit': '20'},
+      );
 
-    final response = await http.get(uri);
-    if (response.statusCode != 200) {
+      try {
+        response = await http.get(uri).timeout(const Duration(seconds: 4));
+        if (response.statusCode == 200) {
+          break;
+        }
+      } catch (_) {
+        response = null;
+      }
+    }
+
+    if (response == null || response.statusCode != 200) {
       throw Exception('Food search service is unavailable');
     }
 

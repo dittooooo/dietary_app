@@ -39,8 +39,8 @@ public class DietRecordRequest {
     @JsonProperty("meal_type")
     @JsonAlias({"mealType", "meal_type"})
     @Pattern(
-            regexp = "^(?i:(BREAKFAST|LUNCH|DINNER))?$",
-            message = "mealType 只允許 BREAKFAST、LUNCH、DINNER"
+            regexp = "^(?:(?i:BREAKFAST|LUNCH|DINNER|OTHER)|早餐|午餐|晚餐|其他)?$",
+            message = "mealType 只允許 BREAKFAST、LUNCH、DINNER、OTHER 或 早餐、午餐、晚餐、其他"
     )
     private String mealType;
 

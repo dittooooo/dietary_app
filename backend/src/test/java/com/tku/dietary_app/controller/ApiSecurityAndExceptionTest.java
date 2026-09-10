@@ -28,6 +28,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -111,6 +113,34 @@ class ApiSecurityAndExceptionTest {
     }
 
     @Test
+    void dietRecordListAcceptsDateQueryParam() throws Exception {
+        User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        LocalDate recordDate = LocalDate.of(2026, 8, 18);
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
+        when(dietRecordService.getRecordsByUserAndDate(1L, recordDate)).thenReturn(List.of(
+                DietRecord.builder()
+                        .id(12L)
+                        .user(loginUser)
+                        .dishName("雞胸肉")
+                        .date(recordDate)
+                        .mealDate(recordDate)
+                        .mealType("LUNCH")
+                        .amount(1)
+                        .build()
+        ));
+
+        mockMvc.perform(get("/api/diet-records")
+                        .queryParam("date", "2026-08-18")
+                        .with(authentication(authToken("user@example.com", "ROLE_USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].dishName").value("雞胸肉"))
+                .andExpect(jsonPath("$.data[0].date").value("2026-08-18"));
+
+        verify(dietRecordService).getRecordsByUserAndDate(1L, recordDate);
+    }
+
+    @Test
     void adminDietRecordRejectsInvalidMealType() throws Exception {
         User loginUser = User.builder().id(1L).email("admin@example.com").password("encoded").build();
         when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(loginUser));
@@ -127,7 +157,7 @@ class ApiSecurityAndExceptionTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐"));
+                .andExpect(jsonPath("$.message").value("mealType 只支援 breakfast、lunch、dinner、other 或 早餐、午餐、晚餐、其他"));
     }
 
     @Test

@@ -124,6 +124,27 @@ class DietRecordServiceTest {
     }
 
     @Test
+    void createStoresOtherMealTypeAsOther() {
+        User user = User.builder().id(1L).email("user@example.com").password("encoded").build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(dietRecordRepository.save(any(DietRecord.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        DietRecordRequest request = new DietRecordRequest();
+        request.setDishName("水果");
+        request.setMealType("其他");
+        request.setCalories(80.0);
+        request.setProtein(1.0);
+        request.setFat(0.0);
+        request.setCarbohydrates(20.0);
+
+        DietRecord result = service.create(1L, request);
+
+        assertThat(result.getMealType()).isEqualTo("OTHER");
+        assertThat(result.getDescription()).isNull();
+    }
+
+    @Test
     void createStoresManualCustomDishWhenDescriptionMarksManual() {
         User user = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));

@@ -49,6 +49,10 @@ public class DietRecordService {
         return dietRecordRepository.findByUserIdOrderByDateDescCreatedAtDescIdDesc(userId);
     }
 
+    public List<DietRecord> getRecordsByUserAndDate(Long userId, LocalDate date) {
+        return dietRecordRepository.findByUserIdAndDateOrderByCreatedAtDescIdDesc(userId, date);
+    }
+
     public List<UserCustomDish> getCustomDishesByUser(Long userId) {
         return userCustomDishRepository.findByUserIdOrderByUpdatedAtDescIdDesc(userId);
     }

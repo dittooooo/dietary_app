@@ -46,10 +46,13 @@ public class DietRecordController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getRecords() {
+    public ResponseEntity<ApiResponse<?>> getRecords(@RequestParam(required = false) String date) {
         User user = getLoginUser();
+        LocalDate requestedDate = readDateParam(date);
         return ResponseEntity.ok(ApiResponse.success(
-                dietRecordService.getRecordsByUser(user.getId())
+                (requestedDate == null
+                        ? dietRecordService.getRecordsByUser(user.getId())
+                        : dietRecordService.getRecordsByUserAndDate(user.getId(), requestedDate))
                         .stream()
                         .map(DietRecordResponse::fromEntity)
                         .toList()
@@ -124,7 +127,7 @@ public class DietRecordController {
             throw new IllegalArgumentException("mealType 為必填欄位");
         }
         if (MealType.from(request.getMealType()) == null) {
-            throw new IllegalArgumentException("mealType 只支援 breakfast、lunch、dinner 或 早餐、午餐、晚餐");
+            throw new IllegalArgumentException("mealType 只支援 breakfast、lunch、dinner、other 或 早餐、午餐、晚餐、其他");
         }
         if (request.getCalories() != null && request.getCalories() < 0) {
             throw new IllegalArgumentException("calories 必須大於或等於 0");
@@ -222,6 +225,17 @@ public class DietRecordController {
             return LocalDate.parse(text);
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("日期格式不正確 (" + text + ")，請使用 YYYY-MM-DD 格式");
+        }
+    }
+
+    private LocalDate readDateParam(String date) {
+        if (date == null || date.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(date.trim());
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("日期格式不正確 (" + date + ")，請使用 YYYY-MM-DD 格式");
         }
     }
 

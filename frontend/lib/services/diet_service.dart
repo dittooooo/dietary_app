@@ -19,6 +19,9 @@ class DietService {
       case '晚餐':
       case 'DINNER':
         return 'DINNER';
+      case '其他':
+      case 'OTHER':
+        return 'OTHER';
       default:
         return mealType.trim().toUpperCase();
     }
@@ -89,22 +92,7 @@ class DietService {
       );
 
       if (response.statusCode == 200) {
-        final rawList = _unwrapListResponse(response.body);
-        return rawList.map((record) {
-          if (record is Map) {
-            final desc = (record['description'] ?? '').toString();
-            if (desc.startsWith('[MealType:OTHER]')) {
-              final newRecord = Map<String, dynamic>.from(record);
-              newRecord['mealType'] = 'OTHER';
-              newRecord['description'] = desc.replaceFirst(
-                '[MealType:OTHER]',
-                '',
-              );
-              return newRecord;
-            }
-          }
-          return record;
-        }).toList();
+        return _unwrapListResponse(response.body);
       }
       return [];
     } catch (_) {
@@ -151,19 +139,11 @@ class DietService {
         rawList = await getMyDietRecords();
       }
 
-      // 3. 對撈出的紀錄進行餐期標記處理與目標日期二次過濾
+      // 3. 對撈出的紀錄進行目標日期二次過濾
       final List<dynamic> result = [];
       for (var record in rawList) {
         if (record is Map) {
           var processedRecord = Map<String, dynamic>.from(record);
-          final desc = (processedRecord['description'] ?? '').toString();
-          if (desc.startsWith('[MealType:OTHER]')) {
-            processedRecord['mealType'] = 'OTHER';
-            processedRecord['description'] = desc.replaceFirst(
-              '[MealType:OTHER]',
-              '',
-            );
-          }
 
           // 正規化日期格式並進行比對
           final rawDate =
@@ -309,20 +289,13 @@ class DietService {
       };
     }
 
-    String apiMealType = _mealTypeForApi(mealType);
-    String apiDescription = description;
-    if (mealType == '其他' || mealType.trim().toUpperCase() == 'OTHER') {
-      apiMealType = 'DINNER';
-      apiDescription = '[MealType:OTHER]$description';
-    }
-
     try {
       final response = await _client.post(
         '/diet-records',
         {
           'dishName': dishName,
-          'mealType': apiMealType,
-          'description': apiDescription,
+          'mealType': _mealTypeForApi(mealType),
+          'description': description,
           'amount': intAmount,
           if (parsedNutrition['calories'] != null)
             'calories': parsedNutrition['calories'],
@@ -339,20 +312,7 @@ class DietService {
 
       final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final recordData = data['data'] ?? data;
-        if (recordData is Map) {
-          final desc = (recordData['description'] ?? '').toString();
-          if (desc.startsWith('[MealType:OTHER]')) {
-            final newRecord = Map<String, dynamic>.from(recordData);
-            newRecord['mealType'] = 'OTHER';
-            newRecord['description'] = desc.replaceFirst(
-              '[MealType:OTHER]',
-              '',
-            );
-            return {'success': true, 'data': newRecord};
-          }
-        }
-        return {'success': true, 'data': recordData};
+        return {'success': true, 'data': data['data'] ?? data};
       }
 
       return {
@@ -449,20 +409,7 @@ class DietService {
 
       final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final recordData = data['data'] ?? data;
-        if (recordData is Map) {
-          final desc = (recordData['description'] ?? '').toString();
-          if (desc.startsWith('[MealType:OTHER]')) {
-            final newRecord = Map<String, dynamic>.from(recordData);
-            newRecord['mealType'] = 'OTHER';
-            newRecord['description'] = desc.replaceFirst(
-              '[MealType:OTHER]',
-              '',
-            );
-            return {'success': true, 'data': newRecord};
-          }
-        }
-        return {'success': true, 'data': recordData};
+        return {'success': true, 'data': data['data'] ?? data};
       }
 
       return {
