@@ -20,12 +20,16 @@ class ReportPage extends StatefulWidget {
   final ValueListenable<DateTime>? selectedDateListenable;
   final ValueChanged<DateTime>? onDateChanged;
   final ValueListenable<int>? avatarRefreshListenable;
+  final int initialViewType;
+  final bool embedded;
   const ReportPage({
     super.key,
     this.initialDate,
     this.selectedDateListenable,
     this.onDateChanged,
     this.avatarRefreshListenable,
+    this.initialViewType = 0,
+    this.embedded = false,
   });
 
   @override
@@ -34,7 +38,7 @@ class ReportPage extends StatefulWidget {
 
 class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   late DateTime _selectedDate;
-  int _viewType = 0; // 0: 今日, 1: 一週
+  late int _viewType; // 0: 今日, 1: 一週
   int? _hoveredIdx; // 用於追蹤圖表上被點擊/懸停的點
 
   late AnimationController _hoverController;
@@ -98,6 +102,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _viewType = widget.initialViewType;
     _selectedDate =
         widget.selectedDateListenable?.value ??
         widget.initialDate ??
@@ -708,25 +713,26 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Positioned(
-                left: 0,
-                child: IconButton(
-                  onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HomePage(initialIndex: 1),
-                      ),
-                      (route) => false,
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back_ios,
-                    size: 28,
-                    color: AppColors.textPrimary,
+              if (!widget.embedded)
+                Positioned(
+                  left: 0,
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HomePage(initialIndex: 1),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      size: 28,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
               const Text(
                 '飲食報告',
                 style: TextStyle(
@@ -736,17 +742,18 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                   letterSpacing: 1.2,
                 ),
               ),
-              Positioned(
-                right: 0,
-                child: IconButton(
-                  tooltip: '更改日期',
-                  onPressed: _changeDate,
-                  icon: const Icon(
-                    Icons.calendar_month_outlined,
-                    color: AppColors.textPrimary,
+              if (!widget.embedded)
+                Positioned(
+                  right: 0,
+                  child: IconButton(
+                    tooltip: '更改日期',
+                    onPressed: _changeDate,
+                    icon: const Icon(
+                      Icons.calendar_month_outlined,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

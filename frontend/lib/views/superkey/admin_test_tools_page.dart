@@ -9,6 +9,7 @@ import '../../controllers/dog_state_controller.dart';
 import '../../services/diet_service.dart';
 import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
+import '../records/report_page.dart';
 
 /// 管理者專用之測試工具箱與開發者除錯主控制頁面。
 class AdminTestToolsPage extends StatefulWidget {
@@ -95,6 +96,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                 items: const [
                   DropdownMenuItem(value: 'YESTERDAY', child: Text('昨日')),
                   DropdownMenuItem(value: 'TODAY', child: Text('今日')),
+                  DropdownMenuItem(value: 'WEEK', child: Text('本周')),
                 ],
                 onChanged: _isLoadingReport
                     ? null
@@ -240,6 +242,12 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
 
     try {
       final records = await DietService().getMyDietRecords();
+      if (_reportDateMode == 'WEEK') {
+        if (!mounted) return;
+        setState(() => _isLoadingReport = false);
+        _showWeeklyDietSummaryDialog();
+        return;
+      }
       final targetDate = _targetReportDate();
       final summary = _buildDietSummaryForDate(records, targetDate);
 
@@ -267,6 +275,54 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
     return _reportDateMode == 'TODAY'
         ? today
         : today.subtract(const Duration(days: 1));
+  }
+
+  /// 顯示內嵌週飲食摘要報告的對話視窗。
+  void _showWeeklyDietSummaryDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          width: 430,
+          height: MediaQuery.of(context).size.height * 0.86,
+          child: Column(
+            children: [
+              const Expanded(
+                child: ReportPage(
+                  initialViewType: 1,
+                  embedded: true,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.background,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      '太棒了，我知道了！',
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   _DietSummary _buildDietSummaryForDate(
@@ -458,11 +514,16 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
           ),
           backgroundColor: AppColors.background,
           elevation: 10,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.72,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                 Text(
                   '$dateStr 飲食總結報告',
                   style: const TextStyle(
@@ -514,8 +575,13 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                ElevatedButton(
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                  child: ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -529,6 +595,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                   child: const Text(
                     '太棒了，我知道了！',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
                   ),
                 ),
               ],

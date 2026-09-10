@@ -16,6 +16,7 @@ import '../../widgets/meal_record_card.dart';
 import '../records/diary_page.dart';
 import '../records/elf_feeding_page.dart';
 import '../records/manual_record_page.dart';
+import '../records/report_page.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 // === 1. AI 主對話頁面與狀態定義 (HomeView & State) ===
@@ -711,38 +712,9 @@ class _HomeViewState extends State<HomeView>
     }
 
     try {
-      final records = await DietService().getMyDietRecords();
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-
-      double totalCalories = 0;
-      double totalProtein = 0;
-      double totalFat = 0;
-      double totalCarbs = 0;
-      List<String> yesterdayDishes = [];
-
-      for (var record in records) {
-        final rDate = _getRecordDate(record);
-        if (rDate == null) continue;
-        if (rDate.year == yesterday.year &&
-            rDate.month == yesterday.month &&
-            rDate.day == yesterday.day) {
-          totalCalories += _getCaloriesFromRecord(record);
-          totalProtein += _getNutrientFromRecord(record, r'(?:蛋白質|protein)');
-          totalFat += _getNutrientFromRecord(record, r'(?:脂肪|fat)');
-          totalCarbs += _getNutrientFromRecord(
-            record,
-            r'(?:碳水化合物|碳水|carbohydrate|carbs)',
-          );
-
-          if (record['dishName'] != null) {
-            yesterdayDishes.add(record['dishName'].toString());
-          }
-        }
-      }
-
       if (!mounted) return;
       debugPrint('=============================================');
-      debugPrint('準備跳出昨日飲食總結彈窗。');
+      debugPrint('準備跳出本周飲食總結彈窗。');
       debugPrint('=============================================');
 
       // 紀錄今日已跳出飲食總結彈窗
@@ -750,13 +722,49 @@ class _HomeViewState extends State<HomeView>
 
       await Future.delayed(const Duration(milliseconds: 500));
       if (!mounted) return;
-      await _showDietSummaryDialog(
-        date: yesterday,
-        calories: totalCalories,
-        protein: totalProtein,
-        fat: totalFat,
-        carbs: totalCarbs,
-        dishes: yesterdayDishes,
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: 430,
+            height: MediaQuery.of(context).size.height * 0.86,
+            child: Column(
+              children: [
+                const Expanded(
+                  child: ReportPage(
+                    initialViewType: 1,
+                    embedded: true,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.background,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        '太棒了，我知道了！',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     } catch (_) {
       debugPrint('取得昨日飲食總結失敗');
