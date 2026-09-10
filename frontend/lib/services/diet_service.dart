@@ -509,7 +509,7 @@ class DietService {
           '$baseUrl/maf/ask',
           {
             'user_prompt': normalizedPrompt,
-            'temp_story': tempStory, // 打包近 10 則歷史對話傳送至無狀態後端
+            'temp_story': tempStory, // 打包近 3 則歷史對話傳送至無狀態後端
           },
           headers: {if (token != null) 'Authorization': 'Bearer $token'},
         );

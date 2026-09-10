@@ -1,67 +1,132 @@
-// Test script for verifying system prompt behavior and conditional question_type.
-const path = require("path");
-const fs = require("fs");
-const dotenv = require("dotenv");
+// Smoke test for the production Companion HTTP route.
+// It exercises deterministic branches only and does not call OpenAI.
+const assert = require("node:assert/strict");
+const { spawn } = require("node:child_process");
+const path = require("node:path");
 
-// Load .env
-const envCandidates = [
-  path.resolve(__dirname, "../../.env"),
-  path.resolve(__dirname, "../.env"),
-  path.resolve(__dirname, ".env")
-];
-for (const cand of envCandidates) {
-  if (fs.existsSync(cand)) {
-    dotenv.config({ path: cand });
-    break;
+const port = Number(process.env.COMPANION_TEST_PORT || 39001);
+const baseUrl = `http://127.0.0.1:${port}`;
+
+async function waitForHealth(server) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (server.exitCode !== null) {
+      throw new Error(`Companion server exited before becoming healthy (code ${server.exitCode}).`);
+    }
+    try {
+      const response = await fetch(`${baseUrl}/health`);
+      if (response.ok) return;
+    } catch {
+      // The server may still be starting.
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
+  throw new Error("Timed out waiting for the Companion health endpoint.");
 }
 
-const { runOpenAIFlow } = require("./companion-agent-services");
+async function postReply(body) {
+  const response = await fetch(`${baseUrl}/companion/reply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Trace-Id": "smoke-test"
+    },
+    body: JSON.stringify(body)
+  });
+  return { response, data: await response.json() };
+}
 
 async function runTests() {
-  const testCases = [
-    {
-      name: "1. Single Dish Advice (single_dish)",
-      prompt: "我今天晚餐想吃一碗紅燒牛肉麵，請問這樣會不會太油或熱量太高？"
+  const server = spawn(process.execPath, [path.join(__dirname, "companion-agent.js")], {
+    cwd: __dirname,
+    env: {
+      ...process.env,
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY || "smoke-test-key",
+      COMPANION_API_PORT: String(port)
     },
-    {
-      name: "2. Dish Comparison (dish_comparison)",
-      prompt: "去滷味攤不知道要點乾意麵還是切汁米血跟豆干，這兩個哪一個熱量比較低？"
-    },
-    {
-      name: "3. Cross Meal Advice (dish_comparison)",
-      prompt: "我中午吃了麥當勞的大麥克套餐，那晚餐吃鹽水雞搭配蔬菜是不是比較合適？"
-    },
-    {
-      name: "4. Meal Record - Single Meal",
-      prompt: "幫我記錄一下，我今天早上吃了一顆茶葉蛋和一杯無糖高纖豆漿。"
-    },
-    {
-      name: "5. Meal Record - Cross Meal Periods",
-      prompt: "幫我記一下飲食，我上午吃了一份鮪魚蛋吐司，中午吃了一盒舒肥雞胸肉沙拉。"
-    },
-    {
-      name: "6. General Chat / Off-topic (should_handle: false)",
-      prompt: "今天台北天氣好冷喔，你覺得我下午應該去哪裡散步比較好？"
-    }
-  ];
+    stdio: ["ignore", "pipe", "pipe"]
+  });
 
-  console.log("Starting LLM Prompt & Schema verification...\n");
+  let stderr = "";
+  server.stderr.on("data", chunk => {
+    stderr += chunk.toString();
+  });
 
-  for (const tc of testCases) {
-    console.log(`[Test Case] ${tc.name}`);
-    console.log(`Input: "${tc.prompt}"`);
-    try {
-      const result = await runOpenAIFlow(tc.prompt);
-      console.log("Result Screening:", JSON.stringify(result.screening, null, 2));
-      console.log("Result Emotion:", JSON.stringify(result.emotion, null, 2));
-      console.log("Dietary Agent Request Payload:", JSON.stringify(result.dietary_agent_request, null, 2));
-      console.log("-------------------------------------------\n");
-    } catch (err) {
-      console.error("Test Case Failed with error:", err.message);
-      console.log("-------------------------------------------\n");
+  try {
+    await waitForHealth(server);
+
+    const cases = [
+      {
+        name: "meal_record returns a draft confirmation",
+        body: {
+          user_prompt: "幫我記錄午餐吃了一個雞腿便當",
+          screening: {
+            intent_category: "meal_record",
+            meal_items: [{ name: "雞腿便當", quantity: 1, unit: "份", meal_period: "中餐" }]
+          }
+        },
+        expected: "我先整理好飲食紀錄草稿了，請確認內容後再儲存喔！"
+      },
+      {
+        name: "meal_record returns a saved confirmation",
+        body: {
+          user_prompt: "確認儲存雞腿便當",
+          screening: {
+            intent_category: "meal_record",
+            meal_items: [{ name: "雞腿便當", quantity: 1, unit: "份", meal_period: "中餐" }]
+          },
+          dietary_agent_response: { success: true }
+        },
+        expected: "已成功幫你將飲食存入紀錄庫囉！"
+      },
+      {
+        name: "meal_record asks for a missing dish",
+        body: {
+          user_prompt: "幫我記錄一下",
+          screening: { intent_category: "meal_record", meal_items: [] }
+        },
+        expected: "收到你想記錄飲食，但似乎沒有聽到具體的餐點名稱。你可以再跟我說一次你吃了什麼喔！"
+      },
+      {
+        name: "meal_query formats the requested date",
+        body: {
+          user_prompt: "我 9 月 8 日吃了什麼？",
+          screening: { intent_category: "meal_query", query_date: "2026-09-08" }
+        },
+        expected: "幫你找到 9/8 號的飲食紀錄囉！請在下方卡片確認當天記錄的內容吧！"
+      },
+      {
+        name: "meal_query asks for a missing date",
+        body: {
+          user_prompt: "幫我查之前的飲食紀錄",
+          screening: { intent_category: "meal_query", query_date: null }
+        },
+        expected: "收到你想查詢歷史飲食紀錄，但似乎沒有聽到具體的日期。你可以再跟我說一次你想看哪一天的紀錄喔！（例如：「我 6/19 吃了什麼」）"
+      }
+    ];
+
+    for (const testCase of cases) {
+      const { response, data } = await postReply(testCase.body);
+      assert.equal(response.status, 200, testCase.name);
+      assert.deepEqual(data, {
+        success: true,
+        companion_reply: testCase.expected
+      }, testCase.name);
+      console.log(`PASS ${testCase.name}`);
     }
+
+    const badRequest = await postReply({ user_prompt: "   " });
+    assert.equal(badRequest.response.status, 400);
+    assert.equal(badRequest.data.success, false);
+    assert.equal(badRequest.data.error_code, "BAD_REQUEST");
+    console.log("PASS empty user_prompt returns BAD_REQUEST");
+  } finally {
+    if (server.exitCode === null) server.kill();
   }
+
+  if (stderr.trim()) console.error(stderr.trim());
 }
 
-runTests();
+runTests().catch(error => {
+  console.error("Smoke test failed:", error);
+  process.exitCode = 1;
+});
