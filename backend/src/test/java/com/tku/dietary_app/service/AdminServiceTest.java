@@ -111,29 +111,6 @@ class AdminServiceTest {
                 .hasMessage("Email 已被使用");
     }
 
-    @Test
-    void setUserEnabledRejectsDisablingCurrentAdminAccount() {
-        User currentAdmin = User.builder()
-                .id(1L)
-                .email("admin@example.com")
-                .role("ROLE_ADMIN")
-                .enabled(true)
-                .build();
-        UserProfile profile = UserProfile.builder()
-                .id(1L)
-                .user(currentAdmin)
-                .nickname("Admin")
-                .build();
-
-        when(userProfileRepository.findById(1L)).thenReturn(Optional.of(profile));
-
-        assertThatThrownBy(() -> adminService.setUserEnabled(1L, false, "ADMIN@example.com"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("不能禁用目前登入中的管理者帳號");
-
-        verify(userRepository, never()).save(any(User.class));
-    }
-
     private AdminUserRequest buildRequest() {
         AdminUserRequest request = new AdminUserRequest();
         request.setEmail("user@example.com");

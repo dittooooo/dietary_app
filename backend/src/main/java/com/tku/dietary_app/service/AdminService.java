@@ -116,35 +116,6 @@ public class AdminService {
     }
 
     @Transactional
-    public UserProfile setUserEnabled(Long id, boolean enabled, String operatorEmail) {
-        UserProfile profile = userProfileRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到要更新狀態的使用者資料 (ID: " + id + ")"));
-
-        User user = profile.getUser();
-        if (user == null) {
-            throw new ResourceNotFoundException("找不到使用者帳號 (ID: " + id + ")");
-        }
-
-        if (Boolean.FALSE.equals(enabled)) {
-            if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(operatorEmail)) {
-                throw new IllegalArgumentException("不能禁用目前登入中的管理者帳號");
-            }
-            if ("ROLE_ADMIN".equals(normalizeRole(user.getRole()))) {
-                throw new IllegalArgumentException("不能禁用管理者帳號");
-            }
-        }
-
-        user.setEnabled(enabled);
-        if (!enabled) {
-            user.setRefreshTokenHash(null);
-            user.setRefreshTokenExpiresAt(null);
-        }
-
-        userRepository.save(user);
-        return profile;
-    }
-
-    @Transactional
     public void deleteUser(Long id) {
         UserProfile profile = userProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到要刪除的使用者資料 (ID: " + id + ")"));
