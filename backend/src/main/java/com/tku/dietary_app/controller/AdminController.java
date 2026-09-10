@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import java.security.Principal;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -66,22 +64,6 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success(
                 "使用者更新成功",
                 UserProfileResponse.fromEntity(adminService.updateUser(id, request))
-        ));
-    }
-
-    @PutMapping("/users/{id}/status")
-    public ResponseEntity<ApiResponse<?>> updateUserStatus(@PathVariable Long id,
-                                                           @RequestBody Map<String, Boolean> request,
-                                                           Principal principal) {
-        Boolean requestedEnabled = request.get("enabled");
-        if (requestedEnabled == null) {
-            throw new IllegalArgumentException("缺少 enabled 狀態");
-        }
-
-        boolean enabled = Boolean.TRUE.equals(requestedEnabled);
-        return ResponseEntity.ok(ApiResponse.success(
-                enabled ? "使用者已啟用" : "使用者已禁用",
-                UserProfileResponse.fromEntity(adminService.setUserEnabled(id, enabled, principal.getName()))
         ));
     }
 

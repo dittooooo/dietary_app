@@ -160,12 +160,6 @@ class _AdminUserListPageState extends State<AdminUserListPage> {
                       final String displayName =
                           userProfile['nickname'] ??
                           (email.isNotEmpty ? email.split('@')[0] : '使用者');
-                      final bool isEnabled =
-                          userProfile['enabled'] != false &&
-                          userObj['enabled'] != false;
-                      final bool isCurrentAdmin =
-                          _currentAdminEmail.isNotEmpty &&
-                          email.trim().toLowerCase() == _currentAdminEmail;
 
                       return Card(
                         color: AppColors.background,
@@ -195,60 +189,14 @@ class _AdminUserListPageState extends State<AdminUserListPage> {
                               color: AppColors.textPrimary,
                             ),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                email.isNotEmpty ? email : '無電子郵件',
-                                style: const TextStyle(color: Colors.black54),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                isCurrentAdmin
-                                    ? '狀態：啟用中（目前登入管理者）'
-                                    : (isEnabled ? '狀態：啟用中' : '狀態：已禁用'),
-                                style: TextStyle(
-                                  color: isEnabled
-                                      ? AppColors.primary
-                                      : AppColors.danger,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                          subtitle: Text(
+                            email.isNotEmpty ? email : '無電子郵件',
+                            style: const TextStyle(color: Colors.black54),
                           ),
-                          trailing: Switch(
-                            value: isEnabled,
-                            thumbColor: WidgetStateProperty.resolveWith<Color>((
-                              states,
-                            ) {
-                              if (isCurrentAdmin) {
-                                return AppColors.secondary.withValues(
-                                  alpha: 0.45,
-                                );
-                              }
-                              return isEnabled
-                                  ? AppColors.primary
-                                  : AppColors.danger;
-                            }),
-                            trackColor: WidgetStateProperty.resolveWith<Color>((
-                              states,
-                            ) {
-                              if (isCurrentAdmin) {
-                                return AppColors.secondary.withValues(
-                                  alpha: 0.20,
-                                );
-                              }
-                              return isEnabled
-                                  ? AppColors.primary.withValues(alpha: 0.35)
-                                  : AppColors.danger.withValues(alpha: 0.28);
-                            }),
-                            onChanged: isCurrentAdmin
-                                ? null
-                                : (value) => _showStatusConfirmDialog(
-                                    profileId,
-                                    displayName,
-                                    value,
-                                  ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                            color: Colors.black26,
                           ),
                           onTap: () {
                             final String goalText =
@@ -273,7 +221,7 @@ class _AdminUserListPageState extends State<AdminUserListPage> {
                               'healthConditions': healthText.isNotEmpty
                                   ? healthText
                                   : '無疾病',
-                              'status': isEnabled ? '啟用中' : '已禁用',
+                              'status': '啟用中',
                             };
                             Navigator.push(
                               // 導航路由跳轉：開啟並推入新頁面
@@ -303,74 +251,6 @@ class _AdminUserListPageState extends State<AdminUserListPage> {
         onPressed: _showCreateUserDialog, // 新增使用者彈出對話框
         child: const Icon(Icons.add, color: AppColors.background),
       ),
-    );
-  }
-
-  /// 彈出對話框供管理者確認是否啟用或禁用指定使用者帳號，點擊確認後呼叫控制台修改狀態。
-  void _showStatusConfirmDialog(int userId, String name, bool enabled) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.background,
-          title: Text(
-            enabled ? '確認啟用' : '確認禁用',
-            style: const TextStyle(color: AppColors.textPrimary),
-          ),
-          content: Text(
-            enabled
-                ? '確定要啟用使用者「$name」嗎？啟用後該帳號可以重新登入。'
-                : '確定要禁用使用者「$name」嗎？禁用後該帳號將無法登入，既有登入狀態也會失效。',
-            style: const TextStyle(color: Colors.black54),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消', style: TextStyle(color: Colors.black54)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // 關閉對話框
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(enabled ? '正在啟用使用者...' : '正在禁用使用者...'),
-                  ),
-                );
-
-                final res = await AdminService().updateUserStatus(
-                  userId,
-                  enabled,
-                );
-
-                if (context.mounted) {
-                  if (res['success'] == true) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          enabled ? '已啟用使用者：$name' : '已禁用使用者：$name',
-                        ),
-                      ),
-                    );
-                    _fetchUsers(); // 重新整理清單
-                  } else {
-                    String msg = (res['message'] ?? '狀態更新失敗').toString();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(msg)));
-                  }
-                }
-              },
-              child: Text(
-                enabled ? '確認啟用' : '確認禁用',
-                style: TextStyle(
-                  color: enabled ? AppColors.primary : AppColors.danger,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
