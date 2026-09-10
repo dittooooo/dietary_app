@@ -119,6 +119,37 @@ class AdminService {
     }
   }
 
+  Future<Map<String, dynamic>> updateUserStatus(int id, bool enabled) async {
+    final token = await _token();
+    if (token == null) {
+      return {'success': false, 'message': '請重新登入'};
+    }
+
+    try {
+      final response = await _client.put(
+        '/admin/users/$id/status',
+        {'enabled': enabled},
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      final data = _decodeMap(response.body);
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data['data'] ?? data};
+      }
+
+      return {
+        'success': false,
+        ...data,
+        'message':
+            data['message'] ??
+            data['error'] ??
+            '更新狀態失敗 (${response.statusCode})',
+      };
+    } catch (e) {
+      return {'success': false, 'message': '更新使用者狀態失敗，請稍後再試'};
+    }
+  }
+
   // --- 管理者餐廳、菜單與飲食紀錄 API (已廢棄且後端已無對應 Controller，特此清理) ---
 
   Future<List<dynamic>> listProblemFeedback() async {
