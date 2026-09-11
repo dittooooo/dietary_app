@@ -36,6 +36,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
       SPRING_PROFILES_ACTIVE: docker
       APP_PARTNER_DIETARY_BASE_URL: http://nutritionist:8000
+      APP_PARTNER_COMPANION_BASE_URL: http://companion:3000
     ports: ["127.0.0.1:8080:8080"]
     volumes: [uploads:/app/uploads]
     healthcheck:

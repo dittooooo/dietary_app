@@ -490,7 +490,7 @@ class DietService {
   /// 發送使用者訊息至 MAF Workflow (Port 3001 /maf/ask)
   ///
   /// [userPrompt]：使用者輸入的最新對話內容。
-  /// [tempStory]：前端快取的最近最多 10 則歷史對話，供後端無狀態微服務作為 LLM 推理上下文。
+  /// [tempStory]：前端快取的最近最多 10 組來回歷史對話，供後端無狀態微服務作為 LLM 推理上下文。
   Future<Map<String, dynamic>> sendMafUserPrompt(
     String userPrompt, {
     List<Map<String, String>> tempStory = const [],
@@ -509,7 +509,7 @@ class DietService {
           '$baseUrl/maf/ask',
           {
             'user_prompt': normalizedPrompt,
-            'temp_story': tempStory, // 打包近 3 則歷史對話傳送至無狀態後端
+            'temp_story': tempStory, // 打包近 10 組來回歷史對話傳送至無狀態後端
           },
           headers: {if (token != null) 'Authorization': 'Bearer $token'},
         );
@@ -591,7 +591,15 @@ class DietService {
         if (response.statusCode == 200) {
           return data;
         }
-        return {'success': false, 'message': FriendlyErrorMessage.dietRecord};
+        final serverMessage =
+            data['error_message']?.toString().trim() ??
+            data['message']?.toString().trim();
+        return {
+          'success': false,
+          'message': serverMessage?.isNotEmpty == true
+              ? serverMessage
+              : FriendlyErrorMessage.dietRecord,
+        };
       } catch (_) {
         continue;
       }

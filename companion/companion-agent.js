@@ -72,6 +72,7 @@ app.post("/companion/reply", async (req, res) => {
       emotion: req.body.emotion || {},
       dietaryAgentResponse: req.body.dietary_agent_response || null,
       dietaryAgentError: req.body.dietary_agent_error || null,
+      userProfileContext: req.body.user_profile_context || null,
       tempStory: Array.isArray(req.body.temp_story) ? req.body.temp_story : []
     });
     trace(req, "COMPLETED", `回覆生成完成 length=${companionReply.length}`);

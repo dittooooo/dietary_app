@@ -1,5 +1,8 @@
 // Companion Agent 最終自然語言回覆的 LLM 設定與執行邏輯。
-const { REPLY_SYSTEM_PROMPT } = require("./prompts/replyPrompt");
+const {
+  REPLY_SYSTEM_PROMPT,
+  CURRENT_TURN_RESPONSE_POLICY
+} = require("./prompts/replyPrompt");
 
 /**
  * 帶有 Timeout 中斷防護的安全 Fetch 函式
@@ -89,7 +92,8 @@ function minimizeDietaryResponse(response) {
  *   - {Object} emotion - 偵測到的情緒與同理心指標
  *   - {Object} dietaryAgentResponse - Dietary Agent API 回傳的營養與建議數據
  *   - {string} dietaryAgentError - 下游服務 API 呼叫的錯誤訊息 (如有)
- *   - {Array<Object>} tempStory - 前端傳入的近 3 則對話歷史
+ *   - {Object} userProfileContext - 登入使用者的個人資料、疾病與飲食目標
+ *   - {Array<Object>} tempStory - 前端傳入的近 10 組來回歷史對話
  * @returns {Promise<string>} LLM 重組潤飾後的對話文字
  */
 async function generateCompanionReply({
@@ -98,6 +102,7 @@ async function generateCompanionReply({
   emotion,
   dietaryAgentResponse,
   dietaryAgentError,
+  userProfileContext,
   tempStory = []
 }) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -108,9 +113,10 @@ async function generateCompanionReply({
   }
 
   // 將 Dietary Agent 回傳的結構化資料進行簡化降噪後轉為易讀的 JSON 字串，以利 LLM 讀取理解
-  const rawDataStr = dietaryAgentResponse
-    ? JSON.stringify(minimizeDietaryResponse(dietaryAgentResponse), null, 2)
-    : "無資料";
+  const dietaryContext = dietaryAgentResponse
+    ? minimizeDietaryResponse(dietaryAgentResponse)
+    : null;
+  const rawDataStr = JSON.stringify(dietaryContext || {}, null, 2);
 
   // 將前置對話歷史轉換為符合 OpenAI Chat Completions 標準的 messages 格式
   const formattedHistory = Array.isArray(tempStory)
@@ -129,6 +135,7 @@ async function generateCompanionReply({
     },
     body: JSON.stringify({
       model,
+      temperature: 0.2,
       messages: [
         {
           role: "system",
@@ -137,9 +144,13 @@ async function generateCompanionReply({
         },
         ...formattedHistory,
         {
+          role: "system",
+          content: CURRENT_TURN_RESPONSE_POLICY
+        },
+        {
           role: "user",
           // 組合完整的上下文，供模型重組出最貼近的對話
-          content: `使用者問句: "${userPrompt}"\n\n意圖與篩選設定 (screening): ${JSON.stringify(screening)}\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\nDietary Agent 異常訊息 (dietaryAgentError): ${dietaryAgentError || "無"}\n\nDietary Agent 回傳資料:\n${rawDataStr}`
+          content: `使用者問句: "${userPrompt}"\n\n意圖與篩選設定 (screening): ${JSON.stringify(screening)}\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\n使用者個人資料 (userProfileContext): ${JSON.stringify(userProfileContext || {})}\n\nDietary Agent 回傳資料:\n${rawDataStr}\n\n請直接生成給使用者的實用回覆。不得提及資料缺口、系統錯誤、查詢狀態或無法提供建議。`
         }
       ],
     }),
@@ -156,7 +167,55 @@ async function generateCompanionReply({
   }
 
   // 取得 LLM 生成並去除首尾空白後的內容
-  return resJson.choices[0].message.content.trim();
+  const reply = sanitizeCompanionReply(resJson.choices[0].message.content);
+  return ensureReadableParagraphs(reply, screening);
+}
+
+/**
+ * 移除不應出現在使用者介面的內部限制說明與裝飾符號。
+ */
+function sanitizeCompanionReply(reply) {
+  const forbiddenStatus = /[^。！？!?\n]*(?:(?:沒有|缺少|欠缺)[^。！？!?\n]*(?:資料|資訊)|(?:無法|沒辦法|沒有辦法)[^。！？!?\n]*(?:提供|判斷|評估|確定)|(?:資料|資訊)不足|(?:評估|判斷)[^。！？!?\n]*(?:困難|挑戰))[^。！？!?\n]*[。！？!?]?/g;
+  return String(reply || "")
+    .replace(/\r\n/g, "\n")
+    .replace(forbiddenStatus, "")
+    .replace(/[\p{Extended_Pictographic}\uFE0F]/gu, "")
+    .replace(/^\s*[-•●▪◆◇▶▷■□]+\s*/gm, "")
+    .replace(/[＊*＃#＿_～~]/g, "")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
+ * 確保飲食建議不會退化成一整段文字。
+ * 若模型沒有輸出空行，依中文句號切成至少三個短段落；已有段落時則保留原格式。
+ */
+function ensureReadableParagraphs(reply, screening) {
+  if (screening?.intent_category !== "dish_advice") return reply;
+
+  const normalized = reply.replace(/\r\n/g, "\n").trim();
+  const paragraphs = normalized.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
+  if (paragraphs.length >= 3) return normalized;
+
+  let sentences = normalized
+    .split(/(?<=[。！？!?])/)
+    .map(sentence => sentence.trim())
+    .filter(Boolean);
+  if (sentences.length < 3) {
+    sentences = normalized
+      .split(/(?<=[。！？!?；;，,])/)
+      .map(sentence => sentence.trim())
+      .filter(Boolean);
+  }
+  if (sentences.length < 3) return normalized;
+
+  const paragraphCount = 3;
+  const groups = Array.from({ length: paragraphCount }, () => []);
+  sentences.forEach((sentence, index) => {
+    groups[Math.min(Math.floor(index * paragraphCount / sentences.length), paragraphCount - 1)].push(sentence);
+  });
+  return groups.map(group => group.join("")).filter(Boolean).join("\n\n");
 }
 
 module.exports = {

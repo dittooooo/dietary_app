@@ -2,6 +2,32 @@ const {
   generateCompanionReply: runLLMReply
 } = require("./companion-llm");
 
+function displayDietGoal(value) {
+  const normalized = String(value || "").trim();
+  const upper = normalized.toUpperCase();
+  if (["LOSE_WEIGHT", "LOSE_FAT"].includes(upper)) return "減脂";
+  if (upper === "GAIN_MUSCLE") return "增肌";
+  if (upper === "MAINTAIN") return "養生";
+  return normalized;
+}
+
+function displayHealthCondition(value) {
+  const normalized = String(value || "").trim();
+  const labels = {
+    GERD: "胃食道逆流",
+    HYPERTENSION: "高血壓",
+    HYPERLIPIDEMIA: "高血脂",
+    DIABETES: "糖尿病",
+    CARDIOVASCULAR: "心血管疾病",
+    KIDNEY_DISEASE: "慢性腎臟病",
+    METABOLIC_SYNDROME: "代謝症候群",
+    GOUT: "痛風",
+    HYPERURICEMIA: "高尿酸血症",
+    NONE: "無疾病"
+  };
+  return labels[normalized.toUpperCase()] || normalized;
+}
+
 /**
  * 產生陪伴精靈的最終回覆
  * 整合意圖、情緒以及飲食助理的回應，透過 LLM 生成溫馨、同理心且在地化的回覆。
@@ -14,8 +40,19 @@ async function getCompanionReply({
   dietaryAgentResponse,
   userPrompt,
   dietaryAgentError,
+  userProfileContext,
   tempStory = []
 }) {
+  const localizedProfileContext = userProfileContext
+    ? {
+        ...userProfileContext,
+        dietGoal: displayDietGoal(userProfileContext.dietGoal),
+        healthConditions: Array.isArray(userProfileContext.healthConditions)
+          ? userProfileContext.healthConditions.map(displayHealthCondition).filter(Boolean)
+          : []
+      }
+    : null;
+
   // 飲食紀錄意圖處理 (分流 B 極速卡片數據與成功對話組裝，由前端實作延遲渲染)
   if (screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
@@ -49,6 +86,7 @@ async function getCompanionReply({
       emotion,
       dietaryAgentResponse,
       dietaryAgentError,
+      userProfileContext: localizedProfileContext,
       tempStory
     });
   } catch (error) {

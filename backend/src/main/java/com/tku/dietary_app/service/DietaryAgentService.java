@@ -6,6 +6,7 @@ import com.tku.dietary_app.dto.DietaryAgentPayload.HealthConditionDto;
 import com.tku.dietary_app.dto.DietaryAgentPayload.WeeklyDietRecordDto;
 import com.tku.dietary_app.dto.DietaryAskRequest;
 import com.tku.dietary_app.dto.DietaryDishNutritionRequest;
+import com.tku.dietary_app.dto.UserProfileResponse;
 import com.tku.dietary_app.entity.DietRecord;
 import com.tku.dietary_app.entity.UserProfile;
 import com.tku.dietary_app.exception.ResourceNotFoundException;
@@ -27,6 +28,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -56,6 +58,71 @@ public class DietaryAgentService {
 
     @Value("${app.partner.dietary.dish-nutrition-path:/nutritionist-agent/dish-nutrition}")
     private String partnerApiDishNutritionPath;
+
+    @Value("${app.partner.companion.base-url:http://127.0.0.1:3000}")
+    private String companionApiBaseUrl;
+
+    public Object reply(Long userId, Map<String, Object> request, String traceId) {
+        String runId = normalizeTraceId(traceId);
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料"));
+
+        Object dietaryResponse = null;
+        String dietaryError = null;
+        Object dietaryRequestValue = request.get("dietary_agent_request");
+        if (dietaryRequestValue != null) {
+            DietaryAskRequest dietaryRequest = toDietaryAskRequest(dietaryRequestValue);
+            try {
+                DietaryAgentPayload payload = buildPayload(userId, dietaryRequest, userProfile);
+                dietaryResponse = callPartnerApi(partnerApiAskPath, payload, runId);
+            } catch (UpstreamServiceException ex) {
+                dietaryError = ex.getMessage();
+                log.warn("[{}] [DietaryAgent] NutritionistAgent 呼叫失敗，改由 Companion 使用個人資料回答", runId);
+            }
+        }
+
+        Map<String, Object> companionRequest = new LinkedHashMap<>();
+        companionRequest.put("user_prompt", request.get("user_prompt"));
+        companionRequest.put("screening", request.get("screening"));
+        companionRequest.put("emotion", request.get("emotion"));
+        companionRequest.put("dietary_agent_response", dietaryResponse);
+        companionRequest.put("dietary_agent_error", dietaryError);
+        companionRequest.put("user_profile_context", UserProfileResponse.fromEntity(userProfile));
+        companionRequest.put("temp_story", request.get("temp_story"));
+
+        return callCompanion(companionRequest, runId);
+    }
+
+    private DietaryAskRequest toDietaryAskRequest(Object value) {
+        if (!(value instanceof Map<?, ?> source)) {
+            throw new IllegalArgumentException("dietary_agent_request 格式不正確");
+        }
+
+        DietaryAskRequest request = new DietaryAskRequest();
+        request.setQuestion(asString(source.get("question")));
+        request.setQuestionType(asString(source.get("question_type")));
+
+        List<DietaryAskRequest.DishInfoDto> dishes = new ArrayList<>();
+        Object dishListValue = source.get("dish_info_list");
+        if (dishListValue instanceof List<?> dishList) {
+            for (Object item : dishList) {
+                if (!(item instanceof Map<?, ?> dish)) {
+                    continue;
+                }
+                DietaryAskRequest.DishInfoDto dishInfo = new DietaryAskRequest.DishInfoDto();
+                dishInfo.setDishName(asString(dish.get("dish_name")));
+                Object amount = dish.get("amount");
+                dishInfo.setAmount(amount instanceof Number number ? number.intValue() : 1);
+                dishes.add(dishInfo);
+            }
+        }
+        request.setDishInfoList(dishes);
+        return request;
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
 
     public Object ask(Long userId, DietaryAskRequest request) {
         return ask(userId, request, null);
@@ -226,6 +293,24 @@ public class DietaryAgentService {
             throw new UpstreamServiceException("dietary partner API 連線逾時或無法連線");
         } catch (RestClientException ex) {
             throw new UpstreamServiceException("dietary partner API 呼叫失敗");
+        }
+    }
+
+    private Object callCompanion(Object payload, String traceId) {
+        String url = companionApiBaseUrl.endsWith("/")
+                ? companionApiBaseUrl.substring(0, companionApiBaseUrl.length() - 1) + "/companion/reply"
+                : companionApiBaseUrl + "/companion/reply";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Trace-Id", normalizeTraceId(traceId));
+
+        try {
+            return restTemplate.postForObject(url, new HttpEntity<>(payload, headers), Object.class);
+        } catch (ResourceAccessException ex) {
+            throw new UpstreamServiceException("Companion API 連線逾時或無法連線");
+        } catch (RestClientException ex) {
+            throw new UpstreamServiceException("Companion API 呼叫失敗");
         }
     }
 

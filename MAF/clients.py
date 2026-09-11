@@ -30,7 +30,8 @@ def sanitize_temp_story(value: Any) -> list[dict[str, str]]:
         if role not in {"user", "assistant"} or not isinstance(content, str):
             continue
         sanitized.append({"role": role, "content": content.strip()[:300]})
-    return sanitized[-3:]
+    # 保留最近 10 組來回，也就是最多 20 則訊息。
+    return sanitized[-20:]
 
 
 def sanitize_screening(raw: Any) -> dict[str, Any]:
@@ -115,7 +116,7 @@ class WorkflowServices:
 
     async def prepare(self, user_prompt: str, temp_story: list[dict[str, str]]) -> dict[str, Any]:
         trace("IntakeAgent", "OPENAI_ANALYSIS", "呼叫 OpenAI 分析意圖、情緒、料理與份量")
-        analysis = await self._analyze(user_prompt, temp_story)
+        analysis = await self._analyze(user_prompt)
         screening = analysis["screening"]
         trace_payload("IntakeAgent", "OUTPUT", "analysis", analysis)
 
@@ -140,27 +141,6 @@ class WorkflowServices:
             "dietary_agent_request": build_dietary_agent_request(screening, user_prompt),
         }
 
-    async def call_dietary_agent(
-        self, request_body: dict[str, Any], authorization: str | None
-    ) -> dict[str, Any]:
-        headers = {"Content-Type": "application/json", TRACE_HEADER: get_trace_id()}
-        if authorization:
-            headers["Authorization"] = authorization
-        trace_payload("DietaryAgent", "INPUT", "request", request_body)
-        trace("MAF", "CALL_DIETARY_AGENT", f"POST /dietary-agent/ask question={summarize(request_body.get('question'))}")
-        async with httpx.AsyncClient(
-            timeout=self.settings.request_timeout_seconds, transport=self._transport
-        ) as client:
-            response = await client.post(
-                f"{self.settings.dietary_agent_api_url}/dietary-agent/ask",
-                headers=headers,
-                json=request_body,
-            )
-        response.raise_for_status()
-        trace_payload("DietaryAgent", "OUTPUT", "response", response.json())
-        trace("DietaryAgent", "RETURNED", f"飲食建議處理完成 HTTP {response.status_code}")
-        return response.json()
-
     async def create_diet_records(
         self, records: list[dict[str, Any]], authorization: str | None
     ) -> dict[str, Any]:
@@ -180,14 +160,19 @@ class WorkflowServices:
         trace("DietaryAgent", "RECORDS_SAVED", f"資料庫寫入完成 HTTP {response.status_code}")
         return response.json()
 
-    async def fetch_dish_nutrition(self, dish_name: str) -> dict[str, float]:
+    async def fetch_dish_nutrition(
+        self, dish_name: str, authorization: str | None
+    ) -> dict[str, float]:
         trace("MAF", "CALL_NUTRITION", f"查詢料理營養：{summarize(dish_name, 40)}")
+        headers = {"Content-Type": "application/json", TRACE_HEADER: get_trace_id()}
+        if authorization:
+            headers["Authorization"] = authorization
         async with httpx.AsyncClient(
             timeout=self.settings.request_timeout_seconds, transport=self._transport
         ) as client:
             response = await client.post(
                 f"{self.settings.dietary_agent_api_url}/dietary-agent/dish-nutrition",
-                headers={"Content-Type": "application/json", TRACE_HEADER: get_trace_id()},
+                headers=headers,
                 json={"dish_name": dish_name},
             )
         response.raise_for_status()
@@ -224,43 +209,48 @@ class WorkflowServices:
         dietary_agent_response: dict[str, Any] | None,
         dietary_agent_error: str | None,
     ) -> str:
+        intent = context.get("screening", {}).get("intent_category")
+        authorization = context.get("authorization")
         body = {
             "user_prompt": context["user_prompt"],
             "screening": context["screening"],
             "emotion": context["emotion"],
             "dietary_agent_response": dietary_agent_response,
             "dietary_agent_error": dietary_agent_error,
+            "user_profile_context": None,
             "temp_story": context["temp_story"],
         }
-        trace_payload("CompanionAgent", "INPUT", "request", body)
-        trace("MAF", "CALL_COMPANION", "呼叫 CompanionAgent 產生最終自然語言回覆")
+        headers = {"Content-Type": "application/json", TRACE_HEADER: get_trace_id()}
+        if intent in {"general_chat", "dish_advice"}:
+            body["dietary_agent_request"] = context.get("dietary_agent_request")
+            target_url = f"{self.settings.dietary_agent_api_url}/dietary-agent/reply"
+            if authorization:
+                headers["Authorization"] = authorization
+            trace("MAF", "ROUTE_DIETARY_AGENT", "將對話交給 DietaryAgent 處理")
+        else:
+            target_url = f"{self.settings.companion_api_url}/companion/reply"
+            trace("MAF", "ROUTE_COMPANION", "將對話交給 CompanionAgent 處理")
+
         async with httpx.AsyncClient(
             timeout=self.settings.request_timeout_seconds, transport=self._transport
         ) as client:
             response = await client.post(
-                f"{self.settings.companion_api_url}/companion/reply",
-                headers={TRACE_HEADER: get_trace_id()},
+                target_url,
+                headers=headers,
                 json=body,
             )
         response.raise_for_status()
-        trace("CompanionAgent", "RETURNED", f"最終回覆完成 HTTP {response.status_code}")
+        trace("MAF", "RETURNED", f"最終回覆完成 HTTP {response.status_code}")
         data = response.json()
-        trace_payload("CompanionAgent", "OUTPUT", "response", data)
         reply = data.get("companion_reply")
         if not isinstance(reply, str):
             raise RuntimeError("Companion Agent returned an invalid reply.")
         return reply
 
-    async def _analyze(
-        self, user_prompt: str, temp_story: list[dict[str, str]]
-    ) -> dict[str, dict[str, Any]]:
+    async def _analyze(self, user_prompt: str) -> dict[str, dict[str, Any]]:
         local_time = datetime.now(ZoneInfo("Asia/Taipei")).strftime("%Y/%m/%d %H:%M:%S")
-        history = "\n".join(
-            f"{'使用者' if item['role'] == 'user' else '米粒'}: {item['content']}"
-            for item in temp_story
-        ) or "無歷史對話"
         prompt_with_time = (
-            f'【歷史對話紀錄】:\n{history}\n\n當前系統時間: {local_time}\n'
+            f"當前系統時間: {local_time}\n"
             f'使用者最新輸入: "{user_prompt}"'
         )
         body = {

@@ -55,7 +55,7 @@ class _HomeViewState extends State<HomeView>
 
   List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
   List<Map<String, String>> _tempStory =
-      []; // 前端託管最近最多 10 則訊息 ([{role: 'user'|'assistant', content: '...'}])
+      []; // 前端託管最近最多 10 組來回訊息 ([{role: 'user'|'assistant', content: '...'}])
   DateTime? _lastUpdateTime; // 最後互動時間戳，供 24h 閒置檢測比對
 
   String _stripEmojis(String text) {
@@ -315,10 +315,10 @@ class _HomeViewState extends State<HomeView>
     });
   }
 
-  /// 將新對話推入 tempStory，維持最多 10 則訊息的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
+  /// 將新對話推入 tempStory，維持最多 10 組來回（20 則訊息）的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
   void _appendTempStory(String role, String content) async {
     _tempStory.add({'role': role, 'content': content});
-    if (_tempStory.length > 10) {
+    if (_tempStory.length > 20) {
       _tempStory.removeAt(0);
     }
     _lastUpdateTime = DateTime.now();
@@ -726,7 +726,10 @@ class _HomeViewState extends State<HomeView>
         context: context,
         barrierDismissible: true,
         builder: (context) => Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 24,
+          ),
           clipBehavior: Clip.antiAlias,
           child: SizedBox(
             width: 430,
@@ -734,10 +737,7 @@ class _HomeViewState extends State<HomeView>
             child: Column(
               children: [
                 const Expanded(
-                  child: ReportPage(
-                    initialViewType: 1,
-                    embedded: true,
-                  ),
+                  child: ReportPage(initialViewType: 1, embedded: true),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
@@ -756,7 +756,10 @@ class _HomeViewState extends State<HomeView>
                       ),
                       child: const Text(
                         '太棒了，我知道了！',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -2065,6 +2068,7 @@ class _HomeViewState extends State<HomeView>
       barrierDismissible: false,
       builder: (ctx) {
         bool isSaving = false;
+        String? saveErrorMessage;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -2079,18 +2083,49 @@ class _HomeViewState extends State<HomeView>
                 borderRadius: BorderRadius.circular(20),
               ),
               backgroundColor: AppColors.background,
-              title: Row(
-                children: const [
-                  Icon(Icons.edit_note, color: AppColors.primary, size: 28),
-                  SizedBox(width: 8),
-                  Text(
-                    '核對與修改飲食紀錄草稿',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: AppColors.textPrimary,
-                    ),
+              title: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.edit_note, color: AppColors.primary, size: 28),
+                      SizedBox(width: 8),
+                      Text(
+                        '核對與修改飲食紀錄草稿',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
+                  if (saveErrorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.redAccent.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Text(
+                        saveErrorMessage!,
+                        style: const TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
               content: SizedBox(
@@ -2728,7 +2763,10 @@ class _HomeViewState extends State<HomeView>
                   onPressed: isSaving
                       ? null
                       : () async {
-                          setDialogState(() => isSaving = true);
+                          setDialogState(() {
+                            isSaving = true;
+                            saveErrorMessage = null;
+                          });
                           try {
                             final mafConfirmationId = confirmationId;
                             if (mafConfirmationId == null ||
@@ -2796,17 +2834,20 @@ class _HomeViewState extends State<HomeView>
                                 ),
                               );
                             }
-                          } catch (_) {
-                            setDialogState(() => isSaving = false);
-                            debugPrint('儲存飲食草稿失敗');
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('儲存失敗，請稍後再試。'),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
+                          } catch (error) {
+                            final rawMessage = error
+                                .toString()
+                                .replaceFirst('Exception: ', '')
+                                .trim();
+                            if (ctx.mounted) {
+                              setDialogState(() {
+                                isSaving = false;
+                                saveErrorMessage = rawMessage.isEmpty
+                                    ? '儲存失敗，請稍後再試。'
+                                    : rawMessage;
+                              });
                             }
+                            debugPrint('儲存飲食草稿失敗：$error');
                           }
                         },
                   child: isSaving

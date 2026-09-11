@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, Protocol
-
 from agent_framework import Case, Default, Executor, WorkflowBuilder, WorkflowContext, handler
 from typing_extensions import Never
 
@@ -11,15 +10,13 @@ from .trace import summarize, trace
 class ConversationServices(Protocol):
     async def prepare(self, user_prompt: str, temp_story: list[dict[str, str]]) -> dict[str, Any]: ...
 
-    async def call_dietary_agent(
-        self, request_body: dict[str, Any], authorization: str | None
-    ) -> dict[str, Any]: ...
-
     async def create_diet_records(
         self, records: list[dict[str, Any]], authorization: str | None
     ) -> dict[str, Any]: ...
 
-    async def fetch_dish_nutrition(self, dish_name: str) -> dict[str, float]: ...
+    async def fetch_dish_nutrition(
+        self, dish_name: str, authorization: str | None
+    ) -> dict[str, float]: ...
 
     async def call_companion_reply(
         self,
@@ -81,21 +78,10 @@ class DietaryAdviceExecutor(Executor):
 
     @handler
     async def process(self, context: dict, ctx: WorkflowContext[Never, dict]) -> None:
-        dietary_response: dict[str, Any] | None = None
-        dietary_error: str | None = None
-        try:
-            trace("MAF", "AGENT_SELECTED", "輪到 DietaryAgent：整理個人資料並取得飲食建議")
-            dietary_response = await self.services.call_dietary_agent(
-                context["dietary_agent_request"], context.get("authorization")
-            )
-        except Exception as error:
-            dietary_error = str(error)
-            trace("MAF", "DOWNSTREAM_FAILED", f"DietaryAgent 失敗：{summarize(error)}")
-
-        trace("MAF", "AGENT_SELECTED", "輪到 CompanionAgent：將處理結果轉成自然語言")
-        reply = await self.services.call_companion_reply(context, dietary_response, dietary_error)
+        trace("MAF", "AGENT_SELECTED", "分流至 DietaryAgent 處理飲食建議")
+        reply = await self.services.call_companion_reply(context, None, None)
         trace("MAF", "COMPLETED", "飲食建議流程完成")
-        await ctx.yield_output(_response_payload(context, reply, dietary_error))
+        await ctx.yield_output(_response_payload(context, reply, None))
 
 
 def create_conversation_workflow(services: ConversationServices):

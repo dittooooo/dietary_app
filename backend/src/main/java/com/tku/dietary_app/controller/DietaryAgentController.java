@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/dietary-agent")
 @RequiredArgsConstructor
@@ -35,6 +37,18 @@ public class DietaryAgentController {
                 .orElseThrow(() -> new ResourceNotFoundException("找不到登入使用者"));
 
         return ResponseEntity.ok(ApiResponse.success(dietaryAgentService.ask(user.getId(), request, traceId)));
+    }
+
+    @PostMapping("/reply")
+    public ResponseEntity<?> reply(
+            @RequestBody Map<String, Object> request,
+            @RequestHeader(value = "X-Trace-Id", required = false) String traceId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("找不到登入使用者"));
+
+        return ResponseEntity.ok(dietaryAgentService.reply(user.getId(), request, traceId));
     }
 
     @PostMapping("/dish-nutrition")

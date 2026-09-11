@@ -7,6 +7,7 @@ import uuid
 from datetime import date
 from typing import Any
 
+import httpx
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -174,6 +175,19 @@ def create_app(services: ConversationServices | None = None) -> FastAPI:
                 output["status"] = "COMPLETED"
             trace_payload("MAF", "OUTPUT", "frontend_response", output)
             return output
+        except httpx.HTTPStatusError as error:
+            status_code = error.response.status_code
+            if status_code in {401, 403}:
+                trace("MAF", "AUTH_FAILED", "個人化飲食服務驗證失效，交由前端刷新登入憑證", level=logging.WARNING)
+                return JSONResponse(
+                    status_code=status_code,
+                    content={
+                        "success": False,
+                        "error_code": "AUTHENTICATION_REQUIRED",
+                        "error_message": "登入狀態需要更新，請重試。",
+                    },
+                )
+            raise
         except OpenAIServiceError as error:
             trace("MAF", "INTAKE_FAILED", f"OpenAI 呼叫失敗：{summarize(error)}", level=logging.ERROR)
             return JSONResponse(
@@ -246,7 +260,9 @@ def create_app(services: ConversationServices | None = None) -> FastAPI:
             trace("MAF", "DOWNSTREAM_PROCESSING", "補齊營養資料並寫入飲食紀錄")
             for record in records:
                 try:
-                    nutrition = await current_services.fetch_dish_nutrition(record["dish_name"])
+                    nutrition = await current_services.fetch_dish_nutrition(
+                        record["dish_name"], authorization
+                    )
                 except Exception:
                     nutrition = {}
                 amount = record["amount"]
