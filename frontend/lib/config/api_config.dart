@@ -37,8 +37,48 @@ class ApiConfig {
       return _nutritionistBaseUrlOverride;
     }
 
+    if (kIsWeb) {
+      return 'http://localhost:8000';
+    }
+
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:8000';
+    }
+
     final serverUri = Uri.parse(serverBaseUrl);
     return serverUri.replace(port: 8000, path: '').toString();
+  }
+
+  static List<String> get nutritionistCandidateBaseUrls {
+    final primary = nutritionistBaseUrl;
+    final candidates = <String>[primary];
+
+    if (kIsWeb) {
+      return candidates;
+    }
+
+    if (Platform.isAndroid) {
+      for (final url in const [
+        'http://10.0.2.2:8000',
+        'http://127.0.0.1:8000',
+        'http://localhost:8000',
+      ]) {
+        if (!candidates.contains(url)) {
+          candidates.add(url);
+        }
+      }
+      return candidates;
+    }
+
+    for (final url in const [
+      'http://localhost:8000',
+      'http://127.0.0.1:8000',
+    ]) {
+      if (!candidates.contains(url)) {
+        candidates.add(url);
+      }
+    }
+    return candidates;
   }
 
   /// MAF Workflow 的 Base URL (Port 3001)
@@ -49,7 +89,9 @@ class ApiConfig {
 
     try {
       final uri = Uri.parse(serverBaseUrl);
-      if (uri.host.isNotEmpty && uri.host != 'localhost' && uri.host != '127.0.0.1') {
+      if (uri.host.isNotEmpty &&
+          uri.host != 'localhost' &&
+          uri.host != '127.0.0.1') {
         return uri.replace(port: 3001).toString();
       }
     } catch (_) {}

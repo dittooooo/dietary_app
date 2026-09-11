@@ -47,6 +47,7 @@ dependencies:
     path: third_party/model_viewer_plus
   webview_flutter: ^4.13.1
   speech_to_text: ^7.0.0
+  flutter_secure_storage: ^11.1.0
 
 dev_dependencies:
   flutter_test:
