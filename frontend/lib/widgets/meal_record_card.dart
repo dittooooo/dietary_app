@@ -111,7 +111,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
 
     for (var rec in _records) {
       if (rec is Map<String, dynamic>) {
-        final rawType = (rec['mealType'] ?? rec['meal'] ?? 'OTHER').toString().toUpperCase();
+        final rawType = (rec['mealType'] ?? 'OTHER').toString().toUpperCase();
         String periodKey = 'OTHER';
         if (rawType.contains('BREAKFAST') || rawType.contains('早餐')) {
           periodKey = 'BREAKFAST';
@@ -325,7 +325,7 @@ class _MealRecordCardState extends State<MealRecordCard> {
                           ),
                           const SizedBox(height: 4.0),
                           ...periodItems.map((item) {
-                            final name = (item['dishName'] ?? item['dish_name'] ?? '餐點').toString();
+                            final name = (item['dishName'] ?? '餐點').toString();
                             final amount = item['amount'] ?? 1;
                             final calVal = _extractCalories(item);
                             final calStr = calVal != null

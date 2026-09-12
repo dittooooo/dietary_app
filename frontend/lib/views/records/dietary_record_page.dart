@@ -122,7 +122,7 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   // === 飲食紀錄解析與精靈提示計算 ===
   DateTime? _recordDate(dynamic record) {
     if (record == null) return null;
-    final value = record['date'] ?? record['mealDate'] ?? record['createdAt'];
+    final value = record['mealDate'];
     if (value == null) return null;
     if (value is String) {
       try {

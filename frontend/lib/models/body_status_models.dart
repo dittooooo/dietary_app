@@ -8,6 +8,7 @@ class BodyStatusModel {
   final double? recommendedProtein;
   final DateTime? lastSettleDate;
 
+  /// 預設建構元
   const BodyStatusModel({
     required this.bodyScore,
     required this.muscleScore,
@@ -19,6 +20,7 @@ class BodyStatusModel {
     this.lastSettleDate,
   });
 
+  /// 工廠建構元，從 Map 創建 BodyStatusModel。
   factory BodyStatusModel.fromJson(Map<String, dynamic> json) {
     return BodyStatusModel(
       bodyScore: _asInt(json['bodyScore'], fallback: 50),
@@ -33,6 +35,7 @@ class BodyStatusModel {
   }
 }
 
+/// 結算回應模型。
 class SettlementResponse {
   final bool settled;
   final DateTime? lastSettleDate;
@@ -50,6 +53,7 @@ class SettlementResponse {
   final double? totalProtein;
   final List<DailySettlementResult> results;
 
+  /// 預設建構元
   const SettlementResponse({
     required this.settled,
     required this.lastSettleDate,
@@ -68,6 +72,7 @@ class SettlementResponse {
     required this.results,
   });
 
+  /// 工廠建構元，從 Map 創建 SettlementResponse。
   factory SettlementResponse.fromJson(Map<String, dynamic> json) {
     final bodyType = _asString(json['bodyType'], fallback: 'NORMAL');
     final newBodyType = _asString(json['newBodyType'], fallback: bodyType);
@@ -87,14 +92,12 @@ class SettlementResponse {
       totalCalories: _asDouble(json['totalCalories']),
       recommendedProtein: _asDouble(json['recommendedProtein']),
       totalProtein: _asDouble(json['totalProtein']),
-      results: (json['results'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>()
-          .map(DailySettlementResult.fromJson)
-          .toList(),
+      results: (json['results'] as List<dynamic>? ?? const []).whereType<Map<String, dynamic>>().map(DailySettlementResult.fromJson).toList(),
     );
   }
 }
 
+/// 單日結算結果模型。
 class DailySettlementResult {
   final bool settled;
   final DateTime? recordDate;
@@ -110,6 +113,7 @@ class DailySettlementResult {
   final double? recommendedProtein;
   final double? totalProtein;
 
+  /// 預設建構元
   const DailySettlementResult({
     required this.settled,
     required this.recordDate,
@@ -126,6 +130,7 @@ class DailySettlementResult {
     required this.totalProtein,
   });
 
+  /// 工廠建構元，從 Map 創建 DailySettlementResult。
   factory DailySettlementResult.fromJson(Map<String, dynamic> json) {
     return DailySettlementResult(
       settled: _asBool(json['settled']),
@@ -145,29 +150,34 @@ class DailySettlementResult {
   }
 }
 
+/// 將 dynamic 轉換為 int，若轉換失敗則使用 fallback 值。
 int _asInt(dynamic value, {int fallback = 0}) {
   if (value is int) return value;
   if (value is num) return value.toInt();
   return int.tryParse('${value ?? ''}') ?? fallback;
 }
 
+/// 將 dynamic 轉換為 double，若轉換失敗則回傳 null。
 double? _asDouble(dynamic value) {
   if (value == null) return null;
   if (value is num) return value.toDouble();
   return double.tryParse('$value');
 }
 
+/// 將 dynamic 轉換為 bool，若轉換失敗則回傳 false。
 bool _asBool(dynamic value) {
   if (value is bool) return value;
   return '${value ?? ''}'.toLowerCase() == 'true';
 }
 
+/// 將 dynamic 轉換為 String，若轉換失敗則使用 fallback 值。
 String _asString(dynamic value, {required String fallback}) {
   final text = '${value ?? ''}'.trim();
   if (text.isEmpty || text.toLowerCase() == 'null') return fallback;
   return text;
 }
 
+/// 將 dynamic 轉換為 DateTime，若轉換失敗則回傳 null。
 DateTime? _asDate(dynamic value) {
   final text = '${value ?? ''}'.trim();
   if (text.isEmpty || text.toLowerCase() == 'null') return null;

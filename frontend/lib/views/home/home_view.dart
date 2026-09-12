@@ -23,18 +23,13 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 class HomeView extends StatefulWidget {
   final bool initialOpenChat;
   final bool enableStartupDialogs;
-  const HomeView({
-    super.key,
-    this.initialOpenChat = false,
-    this.enableStartupDialogs = true,
-  });
+  const HomeView({ super.key, this.initialOpenChat = false, this.enableStartupDialogs = true, });
 
   @override
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView>
-    with TickerProviderStateMixin, WidgetsBindingObserver {
+class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver {
   static bool _hasCheckedBodyTransitionOnStartup = false;
 
   final TextEditingController _inputController = TextEditingController();
@@ -43,20 +38,19 @@ class _HomeViewState extends State<HomeView>
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
 
-  late stt.SpeechToText _speech; // 語音轉文字 (SpeechToText) 服務實例
-  bool _isListening = false; // 紀錄目前是否正處於語音收聽/錄音狀態
-  bool _speechAvailable = false; // 紀錄語音辨識服務是否已被順利初始化且可用
-  bool _speechActionInProgress = false; // 避免初始化或啟動流程重複執行
+  late stt.SpeechToText _speech;
+  bool _isListening = false;
+  bool _speechAvailable = false; 
+  bool _speechActionInProgress = false;
 
   late bool _isChatOpen;
   late double _chatPanelX;
   String _userNickname = '使用者';
   String _petType = '米粒(Mili)';
 
-  List<Map<String, dynamic>> _messages = []; // UI 顯示的對話氣泡清單
-  List<Map<String, String>> _tempStory =
-      []; // 前端託管最近最多 10 組來回訊息 ([{role: 'user'|'assistant', content: '...'}])
-  DateTime? _lastUpdateTime; // 最後互動時間戳，供 24h 閒置檢測比對
+  List<Map<String, dynamic>> _messages = [];
+  List<Map<String, String>> _tempStory = []; 
+  DateTime? _lastUpdateTime;
 
   String _stripEmojis(String text) {
     final regex = RegExp(
@@ -64,13 +58,11 @@ class _HomeViewState extends State<HomeView>
       unicode: true,
     );
     String result = text.replaceAll(regex, '');
-    result = result.replaceAll(
-      RegExp(r'[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF]'),
-      '',
-    );
+    result = result.replaceAll( RegExp(r'[\u2700-\u27BF\u2600-\u26FF\u2300-\u23FF]'), '', );
     return result.trim();
   }
 
+  /// 初始化狀態
   @override
   void initState() {
     super.initState();
@@ -79,9 +71,7 @@ class _HomeViewState extends State<HomeView>
     _chatPanelX = widget.initialOpenChat ? 0.0 : 1.0;
     _dogController.setState(DogAnimationState.idle);
     _loadHomeData();
-
-    _speech = stt.SpeechToText(); // 建立語音轉文字元件實例
-    // 語音引擎延遲至點擊時初始化，避免在 initState 阻塞主 UI 執行緒造成 ANR 凍結
+    _speech = stt.SpeechToText();
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       SystemChannels.textInput.invokeMethod('TextInput.hide');
@@ -93,49 +83,36 @@ class _HomeViewState extends State<HomeView>
     });
   }
 
+  /// 釋放資源
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (_isListening) {
-      _speech.stop(); // 頁面銷毀時，若正處於收聽狀態，自動停止錄音以釋放資源
-    }
+    if (_isListening) { _speech.stop(); }
     _inputController.dispose();
     _chatScrollController.dispose();
     super.dispose();
   }
 
-  // === 2. 語音辨識與文字輸入邏輯 (SpeechToText & Text Input) ===
+  /// 初始化語音辨識
   Future<bool> _initSpeech() async {
     try {
-      _speechAvailable = await _speech
-          .initialize(
-            // ASUS 裝置目前會在藍牙耳機路徑建立辨識連線後立即斷線，
-            // 語音輸入先固定走手機麥克風，避免音訊路由造成原生服務卡死。
-            options: <stt.SpeechConfigOption>[
-              stt.SpeechToText.androidNoBluetooth,
-            ],
-            onStatus: (status) {
-              debugPrint('[SpeechToText Status] $status');
-              // 語音辨識結束或停止收聽時，自動更新 UI 狀態
-              if (status == 'done' || status == 'notListening') {
-                if (mounted) setState(() => _isListening = false);
-              }
-            },
-            onError: (errorNotification) {
-              debugPrint(
-                '[SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})',
-              );
-              // 發生語音辨識錯誤時，停止收聽並重置 UI 狀態
-              if (mounted) setState(() => _isListening = false);
-            },
-          )
-          .timeout(
-            const Duration(seconds: 4),
-            onTimeout: () {
-              debugPrint('[SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
-              return false;
-            },
-          );
+      _speechAvailable = await _speech .initialize(
+        options: <stt.SpeechConfigOption>[ stt.SpeechToText.androidNoBluetooth, ],
+        onStatus: (status) {
+          debugPrint('[SpeechToText Status] $status');
+          if (status == 'done' || status == 'notListening') { if (mounted) setState(() => _isListening = false); }
+        },
+        onError: (errorNotification) {
+          debugPrint( '[SpeechToText Error] ${errorNotification.errorMsg} (permanent: ${errorNotification.permanent})', );
+          if (mounted) setState(() => _isListening = false);
+        },
+      ).timeout(
+        const Duration(seconds: 4),
+        onTimeout: () {
+          debugPrint('[SpeechToText] 初始化超時（硬體/模擬器缺少語音引擎服務）');
+          return false;
+        },
+      );
       debugPrint('[SpeechToText] 初始化成功狀態: $_speechAvailable');
     } catch (_) {
       debugPrint('[SpeechToText] 初始化失敗');
@@ -147,7 +124,6 @@ class _HomeViewState extends State<HomeView>
 
   /// 切換語音收聽狀態（開始錄音 / 停止錄音）
   Future<void> _toggleListening() async {
-    // 初始化、取消與啟動都涉及原生語音辨識器，不能同時執行。
     if (_speechActionInProgress) return;
     _speechActionInProgress = true;
 
@@ -178,8 +154,6 @@ class _HomeViewState extends State<HomeView>
       }
 
       if (mounted) setState(() => _isListening = true);
-      // 不再先呼叫 locales()，也不手動傳 localeId：該查詢會在部分
-      // Android 語音服務上開第二個 session，導致真正 listen 前連線被關閉。
       debugPrint('[SpeechToText] 開始監聽語音，使用裝置預設語系');
       await _speech.listen(
         listenOptions: stt.SpeechListenOptions(
@@ -192,9 +166,6 @@ class _HomeViewState extends State<HomeView>
           debugPrint(
             '[SpeechToText Result] 已收到語音辨識結果 (final: ${result.finalResult})',
           );
-          // Android 可能先回傳 notListening/done，再非同步送出最後一筆
-          // finalResult；不能用 _isListening 阻擋這筆結果，否則使用者說完
-          // 話後文字已辨識成功，卻會被 UI 狀態競速直接丟掉。
           if (!mounted) return;
           if (result.recognizedWords.isNotEmpty) {
             setState(() {
@@ -227,6 +198,7 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
+  /// 應用程式生命週期切換
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -234,6 +206,7 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
+  /// 取得使用者儲存金鑰（依使用者帳號隔離）
   Future<String> _getUserStorageKey() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('user_email');
@@ -253,16 +226,12 @@ class _HomeViewState extends State<HomeView>
     final String? storyJson = prefs.getString('temp_story_$userKey');
     final int? lastTimeMs = prefs.getInt('last_update_time_$userKey');
 
-    if (lastTimeMs != null) {
-      _lastUpdateTime = DateTime.fromMillisecondsSinceEpoch(lastTimeMs);
-    }
+    if (lastTimeMs != null) { _lastUpdateTime = DateTime.fromMillisecondsSinceEpoch(lastTimeMs);}
 
     if (storyJson != null) {
       try {
         final List<dynamic> decoded = jsonDecode(storyJson);
-        _tempStory = decoded
-            .map((e) => Map<String, String>.from(e as Map))
-            .toList();
+        _tempStory = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
       } catch (e) {
         debugPrint('載入對話快取失敗');
         _tempStory = [];
@@ -277,9 +246,7 @@ class _HomeViewState extends State<HomeView>
           'text': item['content'] ?? '',
         });
       }
-      setState(() {
-        _messages = loadedMessages;
-      });
+      setState(() { _messages = loadedMessages; });
     }
 
     _check24hIdleTimeout();
@@ -303,24 +270,19 @@ class _HomeViewState extends State<HomeView>
     await prefs.remove('temp_story_$userKey');
     await prefs.remove('last_update_time_$userKey');
 
-    setState(() {
-      _messages = [
-        {
-          'isElf': true,
-          'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！',
-        },
-      ];
-      _tempStory.clear();
-      _lastUpdateTime = DateTime.now();
+    setState(() { _messages = [ {
+        'isElf': true,
+        'text': '嗨 $_userNickname！我是你的飲食夥伴精靈！無論想記錄餐點、詢問營養建議，或是隨意聊聊都歡迎跟我說喔！',
+    }, ];
+    _tempStory.clear();
+    _lastUpdateTime = DateTime.now();
     });
   }
 
   /// 將新對話推入 tempStory，維持最多 10 組來回（20 則訊息）的滑動視窗，並寫入 SharedPreferences 快取（依使用者帳號隔離）
   void _appendTempStory(String role, String content) async {
     _tempStory.add({'role': role, 'content': content});
-    if (_tempStory.length > 20) {
-      _tempStory.removeAt(0);
-    }
+    if (_tempStory.length > 20) { _tempStory.removeAt(0); }
     _lastUpdateTime = DateTime.now();
 
     final prefs = await SharedPreferences.getInstance();
@@ -362,17 +324,13 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // === 3. 寵物數據載入與狀態控制器 (Pet State & Dog Controller) ===
+  ///載入首頁資料。
   Future<void> _loadHomeData() async {
-    // 1. 先從本地快取讀取 (前端輔助，速度快)
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
     final bool isCachedAdmin = cachedRole == 'ROLE_ADMIN';
-    String nick =
-        prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
-    if (isCachedAdmin && nick == '使用者') {
-      nick = '系統管理員';
-    }
+    String nick =  prefs.getString('user_nickname') ?? (isCachedAdmin ? '系統管理員' : '使用者');
+    if (isCachedAdmin && nick == '使用者') { nick = '系統管理員'; }
 
     setState(() {
       _userNickname = prefs.getString('user_nickname') ?? '使用者';
@@ -386,14 +344,13 @@ class _HomeViewState extends State<HomeView>
     });
     await _loadTempStoryFromStorage();
 
-    // 2. 向後端請求最新資料 (後端為主，保持同步)
-    await _syncBodyStatus(prefs);
+    await _syncBodyStatus(prefs); //檢查上次更新時間是否超過24小時
     if (!mounted) return;
 
     final result = await _authService.getUserProfile();
     if (result['success'] == true) {
       final userData = result['data'];
-      final String g = userData['dietGoal'] ?? userData['diet_goal'] ?? '養生';
+      final String g = userData['dietGoal'] ?? '養生';
       await prefs.setString('user_diet_goal', g);
 
       final String? userRole =
@@ -423,38 +380,6 @@ class _HomeViewState extends State<HomeView>
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
 
-    // 0. Try date first (from backend record_date field)
-    final dateVal = record['date'];
-    if (dateVal != null) {
-      if (dateVal is String) {
-        try {
-          return DateTime.parse(dateVal);
-        } catch (_) {}
-      } else if (dateVal is List && dateVal.length >= 3) {
-        try {
-          return DateTime(
-            int.parse(dateVal[0].toString()),
-            int.parse(dateVal[1].toString()),
-            int.parse(dateVal[2].toString()),
-          );
-        } catch (_) {}
-      } else if (dateVal is Map) {
-        try {
-          final y = int.parse(
-            (dateVal['year'] ?? dateVal['yearValue']).toString(),
-          );
-          final m = int.parse(
-            (dateVal['month'] ?? dateVal['monthValue']).toString(),
-          );
-          final d = int.parse(
-            (dateVal['day'] ?? dateVal['dayOfMonth']).toString(),
-          );
-          return DateTime(y, m, d);
-        } catch (_) {}
-      }
-    }
-
-    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -485,31 +410,6 @@ class _HomeViewState extends State<HomeView>
       }
     }
 
-    // 2. Fallback to createdAt
-    final createdAtVal = record['createdAt'];
-    if (createdAtVal != null) {
-      if (createdAtVal is String) {
-        try {
-          return DateTime.parse(createdAtVal);
-        } catch (_) {}
-      } else if (createdAtVal is List && createdAtVal.length >= 3) {
-        try {
-          final y = int.parse(createdAtVal[0].toString());
-          final m = int.parse(createdAtVal[1].toString());
-          final d = int.parse(createdAtVal[2].toString());
-          final h = createdAtVal.length > 3
-              ? int.parse(createdAtVal[3].toString())
-              : 0;
-          final min = createdAtVal.length > 4
-              ? int.parse(createdAtVal[4].toString())
-              : 0;
-          final s = createdAtVal.length > 5
-              ? int.parse(createdAtVal[5].toString())
-              : 0;
-          return DateTime(y, m, d, h, min, s);
-        } catch (_) {}
-      }
-    }
     return null;
   }
 
@@ -1078,7 +978,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // 根據小精靈名稱獲取對應圖標
+  ///根據小精靈名稱獲取對應圖標
   Future<void> _syncBodyStatus(SharedPreferences prefs) async {
     try {
       final status = await _bodyStatusApi.getBodyStatus().timeout(
@@ -1092,6 +992,7 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
+  ///檢查並顯示首頁每日結算
   Future<void> _checkAndShowBodyTransitionOnStartup() async {
     if (_hasCheckedBodyTransitionOnStartup) return;
 
@@ -1159,7 +1060,7 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
-  // 根據小精靈名稱獲取對應顏色
+  ///根據小精靈名稱獲取對應顏色
   Color _getPetColor(String petType) {
     switch (petType) {
       case '奶油皮丘':
@@ -1173,6 +1074,7 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
+  ///切換對話面板
   void _toggleChat(bool open) {
     setState(() {
       _isChatOpen = open;
@@ -1183,8 +1085,8 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
+  ///自動滾動對話清單到底部
   void _scrollToBottom() {
-    // 新增：自動滾動對話清單到底部
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_chatScrollController.hasClients) {
         _chatScrollController.animateTo(
@@ -1196,27 +1098,26 @@ class _HomeViewState extends State<HomeView>
     });
   }
 
+  ///顯示狗的回答動畫然後變為待機
   void _showDogResponseThenIdle() {
     _dogController.setState(DogAnimationState.response);
     Future.delayed(const Duration(milliseconds: 1800), () {
-      if (!mounted || _dogController.state != DogAnimationState.response)
+      if (!mounted || _dogController.state != DogAnimationState.response) {
         return;
+      }
       _dogController.setState(DogAnimationState.idle);
     });
   }
 
-  // === 5. AI 聊天訊息發送與 API 呼叫 (Chat API & Voice Processing) ===
+  ///處理訊息
   void _handleMessage(String text) {
     FocusScope.of(context).unfocus(); // 送出訊息後立刻收起軟鍵盤
     if (text.trim().isEmpty) return;
-
-    // 送出訊息時若語音辨識仍在收聽，先取消語音並重置狀態，避免非同步 callback 覆蓋已清空的輸入框
     if (_isListening) {
       _isListening = false;
       _speech.cancel();
     }
 
-    // 複製一份當前歷史傳給後端
     final payloadHistory = List<Map<String, String>>.from(_tempStory);
     _appendTempStory('user', text);
 
@@ -1316,7 +1217,7 @@ class _HomeViewState extends State<HomeView>
     });
   }
 
-  // === 6. UI 畫面建構主體 (Scaffold & Stack Build) ===
+  ///UI 畫面建構主體
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -1516,7 +1417,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // === 8. 對話訊息列表與輸入框組件 (Chat ListView & Input Bar) ===
+  ///對話面板
   Widget _buildChatPanel() {
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -1669,6 +1570,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///對話訊息
   Widget _buildChatMessage(
     bool isElf,
     String text, {
@@ -1713,13 +1615,10 @@ class _HomeViewState extends State<HomeView>
                     height: 1.55,
                   ),
                 ),
-                // TODO: 這個部分是甚麼呀?
-                // 若米粒回應含有推薦餐點選項 (options)，於泡泡內繪製可點擊的營養成分按鈕
                 if (isElf && options != null) ...[
                   const SizedBox(height: 15),
                   const Divider(height: 1),
                   const SizedBox(height: 10),
-                  // [代碼清理/Lint修正] 在 Spread 運算子 (...) 中直接展開 Iterable，移除贅餘的 .toList()
                   ...options.map(
                     (opt) => Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
@@ -1751,7 +1650,6 @@ class _HomeViewState extends State<HomeView>
               ],
             ),
           ),
-          // 當意圖為「歷史飲食紀錄查詢 (meal_query)」且含有合法日期時，於對話泡泡下方動態掛載卡片
           if (isElf &&
               intentCategory == 'meal_query' &&
               queryDate != null &&
@@ -1774,8 +1672,6 @@ class _HomeViewState extends State<HomeView>
                     ),
                   );
                 },
-                // todo: 補記這天的飲食
-                // 點擊「＋ 補記這天的飲食」跳轉至手動紀錄頁 (帶入解析後的目標日期，並於返回時觸發畫面刷新)
                 onAddRecordForDate: (date) async {
                   final targetDate = DateTime.tryParse(date) ?? DateTime.now();
                   await Navigator.push(
@@ -1796,7 +1692,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // === 9. 體態評估與歷史分析彈窗元件 (Body Status & History Dialogs) ===
+  ///營養素詳細資訊
   void _showNutrientDetail(String name, Map<String, dynamic> nutrients) {
     showModalBottomSheet(
       context: context,
@@ -1903,6 +1799,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///餐廳卡片
   Widget _buildRestaurantCard(String text) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -1946,6 +1843,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///營養卡片
   Widget _buildNutrientCard() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -2011,11 +1909,10 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///解析日期格式
   DateTime _parseDateFromPrompt(String prompt) {
     final now = DateTime.now();
     if (prompt.isEmpty) return now;
-
-    // Matches YYYY/MM/DD, YYYY-MM-DD, YYYY年MM月DD日
     final regFull = RegExp(r'(\d{4})[/-年](\d{1,2})[/-月](\d{1,2})');
     final matchFull = regFull.firstMatch(prompt);
     if (matchFull != null) {
@@ -2025,7 +1922,6 @@ class _HomeViewState extends State<HomeView>
       return DateTime(y, m, d);
     }
 
-    // Matches MM/DD, MM-DD, MM月DD日 (e.g. 8/12, 8月12日)
     final regShort = RegExp(r'(\d{1,2})[/-月](\d{1,2})');
     final matchShort = regShort.firstMatch(prompt);
     if (matchShort != null) {
@@ -2172,8 +2068,6 @@ class _HomeViewState extends State<HomeView>
                         ),
                         const SizedBox(height: 12),
 
-                        // [代碼清理/Lint修正] 在 Spread 運算子 (...) 中直接展開 Iterable，移除贅餘的 .toList()
-                        // 每個餐點獨立成可點擊展開/收合的折疊卡片
                         ...flatCards.asMap().entries.map((cardEntry) {
                           final cardIdx = cardEntry.key;
                           final card = cardEntry.value;
@@ -2890,7 +2784,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  // === 10. 昨日飲食總結彈窗與動態畫筆 (Yesterday Summary Dialog & Painters) ===
+  ///熱量卡片
   Widget _buildCalorieArcGaugeCard(int currentCalories) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2994,6 +2888,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///顯示熱量區域標籤
   Widget _buildGaugeZoneLabel(String zoneTitle, String rangeStr, Color color) {
     return Column(
       children: [
@@ -3018,6 +2913,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///三大營養素比例卡片
   Widget _buildMacronutrientBarChartCard({
     required int carbsPercent,
     required int proteinPercent,
@@ -3106,6 +3002,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///營養素標籤
   Widget _buildMacroLabelItem(String label, double grams) {
     return SizedBox(
       width: 62,
@@ -3135,6 +3032,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///畫圖格線
   Widget _buildDashedGridLine(String label) {
     return Row(
       children: [
@@ -3159,6 +3057,7 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
+  ///顯示單一長條
   Widget _buildSingleBarItem(int pct, Color color) {
     const double plotHeight = 84.0;
     final double barHeight = (pct / 100.0 * plotHeight).clamp(4.0, plotHeight);
@@ -3207,6 +3106,7 @@ class _HomeViewState extends State<HomeView>
   }
 }
 
+///熱量計量表
 class CalorieGaugeArcPainter extends CustomPainter {
   final double currentCalories;
   CalorieGaugeArcPainter({required this.currentCalories});
@@ -3285,6 +3185,7 @@ class CalorieGaugeArcPainter extends CustomPainter {
       oldDelegate.currentCalories != currentCalories;
 }
 
+///營養素資訊
 class _NutrientInfo extends StatelessWidget {
   final String label, value, unit;
   const _NutrientInfo({
@@ -3293,6 +3194,7 @@ class _NutrientInfo extends StatelessWidget {
     required this.unit,
   });
 
+  ///顯示營養素資訊
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -3319,11 +3221,13 @@ class _NutrientInfo extends StatelessWidget {
   }
 }
 
+///顯示三大營養素數值
 class MacronutrientValuesDisplay extends StatelessWidget {
   final double protein;
   final double fat;
   final double carbs;
 
+  ///顯示三大營養素數值
   const MacronutrientValuesDisplay({
     super.key,
     required this.protein,
@@ -3331,6 +3235,7 @@ class MacronutrientValuesDisplay extends StatelessWidget {
     required this.carbs,
   });
 
+  ///三大營養素數值
   @override
   Widget build(BuildContext context) {
     final total = protein + fat + carbs;
@@ -3374,6 +3279,7 @@ class MacronutrientValuesDisplay extends StatelessWidget {
     );
   }
 
+  ///顯示單一營養素數值
   Widget _buildValueItem(String label, double val, double total, String unit) {
     final pct = (val / total * 100).toStringAsFixed(0);
     return Container(

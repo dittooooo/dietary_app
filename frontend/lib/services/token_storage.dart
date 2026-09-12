@@ -1,11 +1,14 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+/// 抽象介面，定義了 Token 的儲存與讀取方法。
 abstract class TokenStore {
+  /// 讀取 AccessToken。
   Future<String?> readAccessToken();
-
+  
+  /// 讀取 RefreshToken。
   Future<String?> readRefreshToken();
 
+  /// 寫入 Token。 
   Future<void> writeAuthTokens({
     required String accessToken,
     required String refreshToken,
@@ -14,103 +17,64 @@ abstract class TokenStore {
     int? refreshTokenExpiresInSeconds,
   });
 
+  /// 清除 Token。
   Future<void> clear();
 }
 
-/// Stores authentication secrets in Android Keystore / iOS Keychain.
+/// 將驗證密鑰儲存在 Android Keystore / iOS Keychain 中。
 class SecureTokenStorage implements TokenStore {
-  static const String accessTokenKey = 'jwt_token';
-  static const String refreshTokenKey = 'refresh_token';
-  static const String tokenTypeKey = 'token_type';
-  static const String accessTokenExpiresKey = 'access_token_expires_in_seconds';
-  static const String refreshTokenExpiresKey =
-      'refresh_token_expires_in_seconds';
+  /// 儲存 AccessToken 的 Key。
+  static const String _accessTokenKey = 'jwt_token';
+  /// 儲存 RefreshToken 的 Key。
+  static const String _refreshTokenKey = 'refresh_token';
+  /// 儲存 TokenType 的 Key。
+  static const String _tokenTypeKey = 'token_type';
+  /// AccessToken 過期時間的 Key。
+  static const String _accessTokenExpiresKey = 'access_token_expires_in_seconds';
+  /// RefreshToken 過期時間的 Key。
+  static const String _refreshTokenExpiresKey = 'refresh_token_expires_in_seconds';
 
+  /// 儲存 Token 的工具。
   final FlutterSecureStorage _storage;
 
-  const SecureTokenStorage({
-    FlutterSecureStorage storage = const FlutterSecureStorage(),
-  }) : _storage = storage;
+  /// 建構子。
+  const SecureTokenStorage({ FlutterSecureStorage storage = const FlutterSecureStorage(), }) : _storage = storage;
 
+  /// 實作 TokenStore 介面，讀取 AccessToken。
   @override
-  Future<String?> readAccessToken() => _storage.read(key: accessTokenKey);
+  Future<String?> readAccessToken() => _storage.read(key: _accessTokenKey);
 
+  /// 實作 TokenStore 介面，讀取 RefreshToken。
   @override
-  Future<String?> readRefreshToken() => _storage.read(key: refreshTokenKey);
+  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
 
+  /// 實作 TokenStore 介面，寫入 Token。
   @override
   Future<void> writeAuthTokens({
-    required String accessToken,
-    required String refreshToken,
-    String tokenType = 'Bearer',
-    int? accessTokenExpiresInSeconds,
-    int? refreshTokenExpiresInSeconds,
+    required String accessToken, required String refreshToken, String tokenType = 'Bearer',
+    int? accessTokenExpiresInSeconds, int? refreshTokenExpiresInSeconds,
   }) async {
-    await _storage.write(key: accessTokenKey, value: accessToken);
-    if (refreshToken.isEmpty) {
-      await _storage.delete(key: refreshTokenKey);
-    } else {
-      await _storage.write(key: refreshTokenKey, value: refreshToken);
-    }
-    await _storage.write(key: tokenTypeKey, value: tokenType);
+    await _storage.write(key: _accessTokenKey, value: accessToken);
+    if (refreshToken.isEmpty) { await _storage.delete(key: _refreshTokenKey);}
+    else { await _storage.write(key: _refreshTokenKey, value: refreshToken);}
+    await _storage.write(key: _tokenTypeKey, value: tokenType);
 
     if (accessTokenExpiresInSeconds != null) {
-      await _storage.write(
-        key: accessTokenExpiresKey,
-        value: '$accessTokenExpiresInSeconds',
-      );
+      await _storage.write( key: _accessTokenExpiresKey, value: '$accessTokenExpiresInSeconds' );
     }
     if (refreshTokenExpiresInSeconds != null) {
-      await _storage.write(
-        key: refreshTokenExpiresKey,
-        value: '$refreshTokenExpiresInSeconds',
-      );
+      await _storage.write( key: _refreshTokenExpiresKey, value: '$refreshTokenExpiresInSeconds' );
     }
-  }
+  } 
 
+  /// 實作 TokenStore 介面，清除 Token。
   @override
   Future<void> clear() async {
-    await _storage.delete(key: accessTokenKey);
-    await _storage.delete(key: refreshTokenKey);
-    await _storage.delete(key: tokenTypeKey);
-    await _storage.delete(key: accessTokenExpiresKey);
-    await _storage.delete(key: refreshTokenExpiresKey);
+    await _storage.delete(key: _accessTokenKey);
+    await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: _tokenTypeKey);
+    await _storage.delete(key: _accessTokenExpiresKey);
+    await _storage.delete(key: _refreshTokenExpiresKey);
   }
 
-  /// Migrates tokens created by older builds from SharedPreferences once.
-  Future<void> migrateLegacyTokens() async {
-    final prefs = await SharedPreferences.getInstance();
-    final secureAccessToken = await readAccessToken();
-    final secureRefreshToken = await readRefreshToken();
-
-    final legacyAccessToken = prefs.getString(accessTokenKey);
-    final legacyRefreshToken = prefs.getString(refreshTokenKey);
-    final legacyTokenType = prefs.getString(tokenTypeKey) ?? 'Bearer';
-    final legacyAccessExpiry = prefs.getInt(accessTokenExpiresKey);
-    final legacyRefreshExpiry = prefs.getInt(refreshTokenExpiresKey);
-
-    if ((secureAccessToken == null || secureAccessToken.isEmpty) &&
-        legacyAccessToken != null &&
-        legacyAccessToken.isNotEmpty) {
-      await writeAuthTokens(
-        accessToken: legacyAccessToken,
-        refreshToken: legacyRefreshToken ?? secureRefreshToken ?? '',
-        tokenType: legacyTokenType,
-        accessTokenExpiresInSeconds: legacyAccessExpiry,
-        refreshTokenExpiresInSeconds: legacyRefreshExpiry,
-      );
-    } else if ((secureRefreshToken == null || secureRefreshToken.isEmpty) &&
-        legacyRefreshToken != null &&
-        legacyRefreshToken.isNotEmpty) {
-      await _storage.write(key: refreshTokenKey, value: legacyRefreshToken);
-    }
-
-    // Remove secrets from the old unencrypted store, whether or not migration
-    // was needed. The next app start will use only secure storage.
-    await prefs.remove(accessTokenKey);
-    await prefs.remove(refreshTokenKey);
-    await prefs.remove(tokenTypeKey);
-    await prefs.remove(accessTokenExpiresKey);
-    await prefs.remove(refreshTokenExpiresKey);
-  }
 }

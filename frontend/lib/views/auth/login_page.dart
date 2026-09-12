@@ -54,65 +54,41 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      await AuthService().clearSession();
-      final result = await AuthService().login(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
-      );
+      await AuthService().clearSession(); // 非同步請求
+      final result = await AuthService().login( _emailController.text.trim(), _passwordController.text.trim(), );
 
       if (mounted) {
         if (result['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
           final userEmail = _emailController.text.trim().toLowerCase();
           await prefs.setString('user_email', userEmail);
-          final role =
-              result['role']?.toString() ?? result['data']?['role']?.toString();
+          final role = result['role']?.toString() ?? result['data']?['role']?.toString();
           final bool isAdmin = role == 'ROLE_ADMIN';
-          if (isAdmin) {
-            await prefs.setString('user_role', 'ROLE_ADMIN');
-          } else {
-            await prefs.setString('user_role', 'ROLE_USER');
-          }
+          if (isAdmin) { await prefs.setString('user_role', 'ROLE_ADMIN'); }
+          else { await prefs.setString('user_role', 'ROLE_USER'); }
 
           // 登入回應中的 needsOnboarding 可能與既有 profile 的狀態不同步。
           // 重新向後端讀取 profile，避免已完成資料填寫的使用者登出後再次進入 onboarding。
           final profileResult = await AuthService().getUserProfile();
-          if (profileResult['success'] == true) {
-            await prefs.setBool(AuthService.needsOnboardingKey, false);
-          } else if (profileResult['statusCode'] == 404) {
-            await prefs.setBool(AuthService.needsOnboardingKey, true);
-          }
+          if (profileResult['success'] == true) { await prefs.setBool(AuthService.needsOnboardingKey, false); }
+          else if (profileResult['statusCode'] == 404) { await prefs.setBool(AuthService.needsOnboardingKey, true); }
 
-          if (!mounted) return;
+          if (!mounted) return; // 檢查 widget 是否仍然掛載
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (context) => const SuccessTransitionPage(
-                title: '登入成功！',
-                shouldNavigate: true,
-              ),
-            ),
+            MaterialPageRoute( builder: (context) => const SuccessTransitionPage( title: '登入成功！', shouldNavigate: true, ), ),
           );
         } else {
-          setState(() {
+          setState(() { // 非同步請求回傳結果
             _emailError = result['email'] != null ? '請確認帳號格式或內容' : null;
-            _passwordError =
-                result['error'] != null || result['password'] != null
-                ? '請確認密碼是否正確'
-                : null;
+            _passwordError = result['error'] != null || result['password'] != null ? '請確認密碼是否正確' : null;
           });
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('登入失敗，請確認帳號密碼後再試。')));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('登入失敗，請確認帳號密碼後再試。')));
         }
       }
     } catch (_) {
       debugPrint('登入請求失敗');
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('無法連線至伺服器，請確認網路連線或稍後再試。')));
-      }
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('無法連線至伺服器，請確認網路連線或稍後再試。')));}
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -120,25 +96,14 @@ class _LoginPageState extends State<LoginPage> {
 
   /// 處理點擊登入按鈕事件，執行輸入欄位本機格式驗證。
   void _handleLoginClick() {
-    FocusManager.instance.primaryFocus?.unfocus();
+    FocusManager.instance.primaryFocus?.unfocus(); // 關閉鍵盤
     bool hasLocalError = false;
     setState(() {
-      _emailError = null;
-      _passwordError = null;
-
-      if (_emailController.text.trim().isEmpty) {
-        _emailError = '請輸入電子郵件';
-        hasLocalError = true;
-      }
-      if (_passwordController.text.isEmpty) {
-        _passwordError = '請輸入密碼';
-        hasLocalError = true;
-      }
+      _emailError = null; _passwordError = null;
+      if (_emailController.text.trim().isEmpty) { _emailError = '請輸入電子郵件'; hasLocalError = true; }
+      if (_passwordController.text.isEmpty) { _passwordError = '請輸入密碼'; hasLocalError = true; }
     });
-
-    if (!hasLocalError) {
-      _login();
-    }
+    if (!hasLocalError) { _login(); }
   }
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。

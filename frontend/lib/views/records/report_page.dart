@@ -764,38 +764,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
 
-    // 0. Try date first (from backend record_date field)
-    final dateVal = record['date'];
-    if (dateVal != null) {
-      if (dateVal is String) {
-        try {
-          return DateTime.parse(dateVal);
-        } catch (_) {}
-      } else if (dateVal is List && dateVal.length >= 3) {
-        try {
-          return DateTime(
-            int.parse(dateVal[0].toString()),
-            int.parse(dateVal[1].toString()),
-            int.parse(dateVal[2].toString()),
-          );
-        } catch (_) {}
-      } else if (dateVal is Map) {
-        try {
-          final y = int.parse(
-            (dateVal['year'] ?? dateVal['yearValue']).toString(),
-          );
-          final m = int.parse(
-            (dateVal['month'] ?? dateVal['monthValue']).toString(),
-          );
-          final d = int.parse(
-            (dateVal['day'] ?? dateVal['dayOfMonth']).toString(),
-          );
-          return DateTime(y, m, d);
-        } catch (_) {}
-      }
-    }
-
-    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -826,31 +794,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       }
     }
 
-    // 2. Fallback to createdAt
-    final createdAtVal = record['createdAt'];
-    if (createdAtVal != null) {
-      if (createdAtVal is String) {
-        try {
-          return DateTime.parse(createdAtVal);
-        } catch (_) {}
-      } else if (createdAtVal is List && createdAtVal.length >= 3) {
-        try {
-          final y = int.parse(createdAtVal[0].toString());
-          final m = int.parse(createdAtVal[1].toString());
-          final d = int.parse(createdAtVal[2].toString());
-          final h = createdAtVal.length > 3
-              ? int.parse(createdAtVal[3].toString())
-              : 0;
-          final min = createdAtVal.length > 4
-              ? int.parse(createdAtVal[4].toString())
-              : 0;
-          final s = createdAtVal.length > 5
-              ? int.parse(createdAtVal[5].toString())
-              : 0;
-          return DateTime(y, m, d, h, min, s);
-        } catch (_) {}
-      }
-    }
     return null;
   }
 
@@ -889,7 +832,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       try {
         if (rDate.isAfter(startLimit.subtract(const Duration(seconds: 1))) &&
             rDate.isBefore(endLimit.add(const Duration(seconds: 1)))) {
-          final String meal = (record['mealType'] ?? record['meal'] ?? '')
+          final String meal = (record['mealType'] ?? '')
               .toString()
               .toUpperCase();
           final double cal = _getCaloriesFromRecord(record);
@@ -1755,8 +1698,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       }).toList();
 
       todayRecords.sort((a, b) {
-        final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
-        final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+        final orderA = _getMealOrder(a['mealType'] ?? 'OTHER');
+        final orderB = _getMealOrder(b['mealType'] ?? 'OTHER');
         return orderA.compareTo(orderB);
       });
 
@@ -1802,10 +1745,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
               itemCount: todayRecords.length,
               itemBuilder: (context, index) {
                 final record = todayRecords[index];
-                final dish =
-                    record['dishName'] ?? record['dish_name'] ?? '未命名餐點';
+                final dish = record['dishName'] ?? '未命名餐點';
                 final meal = _mealTypeDisplay(
-                  record['mealType'] ?? record['meal'] ?? 'OTHER',
+                  record['mealType'] ?? 'OTHER',
                 );
                 final cal = _getCaloriesFromRecord(record).round();
                 final protein = _getProteinFromRecord(record);
@@ -1820,7 +1762,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                   fat: fat,
                   carbs: carbs,
                   mealColor: _getMealColor(
-                    record['mealType'] ?? record['meal'] ?? 'OTHER',
+                    record['mealType'] ?? 'OTHER',
                   ),
                   dish: dish,
                 );
@@ -1847,8 +1789,8 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
         }).toList();
 
         dayRecords.sort((a, b) {
-          final orderA = _getMealOrder(a['mealType'] ?? a['meal'] ?? 'OTHER');
-          final orderB = _getMealOrder(b['mealType'] ?? b['meal'] ?? 'OTHER');
+          final orderA = _getMealOrder(a['mealType'] ?? 'OTHER');
+          final orderB = _getMealOrder(b['mealType'] ?? 'OTHER');
           return orderA.compareTo(orderB);
         });
 
@@ -1945,10 +1887,9 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                           itemCount: recs.length,
                           itemBuilder: (context, rIdx) {
                             final rec = recs[rIdx];
-                            final dish =
-                                rec['dishName'] ?? rec['dish_name'] ?? '未命名';
+                            final dish = rec['dishName'] ?? '未命名';
                             final meal = _mealTypeDisplay(
-                              rec['mealType'] ?? rec['meal'] ?? 'OTHER',
+                              rec['mealType'] ?? 'OTHER',
                             );
                             final cal = _getCaloriesFromRecord(rec).toInt();
                             final protein = _getProteinFromRecord(rec);
@@ -1963,7 +1904,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                               fat: fat,
                               carbs: carbs,
                               mealColor: _getMealColor(
-                                rec['mealType'] ?? rec['meal'] ?? 'OTHER',
+                                rec['mealType'] ?? 'OTHER',
                               ),
                               dish: dish,
                             );

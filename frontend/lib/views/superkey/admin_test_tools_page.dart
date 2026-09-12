@@ -372,12 +372,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
 
-    for (final key in const ['date', 'mealDate', 'createdAt']) {
-      final parsedDate = _parseDateValue(record[key]);
-      if (parsedDate != null) return parsedDate;
-    }
-
-    return null;
+    return _parseDateValue(record['mealDate']);
   }
 
   DateTime? _parseDateValue(dynamic value) {

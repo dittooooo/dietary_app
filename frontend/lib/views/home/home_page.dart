@@ -12,10 +12,6 @@ bool shouldShowAdminMandatoryProfileDialog(
   Map<String, dynamic> profileResult,
 ) {
   if (profileResult['isOffline'] == true) return false;
-
-  // A newly-created administrator has no profile yet. The profile endpoint
-  // correctly returns 404, and that is exactly when the mandatory form is
-  // required.
   if (profileResult['statusCode'] == 404) return true;
 
   final rawData = profileResult['data'];
@@ -23,9 +19,7 @@ bool shouldShowAdminMandatoryProfileDialog(
 
   final profileData = Map<String, dynamic>.from(rawData);
   final healthConditions = profileData['healthConditions'];
-  final hasHealthConditions = healthConditions is Iterable
-      ? healthConditions.isNotEmpty
-      : healthConditions?.toString().trim().isNotEmpty == true;
+  final hasHealthConditions = healthConditions is Iterable ? healthConditions.isNotEmpty : healthConditions?.toString().trim().isNotEmpty == true;
 
   return profileData['nickname']?.toString().trim().isNotEmpty != true ||
       profileData['gender']?.toString().trim().isNotEmpty != true ||
@@ -36,14 +30,12 @@ bool shouldShowAdminMandatoryProfileDialog(
       profileData['dietGoal']?.toString().trim().isNotEmpty != true;
 }
 
-bool shouldEnableHomeStartupDialogs(
-  bool isAdmin,
-  Map<String, dynamic> profileResult,
-) {
+///是否啟用首頁啟動彈窗
+bool shouldEnableHomeStartupDialogs(bool isAdmin,Map<String, dynamic> profileResult) {
   return !isAdmin || !shouldShowAdminMandatoryProfileDialog(profileResult);
 }
 
-// === 1. 主框架頁面與狀態定義 (HomePage & State) ===
+///主框架頁面
 class HomePage extends StatefulWidget {
   final int initialIndex;
   final bool showChat;
@@ -59,6 +51,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+///主框架頁面狀態
 class _HomePageState extends State<HomePage> {
   late int _selectedIndex;
   late List<Widget> _pages;
@@ -67,19 +60,18 @@ class _HomePageState extends State<HomePage> {
   bool _isRoleChecked = false;
   bool _hasShownAdminDialog = false;
 
+  ///初始化
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
-    _selectedReportDate = ValueNotifier(
-      widget.initialReportDate ?? DateTime.now(),
-    );
+    _selectedReportDate = ValueNotifier(widget.initialReportDate ?? DateTime.now(),);
     _avatarRefreshNotifier = ValueNotifier(0);
     _pages = [];
     _checkAdminRole();
   }
 
-  // === 2. 管理員權限檢測與頁面切換邏輯 ===
+  ///管理者權限檢測
   Future<void> _checkAdminRole() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedRole = prefs.getString('user_role');
@@ -103,21 +95,17 @@ class _HomePageState extends State<HomePage> {
       }
     }
 
-    final enableStartupDialogs = shouldEnableHomeStartupDialogs(
-      isAdmin,
-      profileResult,
-    );
-
+    ///啟用首頁啟動彈窗
+    final enableStartupDialogs = shouldEnableHomeStartupDialogs(isAdmin, profileResult);
     if (isAdmin) {
       _applyAdminConfig(enableStartupDialogs: enableStartupDialogs);
-      if (!enableStartupDialogs) {
-        await _showAdminMandatoryProfileDialog(profileResult);
-      }
+      if (!enableStartupDialogs) { await _showAdminMandatoryProfileDialog(profileResult);}
     } else {
       _applyUserConfig();
     }
   }
 
+  ///套用使用者設定
   void _applyUserConfig() {
     if (mounted) {
       setState(() {
@@ -139,6 +127,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  ///套用管理者設定
   void _applyAdminConfig({required bool enableStartupDialogs}) {
     if (mounted) {
       setState(() {
@@ -163,16 +152,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // === 3. 管理員強制補充資料彈窗組件 (Admin Profile Mandatory Dialog) ===
-  Future<void> _showAdminMandatoryProfileDialog(
-    Map<String, dynamic> profileResult,
-  ) async {
+  ///管理者強制補充資料彈窗
+  Future<void> _showAdminMandatoryProfileDialog(Map<String, dynamic> profileResult) async {
     if (_hasShownAdminDialog) return;
     _hasShownAdminDialog = true;
 
-    if (!shouldShowAdminMandatoryProfileDialog(profileResult)) {
-      return;
-    }
+    if (!shouldShowAdminMandatoryProfileDialog(profileResult)) { return;}
 
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
@@ -203,7 +188,6 @@ class _HomePageState extends State<HomePage> {
               }
             },
             behavior: HitTestBehavior.opaque,
-            // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
             child: Container(color: Colors.black.withValues(alpha: 0.54)),
           ),
           Center(
@@ -236,27 +220,25 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    if (mounted) {
-      setState(() {
-        _selectedIndex = 0;
-      });
-    }
+    if (mounted) { setState(() { _selectedIndex = 0;});}
   }
 
+  ///底部導覽列點擊事件
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() { _selectedIndex = index;});
   }
 
+  ///更新選取日期
   void _updateSelectedReportDate(DateTime date) {
     _selectedReportDate.value = DateTime(date.year, date.month, date.day);
   }
 
+  ///通知頭像已更改
   void _notifyAvatarChanged() {
     _avatarRefreshNotifier.value++;
   }
 
+  ///資源釋放
   @override
   void dispose() {
     _selectedReportDate.dispose();
@@ -264,7 +246,7 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  // === 4. UI 畫面建構與底部導覽列 (Scaffold & BottomNavigationBar) ===
+  ///主框架頁面
   @override
   Widget build(BuildContext context) {
     if (!_isRoleChecked) {
@@ -286,7 +268,6 @@ class _HomePageState extends State<HomePage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
               color: Colors.black.withValues(alpha: 0.15),
               blurRadius: 3.9,
               offset: const Offset(0, -1.17),
@@ -297,7 +278,6 @@ class _HomePageState extends State<HomePage> {
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           selectedItemColor: AppColors.primary,
-          // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
           unselectedItemColor: AppColors.textPrimary.withValues(
             alpha: 0.4,
           ),

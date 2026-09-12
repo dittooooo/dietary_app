@@ -78,8 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
               _fullUserData?['bodyType'] ??
               _fullUserData?['mascotBodyType'] ??
               _fullUserData?['avatarBodyType'] ??
-              _fullUserData?['dietGoal'] ??
-              _fullUserData?['diet_goal'];
+              _fullUserData?['dietGoal'];
           _dogController.setBodyTypeFromBackend(bodyValue);
           _dogController.setState(DogAnimationState.idle);
 
@@ -595,8 +594,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 overlayColor: WidgetStateProperty.resolveWith<Color?>((
                   Set<WidgetState> states,
                 ) {
-                  if (states.contains(WidgetState.pressed))
+                  if (states.contains(WidgetState.pressed)) {
                     return AppColors.secondary.withValues(alpha: 0.1);
+                  }
                   return null;
                 }),
               ),

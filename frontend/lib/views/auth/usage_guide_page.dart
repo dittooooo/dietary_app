@@ -6,6 +6,7 @@ import '../../color/app_colors.dart';
 class UsageGuidePage extends StatelessWidget {
   const UsageGuidePage({super.key});
 
+  ///使用說明資料
   static const List<_GuideSectionData> _sections = [
     _GuideSectionData(
       title: '詢問小精靈',
@@ -61,6 +62,7 @@ class UsageGuidePage extends StatelessWidget {
     ),
   ];
 
+  ///使用說明頁面
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -105,11 +107,12 @@ class UsageGuidePage extends StatelessWidget {
   }
 }
 
+///使用說明分項
 class _GuideSection extends StatelessWidget {
   final _GuideSectionData section;
-
   const _GuideSection({required this.section});
 
+  ///使用說明分項
   @override
   Widget build(BuildContext context) {
     return ListView(
@@ -135,17 +138,15 @@ class _GuideSection extends StatelessWidget {
   }
 }
 
+///使用說明文字卡片
 class _GuideTextCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String text;
 
-  const _GuideTextCard({
-    required this.icon,
-    required this.title,
-    required this.text,
-  });
+  const _GuideTextCard({required this.icon, required this.title, required this.text,});
 
+  ///使用說明文字卡片
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -199,11 +200,12 @@ class _GuideTextCard extends StatelessWidget {
   }
 }
 
+///使用說明截圖
 class _GuideScreenshot extends StatelessWidget {
   final _GuideScreenshotData screenshot;
-
   const _GuideScreenshot({required this.screenshot});
 
+  ///使用說明截圖
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
@@ -238,11 +240,12 @@ class _GuideScreenshot extends StatelessWidget {
   }
 }
 
+///使用說明截圖標題
 class _GuideScreenshotCaption extends StatelessWidget {
   final String label;
-
   const _GuideScreenshotCaption({required this.label});
 
+  ///使用說明截圖標題
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -274,6 +277,7 @@ class _GuideScreenshotCaption extends StatelessWidget {
   }
 }
 
+///使用說明資料
 class _GuideSectionData {
   final String title;
   final IconData icon;
@@ -290,6 +294,7 @@ class _GuideSectionData {
   });
 }
 
+///使用說明截圖資料
 class _GuideScreenshotData {
   final String assetPath;
   final String highlightLabel;

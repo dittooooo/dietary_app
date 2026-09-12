@@ -27,7 +27,6 @@ class EditProfilePage extends StatefulWidget {
 /// 內部使用的 _EditProfilePageState 元件與狀態處理類別。
 class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
-  
   late AuthService _authService;
   
   late TextEditingController _nameController;
@@ -47,19 +46,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Timer? _bannerTimer;
 
   final List<String> _genderOptions = ['男', '女'];
-  final List<String> _diseaseOptions = [
-    '高血壓',
-    '高血脂',
-    '糖尿病',
-    '心血管疾病',
-    '慢性腎臟病',
-    '腦中風',
-    '代謝症候群',
-    '痛風',
-    '高尿酸血症',
-    '胃食道逆流',
-    '無疾病',
-  ];
+  final List<String> _diseaseOptions = [ '高血壓', '高血脂','糖尿病','心血管疾病','慢性腎臟病','腦中風','代謝症候群','痛風','高尿酸血症','胃食道逆流','無疾病',];
   final List<String> _goalOptions = ['減脂', '增肌', '養生'];
 
   bool get _isUserAdmin {
@@ -90,9 +77,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final result = await _authService.getUserProfile();
       if (mounted && result['success'] == true && result['data'] != null) {
         final data = Map<String, dynamic>.from(result['data']);
-        setState(() {
-          _populateFieldsFromData(data);
-        });
+        setState(() { _populateFieldsFromData(data); });
       }
     } catch (_) {}
   }
@@ -104,31 +89,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
     
-    final initialName = (data['nickname'] != null && data['nickname'].toString().trim().isNotEmpty)
-        ? data['nickname'].toString().trim()
-        : (_isUserAdmin ? '系統管理員' : '');
-    if (initialName.isNotEmpty || _nameController.text.isEmpty) {
-      _nameController.text = initialName;
-    }
+    final initialName = (data['nickname'] != null && data['nickname'].toString().trim().isNotEmpty)? data['nickname'].toString().trim(): (_isUserAdmin ? '系統管理員' : '');
+    if (initialName.isNotEmpty || _nameController.text.isEmpty) { _nameController.text = initialName;}
 
     final initialEmail = data['email']?.toString().trim() ?? data['user']?['email']?.toString().trim() ?? '';
-    if (initialEmail.isNotEmpty || _emailController.text.isEmpty) {
-      _emailController.text = initialEmail;
-    }
+    if (initialEmail.isNotEmpty || _emailController.text.isEmpty) { _emailController.text = initialEmail;}
     _loadUserEmail();
 
     final gStr = data['gender']?.toString().toUpperCase() ?? '';
-    if (gStr == 'FEMALE') {
-      _gender = '女';
-    } else if (gStr == 'MALE') {
-      _gender = '男';
-    }
+    if (gStr == 'FEMALE') {_gender = '女';} 
+    else if (gStr == 'MALE') {_gender = '男';}
 
     String yearStr = '';
     String monthStr = '';
     String dayStr = '';
 
-    final rawBirthDateData = data['birthDate'] ?? data['birth_date'] ?? data['birthday'] ?? data['dateOfBirth'];
+    final rawBirthDateData = data['birthDate'];
     final rawAge = data['age'] != null ? int.tryParse(data['age'].toString()) : null;
 
     if (rawBirthDateData is List && rawBirthDateData.length >= 3) {
@@ -137,9 +113,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       dayStr = rawBirthDateData[2].toString().padLeft(2, '0');
     } else if (rawBirthDateData != null && rawBirthDateData.toString().trim().isNotEmpty) {
       var birthStr = rawBirthDateData.toString().trim();
-      if (birthStr.contains('T')) {
-        birthStr = birthStr.split('T')[0];
-      }
+      if (birthStr.contains('T')) { birthStr = birthStr.split('T')[0]; }
       birthStr = birthStr.replaceAll('/', '-').replaceAll('.', '-').replaceAll(' ', '');
       if (birthStr.contains('-')) {
         final parts = birthStr.split('-');
@@ -164,16 +138,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (yearStr.isNotEmpty) _yearController.text = yearStr;
     if (monthStr.isNotEmpty) _monthController.text = monthStr;
     if (dayStr.isNotEmpty) _dayController.text = dayStr;
-
     final hVal = data['height'];
-    if (hVal != null && (double.tryParse(hVal.toString()) ?? 0) > 0) {
-      _heightController.text = hVal.toString();
-    }
-
+    if (hVal != null && (double.tryParse(hVal.toString()) ?? 0) > 0) { _heightController.text = hVal.toString();}
     final wVal = data['weight'];
-    if (wVal != null && (double.tryParse(wVal.toString()) ?? 0) > 0) {
-      _weightController.text = wVal.toString();
-    }
+    if (wVal != null && (double.tryParse(wVal.toString()) ?? 0) > 0) { _weightController.text = wVal.toString();}
 
     if (data['healthConditions'] != null && data['healthConditions'].toString().isNotEmpty) {
       _diseases = ProfileValueMapper.healthConditionsToDisplaySet(data['healthConditions']);
@@ -189,13 +157,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (_emailController.text.isEmpty) {
       final prefs = await SharedPreferences.getInstance();
       final savedEmail = prefs.getString('user_email');
-      final emailToSet = (savedEmail != null && savedEmail.isNotEmpty)
-          ? savedEmail
-          : '';
+      final emailToSet = (savedEmail != null && savedEmail.isNotEmpty) ? savedEmail : '';
       if (emailToSet.isNotEmpty && mounted) {
-        setState(() {
-          _emailController.text = emailToSet;
-        });
+        setState(() { _emailController.text = emailToSet; });
       }
     }
   }
@@ -232,8 +196,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final heightVal = double.tryParse(heightText);
     final weightVal = double.tryParse(weightText);
 
-    if (yearText.isEmpty || monthText.isEmpty || dayText.isEmpty ||
-        yearVal == null || monthVal == null || dayVal == null) {
+    if (yearText.isEmpty || monthText.isEmpty || dayText.isEmpty || yearVal == null || monthVal == null || dayVal == null) {
       _showValidationError('請輸入完整訊息');
       return;
     }
@@ -241,9 +204,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    if (yearVal < 1900 || yearVal > now.year ||
-        monthVal < 1 || monthVal > 12 ||
-        dayVal < 1 || dayVal > 31) {
+    if (yearVal < 1900 || yearVal > today.year || monthVal < 1 || monthVal > 12 || dayVal < 1 || dayVal > 31) {
       _showValidationError('請輸入完整訊息');
       return;
     }
@@ -265,12 +226,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
-    if (_nameController.text.trim().isEmpty ||
-        _gender.trim().isEmpty ||
+    if (_nameController.text.trim().isEmpty || _gender.trim().isEmpty ||
         heightText.isEmpty || heightVal == null || heightVal <= 0 ||
         weightText.isEmpty || weightVal == null || weightVal <= 0 ||
-        _diseases.isEmpty ||
-        _goals.isEmpty) {
+        _diseases.isEmpty || _goals.isEmpty) {
       _showValidationError('請輸入完整訊息');
       return;
     }
@@ -280,7 +239,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ageVal--;
     }
     if (ageVal < 0) ageVal = 0;
-
     final formattedBirthDate = "${parsedBirthDate.year.toString().padLeft(4, '0')}-${parsedBirthDate.month.toString().padLeft(2, '0')}-${parsedBirthDate.day.toString().padLeft(2, '0')}";
 
     try {
@@ -295,19 +253,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'dietGoal': ProfileValueMapper.firstDietGoalToApi(_goals),
         'petType': ProfileValueMapper.petTypeToApi(widget.initialData['petType']?.toString()),
       };
-
       final result = await _authService.updateProfile(body);
 
       if (result['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('個人資料儲存成功！'))
-          );
-          if (widget.onSaveSuccess != null) {
-            widget.onSaveSuccess!();
-          } else if (Navigator.canPop(context)) {
-            Navigator.of(context).pop(true);
-          }
+          ScaffoldMessenger.of(context).showSnackBar( const SnackBar(content: Text('個人資料儲存成功！')) );
+          if (widget.onSaveSuccess != null) { widget.onSaveSuccess!();}
+          else if (Navigator.canPop(context)) { Navigator.of(context).pop(true);}
         }
       } else {
         final msg = result['message'] ?? '伺服器回應錯誤';
@@ -315,9 +267,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(FriendlyErrorMessage.generic))
-        );
+        ScaffoldMessenger.of(context).showSnackBar( const SnackBar(content: Text(FriendlyErrorMessage.generic)) );
       }
     }
   }
@@ -336,9 +286,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
     _bannerTimer = Timer(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() {
-          _showTopBanner = false;
-        });
+        setState(() { _showTopBanner = false; });
       }
     });
   }
@@ -362,7 +310,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ],
       ),
     );
-
     if (confirm != true) return;
 
     try {
@@ -370,9 +317,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (res['success'] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(res['message'] ?? '帳號已成功註銷。')),
-          );
+          ScaffoldMessenger.of(context).showSnackBar( SnackBar(content: Text(res['message'] ?? '帳號已成功註銷。')));
           Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (context) => const LoginPage()),
             (route) => false,
@@ -387,9 +332,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('註銷失敗，請檢查網路連線。')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar( const SnackBar(content: Text('註銷失敗，請檢查網路連線。')));
       }
     }
   }
@@ -412,7 +355,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ),
       body: Stack(
         children: [
-          SingleChildScrollView(
+          SingleChildScrollView(// 主表單內容
             padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
@@ -482,7 +425,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
           ),
 
-          AnimatedPositioned(
+          AnimatedPositioned(// 頂部警告訊息橫幅。
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeOutCubic,
             top: _showTopBanner ? 10 : -70,
@@ -630,12 +573,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildRowItem(
     String label, 
     TextEditingController controller, {
-    bool enabled = true, 
-    bool isNumber = false, 
-    String suffix = '', 
-    String? hintText,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
+        bool enabled = true, bool isNumber = false, String suffix = '', String? hintText,
+        TextInputType? keyboardType, List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
@@ -822,24 +761,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
       ),
     );
-  } // end _buildCustomButton
-} // end _EditProfilePageState
+  } 
+} 
 
 /// DateTextInputFormatter 視圖頁面與狀態類別。
 class DateTextInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
     var text = newValue.text.replaceAll(RegExp(r'\D'), '');
     if (text.length > 8) text = text.substring(0, 8);
 
     var formatted = '';
     for (int i = 0; i < text.length; i++) {
-      if (i == 4 || i == 6) {
-        formatted += '-';
-      }
+      if (i == 4 || i == 6) { formatted += '-'; }
       formatted += text[i];
     }
 

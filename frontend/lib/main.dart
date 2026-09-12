@@ -20,9 +20,6 @@ void main() async {
   );
 
   final prefs = await SharedPreferences.getInstance();
-  await AuthService.migrateLegacyTokenStorage();
-  // 移除舊版本可能保存的完整密碼；之後只使用 Access Token / Refresh Token。
-  await prefs.remove('user_password');
   final token = await AuthService().getAccessToken();
 
   Widget initialScreen = const LoginPage();
@@ -44,7 +41,7 @@ void main() async {
           initialScreen = const HomePage();
         }
       } else {
-        await prefs.clear();
+        await AuthService().clearSession();
         initialScreen = const LoginPage(initialMessage: '登入憑證已失效，請重新登入');
       }
     } catch (_) {

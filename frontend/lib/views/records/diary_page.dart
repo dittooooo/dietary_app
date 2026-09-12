@@ -1,4 +1,3 @@
-// === 1. 外部套件與自定義模組匯入 ===
 import 'dart:convert';
 import 'dart:ui';
 
@@ -16,7 +15,7 @@ import '../../utils/friendly_error_message.dart';
 import '../home/home_page.dart';
 import 'manual_record_page.dart';
 
-// === 2. 日記頁面 Widget 宣告 ===
+///日記頁面
 class DiaryPage extends StatefulWidget {
   final DateTime date;
   final ValueChanged<DateTime>? onDateChanged;
@@ -26,8 +25,8 @@ class DiaryPage extends StatefulWidget {
   State<DiaryPage> createState() => _DiaryPageState();
 }
 
+///日記頁面狀態
 class _DiaryPageState extends State<DiaryPage> {
-  // === 狀態變數與控制器 ===
   late DateTime _selectedDate;
   final Set<String> _expandedMeals = {};
   String? _swipedMeal;
@@ -38,7 +37,7 @@ class _DiaryPageState extends State<DiaryPage> {
   bool _isLoading = false;
   String? _avatarUrl;
 
-  // === 生命週期與用戶/寵物資料載入 ===
+  ///初始化
   @override
   void initState() {
     super.initState();
@@ -47,6 +46,7 @@ class _DiaryPageState extends State<DiaryPage> {
     _fetchRecords();
   }
 
+  ///更新日記頁面
   @override
   void didUpdateWidget(covariant DiaryPage oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -69,6 +69,7 @@ class _DiaryPageState extends State<DiaryPage> {
     }
   }
 
+  ///載入用戶/寵物資料
   Future<void> _loadPetData() async {
     final prefs = await SharedPreferences.getInstance();
     if (mounted) {
@@ -97,7 +98,7 @@ class _DiaryPageState extends State<DiaryPage> {
     }
   }
 
-  // === 日期切換與選擇邏輯 ===
+  ///選擇日期
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -126,6 +127,7 @@ class _DiaryPageState extends State<DiaryPage> {
     widget.onDateChanged?.call(selectedDate);
   }
 
+  ///前往前一天
   void _goToPreviousDay() {
     final prevDate = _selectedDate.subtract(const Duration(days: 1));
     setState(() {
@@ -136,6 +138,7 @@ class _DiaryPageState extends State<DiaryPage> {
     widget.onDateChanged?.call(_selectedDate);
   }
 
+  ///前往下一天
   void _goToNextDay() {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -166,7 +169,7 @@ class _DiaryPageState extends State<DiaryPage> {
     widget.onDateChanged?.call(_selectedDate);
   }
 
-  // === 飲食紀錄 API 獲取與圖片預載入 ===
+  ///獲取飲食紀錄
   Future<void> _fetchRecords() async {
     setState(() => _isLoading = true);
     try {
@@ -174,10 +177,9 @@ class _DiaryPageState extends State<DiaryPage> {
       final records = await DietService().getMyDietRecords();
       debugPrint('飲食紀錄載入完成，共 ${records.length} 筆');
       setState(() {
-        _jwtToken = token; // 確保 JWT Token 在 UI 載入前就緒，防止圖片 headers 變更觸發二次下載
+        _jwtToken = token;
         _allRecords = records;
       });
-      // 預加載所有餐點圖片，點擊展開時瞬間顯示
       for (var record in records) {
         if (record['photoUrl'] != null &&
             (record['photoUrl'] as String).isNotEmpty) {
@@ -187,7 +189,6 @@ class _DiaryPageState extends State<DiaryPage> {
             imageUrl,
             headers: token != null ? {'Authorization': 'Bearer $token'} : null,
           );
-          // [Lint修復] 異步操作(await)後使用 context 前需檢查 mounted，避免 Widget 銷毀後存取 context 造成錯誤
           if (!mounted) return;
           precacheImage(provider, context).catchError((_) {
             debugPrint('飲食圖片預載入失敗');
@@ -201,42 +202,9 @@ class _DiaryPageState extends State<DiaryPage> {
     }
   }
 
-  // === 紀錄日期解析與份數解析工具 ===
+  ///獲取飲食紀錄日期
   DateTime? _getRecordDate(dynamic record) {
     if (record == null) return null;
-
-    // 0. Try date first (from backend record_date field)
-    final dateVal = record['date'];
-    if (dateVal != null) {
-      if (dateVal is String) {
-        try {
-          return DateTime.parse(dateVal);
-        } catch (_) {}
-      } else if (dateVal is List && dateVal.length >= 3) {
-        try {
-          return DateTime(
-            int.parse(dateVal[0].toString()),
-            int.parse(dateVal[1].toString()),
-            int.parse(dateVal[2].toString()),
-          );
-        } catch (_) {}
-      } else if (dateVal is Map) {
-        try {
-          final y = int.parse(
-            (dateVal['year'] ?? dateVal['yearValue']).toString(),
-          );
-          final m = int.parse(
-            (dateVal['month'] ?? dateVal['monthValue']).toString(),
-          );
-          final d = int.parse(
-            (dateVal['day'] ?? dateVal['dayOfMonth']).toString(),
-          );
-          return DateTime(y, m, d);
-        } catch (_) {}
-      }
-    }
-
-    // 1. Try mealDate second
     final mealDateVal = record['mealDate'];
     if (mealDateVal != null) {
       if (mealDateVal is String) {
@@ -267,51 +235,21 @@ class _DiaryPageState extends State<DiaryPage> {
       }
     }
 
-    // 2. Fallback to createdAt
-    final createdAtVal = record['createdAt'];
-    if (createdAtVal != null) {
-      if (createdAtVal is String) {
-        try {
-          return DateTime.parse(createdAtVal);
-        } catch (_) {}
-      } else if (createdAtVal is List && createdAtVal.length >= 3) {
-        try {
-          final y = int.parse(createdAtVal[0].toString());
-          final m = int.parse(createdAtVal[1].toString());
-          final d = int.parse(createdAtVal[2].toString());
-          final h = createdAtVal.length > 3
-              ? int.parse(createdAtVal[3].toString())
-              : 0;
-          final min = createdAtVal.length > 4
-              ? int.parse(createdAtVal[4].toString())
-              : 0;
-          final s = createdAtVal.length > 5
-              ? int.parse(createdAtVal[5].toString())
-              : 0;
-          return DateTime(y, m, d, h, min, s);
-        } catch (_) {}
-      }
-    }
     return null;
   }
 
+  ///獲取飲食紀錄份數
   String _parsePortionAtIndex(dynamic record, int index) {
     if (record == null) return "1份";
     final amountVal = record['amount'];
     final portionsVal = record['portions'];
     final descriptionVal = record['description'];
     final sourceStr =
-        (amountVal != null && amountVal.toString().trim().isNotEmpty)
-        ? amountVal.toString().trim()
-        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty)
-              ? portionsVal.toString().trim()
-              : (descriptionVal != null
-                    ? descriptionVal.toString().trim()
-                    : ''));
+        (amountVal != null && amountVal.toString().trim().isNotEmpty) ? amountVal.toString().trim()
+        : ((portionsVal != null && portionsVal.toString().trim().isNotEmpty) ? portionsVal.toString().trim()
+              : (descriptionVal != null ? descriptionVal.toString().trim() : ''));
 
-    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") {
-      return "1份";
-    }
+    if (sourceStr.isEmpty || sourceStr == "手動輸入飲食紀錄") return "1份";
     final parts = sourceStr.split(RegExp(r',\s*'));
     if (index >= parts.length) return "1份";
     final part = parts[index].trim();
@@ -324,7 +262,7 @@ class _DiaryPageState extends State<DiaryPage> {
         if (val == val.toInt()) {
           return "${val.toInt()}份";
         }
-        return "$val份"; // [Lint修復] 簡化單一變數插值，移除多餘大括號
+        return "$val份"; 
       }
     }
     if (part.contains("份")) {
@@ -335,7 +273,7 @@ class _DiaryPageState extends State<DiaryPage> {
           if (val == val.toInt()) {
             return "${val.toInt()}份";
           }
-          return "$val份"; // [Lint修復] 簡化單一變數插值，移除多餘大括號
+          return "$val份"; 
         }
       }
       return part;
@@ -343,7 +281,7 @@ class _DiaryPageState extends State<DiaryPage> {
     return "1份";
   }
 
-  // 根據日期過濾今日的飲食紀錄
+  ///根據日期過濾今日的飲食紀錄
   List<dynamic> _getRecordsForSelectedDate() {
     return _allRecords.where((record) {
       final rDate = _getRecordDate(record);
@@ -354,25 +292,17 @@ class _DiaryPageState extends State<DiaryPage> {
     }).toList();
   }
 
-  // === UI 建構主邏輯 ===
+  ///日記頁面
   @override
   Widget build(BuildContext context) {
     String dateStr =
         "${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日";
     final todayRecords = _getRecordsForSelectedDate();
 
-    final breakfastRecords = todayRecords
-        .where((r) => r['mealType'] == 'BREAKFAST')
-        .toList();
-    final lunchRecords = todayRecords
-        .where((r) => r['mealType'] == 'LUNCH')
-        .toList();
-    final dinnerRecords = todayRecords
-        .where((r) => r['mealType'] == 'DINNER')
-        .toList();
-    final otherRecords = todayRecords
-        .where((r) => r['mealType'] == 'OTHER' || r['mealType'] == '其他')
-        .toList();
+    final breakfastRecords = todayRecords.where((r) => r['mealType'] == 'BREAKFAST').toList();
+    final lunchRecords = todayRecords.where((r) => r['mealType'] == 'LUNCH').toList();
+    final dinnerRecords = todayRecords.where((r) => r['mealType'] == 'DINNER').toList();
+    final otherRecords = todayRecords.where((r) => r['mealType'] == 'OTHER' || r['mealType'] == '其他').toList();
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -386,13 +316,11 @@ class _DiaryPageState extends State<DiaryPage> {
                   const SizedBox(height: 80),
                   _buildDateBar(dateStr),
                   Expanded(
-                    child: _isLoading
-                        ? const Center(
+                    child: _isLoading ? const Center(
                             child: CircularProgressIndicator(
                               color: AppColors.primary,
                             ),
-                          )
-                        : ListView(
+                          ) : ListView(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                             children: [
                               _buildMealSection(
@@ -476,7 +404,7 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
-  // === 頂部固定標題列區塊 ===
+  /// 頂部固定標題列
   Widget _buildHeader(BuildContext context) {
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     return ClipRect(
@@ -485,9 +413,7 @@ class _DiaryPageState extends State<DiaryPage> {
         child: Container(
           height: 80 + statusBarHeight,
           decoration: BoxDecoration(
-            color: AppColors.background.withValues(
-              alpha: 0.5,
-            ), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.5)
+            color: AppColors.background.withValues(alpha: 0.5),
             border: Border(
               bottom: BorderSide(color: AppColors.border, width: 0.5),
             ),
@@ -536,7 +462,7 @@ class _DiaryPageState extends State<DiaryPage> {
                       BoxShadow(
                         color: Colors.black.withValues(
                           alpha: 0.35,
-                        ), // [API更新] withOpacity 已過時，改用 withValues(alpha: 0.35)
+                        ),  
                         blurRadius: 2.925,
                         offset: const Offset(0, 1.56),
                       ),
@@ -566,7 +492,7 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
-  // === 日期切換工具列 ===
+  /// 日期切換工具列
   Widget _buildDateBar(String dateStr) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -588,7 +514,7 @@ class _DiaryPageState extends State<DiaryPage> {
           BoxShadow(
             color: Colors.black.withValues(
               alpha: 0.05,
-            ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+            ), 
             blurRadius: 0.975,
             offset: const Offset(0, 0.39),
           ),
@@ -627,21 +553,16 @@ class _DiaryPageState extends State<DiaryPage> {
             onPressed: _goToNextDay,
             icon: Icon(
               Icons.chevron_right,
-              color: isLatest
-                  ? AppColors.textPrimary.withValues(
-                      alpha: 0.35,
-                    ) // [API更新] withOpacity 改用 withValues(alpha: 0.35)
-                  : AppColors.textPrimary,
+              color: isLatest ? AppColors.textPrimary.withValues(alpha: 0.35) : AppColors.textPrimary,
               size: 28,
-            ),
-            tooltip: '後一天',
+            ), tooltip: '後一天',
           ),
         ],
       ),
     );
   }
 
-  // === 餐點時段與餐點卡片組件 ===
+  /// 餐點時段與餐點卡片組件
   Widget _buildMealSection(String title, IconData icon, List<dynamic> records) {
     if (records.isEmpty) {
       return Container(
@@ -653,7 +574,7 @@ class _DiaryPageState extends State<DiaryPage> {
             BoxShadow(
               color: AppColors.primary.withValues(
                 alpha: 0.05,
-              ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+              ),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),
@@ -689,11 +610,9 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
+  /// 餐點卡片
   Widget _buildMealCard(
-    String title,
-    IconData icon,
-    List<String> items,
-    dynamic record,
+    String title, IconData icon, List<String> items, dynamic record,
   ) {
     bool isExpanded = _expandedMeals.contains(record['id'].toString());
     bool isSwiped = _swipedMeal == record['id'].toString();
@@ -705,7 +624,6 @@ class _DiaryPageState extends State<DiaryPage> {
         GestureDetector(
           onHorizontalDragUpdate: (details) {
             _dragExtent += details.delta.dx;
-            // [格式修復] if 語句補全大括號，符合 Dart 代碼規範
             if (_dragExtent < -5) {
               setState(() => _swipedMeal = record['id'].toString());
             } else if (_dragExtent > 5) {
@@ -714,7 +632,6 @@ class _DiaryPageState extends State<DiaryPage> {
           },
           onHorizontalDragEnd: (details) {
             _dragExtent = 0;
-            // [格式修復] if 語句補全大括號，符合 Dart 代碼規範
             if (details.primaryVelocity! < -300) {
               setState(() => _swipedMeal = record['id'].toString());
             } else if (details.primaryVelocity! > 300) {
@@ -730,7 +647,7 @@ class _DiaryPageState extends State<DiaryPage> {
                 BoxShadow(
                   color: AppColors.primary.withValues(
                     alpha: 0.1,
-                  ), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
+                  ), 
                   blurRadius: 1.95,
                   offset: const Offset(0, 0.78),
                 ),
@@ -745,23 +662,9 @@ class _DiaryPageState extends State<DiaryPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        _buildActionBtn(
-                          Icons.edit,
-                          "編輯",
-                          AppColors.secondary,
-                          () => _handleEditRecord(record),
-                        ),
-                        _buildActionBtn(
-                          Icons.image,
-                          "相片",
-                          AppColors.accent,
-                          () => _handleUploadPhoto(record),
-                        ),
-                        _buildActionBtn(
-                          Icons.delete,
-                          "刪除",
-                          AppColors.danger,
-                          () => _handleDeleteRecord(record),
+                        _buildActionBtn(Icons.edit, "編輯", AppColors.secondary, () => _handleEditRecord(record)),
+                        _buildActionBtn(Icons.image, "相片", AppColors.accent, () => _handleUploadPhoto(record)),
+                        _buildActionBtn(Icons.delete, "刪除", AppColors.danger, () => _handleDeleteRecord(record),
                         ),
                       ],
                     ),
@@ -902,7 +805,7 @@ class _DiaryPageState extends State<DiaryPage> {
                 BoxShadow(
                   color: Colors.black.withValues(
                     alpha: 0.05,
-                  ), // [API更新] withOpacity 改用 withValues(alpha: 0.05)
+                  ), 
                   blurRadius: 0.975,
                   offset: const Offset(0, 0.39),
                 ),
@@ -929,7 +832,7 @@ class _DiaryPageState extends State<DiaryPage> {
                       decoration: BoxDecoration(
                         color: AppColors.secondary.withValues(
                           alpha: 0.08,
-                        ), // [API更新] withOpacity 改用 withValues(alpha: 0.08)
+                        ), 
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -944,12 +847,9 @@ class _DiaryPageState extends State<DiaryPage> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          // [Lint修復] Spread 展開運算子內直接傳回 Iterable，移除多餘的 .toList()
                           ...nutritionParts.map(
                             (part) => Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 2.0,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 2.0),
                               child: Row(
                                 children: [
                                   Container(
@@ -1020,13 +920,8 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
-  // === 左滑動作按鈕（編輯、上傳相片、刪除） ===
-  Widget _buildActionBtn(
-    IconData icon,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
+  /// 左滑動作按鈕（編輯、上傳相片、刪除）
+  Widget _buildActionBtn(IconData icon, String label, Color color, VoidCallback onTap,) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1041,7 +936,7 @@ class _DiaryPageState extends State<DiaryPage> {
                 shape: BoxShape.circle,
                 color: color.withValues(
                   alpha: 0.1,
-                ), // [API更新] withOpacity 改用 withValues(alpha: 0.1)
+                ), 
               ),
               child: Icon(icon, color: color, size: 20),
             ),
@@ -1060,7 +955,7 @@ class _DiaryPageState extends State<DiaryPage> {
     );
   }
 
-  // === 營養數據解析工具函數 ===
+  /// 營養數據解析工具函數
   List<String> _getNutritionParts(dynamic nutritionVal) {
     if (nutritionVal == null) return [];
 
@@ -1093,7 +988,6 @@ class _DiaryPageState extends State<DiaryPage> {
         final keyStr = k.toString().trim();
         final valStr = formatValue(keyStr, v);
         String displayKey = keyStr;
-        // [格式修復] if/else 語句補全大括號，符合 Dart 規範
         if (keyStr.toLowerCase() == 'calories') {
           displayKey = '熱量';
         } else if (keyStr.toLowerCase() == 'protein') {
@@ -1127,6 +1021,7 @@ class _DiaryPageState extends State<DiaryPage> {
     return [nutritionVal.toString()];
   }
 
+  /// 解析營養字串中的特定營養數值。
   String _parseNutrient(String? nutritionStr, String pattern) {
     if (nutritionStr == null || nutritionStr.isEmpty) return '';
     final regExp = RegExp(
@@ -1137,13 +1032,10 @@ class _DiaryPageState extends State<DiaryPage> {
     return match != null ? (match.group(1) ?? '') : '';
   }
 
-  // === 飲食紀錄 CRUD 操作邏輯 ===
-  // 1. 編輯紀錄
+  /// 編輯 食物紀錄
   Future<void> _handleEditRecord(dynamic record) async {
     setState(() => _swipedMeal = null);
-    final String nutritionStr = record['nutrition'] is Map
-        ? _getNutritionParts(record['nutrition']).join(', ')
-        : (record['nutrition']?.toString() ?? '');
+    final String nutritionStr = record['nutrition'] is Map ? _getNutritionParts(record['nutrition']).join(', '): (record['nutrition']?.toString() ?? '');
     final calVal = _parseNutrient(nutritionStr, r'(?:熱量|calories|kcal)');
     final proVal = _parseNutrient(nutritionStr, r'(?:蛋白質|protein)');
     final fatVal = _parseNutrient(nutritionStr, r'(?:脂肪|fat)');
@@ -1164,10 +1056,10 @@ class _DiaryPageState extends State<DiaryPage> {
     );
     if (result == null || !mounted) return;
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('正在更新餐點資訊...')));
+    /// 顯示載入中提示
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在更新餐點資訊...')));
 
+    /// 更新餐點資訊
     final res = await DietService().updateDietRecord(
       record['id'],
       amount: result.amount,
@@ -1189,25 +1081,21 @@ class _DiaryPageState extends State<DiaryPage> {
     }
   }
 
-  // 2. 上傳相片
+  /// 上傳相片
   Future<void> _handleUploadPhoto(dynamic record) async {
     setState(() => _swipedMeal = null);
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
-        // [Lint修復] 選擇相片異步操作後檢查 mounted
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('正在上傳餐點照片...')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('正在上傳餐點照片...')));
         final bytes = await image.readAsBytes();
         final res = await DietService().uploadDietPhoto(
           record['id'],
           bytes,
           image.name,
         );
-        // [Lint修復] 上傳照片異步操作後檢查 mounted
         if (!mounted) return;
         if (res['success'] == true) {
           ScaffoldMessenger.of(
@@ -1221,7 +1109,6 @@ class _DiaryPageState extends State<DiaryPage> {
         }
       }
     } catch (e) {
-      // [Lint修復] catch 區塊存取 context 前檢查 mounted
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(FriendlyErrorMessage.upload)),
@@ -1229,7 +1116,7 @@ class _DiaryPageState extends State<DiaryPage> {
     }
   }
 
-  // 3. 刪除紀錄
+  /// 刪除 食物紀錄
   void _handleDeleteRecord(dynamic record) {
     setState(() => _swipedMeal = null);
     showDialog(
@@ -1278,6 +1165,7 @@ class _DiaryPageState extends State<DiaryPage> {
   }
 }
 
+/// 編輯 食物紀錄 表單
 class _EditDietRecordFormData {
   const _EditDietRecordFormData({
     required this.amount,
@@ -1294,6 +1182,7 @@ class _EditDietRecordFormData {
   final double carbohydrates;
 }
 
+/// 編輯 食物紀錄 對話框
 class _EditDietRecordDialog extends StatefulWidget {
   const _EditDietRecordDialog({
     required this.dishName,
@@ -1315,6 +1204,7 @@ class _EditDietRecordDialog extends StatefulWidget {
   State<_EditDietRecordDialog> createState() => _EditDietRecordDialogState();
 }
 
+/// 編輯 食物紀錄 對話框 狀態
 class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
   late final TextEditingController _dishNameController;
   late final TextEditingController _amountController;
@@ -1334,6 +1224,7 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
   var _fatEdited = false;
   var _carbohydratesEdited = false;
 
+  /// 初始化狀態
   @override
   void initState() {
     super.initState();
@@ -1348,6 +1239,7 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
       text: widget.initialCarbohydratesText,
     );
 
+    /// 計算每份熱量
     final initialAmount = double.tryParse(widget.initialAmountText) ?? 1;
     _perServingCalories =
         (double.tryParse(widget.initialCaloriesText) ?? 0) / initialAmount;
@@ -1365,6 +1257,7 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     _carbohydratesController.addListener(_handleCarbohydratesChanged);
   }
 
+  /// 釋放資源
   @override
   void dispose() {
     _amountController.removeListener(_recalculateUneditedNutrition);
@@ -1382,26 +1275,30 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     super.dispose();
   }
 
-  String _numberText(double value) => value == value.roundToDouble()
-      ? value.toInt().toString()
-      : value.toString();
+  /// 轉換數字格式
+  String _numberText(double value) => value == value.roundToDouble() ? value.toInt().toString() : value.toString();
 
+  /// 處理 卡路里 輸入
   void _handleCaloriesChanged() {
     _caloriesEdited = !_isUpdatingCalculatedValues;
   }
 
+  /// 處理 蛋白質 輸入
   void _handleProteinChanged() {
     _proteinEdited = !_isUpdatingCalculatedValues;
   }
 
+  /// 處理 脂肪 輸入
   void _handleFatChanged() {
     _fatEdited = !_isUpdatingCalculatedValues;
   }
 
+  /// 處理 碳水化合物 輸入
   void _handleCarbohydratesChanged() {
     _carbohydratesEdited = !_isUpdatingCalculatedValues;
   }
 
+  /// 當 份量 輸入改變時，自動重新計算其他營養素（未手動編輯者）
   void _recalculateUneditedNutrition() {
     final amount = double.tryParse(_amountController.text.trim());
     if (amount == null || amount <= 0) return;
@@ -1424,6 +1321,7 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     _isUpdatingCalculatedValues = false;
   }
 
+  /// 提交
   void _submit() {
     final parsedAmount = double.tryParse(_amountController.text.trim());
     if (parsedAmount == null ||
@@ -1462,6 +1360,7 @@ class _EditDietRecordDialogState extends State<_EditDietRecordDialog> {
     );
   }
 
+  /// 繪製 UI
   @override
   Widget build(BuildContext context) {
     return AlertDialog(

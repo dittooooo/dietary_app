@@ -20,8 +20,7 @@ class InitialInfoPage extends StatefulWidget {
 }
 
 /// 內部使用的 _InitialInfoPageState 元件與狀態處理類別。
-class _InitialInfoPageState extends State<InitialInfoPage>
-    with TickerProviderStateMixin {
+class _InitialInfoPageState extends State<InitialInfoPage> with TickerProviderStateMixin {
   late PageController _pageController;
   late AnimationController _pacmanController;
   late AnimationController _peelController;
@@ -32,6 +31,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   int _animatingFromPage = 0;
   int _animatingToPage = 0;
 
+  ///標題文字排版樣式。
   static const TextStyle _titleStyle = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
@@ -39,18 +39,20 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     fontFamily: 'Roboto',
   );
 
+  ///輸入文字排版樣式。
   static const TextStyle _inputTextStyle = TextStyle(
     fontWeight: FontWeight.bold,
     fontSize: 16,
   );
 
+  ///按鈕文字排版樣式。
   static const TextStyle _buttonTextStyle = TextStyle(
     fontSize: 16,
-
     fontWeight: FontWeight.bold,
     color: Colors.black,
   );
 
+  ///頁面錯誤儲存變數。
   final Map<int, String> _pageErrors = {};
 
   String _name = '';
@@ -63,25 +65,16 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   int? _selectedBirthMonth;
   int? _selectedBirthDay;
 
-  String get _birthDateString =>
-      (_selectedBirthYear != null &&
-          _selectedBirthMonth != null &&
-          _selectedBirthDay != null)
-      ? '${_selectedBirthYear!.toString().padLeft(4, '0')}-${_selectedBirthMonth!.toString().padLeft(2, '0')}-${_selectedBirthDay!.toString().padLeft(2, '0')}'
-      : '';
+  ///計算生日字串。
+  String get _birthDateString => (_selectedBirthYear != null && _selectedBirthMonth != null && _selectedBirthDay != null)
+      ? '${_selectedBirthYear!.toString().padLeft(4, '0')}-${_selectedBirthMonth!.toString().padLeft(2, '0')}-${_selectedBirthDay!.toString().padLeft(2, '0')}': '';
 
+  ///計算年齡。
   int get _calculatedAge {
-    if (_selectedBirthYear == null ||
-        _selectedBirthMonth == null ||
-        _selectedBirthDay == null) {
-      return 0;
-    }
+    if (_selectedBirthYear == null ||  _selectedBirthMonth == null || _selectedBirthDay == null) { return 0; }
     final now = DateTime.now();
     int age = now.year - _selectedBirthYear!;
-    if (now.month < _selectedBirthMonth! ||
-        (now.month == _selectedBirthMonth! && now.day < _selectedBirthDay!)) {
-      age--;
-    }
+    if (now.month < _selectedBirthMonth! || (now.month == _selectedBirthMonth! && now.day < _selectedBirthDay!)) { age--; }
     return age < 0 ? 0 : age;
   }
 
@@ -94,25 +87,17 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   late TextEditingController _ageController;
   late TextEditingController _heightController;
   late TextEditingController _weightController;
-  Set<String> _diseases = {};
-  Set<String> _goals = {};
+  final Set<String> _diseases = {};
+  final Set<String> _goals = {};
 
+  ///預設寵物類型。
   static const String _defaultPetType = '米粒(Mili)';
   bool _isSubmitting = false;
 
-  final List<String> _diseaseOptions = [
-    '高血壓',
-    '高血脂',
-    '糖尿病',
-    '心血管疾病',
-    '慢性腎臟病',
-    '腦中風',
-    '代謝症候群',
-    '痛風',
-    '高尿酸血症',
-    '胃食道逆流',
-    '無疾病',
-  ];
+  ///疾病選項。
+  final List<String> _diseaseOptions = ['高血壓','高血脂','糖尿病','心血管疾病','慢性腎臟病','腦中風','代謝症候群','痛風','高尿酸血症','胃食道逆流','無疾病', ];
+
+  ///目標選項。
   final List<String> _goalOptions = ['減脂', '增肌', '養生'];
 
   /// 初始化 Widget 狀態與訂閱生命週期。
@@ -120,19 +105,12 @@ class _InitialInfoPageState extends State<InitialInfoPage>
   void initState() {
     super.initState();
     _pageController = PageController();
-    _pacmanController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    )..repeat(reverse: true);
+    _pacmanController = AnimationController( vsync: this, duration: const Duration(milliseconds: 300), )..repeat(reverse: true);
 
-    _peelController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
+    _peelController = AnimationController( vsync: this, duration: const Duration(milliseconds: 1000), );
     _peelController.addStatusListener((status) {
       if (_isAnimatingPage) {
-        if ((!_isBackAnimating && status == AnimationStatus.completed) ||
-            (_isBackAnimating && status == AnimationStatus.dismissed)) {
+        if ((!_isBackAnimating && status == AnimationStatus.completed) || (_isBackAnimating && status == AnimationStatus.dismissed)) {
           setState(() {
             _isAnimatingPage = false;
             _pageController.jumpToPage(_animatingToPage);
@@ -164,13 +142,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
 
   /// 清除本地會話憑證與快取資料，並強行退回登入頁面。
   Future<void> _logoutToLogin() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(AuthService.accessTokenKey);
-    await prefs.remove(AuthService.refreshTokenKey);
-    await prefs.remove(AuthService.needsOnboardingKey);
-    await prefs.remove('user_role');
-    await prefs.remove('user_email');
-    await prefs.remove('user_avatar_url');
+    await AuthService().logout();
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -198,9 +170,7 @@ class _InitialInfoPageState extends State<InitialInfoPage>
     if (!_canProceed()) {
       final msg = _validationMessage();
       debugPrint('校驗失敗: $msg');
-      setState(() {
-        _pageErrors[_currentPage] = msg;
-      });
+      setState(() { _pageErrors[_currentPage] = msg; });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       return;
     }
@@ -1794,9 +1764,7 @@ class WashiTapeButtonPainter extends CustomPainter {
 /// WashiPainter 視圖頁面與狀態類別。
 class WashiPainter extends CustomPainter {
   @override
-  void paint(Canvas canvas, Size size) {
-    /* 可擴充紙膠帶條紋圖案的邏輯 */
-  }
+  void paint(Canvas canvas, Size size) {}
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
