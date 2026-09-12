@@ -4,7 +4,7 @@ import logging
 from typing import Any, Dict, List
 
 from .answer_generator import AnswerGenerator
-from .config import NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from .config import ENABLE_TEXT2CYPHER_FALLBACK, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from .cypher_guard import validate_nutrition_rows
 from .disease_rules import retrieve_disease_rules
 from .dish_matcher import DishMatcher, normalize_name
@@ -20,6 +20,7 @@ from .nutrition_calculator import (
 )
 from .retriever import GraphRetriever
 from .template_cypher import SUMMARY_NUTRIENT_NAMES, build_graph_retrieval_cypher
+from .text2cypher_fallback import Text2CypherFallback
 
 logger = logging.getLogger(__name__)
 UNITS = {name: {"熱量": "kcal", "鈉": "mg"}.get(name, "g")
@@ -33,6 +34,12 @@ class NutritionAgent:
         self.dish_matcher = DishMatcher(self.retriever.driver)
         self.nutrition_calculator = NutritionCalculator()
         self.answer_generator = AnswerGenerator()
+        self.text2cypher_fallback = None
+        if ENABLE_TEXT2CYPHER_FALLBACK:
+            try:
+                self.text2cypher_fallback = Text2CypherFallback(self.retriever)
+            except Exception as exc:
+                logger.warning("Text2Cypher fallback is unavailable: %s", exc)
 
     def close(self) -> None:
         self.retriever.close()
@@ -222,6 +229,7 @@ class NutritionAgent:
         candidates = list(amounts)
         matches = [{**m, "amount": amounts[m["input_name"]]}
                    for m in self.dish_matcher.match_dishes(candidates)]
+        matches = self._apply_text2cypher_fallback(matches)
         # Rules are queried separately. Joining multiple diseases to nutrition would multiply totals.
         rows = self._retrieve_nutrition_rows(matches)
         missing = self._missing_candidates_from_rows(candidates, matches, rows)
@@ -239,6 +247,41 @@ class NutritionAgent:
         completed = [by_name[m["input_name"]] if m["input_name"] in by_name
                      else self._empty_nutrition(m["input_name"], m) for m in matches]
         return completed, rows
+
+    def _apply_text2cypher_fallback(
+        self, matches: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        if self.text2cypher_fallback is None:
+            return matches
+
+        resolved = []
+        for match in matches:
+            if match.get("match_status") != "no_match":
+                resolved.append(match)
+                continue
+            try:
+                candidate = self.text2cypher_fallback.resolve(match["input_name"])
+            except Exception as exc:
+                logger.warning("Text2Cypher fallback failed for %r: %s", match["input_name"], exc)
+                resolved.append(match)
+                continue
+            if candidate is None:
+                resolved.append(match)
+                continue
+
+            is_dish = candidate["match_type"] == "dish"
+            resolved.append({
+                **match,
+                "matched_query_name": candidate["name"],
+                "matched_dish_name": candidate["name"] if is_dish else None,
+                "matched_food_id": None if is_dish else candidate["food_id"],
+                "matched_food_name": None if is_dish else candidate["name"],
+                "match_status": "match",
+                "match_score": 60,
+                "match_reason": "LangChain Text2Cypher fallback",
+                "retrieval_strategy": "dish_match" if is_dish else "fooditem_fallback",
+            })
+        return resolved
 
     def _retrieve_nutrition_rows(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         rows = self.retriever.retrieve(build_graph_retrieval_cypher(matches))
