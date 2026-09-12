@@ -145,7 +145,7 @@ public class DietRecordService {
         DietRecord record = dietRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("找不到飲食紀錄 (ID: " + id + ")"));
 
-        Path dir = Paths.get(uploadDir.replace("avatars", "diet"));
+        Path dir = Paths.get(uploadDir, "diet");
         String filename = imageStorageService.storeImage(file, dir, "diet_" + id);
 
         record.setPhotoUrl("/diet/" + filename);
@@ -159,7 +159,7 @@ public class DietRecordService {
             throw new ForbiddenOperationException("無權上傳此紀錄的照片");
         }
 
-        Path dir = Paths.get(uploadDir.replace("avatars", "diet"));
+        Path dir = Paths.get(uploadDir, "diet");
         String filename = imageStorageService.storeImage(file, dir, "diet_" + id);
 
         record.setPhotoUrl("/diet/" + filename);
@@ -304,12 +304,7 @@ public class DietRecordService {
     }
 
     private boolean isManualCustomDish(DietRecordRequest request) {
-        if (hasText(request.getType()) && UserCustomDish.TYPE_MANUAL.equalsIgnoreCase(request.getType().trim())) {
-            return true;
-        }
-
-        String description = normalizeNullableText(request.getDescription());
-        return description != null && description.startsWith("手動新增");
+        return hasText(request.getType()) && UserCustomDish.TYPE_MANUAL.equalsIgnoreCase(request.getType().trim());
     }
 
     private double requireNutritionValue(Double value, String fieldName) {
