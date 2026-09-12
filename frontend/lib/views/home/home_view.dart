@@ -35,13 +35,12 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView>
     with TickerProviderStateMixin, WidgetsBindingObserver {
-  static bool _hasCheckedBodyTransitionOnStartup = false;
-
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
   final AuthService _authService = AuthService();
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
+  bool _hasCheckedBodyTransitionOnStartup = false;
 
   late stt.SpeechToText _speech; // 語音轉文字 (SpeechToText) 服務實例
   bool _isListening = false; // 紀錄目前是否正處於語音收聽/錄音狀態
