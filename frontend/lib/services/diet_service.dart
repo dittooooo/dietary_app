@@ -264,13 +264,18 @@ class DietService {
       final data = _decodeObject(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) { return {'success': true, 'data': data['data'] ?? data};}
 
+      final serverMessage =
+          data['message']?.toString().trim() ??
+          data['error']?.toString().trim();
       return {
         'success': false,
-        'message': _errorMessage(
-          'Create diet record',
-          response.statusCode,
-          response.body,
-        ),
+        'message': serverMessage?.isNotEmpty == true
+            ? serverMessage
+            : _errorMessage(
+                'Create diet record',
+                response.statusCode,
+                response.body,
+              ),
       };
     } catch (e) { return {'success': false, 'message': FriendlyErrorMessage.dietRecord};}
   }
