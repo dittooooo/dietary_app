@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:typed_data';
 import '../../config/api_config.dart';
 import '../../color/app_colors.dart';
-import '../superkey/admin_user_list_page.dart';
 import '../superkey/admin_problem_feedback_page.dart';
 import '../superkey/admin_test_tools_page.dart';
 import '../home/home_page.dart';
@@ -439,14 +438,6 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                       ),
-                      _buildAdminButton('使用者管理', () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AdminUserListPage(),
-                          ),
-                        );
-                      }),
                       _buildAdminButton('問題回饋管理', () {
                         Navigator.push(
                           context,

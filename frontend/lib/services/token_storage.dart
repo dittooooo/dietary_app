@@ -38,8 +38,6 @@ class SecureTokenStorage implements TokenStore {
   @override
   Future<String?> readRefreshToken() => _storage.read(key: refreshTokenKey);
 
-  Future<String?> readTokenType() => _storage.read(key: tokenTypeKey);
-
   @override
   Future<void> writeAuthTokens({
     required String accessToken,

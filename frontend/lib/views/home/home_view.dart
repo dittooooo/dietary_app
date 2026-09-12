@@ -623,6 +623,15 @@ class _HomeViewState extends State<HomeView>
         date.day == targetDate.day;
   }
 
+  bool _isFutureDate(DateTime date) {
+    final now = DateTime.now();
+    return DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).isAfter(DateTime(now.year, now.month, now.day));
+  }
+
   bool _shouldShowDietReportForIntent(String intent) {
     return intent.trim().toLowerCase() == 'meal_query';
   }
@@ -1248,14 +1257,22 @@ class _HomeViewState extends State<HomeView>
                 // 取得 AI 助手識別的意圖類別 (intent_category) 與歷史查詢日期 (query_date)
                 final intent = (res['intent_category'] ?? '').toString();
                 final queryDate = res['query_date']?.toString();
+                final parsedQueryDate = DateTime.tryParse(queryDate ?? '');
+                final isFutureDate =
+                    parsedQueryDate != null && _isFutureDate(parsedQueryDate);
 
                 // 判斷意圖若為 meal_record 且含草稿，採延遲渲染模式 (Delayed Display Pattern)
                 final mealRecords = res['meal_records'] as List<dynamic>? ?? [];
-                if (intent == 'meal_record' && mealRecords.isNotEmpty) {
+                if (isFutureDate &&
+                    (intent == 'meal_record' || intent == 'meal_query')) {
+                  _messages.add({'isElf': true, 'text': replyStr});
+                  _appendTempStory('assistant', replyStr);
+                } else if (intent == 'meal_record' && mealRecords.isNotEmpty) {
                   _showMealRecordDraftDialog(
                     context,
                     mealRecords,
                     userPrompt: text,
+                    queryDate: queryDate,
                     delayedReply: replyStr,
                     confirmationId: res['confirmation_id']?.toString(),
                   );
@@ -2025,10 +2042,12 @@ class _HomeViewState extends State<HomeView>
     BuildContext context,
     List<dynamic> mealRecords, {
     String userPrompt = '',
+    String? queryDate,
     String? delayedReply,
     String? confirmationId,
   }) {
-    final DateTime defaultDate = _parseDateFromPrompt(userPrompt);
+    final DateTime defaultDate =
+        DateTime.tryParse(queryDate ?? '') ?? _parseDateFromPrompt(userPrompt);
     final ScrollController draftScrollController = ScrollController();
 
     // 1. 將所有解析到的餐點攤平為單一獨立的卡片數據結構
@@ -2388,12 +2407,8 @@ class _HomeViewState extends State<HomeView>
                                                         firstDate: DateTime(
                                                           2023,
                                                         ),
-                                                        lastDate: DateTime.now()
-                                                            .add(
-                                                              const Duration(
-                                                                days: 365,
-                                                              ),
-                                                            ),
+                                                        lastDate:
+                                                            DateTime.now(),
                                                       );
                                                   if (picked != null) {
                                                     setDialogState(() {

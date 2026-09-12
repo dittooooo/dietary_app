@@ -52,25 +52,6 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>> refreshAccessToken() async {
-    final refreshToken = await _tokenStorage.readRefreshToken();
-
-    if (refreshToken == null || refreshToken.isEmpty) {
-      return {'success': false, 'message': 'No refresh token found.'};
-    }
-
-    final response = await _client.post('/refresh', {
-      'refreshToken': refreshToken,
-    });
-
-    final data = _decodeBody(response.body);
-    return _handleAuthResponse(
-      response.statusCode,
-      data,
-      preserveOnboardingState: true,
-    );
-  }
-
   Future<Map<String, dynamic>> getUserProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final token = await _tokenStorage.readAccessToken();
@@ -363,11 +344,6 @@ class AuthService {
 
   Future<String?> getAccessToken() async {
     return _tokenStorage.readAccessToken();
-  }
-
-  Future<bool> getNeedsOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(needsOnboardingKey) ?? false;
   }
 
   Future<void> clearSession() async {

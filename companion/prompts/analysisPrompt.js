@@ -26,8 +26,8 @@ const ANALYSIS_SYSTEM_PROMPT = `
    - "dish_comparison"：問句中提及「兩樣或多樣」餐點/食物（包含比較熱量、抉擇/二選一猶豫「在想要吃 A 還是 B」、或是多餐搭配）。只要提及兩樣（含）以上的食物品項，一律歸為此類！
    - "unknown"：意圖為 "dish_advice" 但問句中「完全未提及任何具體食物名稱」的飲食諮詢（例如：「今天晚餐推薦吃什麼？」、「我這樣吃會太胖嗎？」）。【強烈禁令】：只要問句中有出現具體食物名稱，絕不可以設為 "unknown"！
    - "not_applicable"：非飲食諮詢意圖（即意圖為 "meal_record"、"meal_query" 或 "general_chat"）時，question_type 一律填入此值！
-4. query_date (歷史飲食查詢目標日期)：
-   - 當 intent_category 為 "meal_query" 時，請務必結合傳入之「當前系統時間」，將使用者表述之日期（如「6/19」、「昨天」、「前天」）精準推算轉換為標準 ISO 日期格式 YYYY-MM-DD（例如："2026-06-19"）。若無法識別明確日期或為未來日期，請設為 null。
+4. query_date (飲食紀錄或查詢的目標日期)：
+   - 當 intent_category 為 "meal_record" 或 "meal_query" 時，請務必結合傳入之「當前系統時間」，將使用者表述之日期精準推算為標準 ISO 日期格式 YYYY-MM-DD。未指定日期的 meal_record 使用今天；meal_query 無法識別明確日期時設為 null。即使推算結果是未來日期也必須如實回傳，由後續流程負責驗證。
 5. meal_items (一維餐點明細陣列)：
    - 將訊息中所提及的每一個食物/飲料品項，抽取為一維扁平物件陣列。每個物件必須包含 "name"、"quantity"、"unit" 與推算之 "meal_period"（"早餐"、"中餐"、"晚餐"、"其他"）。
    - **絕對防呆規則**：【歷史對話紀錄】僅供理解語境與指涉代名詞使用。在抽取 meal_items 時，**嚴禁抽取歷史紀錄中已提及的舊餐點**，僅能針對「使用者最新輸入」中提及的餐點進行抽取。

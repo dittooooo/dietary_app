@@ -28,6 +28,34 @@ function displayHealthCondition(value) {
   return labels[normalized.toUpperCase()] || normalized;
 }
 
+function getTaipeiIsoDate(now = new Date()) {
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(now);
+  const values = Object.fromEntries(
+    dateParts.filter(part => part.type !== "literal").map(part => [part.type, part.value])
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function isFutureQueryDate(queryDate, today = getTaipeiIsoDate()) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(queryDate || "").trim());
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  const isValidDate = parsedDate.getUTCFullYear() === year
+    && parsedDate.getUTCMonth() === month - 1
+    && parsedDate.getUTCDate() === day;
+
+  return isValidDate && match[0] > today;
+}
+
 /**
  * 產生陪伴精靈的最終回覆
  * 整合意圖、情緒以及飲食助理的回應，透過 LLM 生成溫馨、同理心且在地化的回覆。
@@ -53,8 +81,14 @@ async function getCompanionReply({
       }
     : null;
 
+  const queryDate = screening?.query_date;
+  const today = getTaipeiIsoDate();
+  const shouldBlockFutureDate =
+    ["meal_record", "meal_query"].includes(screening?.intent_category)
+    && isFutureQueryDate(queryDate, today);
+
   // 飲食紀錄意圖處理 (分流 B 極速卡片數據與成功對話組裝，由前端實作延遲渲染)
-  if (screening?.intent_category === "meal_record") {
+  if (!shouldBlockFutureDate && screening?.intent_category === "meal_record") {
     if (Array.isArray(screening.meal_items) && screening.meal_items.length > 0) {
       return dietaryAgentResponse
         ? `已成功幫你將飲食存入紀錄庫囉！`
@@ -65,7 +99,7 @@ async function getCompanionReply({
   }
 
   // 飲食紀錄查詢意圖處理 (分流 D 極速日期卡片對話組裝)
-  if (screening?.intent_category === "meal_query") {
+  if (!shouldBlockFutureDate && screening?.intent_category === "meal_query") {
     if (screening.query_date) {
       const dateParts = screening.query_date.split("-");
       const formattedDateStr = dateParts.length === 3
@@ -82,7 +116,16 @@ async function getCompanionReply({
   try {
     finalReply = await runLLMReply({
       userPrompt,
-      screening,
+      screening: shouldBlockFutureDate
+        ? {
+            ...screening,
+            date_validation: {
+              is_future: true,
+              requested_date: queryDate,
+              current_date: today
+            }
+          }
+        : screening,
       emotion,
       dietaryAgentResponse,
       dietaryAgentError,
@@ -100,5 +143,6 @@ async function getCompanionReply({
 
 // 匯出外部服務層的核心函數
 module.exports = {
-  getCompanionReply
+  getCompanionReply,
+  isFutureQueryDate
 };

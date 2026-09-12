@@ -12,21 +12,6 @@ class FriendlyErrorMessage {
 
   static String companionReply([Object? _]) => companion;
 
-  static String forAction(String action, [Object? _]) {
-    switch (action) {
-      case 'companion':
-        return companion;
-      case 'dietRecord':
-        return dietRecord;
-      case 'upload':
-        return upload;
-      case 'camera':
-        return camera;
-      default:
-        return generic;
-    }
-  }
-
   static bool looksTechnical(String message) {
     final lower = message.toLowerCase();
     return RegExp(

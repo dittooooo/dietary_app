@@ -176,6 +176,7 @@ public class DietRecordService {
     }
 
     private void applyUpdates(DietRecord record, DietRecordRequest request) {
+        validateRecordDate(request);
         String nextDishName = hasText(request.getDishName()) ? request.getDishName().trim() : record.getDishName();
         boolean dishNameChanged = !Objects.equals(record.getDishName(), nextDishName);
         DietaryAgentService.NutritionValues nutritionValues = dishNameChanged
@@ -248,6 +249,7 @@ public class DietRecordService {
     }
 
     private void validateCreateRequest(DietRecordRequest request) {
+        validateRecordDate(request);
         if (!hasText(request.getDishName())) {
             throw new IllegalArgumentException("dishName 為必填欄位");
         }
@@ -259,6 +261,13 @@ public class DietRecordService {
             requireNutritionValue(request.getProtein(), "protein");
             requireNutritionValue(request.getFat(), "fat");
             requireNutritionValue(request.getCarbohydrates(), "carbohydrates");
+        }
+    }
+
+    private void validateRecordDate(DietRecordRequest request) {
+        LocalDate requestedDate = resolveRequestedDate(request);
+        if (requestedDate != null && requestedDate.isAfter(LocalDate.now(taipeiClock))) {
+            throw new IllegalArgumentException("飲食紀錄不能設定為未來日期");
         }
     }
 

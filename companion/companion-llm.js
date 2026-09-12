@@ -117,6 +117,10 @@ async function generateCompanionReply({
     ? minimizeDietaryResponse(dietaryAgentResponse)
     : null;
   const rawDataStr = JSON.stringify(dietaryContext || {}, null, 2);
+  const replyTemperature = screening?.date_validation?.is_future ? 0.7 : 0.2;
+  const futureDateContext = screening?.date_validation?.is_future
+    ? `\n\n本輪日期限制情境：指定日期為 ${screening.date_validation.requested_date}，意圖為 ${screening.intent_category}，餐點為 ${JSON.stringify((screening.meal_items || []).map(item => item.name).filter(Boolean))}。請根據這些實際內容重新組織自然回覆，不可使用通用模板；meal_record 有餐點時必須提到餐點名稱。`
+    : "";
 
   // 將前置對話歷史轉換為符合 OpenAI Chat Completions 標準的 messages 格式
   const formattedHistory = Array.isArray(tempStory)
@@ -135,7 +139,7 @@ async function generateCompanionReply({
     },
     body: JSON.stringify({
       model,
-      temperature: 0.2,
+      temperature: replyTemperature,
       messages: [
         {
           role: "system",
@@ -150,7 +154,7 @@ async function generateCompanionReply({
         {
           role: "user",
           // 組合完整的上下文，供模型重組出最貼近的對話
-          content: `使用者問句: "${userPrompt}"\n\n意圖與篩選設定 (screening): ${JSON.stringify(screening)}\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\n使用者個人資料 (userProfileContext): ${JSON.stringify(userProfileContext || {})}\n\nDietary Agent 回傳資料:\n${rawDataStr}\n\n請直接生成給使用者的實用回覆。不得提及資料缺口、系統錯誤、查詢狀態或無法提供建議。`
+          content: `使用者問句: "${userPrompt}"\n\n意圖與篩選設定 (screening): ${JSON.stringify(screening)}\n\n情緒與同理心設定: ${JSON.stringify(emotion)}\n\n使用者個人資料 (userProfileContext): ${JSON.stringify(userProfileContext || {})}\n\nDietary Agent 回傳資料:\n${rawDataStr}${futureDateContext}\n\n請直接生成給使用者的實用回覆。不得提及資料缺口、系統錯誤、查詢狀態或無法提供建議。`
         }
       ],
     }),
