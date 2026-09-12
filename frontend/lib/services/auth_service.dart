@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../controllers/dog_state_controller.dart';
 import '../core/api_client.dart';
 import 'token_storage.dart';
 import '../utils/friendly_error_message.dart';
@@ -502,6 +503,8 @@ class AuthService {
 
   Future<void> _clearSession(SharedPreferences prefs) async {
     ApiClient.clearLatestAccessToken();
+    DogStateController.instance.setBodyType(DogBodyType.normal);
+    DogStateController.instance.setState(DogAnimationState.idle);
     await _tokenStorage.clear();
     // Remove legacy unencrypted keys left by older app versions.
     await prefs.remove(accessTokenKey);
@@ -515,6 +518,10 @@ class AuthService {
     await prefs.remove('user_nickname');
     await prefs.remove('user_avatar_url');
     await prefs.remove('user_password');
+    await prefs.remove('dog_body_type');
+    await prefs.remove('pending_body_transition_show');
+    await prefs.remove('pending_old_body_type');
+    await prefs.remove('pending_new_body_type');
   }
 
   Map<String, dynamic> _decodeBody(String body) {
