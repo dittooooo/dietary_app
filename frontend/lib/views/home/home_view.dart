@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../controllers/dog_state_controller.dart';
+import '../../models/calorie_target_range.dart';
 import '../../services/auth_service.dart';
 import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart';
@@ -37,6 +38,7 @@ class _HomeViewState extends State<HomeView>
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
   bool _hasCheckedBodyTransitionOnStartup = false;
+  CalorieTargetRange? _calorieTarget;
 
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -846,6 +848,11 @@ class _HomeViewState extends State<HomeView>
       );
       await prefs.setString('dog_body_type', status.bodyType);
       if (!mounted) return;
+      setState(() {
+        _calorieTarget = CalorieTargetRange.tryParse(
+          status.recommendedCalories,
+        );
+      });
       _dogController.setBodyTypeFromBackend(status.bodyType);
     } catch (_) {
       debugPrint('首頁同步 BodyStatus 失敗');
@@ -2646,6 +2653,7 @@ class _HomeViewState extends State<HomeView>
 
   ///熱量卡片
   Widget _buildCalorieArcGaugeCard(int currentCalories) {
+    final calorieTarget = _calorieTarget;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -2678,6 +2686,7 @@ class _HomeViewState extends State<HomeView>
                     size: const Size(190, 95),
                     painter: CalorieGaugeArcPainter(
                       currentCalories: currentCalories.toDouble(),
+                      targetRange: calorieTarget,
                     ),
                   ),
                   Positioned(
@@ -2723,26 +2732,34 @@ class _HomeViewState extends State<HomeView>
 
           const SizedBox(height: 8),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildGaugeZoneLabel(
-                "偏低",
-                "< 1,700 kcal",
-                const Color(0xFF7C83FD),
+          if (calorieTarget == null)
+            const Center(
+              child: Text(
+                "尚無個人化熱量建議，請先完成個人資料",
+                style: TextStyle(fontSize: 11, color: Colors.grey),
               ),
-              _buildGaugeZoneLabel(
-                "適量",
-                "1,700 - 2,000 kcal",
-                const Color(0xFF52C41A),
-              ),
-              _buildGaugeZoneLabel(
-                "偏高",
-                "> 2,000 kcal",
-                const Color(0xFFFF7A45),
-              ),
-            ],
-          ),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildGaugeZoneLabel(
+                  "偏低",
+                  calorieTarget.lowLabel,
+                  const Color(0xFF7C83FD),
+                ),
+                _buildGaugeZoneLabel(
+                  "適量",
+                  calorieTarget.suitableLabel,
+                  const Color(0xFF52C41A),
+                ),
+                _buildGaugeZoneLabel(
+                  "偏高",
+                  calorieTarget.highLabel,
+                  const Color(0xFFFF7A45),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -2969,7 +2986,11 @@ class _HomeViewState extends State<HomeView>
 ///熱量計量表
 class CalorieGaugeArcPainter extends CustomPainter {
   final double currentCalories;
-  CalorieGaugeArcPainter({required this.currentCalories});
+  final CalorieTargetRange? targetRange;
+  CalorieGaugeArcPainter({
+    required this.currentCalories,
+    required this.targetRange,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -2990,6 +3011,12 @@ class CalorieGaugeArcPainter extends CustomPainter {
     final double seg2Angle = totalAngle * 0.34;
     final double seg3Angle = totalAngle * 0.28;
 
+    if (targetRange == null) {
+      paint.color = Colors.grey.shade300;
+      canvas.drawArc(rect, startAngle, totalAngle, false, paint);
+      return;
+    }
+
     paint.color = const Color(0xFF7C83FD);
     canvas.drawArc(rect, startAngle, seg1Angle, false, paint);
 
@@ -3005,16 +3032,7 @@ class CalorieGaugeArcPainter extends CustomPainter {
       paint,
     );
 
-    double progressRatio;
-    if (currentCalories < 1700) {
-      progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
-    } else if (currentCalories <= 2000) {
-      progressRatio =
-          0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
-    } else {
-      progressRatio =
-          0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
-    }
+    final progressRatio = targetRange!.gaugeProgressFor(currentCalories);
 
     final double knobAngle = startAngle + progressRatio * totalAngle;
     final double knobX = center.dx + radius * math.cos(knobAngle);
@@ -3029,20 +3047,19 @@ class CalorieGaugeArcPainter extends CustomPainter {
     );
     canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
 
-    Color dotColor;
-    if (currentCalories < 1700) {
-      dotColor = const Color(0xFF7C83FD);
-    } else if (currentCalories <= 2000) {
-      dotColor = const Color(0xFF52C41A);
-    } else {
-      dotColor = const Color(0xFFFF7A45);
-    }
+    final dotColor = switch (targetRange!.levelFor(currentCalories)) {
+      CalorieIntakeLevel.low => const Color(0xFF7C83FD),
+      CalorieIntakeLevel.suitable => const Color(0xFF52C41A),
+      CalorieIntakeLevel.high => const Color(0xFFFF7A45),
+    };
     canvas.drawCircle(Offset(knobX, knobY), 4.5, Paint()..color = dotColor);
   }
 
   @override
   bool shouldRepaint(covariant CalorieGaugeArcPainter oldDelegate) =>
-      oldDelegate.currentCalories != currentCalories;
+      oldDelegate.currentCalories != currentCalories ||
+      oldDelegate.targetRange?.recommendedCalories !=
+          targetRange?.recommendedCalories;
 }
 
 ///營養素資訊

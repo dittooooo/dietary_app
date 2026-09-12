@@ -17,7 +17,7 @@ class ApiClient {
 
   final http.Client _httpClient;
   final TokenStore _tokenStore;
-  Future<bool>? _refreshInFlight;
+  static Future<bool>? _refreshInFlight;
 
   /// 預設建構元
   ApiClient({http.Client? httpClient, TokenStore? tokenStore}) : _httpClient = httpClient ?? _defaultHttpClient, _tokenStore = tokenStore ?? const SecureTokenStorage();

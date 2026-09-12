@@ -68,6 +68,11 @@ class AuthService {
 
     if (token == null || token.isEmpty) { return {'success': false, 'message': '未登入'}; }
     final normalizedProfile = _normalizeProfilePayload(profileData);
+    final birthDate = normalizedProfile['birthDate']?.toString().trim() ?? '';
+    final height = _asDouble(normalizedProfile['height']);
+    final weight = _asDouble(normalizedProfile['weight']);
+    if (birthDate.isEmpty || DateTime.tryParse(birthDate) == null) { return {'success': false, 'message': '請提供正確的生日'}; }
+    if (height <= 0 || weight <= 0) { return {'success': false, 'message': '請提供正確的身高與體重'}; }
     final response = await _client.post( '/user/onboarding',normalizedProfile,headers: {'Authorization': 'Bearer $token'},);
 
     final data = _decodeBody(response.body);
@@ -86,13 +91,6 @@ class AuthService {
     final normalized = Map<String, dynamic>.from(profileData);
 
     normalized['gender'] = ProfileValueMapper.genderToApi( normalized['gender']?.toString());// 性別轉譯
-
-    // 生日 resolution (若無傳入 birthDate，根據年齡推算西元 YYYY-01-01)
-    if (normalized['birthDate'] == null || normalized['birthDate'].toString().isEmpty) {
-      final age = int.tryParse(normalized['age']?.toString() ?? '') ?? 20;
-      final year = DateTime.now().year - age;
-      normalized['birthDate'] = '$year-01-01';
-    }
 
     // 疾病條件轉譯
     final rawHealth = normalized['healthConditions'];
@@ -317,19 +315,28 @@ class AuthService {
 
   /// 非同步清除快取
   Future<void> _clearSession(SharedPreferences prefs) async {
+    final email = prefs.getString('user_email')?.trim().toLowerCase();
+    final nickname = prefs.getString('user_nickname')?.trim().toLowerCase();
+    final userKey = email != null && email.isNotEmpty ? email : (nickname != null && nickname.isNotEmpty ? nickname : null);
+
     DogStateController.instance.setBodyType(DogBodyType.normal);
     DogStateController.instance.setState(DogAnimationState.idle);
     await _tokenStorage.clear();
-    await prefs.remove(needsOnboardingKey);
-    await prefs.remove('user_role');
-    await prefs.remove('user_email');
-    await prefs.remove('user_nickname');
-    await prefs.remove('user_avatar_url');
-    await prefs.remove('user_password');
-    await prefs.remove('dog_body_type');
-    await prefs.remove('pending_body_transition_show');
-    await prefs.remove('pending_old_body_type');
-    await prefs.remove('pending_new_body_type');
+
+    const sessionKeys = <String>[
+      needsOnboardingKey, 'user_role', 'user_email', 'user_nickname', 'user_avatar_url',
+      'user_pet_type', 'user_pet_type_raw', 'user_gender', 'user_birth_date',
+      'user_diet_goal', 'user_diet_goal_raw', 'user_age', 'user_height', 'user_weight',
+      'user_health_conditions_raw', 'dog_body_type', 'pending_body_transition_show',
+      'pending_old_body_type', 'pending_new_body_type',
+    ];
+    for (final key in sessionKeys) { await prefs.remove(key); }
+
+    if (userKey != null) {
+      await prefs.remove('temp_story_$userKey');
+      await prefs.remove('last_update_time_$userKey');
+      await prefs.remove('last_shown_summary_date_$userKey');
+    }
   }
 
   /// 嘗試解析 JSON 格式的字串，若失敗則回傳空 Map。

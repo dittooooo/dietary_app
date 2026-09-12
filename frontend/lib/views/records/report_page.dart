@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import '../home/home_page.dart';
 import '../../color/app_colors.dart';
 import '../../controllers/dog_state_controller.dart';
+import '../../models/calorie_target_range.dart';
 import '../../widgets/dog_avatar.dart';
 import '../../services/diet_service.dart';
 import '../../services/auth_service.dart';
@@ -51,6 +52,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   List<double> _weeklyData = [];
   List<double> _monthlyData = [];
   String? _avatarUrl;
+  CalorieTargetRange? _calorieTarget;
   bool _sharedDateUpdateQueued = false;
 
   // === 2. 使用者頭像與飲食紀錄 API 載入 ===
@@ -84,6 +86,15 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       final avatarPath =
           userData?['avatarUrl'] ?? userData?['user']?['avatarUrl'];
       final fullUrl = _resolveAvatarUrl(avatarPath);
+      final calorieTarget = CalorieTargetRange.tryParse(
+        userData?['recommendedCalories'],
+      );
+      if (calorieTarget?.recommendedCalories !=
+          _calorieTarget?.recommendedCalories) {
+        setState(() {
+          _calorieTarget = calorieTarget;
+        });
+      }
       if (fullUrl != null) {
         if (fullUrl != _avatarUrl) {
           setState(() {
@@ -1152,22 +1163,30 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   // --- 卡路里弧形表元件 ---
   Widget _buildCalorieArcGaugeCard(int currentCalories) {
+    final calorieTarget = _calorieTarget;
     String statusText;
     Color statusColor;
     IconData statusIcon;
 
-    if (currentCalories < 1700) {
-      statusText = "熱量攝取偏低，建議多補充熱量！";
-      statusColor = const Color(0xFF7C83FD);
+    if (calorieTarget == null) {
+      statusText = "尚無個人化熱量建議，請先完成個人資料";
+      statusColor = Colors.grey;
       statusIcon = Icons.info_outline;
-    } else if (currentCalories <= 2000) {
-      statusText = "熱量攝取適中，繼續保持！";
-      statusColor = const Color(0xFF52C41A);
-      statusIcon = Icons.check_circle_outline;
     } else {
-      statusText = "熱量攝取偏高，請注意控制！";
-      statusColor = const Color(0xFFFF7A45);
-      statusIcon = Icons.warning_amber_rounded;
+      switch (calorieTarget.levelFor(currentCalories.toDouble())) {
+        case CalorieIntakeLevel.low:
+          statusText = "熱量攝取偏低，建議多補充熱量！";
+          statusColor = const Color(0xFF7C83FD);
+          statusIcon = Icons.info_outline;
+        case CalorieIntakeLevel.suitable:
+          statusText = "熱量攝取適中，繼續保持！";
+          statusColor = const Color(0xFF52C41A);
+          statusIcon = Icons.check_circle_outline;
+        case CalorieIntakeLevel.high:
+          statusText = "熱量攝取偏高，請注意控制！";
+          statusColor = const Color(0xFFFF7A45);
+          statusIcon = Icons.warning_amber_rounded;
+      }
     }
 
     return Container(
@@ -1205,6 +1224,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                     size: const Size(260, 135),
                     painter: CalorieGaugeArcPainter(
                       currentCalories: currentCalories.toDouble(),
+                      targetRange: calorieTarget,
                     ),
                   ),
                   Positioned(
@@ -1251,26 +1271,27 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
           const SizedBox(height: 20),
 
           // 偏低、適量、偏高 三區間說明欄
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildGaugeZoneLabel(
-                "偏低",
-                "< 1,700 kcal",
-                const Color(0xFF7C83FD),
-              ),
-              _buildGaugeZoneLabel(
-                "適量",
-                "1,700 - 2,000 kcal",
-                const Color(0xFF52C41A),
-              ),
-              _buildGaugeZoneLabel(
-                "偏高",
-                "> 2,000 kcal",
-                const Color(0xFFFF7A45),
-              ),
-            ],
-          ),
+          if (calorieTarget != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildGaugeZoneLabel(
+                  "偏低",
+                  calorieTarget.lowLabel,
+                  const Color(0xFF7C83FD),
+                ),
+                _buildGaugeZoneLabel(
+                  "適量",
+                  calorieTarget.suitableLabel,
+                  const Color(0xFF52C41A),
+                ),
+                _buildGaugeZoneLabel(
+                  "偏高",
+                  calorieTarget.highLabel,
+                  const Color(0xFFFF7A45),
+                ),
+              ],
+            ),
 
           const SizedBox(height: 16),
 
@@ -1659,7 +1680,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                       hoveredIdx: _hoveredIdx,
                       labels: labels,
                       avg: avg,
-                      target: 2000.0,
+                      target: _calorieTarget?.recommendedCalories,
                     ),
                   ),
                 ),
@@ -1952,7 +1973,11 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 // === 9. 畫筆 Painter 工具元件 (Gauge, Diagonal, NutrientPie & LineChart Painters) ===
 class CalorieGaugeArcPainter extends CustomPainter {
   final double currentCalories;
-  CalorieGaugeArcPainter({required this.currentCalories});
+  final CalorieTargetRange? targetRange;
+  CalorieGaugeArcPainter({
+    required this.currentCalories,
+    required this.targetRange,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1975,6 +2000,12 @@ class CalorieGaugeArcPainter extends CustomPainter {
     final double seg2Angle = totalAngle * 0.34;
     final double seg3Angle = totalAngle * 0.28;
 
+    if (targetRange == null) {
+      paint.color = Colors.grey.shade300;
+      canvas.drawArc(rect, startAngle, totalAngle, false, paint);
+      return;
+    }
+
     // 1. 偏低區間 (藍紫色)
     paint.color = const Color(0xFF7C83FD);
     canvas.drawArc(rect, startAngle, seg1Angle, false, paint);
@@ -1994,16 +2025,7 @@ class CalorieGaugeArcPainter extends CustomPainter {
     );
 
     // 計算指針角度
-    double progressRatio;
-    if (currentCalories < 1700) {
-      progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
-    } else if (currentCalories <= 2000) {
-      progressRatio =
-          0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
-    } else {
-      progressRatio =
-          0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
-    }
+    final progressRatio = targetRange!.gaugeProgressFor(currentCalories);
 
     final double knobAngle = startAngle + progressRatio * totalAngle;
     final double knobX = center.dx + radius * math.cos(knobAngle);
@@ -2019,20 +2041,19 @@ class CalorieGaugeArcPainter extends CustomPainter {
     );
     canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
 
-    Color dotColor;
-    if (currentCalories < 1700) {
-      dotColor = const Color(0xFF7C83FD);
-    } else if (currentCalories <= 2000) {
-      dotColor = const Color(0xFF52C41A);
-    } else {
-      dotColor = const Color(0xFFFF7A45);
-    }
+    final dotColor = switch (targetRange!.levelFor(currentCalories)) {
+      CalorieIntakeLevel.low => const Color(0xFF7C83FD),
+      CalorieIntakeLevel.suitable => const Color(0xFF52C41A),
+      CalorieIntakeLevel.high => const Color(0xFFFF7A45),
+    };
     canvas.drawCircle(Offset(knobX, knobY), 4.5, Paint()..color = dotColor);
   }
 
   @override
   bool shouldRepaint(covariant CalorieGaugeArcPainter oldDelegate) =>
-      oldDelegate.currentCalories != currentCalories;
+      oldDelegate.currentCalories != currentCalories ||
+      oldDelegate.targetRange?.recommendedCalories !=
+          targetRange?.recommendedCalories;
 }
 
 class MockLineChartPainter extends CustomPainter {
@@ -2040,7 +2061,7 @@ class MockLineChartPainter extends CustomPainter {
   final int? hoveredIdx;
   final List<String> labels;
   final double avg;
-  final double target;
+  final double? target;
 
   MockLineChartPainter({
     required this.data,
@@ -2064,9 +2085,9 @@ class MockLineChartPainter extends CustomPainter {
     }
 
     // 將建議攝取與平均值納入邊界計算，確保虛線總是能正常顯示在圖表中
-    if (target > maxVal) maxVal = target;
+    if (target != null && target! > maxVal) maxVal = target!;
     if (avg > maxVal) maxVal = avg;
-    if (target < minVal) minVal = target;
+    if (target != null && target! < minVal) minVal = target!;
     if (avg < minVal) minVal = avg;
 
     minVal = minVal * 0.8;
@@ -2080,22 +2101,37 @@ class MockLineChartPainter extends CustomPainter {
     }
 
     // 繪製虛線輔助線
-    final targetY = yForValue(target);
     final avgY = yForValue(avg);
 
-    final targetPaint = Paint()
-      // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-      ..color = Colors.green.withValues(alpha: 0.6)
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-    _drawDashedLine(
-      canvas,
-      Offset(0, targetY),
-      Offset(size.width, targetY),
-      targetPaint,
-      5.0,
-      3.0,
-    );
+    if (target != null) {
+      final targetY = yForValue(target!);
+      final targetPaint = Paint()
+        // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
+        ..color = Colors.green.withValues(alpha: 0.6)
+        ..strokeWidth = 1.2
+        ..style = PaintingStyle.stroke;
+      _drawDashedLine(
+        canvas,
+        Offset(0, targetY),
+        Offset(size.width, targetY),
+        targetPaint,
+        5.0,
+        3.0,
+      );
+
+      final targetTextPainter = TextPainter(
+        text: TextSpan(
+          text: ' 建議攝取: ${target!.round()} kcal',
+          style: TextStyle(
+            color: Colors.green.shade700,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      targetTextPainter.paint(canvas, Offset(5, targetY - 16));
+    }
 
     final avgPaint = Paint()
       // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
@@ -2111,20 +2147,7 @@ class MockLineChartPainter extends CustomPainter {
       3.0,
     );
 
-    // 標示輔助線文字
-    final targetTextPainter = TextPainter(
-      text: TextSpan(
-        text: ' 建議攝取: ${target.round()} kcal',
-        style: TextStyle(
-          color: Colors.green.shade700,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    targetTextPainter.paint(canvas, Offset(5, targetY - 16));
-
+    // 標示平均攝取輔助線文字
     final avgTextPainter = TextPainter(
       text: TextSpan(
         text: ' 本週平均: ${avg.round()} kcal',

@@ -116,7 +116,7 @@ class WorkflowServices:
 
     async def prepare(self, user_prompt: str, temp_story: list[dict[str, str]]) -> dict[str, Any]:
         trace("MAF", "OPENAI_ANALYSIS", "呼叫 OpenAI 分析意圖、情緒、料理與份量")
-        analysis = await self._analyze(user_prompt, temp_story)
+        analysis = await self._analyze(user_prompt)
         screening = analysis["screening"]
         trace_payload("MAF", "OUTPUT", "analysis", analysis)
 

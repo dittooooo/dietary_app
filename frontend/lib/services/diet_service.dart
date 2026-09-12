@@ -112,7 +112,7 @@ class DietService {
     return [];
   }
 
-  /// 依特定日期 (YYYY-MM-DD) 取得歷史飲食紀錄明細（含後端 API 與前端日期備用過濾）
+  /// 依特定日期 (YYYY-MM-DD) 取得歷史飲食紀錄明細。
   Future<List<dynamic>> getDietRecordsByDate(String dateStr) async {
     final targetDate = dateStr.trim();
     if (targetDate.isEmpty) return [];
@@ -126,11 +126,10 @@ class DietService {
         headers: {'Authorization': 'Bearer $token'},
       );
 
-      List<dynamic> rawList = [];
-      if (response.statusCode == 200) { rawList = _unwrapListResponse(response.body);} 
-      else { rawList = await getMyDietRecords(); } // 2. 若帶參查詢失敗，改為撈取全量紀錄再由前端自行篩選
+      if (response.statusCode != 200) return [];
+      final rawList = _unwrapListResponse(response.body);
 
-      // 3. 對撈出的紀錄進行目標日期二次過濾
+      // 對後端回傳資料進行目標日期二次驗證，缺少日期的紀錄不顯示。
       final List<dynamic> result = [];
       for (var record in rawList) {
         if (record is Map) {
@@ -140,7 +139,7 @@ class DietService {
           final rawDate = processedRecord['mealDate'];
           final normDate = _normalizeRecordDate(rawDate);
 
-          if (normDate.isEmpty || normDate.startsWith(targetDate) || normDate == targetDate) { result.add(processedRecord); }
+          if (normDate == targetDate) { result.add(processedRecord); }
         }
       }
       return result;

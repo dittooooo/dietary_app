@@ -214,10 +214,11 @@ class _InitialInfoPageState extends State<InitialInfoPage> with TickerProviderSt
     }
   }
 
-  /// 判斷傳入之字串是否可解析為有效之數值。
+  /// 判斷傳入之字串是否可解析為大於零的有效數值。
   bool _isNumeric(String? s) {
     if (s == null || s.trim().isEmpty) return false;
-    return double.tryParse(s.trim()) != null;
+    final value = double.tryParse(s.trim());
+    return value != null && value > 0;
   }
 
   /// 檢查當前步驟頁面之必填欄位是否已完成輸入。
@@ -271,6 +272,14 @@ class _InitialInfoPageState extends State<InitialInfoPage> with TickerProviderSt
   Future<void> _completeSetup() async {
     if (_isSubmitting) return;
 
+    final birthDate = _birthDateString;
+    final height = double.tryParse(_height.trim());
+    final weight = double.tryParse(_weight.trim());
+    if (birthDate.isEmpty || height == null || height <= 0 || weight == null || weight <= 0) {
+      if (mounted) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('請提供正確的生日、身高與體重'))); }
+      return;
+    }
+
     debugPrint('開始啟動提交流程...');
     setState(() => _isSubmitting = true);
 
@@ -296,10 +305,10 @@ class _InitialInfoPageState extends State<InitialInfoPage> with TickerProviderSt
       final Map<String, dynamic> onboardingData = {
         'nickname': _name.trim(),
         'gender': apiGender,
-        'birthDate': _birthDateString,
+        'birthDate': birthDate,
         'age': _calculatedAge,
-        'height': double.tryParse(_height) ?? 170.0,
-        'weight': double.tryParse(_weight) ?? 60.0,
+        'height': height,
+        'weight': weight,
         'healthConditions': ProfileValueMapper.healthConditionsToApi(_diseases),
         'dietGoal': ProfileValueMapper.firstDietGoalToApi(_goals),
         'petType': ProfileValueMapper.petTypeToApi(_defaultPetType),

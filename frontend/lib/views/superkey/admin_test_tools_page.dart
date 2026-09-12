@@ -1,11 +1,12 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../color/app_colors.dart';
 import '../../controllers/dog_state_controller.dart';
+import '../../models/calorie_target_range.dart';
+import '../../services/body_status_api_service.dart';
 import '../../services/diet_service.dart';
 import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
@@ -25,6 +26,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
   DogBodyType _newBodyType = DogBodyType.heavy;
   String _reportDateMode = 'YESTERDAY';
   bool _isLoadingReport = false;
+  CalorieTargetRange? _calorieTarget;
 
   /// 繪製並傳回當前 Widget 之 UI 畫面架構。
   @override
@@ -247,6 +249,14 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
         setState(() => _isLoadingReport = false);
         _showWeeklyDietSummaryDialog();
         return;
+      }
+      try {
+        final status = await BodyStatusApiService().getBodyStatus();
+        _calorieTarget = CalorieTargetRange.tryParse(
+          status.recommendedCalories,
+        );
+      } catch (_) {
+        _calorieTarget = null;
       }
       final targetDate = _targetReportDate();
       final summary = _buildDietSummaryForDate(records, targetDate);
@@ -603,6 +613,7 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
 
   /// 建立 CalorieArcGaugeCard 區塊之視覺 UI 視圖元件。
   Widget _buildCalorieArcGaugeCard(int currentCalories, String dateLabel) {
+    final calorieTarget = _calorieTarget;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -631,8 +642,9 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
                 children: [
                   CustomPaint(
                     size: const Size(190, 95),
-                    painter: _AdminCalorieGaugeArcPainter(
+                    painter: CalorieGaugeArcPainter(
                       currentCalories: currentCalories.toDouble(),
+                      targetRange: calorieTarget,
                     ),
                   ),
                   Positioned(
@@ -673,14 +685,34 @@ class _AdminTestToolsPageState extends State<AdminTestToolsPage> {
             ),
           ),
           const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildGaugeZoneLabel('偏低', '< 1,700 kcal', const Color(0xFF7C83FD)),
-              _buildGaugeZoneLabel('適量', '1,700 - 2,000 kcal', const Color(0xFF52C41A)),
-              _buildGaugeZoneLabel('偏高', '> 2,000 kcal', const Color(0xFFFF7A45)),
-            ],
-          ),
+          if (calorieTarget == null)
+            const Center(
+              child: Text(
+                '尚無個人化熱量建議，請先完成個人資料',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildGaugeZoneLabel(
+                  '偏低',
+                  calorieTarget.lowLabel,
+                  const Color(0xFF7C83FD),
+                ),
+                _buildGaugeZoneLabel(
+                  '適量',
+                  calorieTarget.suitableLabel,
+                  const Color(0xFF52C41A),
+                ),
+                _buildGaugeZoneLabel(
+                  '偏高',
+                  calorieTarget.highLabel,
+                  const Color(0xFFFF7A45),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -919,86 +951,4 @@ class _DietSummary {
     required this.carbs,
     required this.dishes,
   });
-}
-
-/// 執行 AdminCalorieGaugeArcPainter 之專屬功能操作。
-class _AdminCalorieGaugeArcPainter extends CustomPainter {
-  final double currentCalories;
-
-  const _AdminCalorieGaugeArcPainter({required this.currentCalories});
-
-  @override
-  /// 執行 paint 之專屬功能操作。
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height - 10);
-    final radius = size.width / 2 - 20;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    const strokeWidth = 22.0;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.butt;
-
-    const startAngle = math.pi;
-    const totalAngle = math.pi;
-    const seg1Angle = totalAngle * 0.38;
-    const seg2Angle = totalAngle * 0.34;
-    const seg3Angle = totalAngle * 0.28;
-
-    paint.color = const Color(0xFF7C83FD);
-    canvas.drawArc(rect, startAngle, seg1Angle, false, paint);
-
-    paint.color = const Color(0xFF52C41A);
-    canvas.drawArc(rect, startAngle + seg1Angle, seg2Angle, false, paint);
-
-    paint.color = const Color(0xFFFF7A45);
-    canvas.drawArc(
-      rect,
-      startAngle + seg1Angle + seg2Angle,
-      seg3Angle,
-      false,
-      paint,
-    );
-
-    double progressRatio;
-    if (currentCalories < 1700) {
-      progressRatio = (currentCalories / 1700.0).clamp(0.0, 1.0) * 0.38;
-    } else if (currentCalories <= 2000) {
-      progressRatio =
-          0.38 + ((currentCalories - 1700.0) / 300.0).clamp(0.0, 1.0) * 0.34;
-    } else {
-      progressRatio =
-          0.72 + ((currentCalories - 2000.0) / 1000.0).clamp(0.0, 1.0) * 0.28;
-    }
-
-    final knobAngle = startAngle + progressRatio * totalAngle;
-    final knobX = center.dx + radius * math.cos(knobAngle);
-    final knobY = center.dy + radius * math.sin(knobAngle);
-
-    canvas.drawCircle(
-      Offset(knobX, knobY),
-      11,
-      Paint()
-        ..color = Colors.black26
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-    );
-    canvas.drawCircle(Offset(knobX, knobY), 9, Paint()..color = Colors.white);
-
-    Color dotColor;
-    if (currentCalories < 1700) {
-      dotColor = const Color(0xFF7C83FD);
-    } else if (currentCalories <= 2000) {
-      dotColor = const Color(0xFF52C41A);
-    } else {
-      dotColor = const Color(0xFFFF7A45);
-    }
-    canvas.drawCircle(Offset(knobX, knobY), 5, Paint()..color = dotColor);
-  }
-
-  @override
-  /// 執行 shouldRepaint 之專屬功能操作。
-  bool shouldRepaint(covariant _AdminCalorieGaugeArcPainter oldDelegate) {
-    return oldDelegate.currentCalories != currentCalories;
-  }
 }

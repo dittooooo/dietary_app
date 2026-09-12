@@ -1,4 +1,5 @@
 // === 1. 外部套件與自定義模組匯入 ===
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -30,22 +31,54 @@ class DietaryRecordPage extends StatefulWidget {
   State<DietaryRecordPage> createState() => _DietaryRecordPageState();
 }
 
-class _DietaryRecordPageState extends State<DietaryRecordPage> {
+class _DietaryRecordPageState extends State<DietaryRecordPage> with WidgetsBindingObserver {
   // === 狀態變數與控制器 ===
   final ScrollController _scrollController = ScrollController();
   bool _showBackToToday = false;
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _currentDay;
+  late DateTime _selectedDate;
+  late List<DateTime> _pathDates;
+  Timer? _dayChangeTimer;
   bool _showOverlay = false;
   DateTime? _rippleDate;
   bool _isLoadingRecords = false;
   List<dynamic> _dietRecords = [];
 
-  // 生成歷史日期序列（過去100天）
-  final List<DateTime> _pathDates = List.generate(
-    100,
-    (i) => DateTime.now().subtract(Duration(days: i)),
-  );
   String? _avatarUrl;
+
+  DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+
+  bool _isSameDay(DateTime first, DateTime second) => first.year == second.year && first.month == second.month && first.day == second.day;
+
+  List<DateTime> _buildPathDates(DateTime today) => List.generate(100, (index) => today.subtract(Duration(days: index)));
+
+  void _scheduleDayChangeCheck() {
+    _dayChangeTimer?.cancel();
+    final now = DateTime.now();
+    final nextDay = DateTime(now.year, now.month, now.day + 1);
+    _dayChangeTimer = Timer(nextDay.difference(now) + const Duration(seconds: 1), () {
+      _refreshCurrentDay();
+      _scheduleDayChangeCheck();
+    });
+  }
+
+  void _refreshCurrentDay() {
+    if (!mounted) return;
+    final today = _dateOnly(DateTime.now());
+    if (_isSameDay(today, _currentDay)) return;
+
+    final wasShowingCurrentDay = _isSameDay(_selectedDate, _currentDay);
+    setState(() {
+      _currentDay = today;
+      _pathDates = _buildPathDates(today);
+      if (wasShowingCurrentDay) {
+        _selectedDate = today;
+        _rippleDate = today;
+      }
+    });
+    if (wasShowingCurrentDay) { widget.onDateSelected?.call(today); }
+    _loadDietRecords();
+  }
 
   // === 頭像與數據載入邏輯 ===
   String? _resolveAvatarUrl(dynamic avatarPath) {
@@ -91,6 +124,11 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _currentDay = _dateOnly(DateTime.now());
+    _selectedDate = _currentDay;
+    _pathDates = _buildPathDates(_currentDay);
+    _scheduleDayChangeCheck();
     widget.avatarRefreshListenable?.addListener(_handleAvatarRefresh);
     _loadAvatar();
     _loadDietRecords();
@@ -101,6 +139,21 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
         setState(() => _showBackToToday = false);
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshCurrentDay();
+      _scheduleDayChangeCheck();
+    }
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    _refreshCurrentDay();
+    _scheduleDayChangeCheck();
   }
 
   Future<void> _loadDietRecords() async {
@@ -772,6 +825,8 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _dayChangeTimer?.cancel();
     widget.avatarRefreshListenable?.removeListener(_handleAvatarRefresh);
     _scrollController.dispose();
     super.dispose();
