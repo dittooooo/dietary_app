@@ -1049,7 +1049,16 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
   Future<void> _pickMealTypeFor(_SelectedFood item) async {
     final selectedMeal = await _showMealTypePicker();
     if (selectedMeal != null && mounted) {
-      _replaceSelectedItem(item.copyWith(mealType: selectedMeal));
+      final index = _selectedItems.indexWhere(
+        (selectedItem) => selectedItem.id == item.id,
+      );
+      if (index < 0) return;
+      setState(() {
+        _mealType = selectedMeal;
+        _selectedItems[index] = _selectedItems[index].copyWith(
+          mealType: selectedMeal,
+        );
+      });
     }
   }
 
@@ -1112,6 +1121,7 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
 
     var savedCount = 0;
     String? firstImagePath;
+    String? firstErrorMessage;
     final elfItems = <Map<String, dynamic>>[];
     try {
       for (final item in _selectedItems) {
@@ -1146,6 +1156,8 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
                 ? '-- kcal'
                 : '${_formatNumber(item.totalNutrition.calories)} kcal',
           });
+        } else {
+          firstErrorMessage ??= result['message']?.toString();
         }
       }
 
@@ -1164,7 +1176,15 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       } else {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('已儲存 $savedCount 項，部分項目未能儲存。')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              firstErrorMessage?.trim().isNotEmpty == true
+                  ? firstErrorMessage!
+                  : '已儲存 $savedCount 項，部分項目未能儲存。',
+            ),
+          ),
+        );
       }
     } catch (_) {
       if (mounted) {
@@ -1653,7 +1673,6 @@ class _ManualRecordPageState extends State<ManualRecordPage> {
       ],
     );
   }
-
 
   Future<String?> _showMealTypePicker() {
     return showModalBottomSheet<String>(
