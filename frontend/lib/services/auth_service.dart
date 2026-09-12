@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../controllers/dog_state_controller.dart';
 import '../core/api_client.dart';
 import 'token_storage.dart';
 import '../utils/friendly_error_message.dart';
@@ -316,12 +317,19 @@ class AuthService {
 
   /// 非同步清除快取
   Future<void> _clearSession(SharedPreferences prefs) async {
+    DogStateController.instance.setBodyType(DogBodyType.normal);
+    DogStateController.instance.setState(DogAnimationState.idle);
     await _tokenStorage.clear();
     await prefs.remove(needsOnboardingKey);
     await prefs.remove('user_role');
     await prefs.remove('user_email');
     await prefs.remove('user_nickname');
     await prefs.remove('user_avatar_url');
+    await prefs.remove('user_password');
+    await prefs.remove('dog_body_type');
+    await prefs.remove('pending_body_transition_show');
+    await prefs.remove('pending_old_body_type');
+    await prefs.remove('pending_new_body_type');
   }
 
   /// 嘗試解析 JSON 格式的字串，若失敗則回傳空 Map。

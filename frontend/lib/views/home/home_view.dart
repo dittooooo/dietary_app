@@ -29,14 +29,14 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, WidgetsBindingObserver {
-  static bool _hasCheckedBodyTransitionOnStartup = false;
-
+class _HomeViewState extends State<HomeView>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _chatScrollController = ScrollController();
   final AuthService _authService = AuthService();
   final BodyStatusApiService _bodyStatusApi = BodyStatusApiService();
   final DogStateController _dogController = DogStateController.instance;
+  bool _hasCheckedBodyTransitionOnStartup = false;
 
   late stt.SpeechToText _speech;
   bool _isListening = false;
@@ -681,146 +681,6 @@ class _HomeViewState extends State<HomeView> with TickerProviderStateMixin, Widg
     } catch (_) {
       debugPrint('取得昨日飲食總結失敗');
     }
-  }
-
-  // [代碼清理/Lint修正] 靜態分析發出未呼叫警告，保留此方法作為測試或手動觸發昨日飲食總結彈窗之入口
-  // ignore: unused_element
-  Future<void> _triggerYesterdaySummary() async {
-    try {
-      final records = await DietService().getMyDietRecords();
-      final yesterday = DateTime.now().subtract(const Duration(days: 1));
-
-      double totalCalories = 0;
-      double totalProtein = 0;
-      double totalFat = 0;
-      double totalCarbs = 0;
-      List<String> yesterdayDishes = [];
-
-      for (var record in records) {
-        final rDate = _getRecordDate(record);
-        if (rDate == null) continue;
-        if (rDate.year == yesterday.year &&
-            rDate.month == yesterday.month &&
-            rDate.day == yesterday.day) {
-          totalCalories += _getCaloriesFromRecord(record);
-          final dishName = record['dishName'];
-          if (dishName != null && dishName.toString().isNotEmpty) {
-            yesterdayDishes.add(dishName.toString());
-          }
-        }
-      }
-
-      if (!mounted) return;
-      _showDietSummaryDialog(
-        date: yesterday,
-        calories: totalCalories,
-        protein: totalProtein,
-        fat: totalFat,
-        carbs: totalCarbs,
-        dishes: yesterdayDishes,
-      );
-    } catch (_) {
-      debugPrint('觸發昨日飲食總結失敗');
-      if (mounted) {
-        _showDietSummaryDialog(
-          date: DateTime.now().subtract(const Duration(days: 1)),
-          calories: 0,
-          protein: 0,
-          fat: 0,
-          carbs: 0,
-          dishes: [],
-        );
-      }
-    }
-  }
-
-  // [代碼清理/Lint修正] 靜態分析發出未呼叫警告，保留此方法作為手動觸發體態評估彈窗之備用入口
-  // ignore: unused_element
-  void _showBodyStatusDialog() {
-    SystemChannels.textInput.invokeMethod('TextInput.hide');
-    FocusManager.instance.primaryFocus?.unfocus();
-    FocusScope.of(context).unfocus();
-
-    // 觸發 3D 小精靈動態表演動畫
-    _dogController.setState(DogAnimationState.response);
-    Future.delayed(const Duration(milliseconds: 1800), () {
-      if (mounted) _dogController.setState(DogAnimationState.idle);
-    });
-
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24.0),
-          ),
-          backgroundColor: AppColors.background,
-          elevation: 10,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 16.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 標題
-                const Text(
-                  '小精靈的體態發生了變化......',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // 小精靈 3D 動畫展示 (巨大化 3.2 Scale, 270px)
-                Center(
-                  child: SizedBox(
-                    width: 320,
-                    height: 270,
-                    child: DogAvatar(
-                      controller: _dogController,
-                      scale: 3.2,
-                      instanceId: 'body-status-dialog-dog',
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // 關閉按鈕 (1fe8ba9 風格)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.background,
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      '太棒了，我知道了！',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _showDietSummaryDialog({
@@ -3217,107 +3077,6 @@ class _NutrientInfo extends StatelessWidget {
           style: const TextStyle(fontSize: 10, color: AppColors.textPrimary),
         ),
       ],
-    );
-  }
-}
-
-///顯示三大營養素數值
-class MacronutrientValuesDisplay extends StatelessWidget {
-  final double protein;
-  final double fat;
-  final double carbs;
-
-  ///顯示三大營養素數值
-  const MacronutrientValuesDisplay({
-    super.key,
-    required this.protein,
-    required this.fat,
-    required this.carbs,
-  });
-
-  ///三大營養素數值
-  @override
-  Widget build(BuildContext context) {
-    final total = protein + fat + carbs;
-    if (total == 0) {
-      return const SizedBox(
-        height: 60,
-        child: Center(
-          child: Text(
-            '昨日無三大營養素數據',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(child: _buildValueItem('蛋白質', protein, total, 'g')),
-            const SizedBox(width: 8),
-            Expanded(child: _buildValueItem('脂肪', fat, total, 'g')),
-            const SizedBox(width: 8),
-            Expanded(child: _buildValueItem('碳水', carbs, total, 'g')),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '三大營養素合計 ${total.toStringAsFixed(0)} g',
-          style: TextStyle(
-            fontSize: 11,
-            color: AppColors.textPrimary.withValues(alpha: 0.65),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-
-  ///顯示單一營養素數值
-  Widget _buildValueItem(String label, double val, double total, String unit) {
-    final pct = (val / total * 100).toStringAsFixed(0);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.08)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            val.toStringAsFixed(0),
-            style: const TextStyle(
-              fontSize: 18,
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            '$unit / $pct%',
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textPrimary.withValues(alpha: 0.65),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

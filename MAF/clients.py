@@ -115,23 +115,23 @@ class WorkflowServices:
         self._transport = transport
 
     async def prepare(self, user_prompt: str, temp_story: list[dict[str, str]]) -> dict[str, Any]:
-        trace("IntakeAgent", "OPENAI_ANALYSIS", "呼叫 OpenAI 分析意圖、情緒、料理與份量")
-        analysis = await self._analyze(user_prompt)
+        trace("MAF", "OPENAI_ANALYSIS", "呼叫 OpenAI 分析意圖、情緒、料理與份量")
+        analysis = await self._analyze(user_prompt, temp_story)
         screening = analysis["screening"]
-        trace_payload("IntakeAgent", "OUTPUT", "analysis", analysis)
+        trace_payload("MAF", "OUTPUT", "analysis", analysis)
 
         if (
             screening.get("intent_category") == "dish_advice"
             and isinstance(screening.get("dish_info_list"), dict)
             and screening["dish_info_list"]
         ):
-            trace("TranslationAgent", "OPENAI_TRANSLATION", "標準化料理名稱供下游營養查詢")
+            trace("MAF", "OPENAI_TRANSLATION", "標準化料理名稱供下游營養查詢")
             original_entries = list(screening["dish_info_list"].items())
             translated = await asyncio.gather(
                 *(self._translate_single_dish(name, amount) for name, amount in original_entries)
             )
             screening["dish_info_list"] = dict(translated)
-            trace_payload("TranslationAgent", "OUTPUT", "dish_info_list", screening["dish_info_list"])
+            trace_payload("MAF", "OUTPUT", "dish_info_list", screening["dish_info_list"])
 
         return {
             "user_prompt": user_prompt,
