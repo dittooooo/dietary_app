@@ -22,10 +22,10 @@ public class DefaultAdminInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${ADMIN_EMAIL:admin@gmail.com}")
+    @Value("${app.admin.default-email}")
     private String adminEmail;
 
-    @Value("${ADMIN_PASSWORD:Admin123}")
+    @Value("${app.admin.default-password}")
     private String adminPassword;
 
     @Override

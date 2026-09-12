@@ -73,7 +73,7 @@ public class ProblemFeedbackService {
             throw new ForbiddenOperationException("無權上傳此問題回饋的照片");
         }
 
-        Path dir = Paths.get(uploadDir.replace("avatars", "feedback"));
+        Path dir = Paths.get(uploadDir, "feedback");
         String filename = imageStorageService.storeImage(file, dir, "feedback_" + id);
 
         feedback.setPhotoUrl("/feedback/" + filename);

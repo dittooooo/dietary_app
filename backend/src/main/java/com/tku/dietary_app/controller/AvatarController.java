@@ -43,19 +43,11 @@ public class AvatarController {
         return saveAvatar(file, user.getId());
     }
 
-    @PostMapping("/api/admin/users/{userId}/avatar")
-    public ResponseEntity<ApiResponse<String>> uploadUserAvatar(@PathVariable Long userId,
-                                                                @RequestParam("file") MultipartFile file) {
-        UserProfile profile = userProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("找不到使用者個人資料 (userId: " + userId + ")"));
-        return saveAvatar(file, profile);
-    }
-
     private ResponseEntity<ApiResponse<String>> saveAvatar(MultipartFile file, UserProfile profile) {
         Long userId = profile.getUser().getId();
 
         try {
-            Path dir = Paths.get(uploadDir);
+            Path dir = Paths.get(uploadDir, "avatars");
             String filename = imageStorageService.storeImage(file, dir, "user_" + userId);
             profile.setAvatarUrl("/avatars/" + filename);
             userProfileRepository.save(profile);
