@@ -160,6 +160,7 @@ class DietRecordServiceTest {
         DietRecordRequest request = new DietRecordRequest();
         request.setDishName("Homemade Salad");
         request.setMealType("DINNER");
+        request.setType("MANUAL");
         request.setDescription("手動新增（1份）");
         request.setCalories(320.0);
         request.setProtein(18.0);

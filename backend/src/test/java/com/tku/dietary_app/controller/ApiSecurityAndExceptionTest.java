@@ -96,16 +96,16 @@ class ApiSecurityAndExceptionTest {
 
     @Test
     void adminRouteRejectsNormalUser() throws Exception {
-        mockMvc.perform(get("/api/admin/users")
+        mockMvc.perform(get("/api/admin/problem-feedback")
                         .with(authentication(authToken("user@example.com", "ROLE_USER"))))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void adminRouteAllowsAdminUser() throws Exception {
-        when(adminService.getAllUsers()).thenReturn(List.of());
+        when(problemFeedbackService.getAll()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/admin/users")
+        mockMvc.perform(get("/api/admin/problem-feedback")
                         .with(authentication(authToken("admin@example.com", "ROLE_ADMIN"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -336,7 +336,7 @@ class ApiSecurityAndExceptionTest {
     void dietaryAgentUpstreamFailureMapsTo502() throws Exception {
         User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
-        when(dietaryAgentService.dishNutrition(any())).thenThrow(new UpstreamServiceException("dietary partner API 呼叫失敗"));
+        when(dietaryAgentService.dishNutrition(any(), any())).thenThrow(new UpstreamServiceException("dietary partner API 呼叫失敗"));
 
         mockMvc.perform(post("/dietary-agent/dish-nutrition")
                         .with(authentication(authToken("user@example.com", "ROLE_USER")))
@@ -355,7 +355,7 @@ class ApiSecurityAndExceptionTest {
     void dietaryAgentAskAcceptsDishInfoListAndNestedRecords() throws Exception {
         User loginUser = User.builder().id(1L).email("user@example.com").password("encoded").build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(loginUser));
-        when(dietaryAgentService.ask(eq(1L), any())).thenReturn(Map.of("answer", "ok"));
+        when(dietaryAgentService.ask(eq(1L), any(), any())).thenReturn(Map.of("answer", "ok"));
 
         mockMvc.perform(post("/dietary-agent/ask")
                         .with(authentication(authToken("user@example.com", "ROLE_USER")))
