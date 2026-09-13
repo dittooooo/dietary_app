@@ -47,7 +47,7 @@ def _meal_type(period: Any) -> tuple[str, str]:
         return "LUNCH", ""
     if normalized == "晚餐":
         return "DINNER", ""
-    return "DINNER", "[MealType:OTHER]"
+    return "OTHER", ""
 
 
 def _record_payload(meal_items: list[dict[str, Any]], default_date: str) -> list[dict[str, Any]]:
