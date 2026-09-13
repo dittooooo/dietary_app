@@ -763,23 +763,3 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   } 
 } 
-
-/// DateTextInputFormatter 視圖頁面與狀態類別。
-class DateTextInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    var text = newValue.text.replaceAll(RegExp(r'\D'), '');
-    if (text.length > 8) text = text.substring(0, 8);
-
-    var formatted = '';
-    for (int i = 0; i < text.length; i++) {
-      if (i == 4 || i == 6) { formatted += '-'; }
-      formatted += text[i];
-    }
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}

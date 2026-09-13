@@ -15,7 +15,6 @@ import '../../widgets/body_transition_animation_dialog.dart';
 import '../../widgets/dog_avatar.dart';
 import '../../widgets/meal_record_card.dart';
 import '../records/diary_page.dart';
-import '../records/elf_feeding_page.dart';
 import '../records/manual_record_page.dart';
 import '../records/report_page.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
@@ -1335,15 +1334,9 @@ class _HomeViewState extends State<HomeView>
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
-                  if (msg['type'] == 'restaurant') {
-                    return _buildRestaurantCard(msg['text']);
-                  } else if (msg['type'] == 'nutrient') {
-                    return _buildNutrientCard();
-                  }
                   return _buildChatMessage(
                     msg['isElf'],
                     msg['text'],
-                    options: msg['options'],
                     intentCategory: msg['intentCategory'],
                     queryDate: msg['queryDate'],
                   );
@@ -1441,7 +1434,6 @@ class _HomeViewState extends State<HomeView>
   Widget _buildChatMessage(
     bool isElf,
     String text, {
-    List<dynamic>? options,
     String? intentCategory,
     String? queryDate,
   }) {
@@ -1482,38 +1474,6 @@ class _HomeViewState extends State<HomeView>
                     height: 1.55,
                   ),
                 ),
-                if (isElf && options != null) ...[
-                  const SizedBox(height: 15),
-                  const Divider(height: 1),
-                  const SizedBox(height: 10),
-                  ...options.map(
-                    (opt) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => _showNutrientDetail(
-                            opt['name'],
-                            opt['nutrients'],
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.surface,
-                            foregroundColor: AppColors.textPrimary,
-                            elevation: 0,
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            opt['name'],
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -1554,223 +1514,6 @@ class _HomeViewState extends State<HomeView>
                 },
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  ///營養素詳細資訊
-  void _showNutrientDetail(String name, Map<String, dynamic> nutrients) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.45,
-        decoration: const BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 25),
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "預估攝取熱量: ${nutrients['calories']} kcal",
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.secondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Divider(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NutrientInfo(
-                  label: "蛋白質",
-                  value: "${nutrients['protein']}",
-                  unit: "g",
-                ),
-                _NutrientInfo(
-                  label: "脂肪",
-                  value: "${nutrients['fat']}",
-                  unit: "g",
-                ),
-                _NutrientInfo(
-                  label: "碳水",
-                  value: "${nutrients['carbs']}",
-                  unit: "g",
-                ),
-              ],
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // 關閉彈窗
-                _toggleChat(false); // 關閉對話框
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ElfFeedingPage(
-                      imagePath: "",
-                      items: [
-                        {
-                          'name': name,
-                          'portion': '1份',
-                          'calories': '${nutrients['calories']} kcal',
-                        },
-                      ],
-                      recordDate: DateTime.now(),
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: const Size(double.infinity, 55),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                elevation: 2,
-              ),
-              child: const Text(
-                "確認食用",
-                style: TextStyle(
-                  color: AppColors.background,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  ///餐廳卡片
-  Widget _buildRestaurantCard(String text) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.05),
-            blurRadius: 1.95,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.restaurant, color: AppColors.secondary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  text,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "點擊查看詳細地址與評價",
-            style: TextStyle(color: AppColors.textPrimary, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
-
-  ///營養卡片
-  Widget _buildNutrientCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 2.925,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Text(
-            "薯條 (大份)",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const Divider(height: 30),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _NutrientInfo(label: "熱量", value: "380", unit: "kcal"),
-              _NutrientInfo(label: "蛋白質", value: "4", unit: "g"),
-              _NutrientInfo(label: "脂肪", value: "20", unit: "g"),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ElfFeedingPage(
-                    imagePath: "",
-                    items: const [
-                      {'name': '薯條', 'portion': '大份', 'calories': '380 kcal'},
-                    ],
-                    recordDate: DateTime.now(),
-                  ),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              minimumSize: const Size(double.infinity, 45),
-            ),
-            child: const Text(
-              "進行餵食",
-              style: TextStyle(
-                color: AppColors.background,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -3060,40 +2803,4 @@ class CalorieGaugeArcPainter extends CustomPainter {
       oldDelegate.currentCalories != currentCalories ||
       oldDelegate.targetRange?.recommendedCalories !=
           targetRange?.recommendedCalories;
-}
-
-///營養素資訊
-class _NutrientInfo extends StatelessWidget {
-  final String label, value, unit;
-  const _NutrientInfo({
-    required this.label,
-    required this.value,
-    required this.unit,
-  });
-
-  ///顯示營養素資訊
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        Text(
-          unit,
-          style: const TextStyle(fontSize: 10, color: AppColors.textPrimary),
-        ),
-      ],
-    );
-  }
 }

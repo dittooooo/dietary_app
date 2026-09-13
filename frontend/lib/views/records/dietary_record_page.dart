@@ -39,7 +39,6 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> with WidgetsBindi
   late DateTime _selectedDate;
   late List<DateTime> _pathDates;
   Timer? _dayChangeTimer;
-  bool _showOverlay = false;
   DateTime? _rippleDate;
   bool _isLoadingRecords = false;
   List<dynamic> _dietRecords = [];
@@ -286,7 +285,6 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> with WidgetsBindi
     setState(() {
       _selectedDate = date;
       _rippleDate = date;
-      _showOverlay = false;
     });
 
     Navigator.push(
@@ -333,42 +331,15 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> with WidgetsBindi
             ),
           ),
 
-          // 2. 遮罩區
-          if (_showOverlay)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () => setState(() {
-                  _showOverlay = false;
-                  _rippleDate = null;
-                }),
-                behavior: HitTestBehavior.translucent,
-                child: Container(
-                  // Flutter 3.27+ API 替代 withOpacity
-                  color: Colors.black.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-
-          // 3. 固定標題列與功能列
+          // 2. 固定標題列與功能列
           _buildFixedHeader(context),
           _buildFeatureRow(),
 
-          // 4. 底部彈出操作區
-          if (_showOverlay)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildActionPanel(context),
-            ),
-
-          // 5. 「回今天」按鈕 (中文 + 雙箭頭)
+          // 3. 「回今天」按鈕 (中文 + 雙箭頭)
           if (_showBackToToday)
             Positioned(
               right: 20,
-              bottom: _showOverlay
-                  ? MediaQuery.of(context).size.height * 0.35 + 20
-                  : 20,
+              bottom: 20,
               child: GestureDetector(
                 onTap: () => _scrollToDate(DateTime.now()),
                 child: Container(
@@ -631,98 +602,6 @@ class _DietaryRecordPageState extends State<DietaryRecordPage> with WidgetsBindi
                     ),
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // === 底部動作選單面板 ===
-  Widget _buildActionPanel(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.35,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Text(
-            "${_selectedDate.month}月${_selectedDate.day}日 飲食記錄",
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 50),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildMenuButton(
-                  title: "日記",
-                  icon: Icons.restaurant,
-                  color: const Color.fromARGB(255, 235, 215, 192),
-                  onTap: () {
-                    setState(() => _showOverlay = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DiaryPage(
-                          date: _selectedDate,
-                          onDateChanged: widget.onDateSelected,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuButton({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140,
-        height: 110,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              // Flutter 3.27+ API 替代 withOpacity
-              color: AppColors.primary.withValues(alpha: 0.1),
-              blurRadius: 1.95,
-              offset: const Offset(0.78, 0.78),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 45, color: AppColors.textPrimary),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
               ),
             ),
           ],

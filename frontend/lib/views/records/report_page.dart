@@ -50,7 +50,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   List<dynamic> _allRecords = [];
   bool _isLoading = false;
   List<double> _weeklyData = [];
-  List<double> _monthlyData = [];
   String? _avatarUrl;
   CalorieTargetRange? _calorieTarget;
   bool _sharedDateUpdateQueued = false;
@@ -290,7 +289,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
   }
 
   void _processRecords() {
-    // 1. 週數據：以選擇日期所在週的週日至週六
+    // 週數據：以選擇日期所在週的週日至週六
     final sundayOffset = _selectedDate.weekday % 7;
     final sunday = _selectedDate.subtract(Duration(days: sundayOffset));
     List<double> weekly = [];
@@ -309,25 +308,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
       weekly.add(dailyTotal);
     }
 
-    // 2. 月數據：選擇日期的近 30 天歷史紀錄
-    List<double> monthly = [];
-    for (int i = 29; i >= 0; i--) {
-      final targetDate = _selectedDate.subtract(Duration(days: i));
-      double dailyTotal = 0.0;
-      for (var record in _allRecords) {
-        final rDate = _getRecordDate(record);
-        if (rDate == null) continue;
-        if (rDate.year == targetDate.year &&
-            rDate.month == targetDate.month &&
-            rDate.day == targetDate.day) {
-          dailyTotal += _getCaloriesFromRecord(record);
-        }
-      }
-      monthly.add(dailyTotal);
-    }
-
     _weeklyData = weekly;
-    _monthlyData = monthly;
   }
 
   // === 4. 日期切換與狀態監聽邏輯 ===
@@ -536,7 +517,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // 總結數據區域 (僅限週/月)
+                        // 總結數據區域 (僅限週)
                         if (_viewType != 0) ...[
                           _buildAggregatedStats(),
                           const SizedBox(height: 20),
@@ -808,7 +789,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
     return null;
   }
 
-  // --- 總結數據區域 (週/月) ---
+  // --- 總結數據區域 (週) ---
   Widget _buildAggregatedStats() {
     double breakfastCal = 0.0;
     double lunchCal = 0.0;
@@ -1615,7 +1596,7 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
   // === 8. 折線圖與飲食明細清單組件 (Trend Chart & Eaten Food List) ===
   Widget _buildTrendChart() {
-    List<double> data = _viewType == 1 ? _weeklyData : _monthlyData;
+    final List<double> data = _weeklyData;
     if (data.isEmpty) {
       return const SizedBox(height: 200, child: Center(child: Text("暫無資料")));
     }
