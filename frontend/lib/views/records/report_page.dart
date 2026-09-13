@@ -11,6 +11,7 @@ import '../../color/app_colors.dart';
 import '../../controllers/dog_state_controller.dart';
 import '../../models/calorie_target_range.dart';
 import '../../widgets/dog_avatar.dart';
+import '../../widgets/macronutrient_bar_chart.dart';
 import '../../services/diet_service.dart';
 import '../../services/auth_service.dart';
 import '../../config/api_config.dart';
@@ -1377,72 +1378,27 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
 
           const SizedBox(height: 16),
 
-          // 圖例顏色標籤
-          Row(
+          // 圖例在窄螢幕或放大字體時可換行。
+          Wrap(
+            spacing: 14,
+            runSpacing: 8,
             children: [
               _buildLegendDot(const Color(0xFF7C83FD), "碳水化合物"),
-              const SizedBox(width: 14),
               _buildLegendDot(const Color(0xFFFF7A45), "蛋白質"),
-              const SizedBox(width: 14),
               _buildLegendDot(const Color(0xFFFFB800), "脂肪"),
             ],
           ),
 
           const SizedBox(height: 20),
 
-          // 柱狀圖與 Y 軸刻度區域
-          SizedBox(
-            height: 190,
-            child: Stack(
-              children: [
-                // 背景 100%, 75%, 50%, 25%, 0% 網格虛線
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildDashedGridLine("100%"),
-                    _buildDashedGridLine("75%"),
-                    _buildDashedGridLine("50%"),
-                    _buildDashedGridLine("25%"),
-                    _buildDashedGridLine("0%"),
-                  ],
-                ),
-
-                // 三支柱狀圖
-                Padding(
-                  padding: const EdgeInsets.only(
-                    left: 45,
-                    right: 15,
-                    bottom: 25,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildSingleBarItem(
-                        "碳水化合物",
-                        carbsPercent,
-                        todayCarbs,
-                        const Color(0xFF7C83FD),
-                      ),
-                      _buildSingleBarItem(
-                        "蛋白質",
-                        proteinPercent,
-                        todayProtein,
-                        const Color(0xFFFF7A45),
-                      ),
-                      _buildSingleBarItem(
-                        "脂肪",
-                        fatPercent,
-                        todayFat,
-                        const Color(0xFFFFB800),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          MacronutrientBarChart(
+            carbsPercent: carbsPercent,
+            proteinPercent: proteinPercent,
+            fatPercent: fatPercent,
+            carbsGrams: todayCarbs,
+            proteinGrams: todayProtein,
+            fatGrams: todayFat,
           ),
-
           const SizedBox(height: 12),
 
           // 底部建議提示框 (帶黃色電燈泡)
@@ -1501,93 +1457,6 @@ class _ReportPageState extends State<ReportPage> with TickerProviderStateMixin {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDashedGridLine(String label) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 38,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.black45,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Expanded(
-          // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-          child: Container(
-            height: 1,
-            color: Colors.black.withValues(alpha: 0.06),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSingleBarItem(String label, int pct, double grams, Color color) {
-    const double maxBarHeight = 110.0;
-    final double barHeight = (pct / 100.0 * maxBarHeight).clamp(
-      6.0,
-      maxBarHeight,
-    );
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        // 柱狀圖頂部百分比數字
-        Text(
-          "$pct%",
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        // 圓角柱體
-        Container(
-          width: 52,
-          height: barHeight,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-            boxShadow: [
-              BoxShadow(
-                // [API更新] withOpacity 已過時，改用 withValues(alpha: ...)
-                color: color.withValues(alpha: 0.25),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-
-        // 底部營養素名稱與公克數
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 1),
-        Text(
-          "約 ${grams.round()} g",
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.black54,
-            fontWeight: FontWeight.w500,
           ),
         ),
       ],
